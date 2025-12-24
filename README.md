@@ -72,6 +72,39 @@ This project implements attributes following the [Lunar Attributes documentation
 
 The `AttributeHelper` class provides convenience methods for working with attributes programmatically.
 
+## Collections
+
+This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections):
+
+- **Collection Groups**: Collections belong to collection groups (e.g., "Main Catalogue")
+- **Collections**: Created with `attribute_data` using FieldType objects (e.g., `new \Lunar\FieldTypes\TranslatedText(...)`)
+- **Nested Collections**: Child collections using nested sets (`appendNode()`)
+- **Adding Products**: Products added with positions using `sync()` method
+- **Sorting Products**: Collections support multiple sort types:
+  - `min_price:asc` / `min_price:desc` - Sort by minimum variant price
+  - `sku:asc` / `sku:desc` - Sort by SKU
+  - `custom` - Manual position ordering (default)
+
+The `CollectionHelper` class provides convenience methods for working with collections programmatically.
+
+Example usage:
+```php
+use App\Lunar\Collections\CollectionHelper;
+
+// Get sorted products from a collection
+$products = CollectionHelper::getSortedProducts($collection);
+
+// Add products with positions
+CollectionHelper::addProducts($collection, [
+    1 => ['position' => 1],
+    2 => ['position' => 2],
+]);
+
+// Create child collection
+$child = Collection::create([/*...*/]);
+CollectionHelper::addChildCollection($parent, $child);
+```
+
 ## Product Associations
 
 This project implements product associations as described in the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations):

@@ -320,23 +320,27 @@ class LunarDemoSeeder extends Seeder
 
     protected function createCollections(): array
     {
+        // Create collection group following Lunar Collections documentation
+        // See: https://docs.lunarphp.com/1.x/reference/collections
         $group = CollectionGroup::firstOrCreate(
-            ['handle' => 'main'],
-            ['name' => 'Main']
+            ['handle' => 'main-catalogue'],
+            ['name' => 'Main Catalogue']
         );
 
         $collections = [];
 
+        // Create collections using attribute_data with FieldType objects
+        // Collections follow the same pattern as products for attributes
         $collections['electronics'] = Collection::firstOrCreate(
             ['handle' => 'electronics'],
             [
                 'collection_group_id' => $group->id,
                 'type' => 'static',
-                'name' => [
-                    'en' => 'Electronics',
-                ],
-                'description' => [
-                    'en' => 'Electronic devices and gadgets',
+                'sort' => 'min_price:asc', // Sort by minimum price ascending
+                'attribute_data' => [
+                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                        'en' => new \Lunar\FieldTypes\Text('Electronics'),
+                    ])),
                 ],
             ]
         );
@@ -346,11 +350,11 @@ class LunarDemoSeeder extends Seeder
             [
                 'collection_group_id' => $group->id,
                 'type' => 'static',
-                'name' => [
-                    'en' => 'Clothing',
-                ],
-                'description' => [
-                    'en' => 'Apparel and accessories',
+                'sort' => 'custom', // Custom sorting (manual positions)
+                'attribute_data' => [
+                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                        'en' => new \Lunar\FieldTypes\Text('Clothing'),
+                    ])),
                 ],
             ]
         );
@@ -360,14 +364,36 @@ class LunarDemoSeeder extends Seeder
             [
                 'collection_group_id' => $group->id,
                 'type' => 'static',
-                'name' => [
-                    'en' => 'Home & Garden',
-                ],
-                'description' => [
-                    'en' => 'Home improvement and garden supplies',
+                'sort' => 'sku:asc', // Sort by SKU ascending
+                'attribute_data' => [
+                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                        'en' => new \Lunar\FieldTypes\Text('Home & Garden'),
+                    ])),
                 ],
             ]
         );
+
+        // Create a child collection to demonstrate nested collections
+        // Using appendNode from Laravel Nested Set package
+        $collections['home-electronics'] = Collection::firstOrCreate(
+            ['handle' => 'home-electronics'],
+            [
+                'collection_group_id' => $group->id,
+                'type' => 'static',
+                'sort' => 'min_price:desc', // Sort by minimum price descending
+                'attribute_data' => [
+                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                        'en' => new \Lunar\FieldTypes\Text('Home Electronics'),
+                    ])),
+                ],
+            ]
+        );
+
+        // Make home-electronics a child of home collection
+        // This demonstrates the nested set hierarchy feature
+        if ($collections['home']->wasRecentlyCreated || $collections['home-electronics']->wasRecentlyCreated) {
+            $collections['home-electronics']->appendNode($collections['home']);
+        }
 
         return $collections;
     }
@@ -500,9 +526,16 @@ class LunarDemoSeeder extends Seeder
         // Attach to channel
         $product->channels()->attach($channel->id);
 
-        // Attach to collections
-        foreach ($collections as $collection) {
-            $product->collections()->attach($collection->id, ['position' => 1]);
+        // Attach to collections with positions using sync()
+        // Following Lunar Collections documentation: https://docs.lunarphp.com/1.x/reference/collections
+        // The key in the array is the product id, value contains position
+        $collectionProducts = [];
+        foreach ($collections as $index => $collection) {
+            $collectionProducts[$product->id] = ['position' => $index + 1];
+            // Use sync for each collection to set position properly
+            $collection->products()->syncWithoutDetaching([
+                $product->id => ['position' => $index + 1],
+            ]);
         }
 
         // Create variants

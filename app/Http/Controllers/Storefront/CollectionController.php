@@ -23,6 +23,13 @@ class CollectionController extends Controller
 
     /**
      * Display the specified collection with its products.
+     * 
+     * Products are sorted according to the collection's sort type:
+     * - min_price:asc/desc - by minimum variant price
+     * - sku:asc/desc - by SKU
+     * - custom - by manual position (default)
+     * 
+     * See: https://docs.lunarphp.com/1.x/reference/collections
      */
     public function show(string $slug, Request $request)
     {
@@ -30,15 +37,27 @@ class CollectionController extends Controller
             ->where('element_type', Collection::class)
             ->firstOrFail();
 
-        $collection = Collection::with('group')->findOrFail($url->element_id);
+        $collection = Collection::with(['group', 'children'])->findOrFail($url->element_id);
 
-        $products = $collection->products()
-            ->with(['variants.prices', 'images'])
-            ->where('status', 'published')
-            ->latest()
-            ->paginate(12);
+        // Get products with proper sorting based on collection's sort type
+        $products = \App\Lunar\Collections\CollectionHelper::getSortedProducts($collection);
+        
+        // Paginate the sorted products
+        $perPage = 12;
+        $currentPage = $request->get('page', 1);
+        $items = $products->slice(($currentPage - 1) * $perPage, $perPage)->values();
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $products->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
-        return view('storefront.collections.show', compact('collection', 'products'));
+        // Get breadcrumb for navigation
+        $breadcrumb = $collection->breadcrumb;
+
+        return view('storefront.collections.show', compact('collection', 'products', 'breadcrumb'));
     }
 }
 

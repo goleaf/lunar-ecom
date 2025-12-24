@@ -534,10 +534,9 @@ class LunarDemoSeeder extends Seeder
         // Attach to collections with positions using sync()
         // Following Lunar Collections documentation: https://docs.lunarphp.com/1.x/reference/collections
         // The key in the array is the product id, value contains position
-        $collectionProducts = [];
         foreach ($collections as $index => $collection) {
-            $collectionProducts[$product->id] = ['position' => $index + 1];
-            // Use sync for each collection to set position properly
+            // Use syncWithoutDetaching to add products with positions
+            // Format: [product_id => ['position' => int]]
             $collection->products()->syncWithoutDetaching([
                 $product->id => ['position' => $index + 1],
             ]);

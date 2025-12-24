@@ -17,7 +17,7 @@ class CollectionHelper
     /**
      * Get products from a collection with proper sorting applied.
      * 
-     * Supports the following sort types:
+     * Supports the following sort types (as per Lunar documentation):
      * - min_price:asc - Sort by minimum price ascending
      * - min_price:desc - Sort by minimum price descending
      * - sku:asc - Sort by SKU ascending
@@ -31,45 +31,53 @@ class CollectionHelper
     {
         $sort = $collection->sort ?? 'custom';
         
-        $products = $collection->products()
+        // Base query with relationships
+        $query = $collection->products()
             ->with(['variants.prices', 'images'])
             ->where('status', 'published');
 
         // Apply sorting based on collection's sort type
+        // Note: Lunar has built-in sorting actions, but for simplicity we implement basic sorting here
         switch ($sort) {
             case 'min_price:asc':
                 // Sort by minimum variant price ascending
-                $products = $products->get()->sortBy(function ($product) {
-                    return $product->variants->min(function ($variant) {
-                        return $variant->prices->min('price');
-                    });
+                $products = $query->get()->sortBy(function ($product) {
+                    $minPrice = $product->variants->flatMap(function ($variant) {
+                        return $variant->prices->pluck('price');
+                    })->filter()->min();
+                    return $minPrice ?? PHP_INT_MAX;
                 })->values();
                 break;
 
             case 'min_price:desc':
                 // Sort by minimum variant price descending
-                $products = $products->get()->sortByDesc(function ($product) {
-                    return $product->variants->min(function ($variant) {
-                        return $variant->prices->min('price');
-                    });
+                $products = $query->get()->sortByDesc(function ($product) {
+                    $minPrice = $product->variants->flatMap(function ($variant) {
+                        return $variant->prices->pluck('price');
+                    })->filter()->min();
+                    return $minPrice ?? 0;
                 })->values();
                 break;
 
             case 'sku:asc':
-                // Sort by SKU ascending
-                $products = $products->orderBy('sku', 'asc')->get();
+                // Sort by first variant SKU ascending
+                $products = $query->get()->sortBy(function ($product) {
+                    return $product->variants->first()?->sku ?? '';
+                })->values();
                 break;
 
             case 'sku:desc':
-                // Sort by SKU descending
-                $products = $products->orderBy('sku', 'desc')->get();
+                // Sort by first variant SKU descending
+                $products = $query->get()->sortByDesc(function ($product) {
+                    return $product->variants->first()?->sku ?? '';
+                })->values();
                 break;
 
             case 'custom':
             default:
                 // Custom sorting uses the pivot position (default for BelongsToMany)
                 // The relationship already orders by pivot position
-                $products = $products->get();
+                $products = $query->get();
                 break;
         }
 

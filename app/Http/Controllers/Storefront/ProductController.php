@@ -40,22 +40,23 @@ class ProductController extends Controller
             'tags',
         ])->findOrFail($url->element_id);
 
-        // Get cross-sell, up-sell, and alternate products
+        // Get cross-sell, up-sell, and alternate products using relationship scopes
+        // See: https://docs.lunarphp.com/1.x/reference/associations
         $crossSell = $product->associations()
-            ->where('type', 'cross-sell')
-            ->with('target.variants.prices')
+            ->crossSell()
+            ->with('target.variants.prices', 'target.images')
             ->get()
             ->pluck('target');
 
         $upSell = $product->associations()
-            ->where('type', 'up-sell')
-            ->with('target.variants.prices')
+            ->upSell()
+            ->with('target.variants.prices', 'target.images')
             ->get()
             ->pluck('target');
 
         $alternate = $product->associations()
-            ->where('type', 'alternate')
-            ->with('target.variants.prices')
+            ->alternate()
+            ->with('target.variants.prices', 'target.images')
             ->get()
             ->pluck('target');
 

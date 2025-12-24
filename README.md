@@ -61,6 +61,28 @@ Default admin user (if created during installation):
 - Cart: `/cart`
 - Checkout: `/checkout`
 
+## Product Associations
+
+This project implements product associations as described in the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations):
+
+- **Cross-sell**: Complementary products (e.g., headphones with smartphones)
+- **Up-sell**: Higher value alternatives (e.g., premium versions)
+- **Alternate**: Alternative product options
+
+The storefront displays associations on product detail pages. Associations are managed via:
+- `AssociationManager` class for synchronous operations (seeders, commands)
+- `Product::associate()` method for asynchronous operations (queued jobs)
+- `ProductAssociationController` for API management
+
+Example usage:
+```php
+use App\Lunar\Associations\AssociationManager;
+use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
+
+$manager = new AssociationManager();
+$manager->associate($product, $targetProduct, ProductAssociationEnum::CROSS_SELL);
+```
+
 ## Extension Points
 
 This project includes scaffolding for extending Lunar's functionality:
@@ -139,6 +161,8 @@ The `LunarDemoSeeder` creates:
 - Products with variants, prices, and URLs
 - Tags
 - Product Associations (cross-sell, up-sell, alternate)
+
+See the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations) for details on managing product associations.
 
 ## Development
 

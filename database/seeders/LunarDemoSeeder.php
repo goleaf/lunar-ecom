@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use App\Lunar\Associations\AssociationManager;
+use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
 use Lunar\Models\Attribute;
 use Lunar\Models\AttributeGroup;
 use Lunar\Models\Channel;
@@ -442,35 +444,58 @@ class LunarDemoSeeder extends Seeder
             return;
         }
 
-        // Cross-sell: Headphones with Smartphone
-        $products['smartphone']->associate(
+        // Use AssociationManager for synchronous association creation in seeders
+        // The Product::associate() method dispatches a job, which we avoid in seeders
+        // See: https://docs.lunarphp.com/1.x/reference/associations
+        $manager = new AssociationManager();
+        
+        // Cross-sell: Headphones with Smartphone (complementary products)
+        // When viewing a smartphone, suggest headphones as an add-on
+        $manager->associate(
+            $products['smartphone'],
             $products['headphones'],
-            ProductAssociation::CROSS_SELL
+            ProductAssociationEnum::CROSS_SELL
         );
 
-        // Up-sell: Basic headphones to premium headphones (if we had a basic version)
-        // For demo, we'll up-sell coffee maker to a premium version concept
-        if (isset($products['coffeemaker']) && isset($products['headphones'])) {
-            // Example: up-sell headphones when viewing coffee maker (conceptual)
-            $products['coffeemaker']->associate(
-                $products['headphones'],
-                ProductAssociation::UP_SELL
+        // Up-sell: Smartphone storage upgrade (higher value product)
+        // When viewing smartphone, suggest a higher storage variant (if available)
+        if (isset($products['coffeemaker'])) {
+            // Example: up-sell premium coffee maker when viewing basic one
+            $manager->associate(
+                $products['coffeemaker'],
+                $products['smartphone'],
+                ProductAssociationEnum::UP_SELL
             );
         }
 
-        // Alternate: T-Shirt alternatives
+        // Alternate: T-Shirt alternatives (alternative products)
+        // When viewing t-shirt, show alternative clothing options
         if (isset($products['tshirt']) && isset($products['gardentools'])) {
-            $products['tshirt']->associate(
+            $manager->associate(
+                $products['tshirt'],
                 $products['gardentools'],
-                ProductAssociation::ALTERNATE
+                ProductAssociationEnum::ALTERNATE
             );
         }
 
-        // Cross-sell: Garden tools with home items
+        // Cross-sell: Garden tools with home items (complementary products)
+        // When viewing coffee maker, suggest garden tools for home improvement
         if (isset($products['coffeemaker']) && isset($products['gardentools'])) {
-            $products['coffeemaker']->associate(
+            $manager->associate(
+                $products['coffeemaker'],
                 $products['gardentools'],
-                ProductAssociation::CROSS_SELL
+                ProductAssociationEnum::CROSS_SELL
+            );
+        }
+
+        // Multiple products association example
+        // Associate multiple products at once (cross-sell multiple accessories)
+        // This demonstrates the array syntax from the docs
+        if (isset($products['headphones']) && isset($products['coffeemaker'])) {
+            $manager->associate(
+                $products['smartphone'],
+                [$products['headphones'], $products['coffeemaker']],
+                ProductAssociationEnum::CROSS_SELL
             );
         }
     }

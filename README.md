@@ -1,59 +1,168 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Lunar E-commerce Store
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 application powered by [Lunar PHP](https://docs.lunarphp.com/) e-commerce framework.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP >= 8.2
+- Laravel 12
+- MySQL 8.0+ or PostgreSQL 9.4+
+- Required PHP extensions: exif, intl, bcmath, GD
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Install dependencies:
+```bash
+composer install
+npm install
+```
 
-## Learning Laravel
+2. Configure your environment:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+3. Configure your database connection in `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=lunar_ecom
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+4. Run migrations:
+```bash
+php artisan migrate
+```
 
-## Laravel Sponsors
+5. Seed demo data:
+```bash
+php artisan db:seed
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Accessing the Admin Panel
 
-### Premium Partners
+The Lunar admin panel is available at: `http://localhost/lunar`
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Default admin user (if created during installation):
+- Email: Check your seeder or create one via the admin panel
 
-## Contributing
+## Storefront Routes
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Home: `/`
+- Products: `/products`
+- Product Detail: `/products/{slug}`
+- Collections: `/collections`
+- Collection Detail: `/collections/{slug}`
+- Search: `/search?q=query`
+- Cart: `/cart`
+- Checkout: `/checkout`
 
-## Code of Conduct
+## Extension Points
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+This project includes scaffolding for extending Lunar's functionality:
 
-## Security Vulnerabilities
+### Cart Extensions
+- **Location**: `app/Lunar/Cart/Pipelines/CartLine/`
+- **Example**: `ValidateCartLineStock.php` - Custom cart line validation
+- **Registration**: Add to `config/lunar/cart.php` under the `pipeline` array
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Discount Extensions
+- **Location**: `app/Lunar/Discounts/DiscountTypes/`
+- **Example**: `CustomPercentageDiscount.php` - Custom discount type
+- **Registration**: Register in `AppServiceProvider::boot()` using `DiscountManager::extend()`
+
+### Payment Extensions
+- **Location**: `app/Lunar/Payments/PaymentProviders/`
+- **Example**: `DummyPaymentProvider.php` - Dummy payment for development
+- **Registration**: Add to `config/lunar/payments.php` under `providers`
+
+### Shipping Extensions
+- **Location**: `app/Lunar/Shipping/ShippingCalculators/`
+- **Example**: `FlatRateShippingCalculator.php` - Flat-rate shipping calculator
+- **Registration**: Add to `config/lunar/shipping.php` under `calculators`
+
+### Taxation Extensions
+- **Location**: `app/Lunar/Taxation/TaxCalculators/`
+- **Example**: `StandardTaxCalculator.php` - Standard tax calculator
+- **Registration**: Add to `config/lunar/taxes.php` under `calculators`
+
+### Search Extensions
+- **Location**: `app/Lunar/Search/SearchDrivers/`
+- **Example**: `CustomSearchDriver.php` - Custom search driver
+- **Registration**: Configure in `config/lunar/search.php`
+
+### Order Extensions
+- **Location**: `app/Lunar/Orders/Pipelines/OrderCreation/`
+- **Example**: `ValidateOrderStock.php` - Order validation hook
+- **Registration**: Add to `config/lunar/orders.php` under the `pipeline` array
+
+## Adding Real Payment Providers
+
+To add a real payment provider (e.g., Stripe):
+
+1. Install the Lunar Stripe package (if available):
+```bash
+composer require lunarphp/stripe
+```
+
+2. Or create your own provider by extending `AbstractPayment`:
+```php
+use Lunar\Base\PaymentTypes\AbstractPayment;
+
+class StripePaymentProvider extends AbstractPayment
+{
+    public function authorize(): bool
+    {
+        // Implement Stripe authorization
+    }
+    
+    public function refund(?int $amount = null): bool
+    {
+        // Implement Stripe refund
+    }
+}
+```
+
+3. Register it in `config/lunar/payments.php`
+
+## Demo Data
+
+The `LunarDemoSeeder` creates:
+- Channels, Currencies, Languages
+- Attribute Groups and Attributes
+- Product Types
+- Collections
+- Products with variants, prices, and URLs
+- Tags
+- Product Associations (cross-sell, up-sell, alternate)
+
+## Development
+
+Run the development server:
+```bash
+php artisan serve
+```
+
+Run code style checks:
+```bash
+./vendor/bin/pint
+./vendor/bin/pint --test
+```
+
+Run tests:
+```bash
+php artisan test
+```
+
+## Documentation
+
+- [Lunar PHP Documentation](https://docs.lunarphp.com/)
+- [Laravel Documentation](https://laravel.com/docs)
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -390,9 +390,14 @@ class LunarDemoSeeder extends Seeder
         );
 
         // Make home-electronics a child of home collection
-        // This demonstrates the nested set hierarchy feature
-        if ($collections['home']->wasRecentlyCreated || $collections['home-electronics']->wasRecentlyCreated) {
-            $collections['home-electronics']->appendNode($collections['home']);
+        // This demonstrates the nested set hierarchy feature using appendNode
+        // The parent collection calls appendNode with the child collection
+        try {
+            if (!$collections['home-electronics']->isDescendantOf($collections['home'])) {
+                $collections['home']->appendNode($collections['home-electronics']);
+            }
+        } catch (\Exception $e) {
+            // Collection might already be attached, ignore
         }
 
         return $collections;

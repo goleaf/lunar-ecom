@@ -91,13 +91,15 @@ class CollectionHelper
     /**
      * Create a child collection.
      * 
+     * The parent collection calls appendNode with the child.
+     * 
      * @param LunarCollection $parent
      * @param LunarCollection $child
      * @return void
      */
     public static function addChildCollection(LunarCollection $parent, LunarCollection $child): void
     {
-        $child->appendNode($parent);
+        $parent->appendNode($child);
     }
 
     /**

@@ -1,6 +1,15 @@
 <div class="bg-white rounded-lg shadow overflow-hidden">
-    @if($product->thumbnail)
-        <img src="{{ $product->thumbnail->getUrl() }}" alt="{{ $product->translateAttribute('name') }}" class="w-full h-48 object-cover">
+    @php
+        // Get first image URL using Lunar Media - see: https://docs.lunarphp.com/1.x/reference/media
+        $imageUrl = $product->getFirstMediaUrl('images', 'thumb') 
+            ?? $product->getFirstMediaUrl('images') 
+            ?? config('lunar.media.fallback.url');
+    @endphp
+
+    @if($imageUrl)
+        <img src="{{ $imageUrl }}" 
+             alt="{{ $product->translateAttribute('name') }}" 
+             class="w-full h-48 object-cover">
     @else
         <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
             <span class="text-gray-400">No Image</span>

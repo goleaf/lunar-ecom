@@ -7,8 +7,33 @@
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
             <div>
-                @if($product->thumbnail)
-                    <img src="{{ $product->thumbnail->getUrl() }}" alt="{{ $product->translateAttribute('name') }}" class="w-full rounded">
+                @php
+                    // Get images using Lunar Media - see: https://docs.lunarphp.com/1.x/reference/media
+                    $images = $product->getMedia('images');
+                    $firstImageUrl = $product->getFirstMediaUrl('images', 'large') 
+                        ?? $product->getFirstMediaUrl('images') 
+                        ?? config('lunar.media.fallback.url');
+                @endphp
+
+                @if($images->count() > 0)
+                    <div class="space-y-4">
+                        @if($firstImageUrl)
+                            <img src="{{ $firstImageUrl }}" 
+                                 alt="{{ $product->translateAttribute('name') }}" 
+                                 class="w-full rounded">
+                        @endif
+
+                        @if($images->count() > 1)
+                            <div class="grid grid-cols-4 gap-2">
+                                @foreach($images as $image)
+                                    <img src="{{ $image->getUrl('thumb') }}" 
+                                         alt="{{ $product->translateAttribute('name') }} - Image {{ $loop->iteration }}" 
+                                         class="w-full h-24 object-cover rounded cursor-pointer hover:opacity-75"
+                                         onclick="document.querySelector('img.main-image').src = '{{ $image->getUrl('large') ?? $image->getUrl() }}'">
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 @else
                     <div class="w-full h-96 bg-gray-200 flex items-center justify-center rounded">
                         <span class="text-gray-400">No Image</span>

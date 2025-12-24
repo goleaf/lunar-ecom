@@ -15,7 +15,9 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $products = Product::with(['variants.prices', 'images'])
+        // Load products with media eager loaded
+        // See: https://docs.lunarphp.com/1.x/reference/media
+        $products = Product::with(['variants.prices', 'media'])
             ->where('status', 'published')
             ->latest()
             ->paginate(12);
@@ -32,9 +34,11 @@ class ProductController extends Controller
             ->where('element_type', Product::class)
             ->firstOrFail();
 
+        // Load product with media eager loaded
+        // See: https://docs.lunarphp.com/1.x/reference/media
         $product = Product::with([
             'variants.prices',
-            'images',
+            'media', // Eager load media for better performance
             'collections',
             'associations.target',
             'tags',

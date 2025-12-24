@@ -72,6 +72,38 @@ This project implements attributes following the [Lunar Attributes documentation
 
 The `AttributeHelper` class provides convenience methods for working with attributes programmatically.
 
+## Media
+
+This project implements media handling following the [Lunar Media documentation](https://docs.lunarphp.com/1.x/reference/media):
+
+- **Media Library**: Uses Spatie Laravel Media Library package
+- **Supported Models**: Products and Collections support media
+- **Custom Media Definitions**: Custom conversions and collections defined in `CustomMediaDefinitions`
+- **Fallback Images**: Configured via `lunar/media` config or `.env` (FALLBACK_IMAGE_URL, FALLBACK_IMAGE_PATH)
+- **Media Collections**: Uses 'images' collection by default
+- **Conversions**: Supports 'small', 'thumb', 'medium', 'large', 'zoom' conversions
+
+The `MediaHelper` class provides convenience methods for working with media programmatically.
+
+Example usage:
+```php
+use App\Lunar\Media\MediaHelper;
+
+// Get images
+$images = MediaHelper::getImages($product);
+
+// Get first image URL
+$imageUrl = MediaHelper::getFirstImageUrl($product, 'images', 'large');
+
+// Add image
+MediaHelper::addImage($product, $request->file('image'));
+
+// Or use directly with Spatie Media Library
+$product->addMedia($request->file('image'))->toMediaCollection('images');
+$product->getMedia('images');
+$product->getFirstMediaUrl('images', 'large');
+```
+
 ## Collections
 
 This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections):

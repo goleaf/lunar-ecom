@@ -37,7 +37,9 @@ class CollectionController extends Controller
             ->where('element_type', Collection::class)
             ->firstOrFail();
 
-        $collection = Collection::with(['group', 'children'])->findOrFail($url->element_id);
+        // Load collection with media eager loaded
+        // See: https://docs.lunarphp.com/1.x/reference/media
+        $collection = Collection::with(['group', 'children', 'media'])->findOrFail($url->element_id);
 
         // Get products with proper sorting based on collection's sort type
         $products = \App\Lunar\Collections\CollectionHelper::getSortedProducts($collection);

@@ -113,74 +113,96 @@ class LunarDemoSeeder extends Seeder
             ['name' => 'Shipping']
         );
 
-        // Create attributes
+        // Create attributes following Lunar Attributes documentation
+        // See: https://docs.lunarphp.com/1.x/reference/attributes
         $attributes = [];
 
-        // Name attribute (required)
+        // Name attribute (required, system attribute)
+        // Uses TranslatedText for multi-language support
         $attributes['name'] = Attribute::firstOrCreate(
             ['handle' => 'name'],
             [
-                'attribute_type' => \Lunar\FieldTypes\Text::class,
+                'attribute_type' => 'product',
                 'attribute_group_id' => $productGroup->id,
                 'position' => 1,
                 'name' => [
                     'en' => 'Name',
                 ],
+                'type' => \Lunar\FieldTypes\TranslatedText::class,
                 'required' => true,
                 'searchable' => true,
                 'filterable' => false,
                 'system' => true,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [
+                    'richtext' => false,
+                ],
             ]
         );
 
         // Description attribute
+        // Uses Text field type (supports single-line, multi-line, rich text)
         $attributes['description'] = Attribute::firstOrCreate(
             ['handle' => 'description'],
             [
-                'attribute_type' => \Lunar\FieldTypes\Textarea::class,
+                'attribute_type' => 'product',
                 'attribute_group_id' => $productGroup->id,
                 'position' => 2,
                 'name' => [
                     'en' => 'Description',
                 ],
+                'type' => \Lunar\FieldTypes\Text::class,
                 'required' => false,
                 'searchable' => true,
                 'filterable' => false,
                 'system' => false,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [],
             ]
         );
 
-        // Color attribute
+        // Color attribute (filterable for faceted search)
+        // Product variant attributes use 'product_variant' as attribute_type
         $attributes['color'] = Attribute::firstOrCreate(
             ['handle' => 'color'],
             [
-                'attribute_type' => \Lunar\FieldTypes\Text::class,
+                'attribute_type' => 'product_variant',
                 'attribute_group_id' => $productGroup->id,
                 'position' => 3,
                 'name' => [
                     'en' => 'Color',
                 ],
+                'type' => \Lunar\FieldTypes\Text::class,
                 'required' => false,
                 'searchable' => false,
                 'filterable' => true,
                 'system' => false,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [],
             ]
         );
 
-        // Size attribute
+        // Size attribute (filterable for faceted search)
         $attributes['size'] = Attribute::firstOrCreate(
             ['handle' => 'size'],
             [
-                'attribute_type' => \Lunar\FieldTypes\Text::class,
+                'attribute_type' => 'product_variant',
                 'attribute_group_id' => $productGroup->id,
                 'position' => 4,
                 'name' => [
                     'en' => 'Size',
                 ],
+                'type' => \Lunar\FieldTypes\Text::class,
                 'required' => false,
                 'searchable' => false,
                 'filterable' => true,
                 'system' => false,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [],
             ]
         );
 
@@ -188,16 +210,89 @@ class LunarDemoSeeder extends Seeder
         $attributes['material'] = Attribute::firstOrCreate(
             ['handle' => 'material'],
             [
-                'attribute_type' => \Lunar\FieldTypes\Text::class,
+                'attribute_type' => 'product',
                 'attribute_group_id' => $productGroup->id,
                 'position' => 5,
                 'name' => [
                     'en' => 'Material',
                 ],
+                'type' => \Lunar\FieldTypes\Text::class,
                 'required' => false,
                 'searchable' => true,
                 'filterable' => true,
                 'system' => false,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [],
+            ]
+        );
+
+        // Weight attribute (Number field type)
+        $attributes['weight'] = Attribute::firstOrCreate(
+            ['handle' => 'weight'],
+            [
+                'attribute_type' => 'product',
+                'attribute_group_id' => $productGroup->id,
+                'position' => 6,
+                'name' => [
+                    'en' => 'Weight (kg)',
+                ],
+                'type' => \Lunar\FieldTypes\Number::class,
+                'required' => false,
+                'searchable' => false,
+                'filterable' => true,
+                'system' => false,
+                'section' => 'main',
+                'default_value' => null,
+                'configuration' => [],
+            ]
+        );
+
+        // Create SEO attribute group
+        $seoGroup = AttributeGroup::firstOrCreate(
+            ['handle' => 'seo'],
+            ['name' => 'SEO']
+        );
+
+        // Meta Title attribute (SEO group)
+        $attributes['meta_title'] = Attribute::firstOrCreate(
+            ['handle' => 'meta_title'],
+            [
+                'attribute_type' => 'product',
+                'attribute_group_id' => $seoGroup->id,
+                'position' => 1,
+                'name' => [
+                    'en' => 'Meta Title',
+                ],
+                'type' => \Lunar\FieldTypes\Text::class,
+                'required' => false,
+                'searchable' => false,
+                'filterable' => false,
+                'system' => false,
+                'section' => 'seo',
+                'default_value' => null,
+                'configuration' => [],
+            ]
+        );
+
+        // Meta Description attribute (SEO group)
+        $attributes['meta_description'] = Attribute::firstOrCreate(
+            ['handle' => 'meta_description'],
+            [
+                'attribute_type' => 'product',
+                'attribute_group_id' => $seoGroup->id,
+                'position' => 2,
+                'name' => [
+                    'en' => 'Meta Description',
+                ],
+                'type' => \Lunar\FieldTypes\Text::class,
+                'required' => false,
+                'searchable' => false,
+                'filterable' => false,
+                'system' => false,
+                'section' => 'seo',
+                'default_value' => null,
+                'configuration' => [],
             ]
         );
 
@@ -286,7 +381,9 @@ class LunarDemoSeeder extends Seeder
             'name' => 'Premium Wireless Headphones',
             'description' => 'High-quality wireless headphones with noise cancellation and premium sound quality.',
             'material' => 'Plastic, Metal',
-            'color' => 'Black',
+            'weight' => 0.25, // 250g
+            'meta_title' => 'Premium Wireless Headphones | Noise Cancelling Audio',
+            'meta_description' => 'Discover premium wireless headphones with active noise cancellation and superior sound quality.',
         ], $productType, $channel, $currency, [$collections['electronics']], [
             ['sku' => 'HEAD-001', 'price' => 19999, 'stock' => 50], // $199.99
         ]);
@@ -296,6 +393,9 @@ class LunarDemoSeeder extends Seeder
             'name' => 'Classic Cotton T-Shirt',
             'description' => 'Comfortable 100% cotton t-shirt available in multiple sizes and colors.',
             'material' => 'Cotton',
+            'weight' => 0.15, // 150g
+            'meta_title' => 'Classic Cotton T-Shirt | Comfortable & Versatile',
+            'meta_description' => 'Shop our classic cotton t-shirts in various sizes and colors. 100% cotton comfort.',
         ], $productType, $channel, $currency, [$collections['clothing']], [
             ['sku' => 'TSH-S-BL', 'price' => 2499, 'stock' => 100, 'attributes' => ['size' => 'Small', 'color' => 'Blue']], // $24.99
             ['sku' => 'TSH-M-BL', 'price' => 2499, 'stock' => 100, 'attributes' => ['size' => 'Medium', 'color' => 'Blue']],
@@ -308,7 +408,9 @@ class LunarDemoSeeder extends Seeder
             'name' => 'Automatic Coffee Maker',
             'description' => 'Programmable coffee maker with thermal carafe and auto shut-off.',
             'material' => 'Plastic, Glass',
-            'color' => 'Black',
+            'weight' => 2.5, // 2.5kg
+            'meta_title' => 'Automatic Coffee Maker | Programmable with Thermal Carafe',
+            'meta_description' => 'Wake up to perfect coffee with our programmable coffee maker featuring thermal carafe technology.',
         ], $productType, $channel, $currency, [$collections['home']], [
             ['sku' => 'COF-001', 'price' => 8999, 'stock' => 30], // $89.99
         ]);
@@ -318,7 +420,9 @@ class LunarDemoSeeder extends Seeder
             'name' => 'Smartphone Pro Max',
             'description' => 'Latest generation smartphone with advanced camera and processing power.',
             'material' => 'Glass, Aluminum',
-            'color' => 'Space Gray',
+            'weight' => 0.22, // 220g
+            'meta_title' => 'Smartphone Pro Max | Advanced Camera & Processing',
+            'meta_description' => 'Experience the latest technology with our Pro Max smartphone featuring advanced camera systems and powerful processing.',
         ], $productType, $channel, $currency, [$collections['electronics']], [
             ['sku' => 'PHN-128-BL', 'price' => 99900, 'stock' => 25, 'attributes' => ['color' => 'Black']], // $999.00
             ['sku' => 'PHN-256-BL', 'price' => 114900, 'stock' => 15, 'attributes' => ['color' => 'Black']], // $1149.00
@@ -329,6 +433,9 @@ class LunarDemoSeeder extends Seeder
             'name' => 'Professional Garden Tool Set',
             'description' => 'Complete set of professional-grade garden tools for all your gardening needs.',
             'material' => 'Steel, Wood',
+            'weight' => 3.2, // 3.2kg
+            'meta_title' => 'Professional Garden Tool Set | Complete Gardening Kit',
+            'meta_description' => 'Professional-grade garden tool set with everything you need for your gardening projects.',
         ], $productType, $channel, $currency, [$collections['home']], [
             ['sku' => 'GDT-001', 'price' => 4999, 'stock' => 40], // $49.99
         ]);
@@ -344,12 +451,44 @@ class LunarDemoSeeder extends Seeder
         array $collections,
         array $variants
     ): Product {
-        // Build attribute data with translations
-        $data = [];
-        foreach ($attributeData as $key => $value) {
-            $data[$key] = [
-                'en' => $value,
-            ];
+        // Build attribute data using proper FieldType objects
+        // See: https://docs.lunarphp.com/1.x/reference/attributes
+        $data = collect();
+        
+        // Handle name as TranslatedText (multi-language support)
+        if (isset($attributeData['name'])) {
+            $data['name'] = new \Lunar\FieldTypes\TranslatedText(collect([
+                'en' => new \Lunar\FieldTypes\Text($attributeData['name']),
+            ]));
+        }
+        
+        // Handle description as Text
+        if (isset($attributeData['description'])) {
+            $data['description'] = new \Lunar\FieldTypes\Text($attributeData['description']);
+        }
+        
+        // Handle material as Text
+        if (isset($attributeData['material'])) {
+            $data['material'] = new \Lunar\FieldTypes\Text($attributeData['material']);
+        }
+        
+        // Handle color as Text (if provided for product, though typically it's a variant attribute)
+        if (isset($attributeData['color'])) {
+            $data['color'] = new \Lunar\FieldTypes\Text($attributeData['color']);
+        }
+        
+        // Handle weight as Number (if provided)
+        if (isset($attributeData['weight'])) {
+            $data['weight'] = new \Lunar\FieldTypes\Number($attributeData['weight']);
+        }
+        
+        // Add SEO attributes if provided
+        if (isset($attributeData['meta_title'])) {
+            $data['meta_title'] = new \Lunar\FieldTypes\Text($attributeData['meta_title']);
+        }
+        
+        if (isset($attributeData['meta_description'])) {
+            $data['meta_description'] = new \Lunar\FieldTypes\Text($attributeData['meta_description']);
         }
 
         $product = Product::create([
@@ -368,20 +507,21 @@ class LunarDemoSeeder extends Seeder
 
         // Create variants
         foreach ($variants as $index => $variantData) {
+            // Handle variant attributes using proper FieldType objects
+            // Variant attributes typically include size, color, etc.
             $variantAttributes = $variantData['attributes'] ?? [];
-            $variantAttributeData = [];
+            $variantAttributeData = collect();
             
             foreach ($variantAttributes as $attrKey => $attrValue) {
-                $variantAttributeData[$attrKey] = [
-                    'en' => $attrValue,
-                ];
+                // Use Text field type for variant attributes like size, color
+                $variantAttributeData[$attrKey] = new \Lunar\FieldTypes\Text($attrValue);
             }
 
             $variant = ProductVariant::create([
                 'product_id' => $product->id,
                 'sku' => $variantData['sku'],
                 'tax_class_id' => null, // Can be set if tax classes exist
-                'attribute_data' => !empty($variantAttributeData) ? $variantAttributeData : null,
+                'attribute_data' => $variantAttributeData->count() > 0 ? $variantAttributeData : null,
                 'stock' => $variantData['stock'] ?? 0,
                 'backorder' => 0,
                 'purchasable' => 'always',

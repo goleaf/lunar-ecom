@@ -60,11 +60,24 @@ class ProductController extends Controller
             ->get()
             ->pluck('target');
 
+        // Get attribute values for display
+        // See: https://docs.lunarphp.com/1.x/reference/attributes
+        $description = $product->translateAttribute('description');
+        $material = $product->translateAttribute('material');
+        $weight = $product->translateAttribute('weight');
+        $metaTitle = $product->translateAttribute('meta_title');
+        $metaDescription = $product->translateAttribute('meta_description');
+
         return view('storefront.products.show', compact(
             'product',
             'crossSell',
             'upSell',
-            'alternate'
+            'alternate',
+            'description',
+            'material',
+            'weight',
+            'metaTitle',
+            'metaDescription'
         ));
     }
 }

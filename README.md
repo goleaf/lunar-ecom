@@ -61,6 +61,17 @@ Default admin user (if created during installation):
 - Cart: `/cart`
 - Checkout: `/checkout`
 
+## Attributes
+
+This project implements attributes following the [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes):
+
+- **Field Types**: Text, Number, TranslatedText (with more available)
+- **Attribute Groups**: Logical grouping (e.g., "Product" and "SEO" groups)
+- **Attribute Data**: Stored using proper FieldType objects (e.g., `new \Lunar\FieldTypes\Text('value')`)
+- **Accessing Data**: Use `$product->translateAttribute('handle')` to retrieve attribute values
+
+The `AttributeHelper` class provides convenience methods for working with attributes programmatically.
+
 ## Product Associations
 
 This project implements product associations as described in the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations):
@@ -155,14 +166,33 @@ class StripePaymentProvider extends AbstractPayment
 
 The `LunarDemoSeeder` creates:
 - Channels, Currencies, Languages
-- Attribute Groups and Attributes
+- Attribute Groups and Attributes (with proper FieldType objects)
 - Product Types
 - Collections
 - Products with variants, prices, and URLs
 - Tags
 - Product Associations (cross-sell, up-sell, alternate)
 
-See the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations) for details on managing product associations.
+### Attributes
+
+The seeder demonstrates proper attribute usage following the [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes):
+
+- **Product attributes**: Name (TranslatedText), Description (Text), Material (Text), Weight (Number), Meta Title/Description (Text)
+- **Variant attributes**: Size (Text), Color (Text) - filterable for faceted search
+- **Attribute groups**: Main product group and SEO group
+
+Example of accessing attributes:
+```php
+// Get translated name
+$product->translateAttribute('name'); // Returns current locale
+$product->translateAttribute('name', 'fr'); // Returns French translation
+
+// Get other attributes
+$product->translateAttribute('description');
+$product->translateAttribute('weight'); // Number field type
+```
+
+See the [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes) for complete details.
 
 ## Development
 

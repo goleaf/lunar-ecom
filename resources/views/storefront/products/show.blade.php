@@ -17,7 +17,26 @@
             </div>
             <div>
                 <h1 class="text-3xl font-bold mb-4">{{ $product->translateAttribute('name') }}</h1>
-                <p class="text-gray-600 mb-6">{{ $product->translateAttribute('description') }}</p>
+                
+                @if($description)
+                    <div class="prose mb-6">
+                        <p class="text-gray-600">{{ $description }}</p>
+                    </div>
+                @endif
+
+                @if($material)
+                    <div class="mb-4">
+                        <strong class="text-gray-700">Material:</strong> 
+                        <span class="text-gray-600">{{ $material }}</span>
+                    </div>
+                @endif
+
+                @if($weight)
+                    <div class="mb-4">
+                        <strong class="text-gray-700">Weight:</strong> 
+                        <span class="text-gray-600">{{ $weight }} kg</span>
+                    </div>
+                @endif
 
                 @if($product->variants->count() > 0)
                     @php

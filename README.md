@@ -227,6 +227,76 @@ $manager = new AssociationManager();
 $manager->associate($product, $targetProduct, ProductAssociationEnum::CROSS_SELL);
 ```
 
+## Search
+
+This project implements search following the [Lunar Search documentation](https://docs.lunarphp.com/1.x/reference/search):
+
+- **Laravel Scout**: Uses Laravel Scout package for search functionality
+- **Searchable Models**: Products, Collections, Customers, Orders, ProductOptions, and Brands are searchable
+- **Engine Mapping**: Different models can use different search engines (e.g., Algolia for Products, Meilisearch for Collections)
+- **Indexers**: Custom indexers for each model type handle how data is indexed
+- **Soft Deletes**: Scout soft_delete is set to `true` to prevent soft-deleted models from appearing in search results
+
+**Configuration**:
+
+1. Set your Scout driver in `.env`:
+```env
+SCOUT_DRIVER=database  # or meilisearch, algolia, etc.
+SCOUT_SOFT_DELETE=true  # Required by Lunar - prevents soft-deleted models from appearing in search
+```
+
+2. If you need to publish Scout config (optional):
+```bash
+php artisan vendor:publish --provider="Laravel\Scout\ScoutServiceProvider"
+```
+
+   Then ensure `soft_delete` is set to `true` in `config/scout.php`:
+```php
+'soft_delete' => env('SCOUT_SOFT_DELETE', true),
+```
+
+3. Configure engine mapping in `config/lunar/search.php`:
+```php
+'engine_map' => [
+    Lunar\Models\Product::class => 'algolia',
+    Lunar\Models\Collection::class => 'meilisearch',
+    Lunar\Models\Order::class => 'meilisearch',
+],
+```
+
+4. Index your models:
+```bash
+# Index all models listed in config/lunar/search.php
+php artisan lunar:search:index
+
+# For Meilisearch, set up filterable and searchable attributes
+php artisan lunar:meilisearch:setup
+```
+
+**Usage**:
+
+```php
+use App\Lunar\Search\SearchHelper;
+use Lunar\Models\Product;
+
+// Search products using Scout
+$products = Product::search('query')
+    ->where('status', 'published')
+    ->paginate(12);
+
+// Or use the helper
+$products = SearchHelper::searchProducts('query', 12, 1);
+
+// Get search results as collection
+$results = SearchHelper::searchProductsCollection('query', 10);
+```
+
+**Available Drivers**:
+- `database` - Basic database search (default, no setup required)
+- `meilisearch` - Full-text search engine (requires Meilisearch installation)
+- `algolia` - Cloud search service (requires Algolia account)
+- Custom drivers can be configured via `config/lunar/search.php`
+
 ## Extension Points
 
 This project includes scaffolding for extending Lunar's functionality:
@@ -258,7 +328,8 @@ This project includes scaffolding for extending Lunar's functionality:
 
 ### Search Extensions
 - **Location**: `app/Lunar/Search/SearchDrivers/`
-- **Example**: `CustomSearchDriver.php` - Custom search driver
+- **Example**: `CustomSearchDriver.php` - Custom search driver (note: Lunar uses Laravel Scout, so you'll typically extend Scout engines instead)
+- **Helper**: `SearchHelper` class provides convenience methods for searching products
 - **Registration**: Configure in `config/lunar/search.php`
 
 ### Order Extensions

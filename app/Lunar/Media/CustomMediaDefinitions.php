@@ -78,6 +78,9 @@ class CustomMediaDefinitions implements MediaDefinitionsInterface
     /**
      * Register conversions for the media collection.
      * 
+     * This method registers additional conversions (zoom, large, medium) 
+     * that are registered when media is added to the collection.
+     * 
      * @param MediaCollection $collection
      * @param HasMedia $model
      * @return void

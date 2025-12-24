@@ -83,6 +83,14 @@ This project implements media handling following the [Lunar Media documentation]
 - **Media Collections**: Uses 'images' collection by default
 - **Conversions**: Supports 'small', 'thumb', 'medium', 'large', 'zoom' conversions
 
+**Configuration**:
+
+Add fallback image configuration to your `.env` file:
+```env
+FALLBACK_IMAGE_URL=https://example.com/images/placeholder.jpg
+FALLBACK_IMAGE_PATH=/path/to/placeholder.jpg
+```
+
 The `MediaHelper` class provides convenience methods for working with media programmatically.
 
 Example usage:

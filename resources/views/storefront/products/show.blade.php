@@ -20,7 +20,8 @@
                         @if($firstImageUrl)
                             <img src="{{ $firstImageUrl }}" 
                                  alt="{{ $product->translateAttribute('name') }}" 
-                                 class="w-full rounded">
+                                 class="w-full rounded main-product-image"
+                                 id="main-product-image">
                         @endif
 
                         @if($images->count() > 1)
@@ -28,8 +29,8 @@
                                 @foreach($images as $image)
                                     <img src="{{ $image->getUrl('thumb') }}" 
                                          alt="{{ $product->translateAttribute('name') }} - Image {{ $loop->iteration }}" 
-                                         class="w-full h-24 object-cover rounded cursor-pointer hover:opacity-75"
-                                         onclick="document.querySelector('img.main-image').src = '{{ $image->getUrl('large') ?? $image->getUrl() }}'">
+                                         class="w-full h-24 object-cover rounded cursor-pointer hover:opacity-75 thumbnail-image"
+                                         onclick="document.getElementById('main-product-image').src = '{{ $image->getUrl('large') ?? $image->getUrl() }}'">
                                 @endforeach
                             </div>
                         @endif

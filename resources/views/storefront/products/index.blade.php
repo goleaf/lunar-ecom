@@ -34,9 +34,18 @@
                     <p class="text-gray-600 text-sm mb-3 line-clamp-2">
                         {{ $product->translateAttribute('description') }}
                     </p>
-                    @if($product->variants->first())
+                    @php
+                        // Get pricing using Lunar Pricing facade
+                        // See: https://docs.lunarphp.com/1.x/reference/products#fetching-the-price
+                        $variant = $product->variants->first();
+                        if ($variant) {
+                            $pricing = \Lunar\Facades\Pricing::for($variant)->get();
+                            $price = $pricing->matched?->price;
+                        }
+                    @endphp
+                    @if(isset($price) && $price)
                         <p class="text-xl font-bold text-gray-900">
-                            {{ $product->variants->first()->price->formatted }}
+                            {{ $price->formatted }}
                         </p>
                     @endif
                     <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="mt-3 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">

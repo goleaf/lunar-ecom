@@ -66,12 +66,20 @@
 
                 @if($product->variants->count() > 0)
                     @php
+                        // Get pricing using Lunar Pricing facade
+                        // See: https://docs.lunarphp.com/1.x/reference/products#fetching-the-price
                         $defaultVariant = $product->variants->first();
-                        $price = $defaultVariant->price;
+                        $pricing = \Lunar\Facades\Pricing::for($defaultVariant)->get();
+                        $price = $pricing->matched?->price;
                     @endphp
-                    <div class="mb-6">
-                        <p class="text-3xl font-bold text-gray-900">{{ $price->formatted }}</p>
-                    </div>
+                    @if($price)
+                        <div class="mb-6">
+                            <p class="text-3xl font-bold text-gray-900">{{ $price->formatted }}</p>
+                            @if($pricing->matched?->compare_price)
+                                <p class="text-lg text-gray-500 line-through">{{ $pricing->matched->compare_price->formatted }}</p>
+                            @endif
+                        </div>
+                    @endif
 
                     <form action="{{ route('storefront.cart.add') }}" method="POST" class="mb-6">
                         @csrf

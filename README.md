@@ -72,6 +72,66 @@ This project implements attributes following the [Lunar Attributes documentation
 
 The `AttributeHelper` class provides convenience methods for working with attributes programmatically.
 
+## Products
+
+This project implements products following the [Lunar Products documentation](https://docs.lunarphp.com/1.x/reference/products):
+
+- **Product Creation**: Products created with `attribute_data` using FieldType objects
+- **Product Types**: Products belong to product types which define available attributes
+- **Product Identifiers**: SKU, GTIN, MPN, EAN (configurable validation in `config/lunar/products.php`)
+- **Product Options**: System-level options (e.g., Color, Size) with translatable values
+  - Options are defined at system level and shared across products
+  - Option values are translatable
+  - Variants can be generated automatically from option values
+- **Variants**: Products have variants with SKU, pricing, stock, and option values
+  - Products always have at least one variant
+  - Variants can have different SKU, GTIN, MPN, EAN identifiers
+  - Variants support quantity-based price breaks
+- **Customer Groups**: Products can be scheduled for customer groups
+- **Pricing**: Uses `Pricing` facade for fetching prices with quantity breaks and customer groups
+- **Price Breaks**: Quantity-based pricing supported
+- **Customer Group Pricing**: Different prices for different customer groups
+
+The `ProductHelper` and `ProductOptionHelper` classes provide convenience methods for working with products.
+
+Example usage:
+```php
+use App\Lunar\Products\ProductHelper;
+use App\Lunar\Products\ProductOptionHelper;
+use Lunar\Facades\Pricing;
+
+// Get price for a variant
+$price = ProductHelper::getPrice($variant, 5); // quantity 5
+
+// Get full pricing information
+$pricing = ProductHelper::getPricing($variant, 1, $customerGroup);
+// $pricing->matched, $pricing->base, $pricing->priceBreaks, $pricing->customerGroupPrices
+
+// Schedule product for customer groups
+ProductHelper::scheduleCustomerGroups($product, $customerGroups, now()->addDays(14));
+
+// Get products for customer groups
+$products = ProductHelper::forCustomerGroups($customerGroup)->paginate(50);
+
+// Create product option with values
+$colorOption = ProductOptionHelper::createOption('Colour', 'Colour', ['Red', 'Blue', 'Green']);
+
+// Generate variants using option values
+ProductOptionHelper::generateVariants($product, $optionValueIds);
+
+// Or use Pricing facade directly
+use Lunar\Facades\Pricing;
+
+$pricing = Pricing::qty(5)->for($variant)->get();
+// $pricing->matched, $pricing->base, $pricing->priceBreaks, $pricing->customerGroupPrices
+
+// Get price for specific customer group
+$pricing = Pricing::customerGroup($customerGroup)->for($variant)->get();
+
+// Get price with currency
+$pricing = Pricing::currency($currency)->for($variant)->get();
+```
+
 ## Media
 
 This project implements media handling following the [Lunar Media documentation](https://docs.lunarphp.com/1.x/reference/media):

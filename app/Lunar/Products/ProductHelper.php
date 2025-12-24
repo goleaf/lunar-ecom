@@ -3,6 +3,7 @@
 namespace App\Lunar\Products;
 
 use Illuminate\Support\Collection;
+use Lunar\Base\DataTransferObjects\PricingResponse;
 use Lunar\Facades\Pricing;
 use Lunar\Models\CustomerGroup;
 use Lunar\Models\Product;
@@ -26,16 +27,19 @@ class ProductHelper
      * ProductHelper::getPrice($variant, 5); // quantity
      * ProductHelper::getPrice($variant, 1, $customerGroup); // with customer group
      * 
+     * Returns the Price model instance (not the price property).
+     * Access the formatted price via: $price->price->formatted
+     * 
      * @param ProductVariant $variant
      * @param int $quantity
      * @param CustomerGroup|Collection|array|null $customerGroups
-     * @return \Lunar\DataTypes\Price|null
+     * @return \Lunar\Models\Price|null
      */
     public static function getPrice(
         ProductVariant $variant,
         int $quantity = 1,
         CustomerGroup|Collection|array|null $customerGroups = null
-    ): ?\Lunar\DataTypes\Price {
+    ): ?\Lunar\Models\Price {
         $pricing = Pricing::qty($quantity)->for($variant);
         
         if ($customerGroups) {
@@ -46,7 +50,8 @@ class ProductHelper
             }
         }
         
-        return $pricing->get()->matched?->price;
+        $pricingResponse = $pricing->get();
+        return $pricingResponse->matched ?? null;
     }
 
     /**
@@ -57,13 +62,13 @@ class ProductHelper
      * @param ProductVariant $variant
      * @param int $quantity
      * @param CustomerGroup|Collection|array|null $customerGroups
-     * @return \Lunar\DataTypes\PricingResponse
+     * @return PricingResponse
      */
     public static function getPricing(
         ProductVariant $variant,
         int $quantity = 1,
         CustomerGroup|Collection|array|null $customerGroups = null
-    ): \Lunar\DataTypes\PricingResponse {
+    ): PricingResponse {
         $pricing = Pricing::qty($quantity)->for($variant);
         
         if ($customerGroups) {

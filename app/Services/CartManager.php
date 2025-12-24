@@ -1,0 +1,280 @@
+<?php
+
+namespace App\Services;
+
+use App\Contracts\CartManagerInterface;
+use Lunar\Models\Cart;
+use Lunar\Models\CartLine;
+use Lunar\Base\Purchasable;
+use Lunar\Facades\CartSession;
+use Lunar\Models\Discount;
+
+class CartManager implements CartManagerInterface
+{
+    public function __construct(
+        protected CartSessionService $cartSession
+    ) {}
+
+    /**
+     * Add an item to the cart
+     */
+    public function addItem(Purchasable $item, int $quantity): CartLine
+    {
+        // Validate quantity
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('Quantity must be greater than 0');
+        }
+
+        // Validate item is purchasable
+        if (!$item->purchasable) {
+            throw new \InvalidArgumentException('Item is not purchasable');
+        }
+
+        $cart = $this->cartSession->getOrCreate();
+
+        // Check if item already exists in cart
+        $existingLine = $cart->lines()
+            ->where('purchasable_type', get_class($item))
+            ->where('purchasable_id', $item->id)
+            ->first();
+
+        if ($existingLine) {
+            $newQuantity = $existingLine->quantity + $quantity;
+            
+            // Validate stock availability for updated quantity
+            $this->validateStockAvailability($item, $newQuantity);
+            
+            // Update quantity of existing line
+            $existingLine->update([
+                'quantity' => $newQuantity
+            ]);
+            
+            // Recalculate cart totals
+            $this->calculateTotals();
+            
+            return $existingLine;
+        }
+
+        // Validate stock availability for new item
+        $this->validateStockAvailability($item, $quantity);
+
+        // Create new cart line
+        $cartLine = $cart->lines()->create([
+            'purchasable_type' => get_class($item),
+            'purchasable_id' => $item->id,
+            'quantity' => $quantity,
+        ]);
+
+        // Recalculate cart totals
+        $this->calculateTotals();
+
+        return $cartLine;
+    }
+
+    /**
+     * Remove an item from the cart
+     */
+    public function removeItem(int $lineId): void
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        $cartLine = $cart->lines()->find($lineId);
+        
+        if (!$cartLine) {
+            throw new \InvalidArgumentException('Cart line not found');
+        }
+
+        $cartLine->delete();
+        
+        // Recalculate cart totals
+        $this->calculateTotals();
+    }
+
+    /**
+     * Calculate cart totals
+     */
+    public function calculateTotals(): Cart
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        // Use Lunar's cart calculation pipeline
+        $cart->calculate();
+        
+        return $cart;
+    }
+
+    /**
+     * Apply discount to cart
+     */
+    public function applyDiscount(string $couponCode): void
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        // Validate coupon code format
+        if (empty(trim($couponCode))) {
+            throw new \InvalidArgumentException('Coupon code cannot be empty');
+        }
+
+        // Find the discount by coupon code
+        $discount = Discount::where('coupon', $couponCode)
+            ->active()
+            ->first();
+
+        if (!$discount) {
+            throw new \InvalidArgumentException('Invalid or expired coupon code');
+        }
+
+        // Check if discount is already applied
+        if ($cart->coupon_code === $couponCode) {
+            throw new \InvalidArgumentException('Coupon code is already applied');
+        }
+
+        // Apply discount to cart
+        $cart->update(['coupon_code' => $couponCode]);
+        
+        // Recalculate totals with discount applied
+        $this->calculateTotals();
+    }
+
+    /**
+     * Update cart line quantity
+     */
+    public function updateQuantity(int $lineId, int $quantity): void
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        $cartLine = $cart->lines()->find($lineId);
+        
+        if (!$cartLine) {
+            throw new \InvalidArgumentException('Cart line not found');
+        }
+
+        if ($quantity <= 0) {
+            $this->removeItem($lineId);
+        } else {
+            // Validate stock availability for updated quantity
+            $this->validateStockAvailability($cartLine->purchasable, $quantity);
+            
+            $cartLine->update(['quantity' => $quantity]);
+            $this->calculateTotals();
+        }
+    }
+
+    /**
+     * Clear all items from cart
+     */
+    public function clear(): void
+    {
+        $cart = $this->cartSession->current();
+        
+        if ($cart) {
+            // Delete all cart lines
+            foreach ($cart->lines as $line) {
+                $line->delete();
+            }
+            
+            $cart->update(['coupon_code' => null]);
+            $this->calculateTotals();
+        }
+    }
+
+    /**
+     * Get cart item count
+     */
+    public function getItemCount(): int
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            return 0;
+        }
+
+        // Refresh the cart to get latest data
+        $cart->refresh();
+        $cart->load('lines');
+
+        return $cart->lines->sum('quantity');
+    }
+
+    /**
+     * Validate stock availability for a purchasable item
+     */
+    protected function validateStockAvailability(Purchasable $item, int $quantity): void
+    {
+        // Check if item has stock tracking
+        if (property_exists($item, 'stock') && $item->stock !== null) {
+            if ($item->stock < $quantity) {
+                throw new \InvalidArgumentException(
+                    "Insufficient stock. Only {$item->stock} items available."
+                );
+            }
+        }
+
+        // Check minimum quantity requirements
+        if (property_exists($item, 'min_quantity') && $item->min_quantity !== null) {
+            if ($quantity < $item->min_quantity) {
+                throw new \InvalidArgumentException(
+                    "Minimum quantity is {$item->min_quantity} for this item."
+                );
+            }
+        }
+
+        // Check if item is shippable when required
+        if (property_exists($item, 'shippable') && $item->shippable === false) {
+            // This could be extended to check shipping requirements
+        }
+    }
+
+    /**
+     * Remove discount from cart
+     */
+    public function removeDiscount(): void
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        $cart->update(['coupon_code' => null]);
+        $this->calculateTotals();
+    }
+
+    /**
+     * Check if cart has items
+     */
+    public function hasItems(): bool
+    {
+        return $this->getItemCount() > 0;
+    }
+
+    /**
+     * Get cart total value
+     */
+    public function getTotal(): ?int
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            return null;
+        }
+
+        return $cart->total?->value;
+    }
+}

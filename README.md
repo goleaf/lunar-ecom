@@ -8919,154 +8919,204 @@ $models = CustomModel::channel($channel)->get();
 
 ## Currencies
 
-This project implements currencies following the [Lunar Currencies documentation](https://docs.lunarphp.com/1.x/reference/currencies):
-
-- **Currency Management**: Create and manage currencies with ISO 4217 codes
-- **Exchange Rates**: Set exchange rates relative to the default currency
-- **Decimal Places**: Configure decimal places for each currency
-- **Default Currency**: Set and get the default currency
-- **Currency Conversion**: Convert amounts between currencies
+This project implements currencies following the [Lunar Currencies documentation](https://docs.lunarphp.com/1.x/reference/currencies). Currencies allow you to charge different amounts relative to the currency you're targeting.
 
 **Overview**:
 
 Currencies allow you to charge different amounts relative to the currency you're targeting. Exchange rates are relative to the default currency, which should have an exchange_rate of 1.0000.
 
-**Configuration**:
-
-Currency configuration is handled through the `lunar_currencies` table and `Lunar\Models\Currency` model. The default currency is set with the `default` flag set to `true`.
-
-**Usage**:
+**Creating a Currency**:
 
 ```php
-use App\Lunar\Channels\ChannelHelper;
-use Lunar\Models\Channel;
-use Lunar\Models\Product;
+use Lunar\Models\Currency;
 
-// Get default channel
-$defaultChannel = ChannelHelper::getDefault();
+Currency::create([
+    'code' => 'GBP',
+    'name' => 'British Pound',
+    'exchange_rate' => 1.0000,
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 1,
+]);
+```
 
-// Get all channels
-$channels = ChannelHelper::getAll();
+**Currency Fields**:
 
-// Find channel by ID or handle
-$channel = ChannelHelper::find(1);
-$channel = ChannelHelper::findByHandle('webstore');
+| Field           | Description                                                                   |
+| --------------- | ----------------------------------------------------------------------------- |
+| `code`          | This should be the ISO 4217 currency code (e.g., 'GBP', 'USD', 'EUR')         |
+| `name`          | A given name for the currency (e.g., 'British Pound', 'US Dollar')            |
+| `exchange_rate` | This should be the exchange rate relative to the default currency (see below) |
+| `decimal_places`| Specify the decimal places, e.g. 2                                             |
+| `enabled`       | Whether the currency is enabled                                               |
+| `default`       | Whether the currency is the default                                           |
 
-// Schedule a model for a channel (model must use HasChannels trait)
-$product = Product::find(1);
-$channel = Channel::find(1);
+**Exchange Rates**:
 
-// Schedule for immediate availability
-ChannelHelper::scheduleChannelImmediate($product, $channel);
+Exchange rates are relative to the default currency. For example, assuming we have the following:
 
-// Schedule for future availability
-ChannelHelper::scheduleChannel(
-    $product,
-    $channel,
-    startsAt: now()->addDays(14),
-    endsAt: now()->addDays(24)
+```php
+Currency::create([
+    'code' => 'GBP',
+    'name' => 'British Pound',
+    'exchange_rate' => 1.0000,
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 1,
+]);
+```
+
+We set the model to be the default and we set the exchange rate to be `1` as we're defining this as our base (default) currency. Now, say we wanted to add EUR (Euros). Currently the exchange rate from GBP to EUR is `1.17`. But we want this to be relative to our default record. So 1 / 1.17 = 0.8547. It's entirely up to you what you want to set the exchange rates as, it is also worth mentioning that this is independent of product pricing in the sense that you can specify the price per currency. The exchange rate serves as a helper when working with prices so you have something to go by.
+
+**Usage Examples**:
+
+```php
+use App\Lunar\Currencies\CurrencyHelper;
+use Lunar\Models\Currency;
+
+// Get default currency
+$defaultCurrency = CurrencyHelper::getDefault();
+$defaultCurrency = Currency::getDefault(); // Direct method
+
+// Get all enabled currencies
+$enabledCurrencies = CurrencyHelper::getEnabled();
+$enabledCurrencies = Currency::where('enabled', true)->get(); // Direct method
+
+// Get all currencies
+$currencies = CurrencyHelper::getAll();
+$currencies = Currency::all(); // Direct method
+
+// Find currency by ID or code
+$currency = CurrencyHelper::find(1);
+$currency = CurrencyHelper::findByCode('GBP');
+$currency = CurrencyHelper::findByCode('USD');
+$currency = Currency::where('code', 'GBP')->first(); // Direct method
+
+// Create a new currency (default currency)
+$currency = CurrencyHelper::create(
+    code: 'GBP',
+    name: 'British Pound',
+    exchangeRate: 1.0000, // Default currency should be 1.0000
+    decimalPlaces: 2,
+    enabled: true,
+    default: true
 );
+$currency = Currency::create([
+    'code' => 'GBP',
+    'name' => 'British Pound',
+    'exchange_rate' => 1.0000,
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 1,
+]); // Direct method
 
-// Schedule for multiple channels
-ChannelHelper::scheduleChannel($product, Channel::all());
-
-// Query models by channel
-$products = ChannelHelper::queryByChannel(Product::class, $channel)->get();
-
-// Query models by multiple channels
-$products = ChannelHelper::queryByChannels(Product::class, [$channel1, $channel2])->get();
-
-// Query models for channel available on a specific date
-$products = ChannelHelper::queryByChannel(
-    Product::class,
-    $channel,
-    startDate: now()->addDay(),
-    endDate: now()->addDay()
-)->get();
-
-// Query models for channel within date range
-$products = ChannelHelper::queryByChannel(
-    Product::class,
-    $channel,
-    startDate: now()->addDay(),
-    endDate: now()->addDays(2)
-)->get();
-
-// Check if model is available for channel
-if (ChannelHelper::isAvailableForChannel($product, $channel)) {
-    // Product is available on this channel
-}
-
-// Get channels for a model
-$productChannels = ChannelHelper::getChannelsForModel($product);
-
-// Create a new channel
-$newChannel = ChannelHelper::create(
-    name: 'Mobile App',
-    handle: 'mobile-app',
+// Create a non-default currency with exchange rate
+// If GBP (default) to EUR rate is 1.17, then EUR exchange_rate = 1 / 1.17 = 0.8547
+$eur = CurrencyHelper::create(
+    code: 'EUR',
+    name: 'Euro',
+    exchangeRate: 0.8547, // Relative to default (GBP)
+    decimalPlaces: 2,
+    enabled: true,
     default: false
 );
-```
+$eur = Currency::create([
+    'code' => 'EUR',
+    'name' => 'Euro',
+    'exchange_rate' => 0.8547, // 1 / 1.17 = 0.8547
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 0,
+]); // Direct method
 
-**Enabling Channels on Your Models**:
+// Update exchange rate
+CurrencyHelper::updateExchangeRate('EUR', 0.8500);
+$eur->update(['exchange_rate' => 0.8500]); // Direct method
 
-To enable channel functionality on your own models, add the `HasChannels` trait:
+// Convert amounts between currencies
+$amount = CurrencyHelper::convert(100, 'GBP', 'EUR'); // Convert 100 GBP to EUR
+$amount = CurrencyHelper::convert(100, $gbpCurrency, $eurCurrency); // Using currency instances
 
-```php
-<?php
+// Enable/disable currency
+CurrencyHelper::enable('EUR');
+CurrencyHelper::disable('EUR');
+$eur->update(['enabled' => true]); // Direct method
 
-namespace App\Models;
+// Set default currency (automatically unsets existing default)
+CurrencyHelper::setDefault('USD');
+Currency::where('default', true)->update(['default' => false]);
+$usd->update(['default' => true, 'exchange_rate' => 1.0000]); // Direct method
 
-use Illuminate\Database\Eloquent\Model;
-use Lunar\Traits\HasChannels;
-
-class YourModel extends Model
-{
-    use HasChannels;
+// Check currency status
+if (CurrencyHelper::isEnabled($currency)) {
+    // Currency is enabled
+}
+if (CurrencyHelper::isDefault($currency)) {
+    // Currency is the default
 }
 ```
 
-Once the trait is added, you can use the `scheduleChannel` method and `channel` scope:
+**Exchange Rate Calculation Example**:
 
 ```php
-// Schedule channel on the model
-$model->scheduleChannel($channel);
-$model->scheduleChannel($channel, startsAt: now()->addDays(7));
-$model->scheduleChannel($channel, startsAt: now()->addDays(7), endsAt: now()->addDays(30));
+// Example: Setting up currencies with exchange rates
 
-// Query by channel using scope
-$models = YourModel::channel($channel)->get();
-$models = YourModel::channel([$channel1, $channel2])->get();
-$models = YourModel::channel($channel, now()->addDay())->get();
-$models = YourModel::channel($channel, now()->addDay(), now()->addDays(2))->get();
+// 1. Create default currency (GBP)
+$gbp = Currency::create([
+    'code' => 'GBP',
+    'name' => 'British Pound',
+    'exchange_rate' => 1.0000, // Default currency always has exchange_rate = 1.0
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 1,
+]);
+
+// 2. Current market rate: 1 GBP = 1.17 EUR
+// To convert to relative rate: 1 / 1.17 = 0.8547
+$eur = Currency::create([
+    'code' => 'EUR',
+    'name' => 'Euro',
+    'exchange_rate' => 0.8547, // Relative to GBP (default)
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 0,
+]);
+
+// 3. Current market rate: 1 GBP = 1.25 USD
+// To convert to relative rate: 1 / 1.25 = 0.8000
+$usd = Currency::create([
+    'code' => 'USD',
+    'name' => 'US Dollar',
+    'exchange_rate' => 0.8000, // Relative to GBP (default)
+    'decimal_places' => 2,
+    'enabled' => 1,
+    'default' => 0,
+]);
 ```
 
-**Channel Scope Parameters**:
+**Important Notes**:
 
-The `channel` scope accepts different parameter combinations:
+- **Exchange rates are relative to the default currency**: The default currency should always have `exchange_rate = 1.0000`
+- **Independent of product pricing**: Exchange rates are helpers for price calculations, but you can specify prices per currency independently
+- **ISO 4217 codes**: Use standard ISO 4217 currency codes (e.g., GBP, USD, EUR, JPY)
+- **Decimal places**: Most currencies use 2 decimal places, but some (like JPY) use 0
+- **Default currency**: Only one currency should be marked as default
+- **Enabled status**: Only enabled currencies are typically shown in storefronts
 
-- `channel($channel)` - Single channel, available now
-- `channel([$channel1, $channel2])` - Multiple channels, available now
-- `channel($channel, $startDate)` - Single channel, available from start date
-- `channel($channel, $startDate, $endDate)` - Single channel, available within date range
+**Best Practices**:
 
-**Channel Model**:
+- **Default Currency**: Always set one currency as default with `exchange_rate = 1.0000`
+- **Exchange Rate Updates**: Update exchange rates regularly to reflect current market rates
+- **ISO 4217 Codes**: Always use standard ISO 4217 currency codes
+- **Decimal Places**: Set appropriate decimal places for each currency (2 for most, 0 for JPY)
+- **Enabled Status**: Only enable currencies that are actively used
+- **Price Per Currency**: Consider setting prices per currency rather than relying solely on exchange rates
+- **Storefront Integration**: Use currencies with storefront session for multi-currency stores
+- **Testing**: Test currency conversions with different exchange rates
+- **Performance**: Cache currency data for frequently accessed currencies
+- **Migration**: Ensure currencies are created before creating prices
 
-The `Channel` model has the following properties:
-
-- `id` - Channel ID
-- `name` - Channel name (e.g., "Webstore")
-- `handle` - Channel handle/slug (e.g., "webstore")
-- `default` - Whether this is the default channel
-- `url` - Optional URL for the channel
-
-**Default Channel**:
-
-Lunar creates a default channel named "webstore" during installation. You can get it using:
-
-```php
-$defaultChannel = Channel::getDefault();
-// or
+**Documentation**: See [Lunar Currencies documentation](https://docs.lunarphp.com/1.x/reference/currencies)
 $defaultChannel = ChannelHelper::getDefault();
 ```
 

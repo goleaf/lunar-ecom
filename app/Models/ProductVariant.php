@@ -981,17 +981,20 @@ class ProductVariant extends LunarProductVariant
 
     /**
      * Media relationship via pivot table (legacy support).
+     * Compatible with Lunar's base method signature.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function images()
+    public function images(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
+        $prefix = config('lunar.database.table_prefix');
+        
         return $this->belongsToMany(
             \Spatie\MediaLibrary\MediaCollections\Models\Media::class,
-            config('lunar.database.table_prefix') . 'media_product_variant',
+            "{$prefix}media_product_variant",
             'product_variant_id',
             'media_id'
-        )->withPivot('primary', 'position', 'media_type', 'channel_id', 'locale', 'alt_text', 'caption', 'accessibility_metadata', 'media_metadata')
+        )->withPivot(['primary', 'position', 'media_type', 'channel_id', 'locale', 'alt_text', 'caption', 'accessibility_metadata', 'media_metadata'])
           ->withTimestamps()
           ->orderBy('position');
     }

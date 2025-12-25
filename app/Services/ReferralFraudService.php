@@ -95,9 +95,11 @@ class ReferralFraudService
             return false;
         }
 
-        // Check order not refunded
-        if ($order && $this->isOrderRefunded($order)) {
-            return false;
+        // Check order not refunded (if policy requires it)
+        if ($order && $policy->require_order_not_refunded_days) {
+            if ($this->isOrderRefundedWithinDays($order, $policy->require_order_not_refunded_days)) {
+                return false;
+            }
         }
 
         // Check one referee can only reward one referrer

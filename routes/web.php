@@ -77,6 +77,14 @@ Route::prefix('admin/stock')->name('admin.stock.')->middleware(['auth', 'admin']
     Route::post('/alerts/{alert}/resolve', [\App\Http\Controllers\Admin\StockManagementController::class, 'resolveAlert'])->name('resolve-alert');
 });
 
+// Product Bundles
+Route::prefix('bundles')->name('storefront.bundles.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\BundleController::class, 'index'])->name('index');
+    Route::get('/{bundle:slug}', [\App\Http\Controllers\Storefront\BundleController::class, 'show'])->name('show');
+    Route::post('/{bundle}/add-to-cart', [\App\Http\Controllers\Storefront\BundleController::class, 'addToCart'])->name('add-to-cart');
+    Route::get('/{bundle}/calculate-price', [\App\Http\Controllers\Storefront\BundleController::class, 'calculatePrice'])->name('calculate-price');
+});
+
 // Admin Order Status Management
 Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->group(function () {
     Route::get('/statuses', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getAvailableStatuses'])->name('statuses');
@@ -104,6 +112,16 @@ Route::prefix('stock-reservations')->name('storefront.stock-reservations.')->gro
     Route::post('/release', [\App\Http\Controllers\Storefront\StockReservationController::class, 'release'])->name('release');
 });
 
+// Product Bundles
+Route::prefix('bundles/{bundle}')->name('storefront.bundles.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\BundleController::class, 'show'])->name('show');
+    Route::post('/calculate-price', [\App\Http\Controllers\Storefront\BundleController::class, 'calculatePrice'])->name('calculate-price');
+    Route::post('/check-availability', [\App\Http\Controllers\Storefront\BundleController::class, 'checkAvailability'])->name('check-availability');
+    Route::post('/validate-selection', [\App\Http\Controllers\Storefront\BundleController::class, 'validateSelection'])->name('validate-selection');
+    Route::post('/add-to-cart', [\App\Http\Controllers\Storefront\BundleController::class, 'addToCart'])->name('add-to-cart');
+    Route::get('/available-products', [\App\Http\Controllers\Storefront\BundleController::class, 'getAvailableProducts'])->name('available-products');
+});
+
 // Admin Inventory Management
 Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
@@ -126,6 +144,18 @@ Route::prefix('admin/inventory/reports')->name('admin.inventory.reports.')->midd
 Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
     Route::get('/export', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'export'])->name('export');
     Route::post('/import', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'import'])->name('import');
+});
+
+// Admin Bundle Management
+Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('store');
+    Route::get('/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'show'])->name('show');
+    Route::put('/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'update'])->name('update');
+    Route::get('/{bundle}/analytics', [\App\Http\Controllers\Admin\BundleController::class, 'analytics'])->name('analytics');
+    Route::post('/{bundle}/items', [\App\Http\Controllers\Admin\BundleController::class, 'addItem'])->name('items.store');
+    Route::put('/{bundle}/items/{item}', [\App\Http\Controllers\Admin\BundleController::class, 'updateItem'])->name('items.update');
+    Route::delete('/{bundle}/items/{item}', [\App\Http\Controllers\Admin\BundleController::class, 'removeItem'])->name('items.destroy');
 });
 
 // Search Analytics (admin/analytics endpoints)

@@ -67,6 +67,7 @@ class Product extends LunarProduct
         'rating_3_count',
         'rating_2_count',
         'rating_1_count',
+        'is_bundle',
         // Product Core Model fields
         'visibility',
         'short_description',
@@ -105,6 +106,7 @@ class Product extends LunarProduct
         'rating_3_count' => 'integer',
         'rating_2_count' => 'integer',
         'rating_1_count' => 'integer',
+        'is_bundle' => 'boolean',
         // Product Core Model casts
         'is_locked' => 'boolean',
         'version' => 'integer',
@@ -657,6 +659,36 @@ class Product extends LunarProduct
     public function recommendationRules()
     {
         return $this->hasMany(\App\Models\RecommendationRule::class, 'source_product_id');
+    }
+
+    /**
+     * Bundle relationship (if this product is a bundle).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function bundle()
+    {
+        return $this->hasOne(\App\Models\Bundle::class, 'product_id');
+    }
+
+    /**
+     * Bundle items where this product is included.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function bundleItems()
+    {
+        return $this->hasMany(\App\Models\BundleItem::class, 'product_id');
+    }
+
+    /**
+     * Check if product is a bundle.
+     *
+     * @return bool
+     */
+    public function isBundle(): bool
+    {
+        return $this->is_bundle ?? false;
     }
 
     /**

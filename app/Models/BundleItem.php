@@ -9,7 +9,7 @@ use Lunar\Models\Product;
 use Lunar\Models\ProductVariant;
 
 /**
- * BundleItem model for bundle contents.
+ * BundleItem model for bundle components.
  */
 class BundleItem extends Model
 {
@@ -35,12 +35,14 @@ class BundleItem extends Model
         'product_id',
         'product_variant_id',
         'quantity',
-        'is_optional',
-        'custom_price_override',
+        'min_quantity',
+        'max_quantity',
+        'is_required',
+        'is_default',
+        'price_override',
+        'discount_amount',
         'display_order',
-        'group_name',
-        'group_min_selection',
-        'group_max_selection',
+        'notes',
     ];
 
     /**
@@ -50,11 +52,13 @@ class BundleItem extends Model
      */
     protected $casts = [
         'quantity' => 'integer',
-        'is_optional' => 'boolean',
-        'custom_price_override' => 'decimal:2',
+        'min_quantity' => 'integer',
+        'max_quantity' => 'integer',
+        'is_required' => 'boolean',
+        'is_default' => 'boolean',
+        'price_override' => 'integer',
+        'discount_amount' => 'integer',
         'display_order' => 'integer',
-        'group_min_selection' => 'integer',
-        'group_max_selection' => 'integer',
     ];
 
     /**
@@ -88,41 +92,69 @@ class BundleItem extends Model
     }
 
     /**
-     * Get the price for this item in the bundle.
+     * Get the variant to use (specific variant or first variant of product).
      *
-     * @return int  Price in cents
+     * @return ProductVariant|null
      */
-    public function getPrice(): int
+    public function getVariant(): ?ProductVariant
     {
-        if ($this->custom_price_override) {
-            return (int) ($this->custom_price_override * 100);
+        if ($this->product_variant_id) {
+            return $this->productVariant;
         }
 
-        $variant = $this->productVariant;
-        if (!$variant) {
-            // Get default variant
-            $variant = $this->product->variants->first();
-        }
+        return $this->product->variants->first();
+    }
+
+    /**
+     * Get item price.
+     *
+     * @param  \Lunar\Models\Currency|null  $currency
+     * @param  int|null  $customerGroupId
+     * @return int
+     */
+    public function getPrice(?\Lunar\Models\Currency $currency = null, ?int $customerGroupId = null): int
+    {
+        $currency = $currency ?? \Lunar\Facades\Currency::getDefault();
+        $variant = $this->getVariant();
 
         if (!$variant) {
             return 0;
         }
 
-        // Get the base price from variant
-        $price = $variant->base_price ?? $variant->price ?? 0;
-        
-        return (int) $price;
+        // Use price override if set
+        if ($this->price_override) {
+            $price = $this->price_override;
+        } else {
+            $pricing = \Lunar\Facades\Pricing::for($variant)
+                ->currency($currency)
+                ->customerGroup($customerGroupId)
+                ->get();
+
+            $price = $pricing->matched?->price->value ?? 0;
+        }
+
+        // Apply discount
+        if ($this->discount_amount) {
+            $price -= $this->discount_amount;
+        }
+
+        return max(0, $price);
     }
 
     /**
-     * Scope to get items by group.
+     * Check if item is available.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  string  $groupName
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  int  $bundleQuantity
+     * @return bool
      */
-    public function scopeInGroup($query, string $groupName)
+    public function isAvailable(int $bundleQuantity = 1): bool
     {
-        return $query->where('group_name', $groupName);
+        $variant = $this->getVariant();
+        if (!$variant) {
+            return false;
+        }
+
+        $requiredQuantity = $this->quantity * $bundleQuantity;
+        return $variant->hasSufficientStock($requiredQuantity);
     }
 }

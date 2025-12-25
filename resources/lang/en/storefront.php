@@ -91,5 +91,24 @@ return [
         'you_may_also_like' => 'You May Also Like',
         'based_on_your_history' => 'Based on Your Browsing History',
     ],
+    
+    // Bundles
+    'bundles' => [
+        'title' => 'Product Bundles',
+        'view_bundle' => 'View Bundle',
+        'no_bundles' => 'No bundles available.',
+        'items' => 'items',
+        'individual_total' => 'Individual Total',
+        'bundle_price' => 'Bundle Price',
+        'you_save' => 'You Save',
+        'in_stock' => ':quantity in stock',
+        'out_of_stock' => 'Out of stock',
+        'bundle_contents' => 'Bundle Contents',
+        'quantity' => 'Quantity',
+        'required' => 'Required',
+        'optional' => 'Optional',
+        'customize_items' => 'Customize Your Bundle',
+        'add_to_cart' => 'Add Bundle to Cart',
+    ],
 ];
 

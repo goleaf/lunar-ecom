@@ -300,19 +300,30 @@ class CompleteSeeder extends Seeder
         $rootCategories = collect();
         for ($i = 0; $i < 5; $i++) {
             $categoryData = Category::factory()->make()->toArray();
-            $category = new Category($categoryData);
-            $category->save();
-            $category->makeRoot()->save();
+            $category = Category::create($categoryData);
+            // Ensure it's a root node
+            if ($category->parent_id === null && (!$category->getLft() || !$category->getRgt())) {
+                $category->makeRoot()->save();
+            }
             $category->refresh();
+            // Verify it has lft/rgt values before proceeding
+            if (!$category->getLft() || !$category->getRgt()) {
+                // Rebuild tree if needed
+                Category::fixTree();
+                $category->refresh();
+            }
             $rootCategories->push($category);
         }
         foreach ($rootCategories as $rootCategory) {
             $rootCategory->refresh(); // Ensure lft/rgt values are loaded
-            $childCount = fake()->numberBetween(2, 4);
-            for ($j = 0; $j < $childCount; $j++) {
-                $childData = Category::factory()->make()->toArray();
-                $child = new Category($childData);
-                $rootCategory->appendNode($child);
+            if ($rootCategory->getLft() && $rootCategory->getRgt()) {
+                $childCount = fake()->numberBetween(2, 4);
+                for ($j = 0; $j < $childCount; $j++) {
+                    $childData = Category::factory()->make()->toArray();
+                    unset($childData['parent_id']); // Ensure no parent_id
+                    $child = Category::create($childData);
+                    $rootCategory->appendNode($child);
+                }
             }
         }
 
@@ -360,10 +371,19 @@ class CompleteSeeder extends Seeder
         // Step 17: Create product purchase associations
         $this->command->info('🛒 Creating product purchase associations...');
         foreach ($products->random(20) as $product) {
-            \App\Models\ProductPurchaseAssociation::factory()
-                ->count(fake()->numberBetween(3, 8))
-                ->withProducts($product, $products->random())
-                ->create();
+            $associatedProducts = $products->where('id', '!=', $product->id)->random(fake()->numberBetween(3, 8));
+            foreach ($associatedProducts as $associatedProduct) {
+                \App\Models\ProductPurchaseAssociation::firstOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'associated_product_id' => $associatedProduct->id,
+                    ],
+                    \App\Models\ProductPurchaseAssociation::factory()->make([
+                        'product_id' => $product->id,
+                        'associated_product_id' => $associatedProduct->id,
+                    ])->toArray()
+                );
+            }
         }
 
         // Step 18: Create recommendation rules and clicks

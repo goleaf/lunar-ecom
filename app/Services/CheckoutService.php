@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CheckoutLock;
+use App\Services\CheckoutCache;
 use App\Services\CheckoutLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,8 @@ class CheckoutService
     public function __construct(
         protected CheckoutStateMachine $stateMachine,
         protected StockService $stockService,
-        protected CheckoutLogger $logger
+        protected CheckoutLogger $logger,
+        protected CheckoutCache $cache
     ) {}
 
     /**

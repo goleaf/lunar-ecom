@@ -3,20 +3,27 @@
 namespace App\Services\CartPricing\Pipeline;
 
 use App\Services\CartPricing\DTOs\CartDiscount;
+use App\Services\DiscountStacking\DiscountAuditService;
+use App\Services\DiscountStacking\DiscountStackingService;
 use Illuminate\Support\Collection;
 use Lunar\Models\Cart;
 use Lunar\Models\Discount;
 
 /**
- * Step 5: Apply cart-level discounts.
+ * Step 5: Apply cart-level discounts with stacking rules.
  * 
- * Applies cart-wide discounts (coupon codes, etc.) and distributes
- * them proportionally across line items.
+ * Applies cart-wide discounts (coupon codes, etc.) using discount stacking
+ * rules and distributes them proportionally across line items.
  */
 class ApplyCartDiscountsStep
 {
+    public function __construct(
+        protected DiscountStackingService $stackingService,
+        protected DiscountAuditService $auditService,
+    ) {}
+
     /**
-     * Apply cart-level discounts.
+     * Apply cart-level discounts with stacking rules.
      */
     public function handle(array $data, Cart $cart, callable $next): array
     {
@@ -26,26 +33,33 @@ class ApplyCartDiscountsStep
         // Get cart-level discounts
         $cartDiscounts = $this->getCartDiscounts($cart);
         
+        // Apply stacking rules
+        $stackingResult = $this->stackingService->applyDiscounts(
+            discounts: $cartDiscounts,
+            cart: $cart,
+            baseAmount: $cartSubtotal,
+            scope: 'cart',
+        );
+        
         $appliedCartDiscounts = collect();
-        $totalCartDiscount = 0;
-
-        foreach ($cartDiscounts as $discount) {
-            $discountAmount = $this->calculateCartDiscountAmount($discount, $cartSubtotal, $cart);
+        $totalCartDiscount = $stackingResult->totalDiscount;
+        
+        // Process each applied discount
+        foreach ($stackingResult->applications as $application) {
+            $discountAmount = $application->amount;
             
             if ($discountAmount > 0) {
                 // Distribute discount across line items proportionally
                 $distribution = $this->distributeDiscount($discountAmount, $lineItems, $cartSubtotal);
                 
                 $appliedCartDiscounts->push(new CartDiscount(
-                    discountId: (string) $discount->id,
-                    discountVersion: $this->getDiscountVersion($discount),
-                    discountName: $discount->name ?? 'Cart Discount',
+                    discountId: (string) $application->discount->id,
+                    discountVersion: $this->getDiscountVersion($application->discount),
+                    discountName: $application->discount->name ?? 'Cart Discount',
                     amount: $discountAmount,
-                    type: $this->getDiscountType($discount),
+                    type: $this->getDiscountType($application->discount),
                     distribution: $distribution,
                 ));
-                
-                $totalCartDiscount += $discountAmount;
                 
                 // Update line items with distributed discount
                 foreach ($distribution as $lineId => $lineDiscount) {
@@ -56,15 +70,25 @@ class ApplyCartDiscountsStep
                     }
                 }
                 
-                // Store in applied rules
-                $data['applied_rules'][] = [
-                    'type' => 'cart_discount',
-                    'discount_id' => $discount->id,
-                    'discount_version' => $this->getDiscountVersion($discount),
-                    'amount' => $discountAmount,
-                ];
+                // Log audit trail if required
+                $discount = $application->discount;
+                $data = $discount->data ?? [];
+                if ($data['require_audit_trail'] ?? $discount->require_audit_trail ?? false) {
+                    $this->auditService->logApplication(
+                        application: $application,
+                        cart: $cart,
+                        priceBeforeDiscount: $cartSubtotal,
+                        priceAfterDiscount: $cartSubtotal - $totalCartDiscount,
+                        scope: 'cart',
+                        conflictResolution: $application->reason,
+                        appliedWith: $stackingResult->applications->reject(fn($app) => $app === $application),
+                    );
+                }
             }
         }
+        
+        // Merge applied rules from stacking result
+        $data['applied_rules'] = array_merge($data['applied_rules'] ?? [], $stackingResult->appliedRules);
 
         $data['cart_discounts'] = $appliedCartDiscounts;
         $data['cart_discount_total'] = $totalCartDiscount;

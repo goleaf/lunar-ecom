@@ -169,5 +169,26 @@ class ProductScheduleController extends Controller
 
         return response()->json($schedules);
     }
+
+    /**
+     * Get schedule history.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\View\View|JsonResponse
+     */
+    public function history(Request $request)
+    {
+        $history = \App\Models\ProductScheduleHistory::with(['product', 'productSchedule', 'executedBy'])
+            ->orderBy('executed_at', 'desc')
+            ->paginate(50);
+
+        if ($request->wantsJson()) {
+            return response()->json($history);
+        }
+
+        return view('admin.products.schedules.history', [
+            'history' => $history,
+        ]);
+    }
 }
 

@@ -4,6 +4,8 @@ namespace App\Services\CartPricing\Pipeline;
 
 use App\Services\CartPricing\DTOs\DiscountBreakdown;
 use App\Services\CartPricing\DTOs\ItemDiscount;
+use App\Services\DiscountStacking\DiscountAuditService;
+use App\Services\DiscountStacking\DiscountStackingService;
 use Illuminate\Support\Collection;
 use Lunar\Models\Cart;
 use Lunar\Models\CartLine;
@@ -11,14 +13,19 @@ use Lunar\Models\Discount;
 use Lunar\Models\ProductVariant;
 
 /**
- * Step 4: Apply item-level discounts.
+ * Step 4: Apply item-level discounts with stacking rules.
  * 
- * Applies product/variant-specific discounts using Lunar's discount system.
+ * Applies product/variant-specific discounts using discount stacking rules.
  */
 class ApplyItemDiscountsStep
 {
+    public function __construct(
+        protected DiscountStackingService $stackingService,
+        protected DiscountAuditService $auditService,
+    ) {}
+
     /**
-     * Apply item-level discounts.
+     * Apply item-level discounts with stacking rules.
      */
     public function handle(array $data, Cart $cart, callable $next): array
     {
@@ -38,38 +45,54 @@ class ApplyItemDiscountsStep
         // Get applicable discounts for this item
         $discounts = $this->getApplicableDiscounts($line, $cart);
         
+        // Apply stacking rules
+        $stackingResult = $this->stackingService->applyDiscounts(
+            discounts: $discounts,
+            cart: $cart,
+            baseAmount: $currentPrice,
+            scope: 'item',
+        );
+        
         $itemDiscounts = collect();
-        $totalDiscountAmount = 0;
-        $priceAfterDiscounts = $currentPrice;
+        $totalDiscountAmount = $stackingResult->totalDiscount;
+        $priceAfterDiscounts = $stackingResult->remainingAmount;
 
-        foreach ($discounts as $discount) {
-            $discountAmount = $this->calculateDiscountAmount($discount, $priceAfterDiscounts, $line);
+        // Process each applied discount
+        foreach ($stackingResult->applications as $application) {
+            $discountAmount = $application->amount;
             
             if ($discountAmount > 0) {
                 $itemDiscounts->push(new ItemDiscount(
                     cartLineId: $line->id,
-                    discountId: (string) $discount->id,
-                    discountVersion: $this->getDiscountVersion($discount),
-                    discountName: $discount->name ?? 'Item Discount',
+                    discountId: (string) $application->discount->id,
+                    discountVersion: $this->getDiscountVersion($application->discount),
+                    discountName: $application->discount->name ?? 'Item Discount',
                     amount: $discountAmount,
-                    type: $this->getDiscountType($discount),
+                    type: $this->getDiscountType($application->discount),
                 ));
                 
-                $totalDiscountAmount += $discountAmount;
-                $priceAfterDiscounts -= $discountAmount;
-                
-                // Store discount in applied rules
-                $data['applied_rules'][] = [
-                    'type' => 'item_discount',
-                    'discount_id' => $discount->id,
-                    'discount_version' => $this->getDiscountVersion($discount),
-                    'amount' => $discountAmount,
-                ];
+                // Log audit trail if required
+                $discount = $application->discount;
+                $discountData = $discount->data ?? [];
+                if ($discountData['require_audit_trail'] ?? $discount->require_audit_trail ?? false) {
+                    $this->auditService->logApplication(
+                        application: $application,
+                        cart: $cart,
+                        priceBeforeDiscount: $currentPrice,
+                        priceAfterDiscount: $priceAfterDiscounts,
+                        scope: 'item',
+                        conflictResolution: $application->reason,
+                        appliedWith: $stackingResult->applications->reject(fn($app) => $app === $application),
+                    );
+                }
             }
         }
 
         // Ensure price doesn't go negative
         $priceAfterDiscounts = max(0, $priceAfterDiscounts);
+        
+        // Merge applied rules from stacking result
+        $data['applied_rules'] = array_merge($data['applied_rules'] ?? [], $stackingResult->appliedRules);
         
         $data['current_price'] = $priceAfterDiscounts;
         $data['item_discounts'] = $itemDiscounts;

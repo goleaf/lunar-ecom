@@ -323,13 +323,15 @@ Route::prefix('cart')->name('storefront.cart.')->group(function () {
     Route::post('/discount/remove', [CartController::class, 'removeDiscount'])->name('discount.remove');
 });
 
-Route::prefix('checkout')->name('storefront.checkout.')->group(function () {
-    Route::get('/', [CheckoutController::class, 'index'])->name('index');
-    Route::post('/', [CheckoutController::class, 'store'])->name('store');
-    Route::get('/confirmation/{order}', [CheckoutController::class, 'confirmation'])->name('confirmation');
-    Route::get('/status', [\App\Http\Controllers\Storefront\CheckoutStatusController::class, 'status'])->name('status');
-    Route::post('/cancel', [\App\Http\Controllers\Storefront\CheckoutStatusController::class, 'cancel'])->name('cancel');
-});
+Route::prefix('checkout')->name('storefront.checkout.')
+    ->middleware(['throttle.checkout'])
+    ->group(function () {
+        Route::get('/', [CheckoutController::class, 'index'])->name('index');
+        Route::post('/', [CheckoutController::class, 'store'])->name('store');
+        Route::get('/confirmation/{order}', [CheckoutController::class, 'confirmation'])->name('confirmation');
+        Route::get('/status', [\App\Http\Controllers\Storefront\CheckoutStatusController::class, 'status'])->name('status');
+        Route::post('/cancel', [\App\Http\Controllers\Storefront\CheckoutStatusController::class, 'cancel'])->name('cancel');
+    });
 
 Route::prefix('currency')->name('storefront.currency.')->group(function () {
     Route::get('/', [CurrencyController::class, 'index'])->name('index');

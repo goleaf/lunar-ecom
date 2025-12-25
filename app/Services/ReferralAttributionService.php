@@ -204,8 +204,8 @@ class ReferralAttributionService
                 'attributed_at' => now(),
                 'attribution_method' => $method,
                 'status' => ReferralAttribution::STATUS_PENDING,
+                'priority' => $priority,
                 'metadata' => [
-                    'priority' => $priority,
                     'notes' => $notes,
                 ],
             ]

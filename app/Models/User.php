@@ -83,23 +83,33 @@ class User extends Authenticatable implements LunarUser
     }
 
     /**
-     * Generate a unique referral code.
+     * Generate a unique referral code using safe alphabet.
      */
-    public function generateReferralCode(): string
+    public function generateReferralCode(?int $length = null): string
     {
         if ($this->referral_code) {
             return $this->referral_code;
         }
 
-        $code = strtoupper(substr($this->name ?? $this->email, 0, 3)) . strtoupper(\Illuminate\Support\Str::random(6));
-        
-        while (User::where('referral_code', $code)->exists()) {
-            $code = strtoupper(substr($this->name ?? $this->email, 0, 3)) . strtoupper(\Illuminate\Support\Str::random(6));
-        }
+        $generator = app(\App\Services\ReferralCodeGeneratorService::class);
+        $code = $generator->generate($length ?? 8);
+        $slug = $generator->generateSlug($code);
 
-        $this->update(['referral_code' => $code]);
+        $this->update([
+            'referral_code' => $code,
+            'referral_link_slug' => $slug,
+        ]);
         
         return $code;
+    }
+
+    /**
+     * Regenerate referral code.
+     */
+    public function regenerateReferralCode(?int $length = null): string
+    {
+        $generator = app(\App\Services\ReferralCodeGeneratorService::class);
+        return $generator->regenerateForUser($this, $length);
     }
 
     /**

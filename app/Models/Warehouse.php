@@ -98,6 +98,81 @@ class Warehouse extends Model
     }
 
     /**
+     * Fulfillment rules relationship.
+     *
+     * @return HasMany
+     */
+    public function fulfillmentRules(): HasMany
+    {
+        return $this->hasMany(WarehouseFulfillmentRule::class, 'warehouse_id');
+    }
+
+    /**
+     * Check if warehouse serves location.
+     *
+     * @param  array  $location
+     * @return bool
+     */
+    public function servesLocation(array $location): bool
+    {
+        $serviceAreas = $this->service_areas ?? [];
+
+        if (empty($serviceAreas)) {
+            return true; // No restrictions
+        }
+
+        // Check country
+        if (isset($serviceAreas['countries']) && isset($location['country'])) {
+            if (!in_array($location['country'], $serviceAreas['countries'])) {
+                return false;
+            }
+        }
+
+        // Check regions
+        if (isset($serviceAreas['regions']) && isset($location['region'])) {
+            if (!in_array($location['region'], $serviceAreas['regions'])) {
+                return false;
+            }
+        }
+
+        // Check postal codes
+        if (isset($serviceAreas['postal_codes']) && isset($location['postcode'])) {
+            if (!in_array($location['postcode'], $serviceAreas['postal_codes'])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Calculate distance to location.
+     *
+     * @param  float  $latitude
+     * @param  float  $longitude
+     * @return float|null Distance in kilometers
+     */
+    public function distanceTo(float $latitude, float $longitude): ?float
+    {
+        if (!$this->latitude || !$this->longitude) {
+            return null;
+        }
+
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($latitude - $this->latitude);
+        $dLng = deg2rad($longitude - $this->longitude);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($this->latitude)) * cos(deg2rad($latitude)) *
+             sin($dLng / 2) * sin($dLng / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
+    }
+
+    /**
      * Scope to get active warehouses.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query

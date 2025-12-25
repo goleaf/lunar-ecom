@@ -2,7 +2,7 @@
 
 namespace App\Listeners;
 
-use Lunar\Events\OrderPaymentStatusChanged;
+use Lunar\Events\OrderStatusChanged;
 use App\Services\ReferralRewardService;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,12 +16,17 @@ class ProcessReferralOrderPayment implements ShouldQueue
         protected ReferralRewardService $rewardService
     ) {}
 
-    public function handle(OrderPaymentStatusChanged $event): void
+    public function handle(OrderStatusChanged $event): void
     {
         $order = $event->order;
 
-        // Only process if payment is captured/paid
-        if ($order->status !== 'payment-received' && $order->status !== 'completed') {
+        // Only process if order is placed/paid (Lunar uses placed_at to indicate payment)
+        if (!$order->placed_at || $order->placed_at->isFuture()) {
+            return;
+        }
+
+        // Skip if already processed
+        if (\App\Models\ReferralRewardIssuance::where('order_id', $order->id)->exists()) {
             return;
         }
 

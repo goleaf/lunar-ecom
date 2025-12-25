@@ -15,7 +15,15 @@ use App\Events\ContractValidityChanged;
 use App\Events\PromotionActivated;
 use App\Events\PromotionExpired;
 use App\Events\StockChanged;
+use App\Events\ReferralCodeClicked;
+use App\Events\ReferralSignup;
+use App\Events\ReferralPurchase;
 use App\Listeners\CartRepricingListener;
+use App\Listeners\ProcessReferralClick;
+use App\Listeners\ProcessReferralSignup;
+use App\Listeners\ProcessReferralPurchase;
+use App\Listeners\ProcessUserRegistration;
+use App\Listeners\ProcessOrderCompletion;
 use App\Listeners\Cache\InvalidateContractCache;
 use App\Listeners\Cache\InvalidateCurrencyCache;
 use App\Listeners\Cache\InvalidatePriceCache;
@@ -31,6 +39,7 @@ use App\Listeners\SendOrderConfirmation;
 use App\Listeners\TrackStockNotificationConversion;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Lunar\Events\OrderStatusChanged;
 use Lunar\Models\Discount;
@@ -48,6 +57,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Login::class => [
             MergeCartOnLogin::class,
+        ],
+        Registered::class => [
+            ProcessUserRegistration::class,
         ],
         Logout::class => [
             ClearCartOnLogout::class,
@@ -96,11 +108,22 @@ class EventServiceProvider extends ServiceProvider
         ],
         CheckoutCompleted::class => [
             SendOrderConfirmation::class,
+            ProcessOrderCompletion::class,
             // Add additional listeners here
         ],
         CheckoutFailed::class => [
             NotifyCheckoutFailure::class,
             // Add additional listeners here
+        ],
+        // Referral events
+        ReferralCodeClicked::class => [
+            ProcessReferralClick::class,
+        ],
+        ReferralSignup::class => [
+            ProcessReferralSignup::class,
+        ],
+        ReferralPurchase::class => [
+            ProcessReferralPurchase::class,
         ],
     ];
 

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\LanguageDetectionMiddleware::class,
             \App\Http\Middleware\StorefrontSessionMiddleware::class,
             \App\Http\Middleware\TrackProductView::class,
+            \App\Http\Middleware\TrackReferralLink::class,
         ]);
         
         // Register checkout cart protection middleware

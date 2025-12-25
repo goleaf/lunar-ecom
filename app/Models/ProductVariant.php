@@ -1180,6 +1180,56 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Variant attribute combination relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function attributeCombination()
+    {
+        return $this->hasOne(\App\Models\VariantAttributeCombination::class, 'variant_id');
+    }
+
+    /**
+     * Get defining attributes for this variant.
+     *
+     * @return array
+     */
+    public function getDefiningAttributes(): array
+    {
+        return $this->attributeCombination?->defining_attributes ?? [];
+    }
+
+    /**
+     * Get informational attributes for this variant.
+     *
+     * @return array
+     */
+    public function getInformationalAttributes(): array
+    {
+        return $this->attributeCombination?->informational_attributes ?? [];
+    }
+
+    /**
+     * Check if variant is partial (missing some defining attributes).
+     *
+     * @return bool
+     */
+    public function isPartial(): bool
+    {
+        return $this->attributeCombination?->is_partial ?? false;
+    }
+
+    /**
+     * Get attribute combination as array.
+     *
+     * @return array
+     */
+    public function getAttributeCombination(): array
+    {
+        return $this->attributeCombination?->combination ?? [];
+    }
+
+    /**
      * Get variant-specific SEO meta title.
      * Falls back to product meta title or product name if not set.
      *

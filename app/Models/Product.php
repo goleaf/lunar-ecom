@@ -785,6 +785,26 @@ class Product extends LunarProduct
     }
 
     /**
+     * Variant attribute combinations relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variantAttributeCombinations()
+    {
+        return $this->hasMany(\App\Models\VariantAttributeCombination::class, 'product_id');
+    }
+
+    /**
+     * Variant attribute dependencies relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variantAttributeDependencies()
+    {
+        return $this->hasMany(\App\Models\VariantAttributeDependency::class, 'product_id');
+    }
+
+    /**
      * Get analytics summary for product.
      *
      * @param  \Carbon\Carbon|null  $startDate

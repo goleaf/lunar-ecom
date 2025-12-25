@@ -217,10 +217,8 @@ class ReferralFraudService
      */
     protected function isPaymentCaptured(Order $order): bool
     {
-        // Check if order has captured payment
-        return $order->status === 'payment-received' || 
-               $order->status === 'completed' ||
-               ($order->placed_at && $order->placed_at->isPast());
+        // Lunar uses placed_at to indicate order is paid
+        return $order->placed_at && $order->placed_at->isPast();
     }
 
     /**

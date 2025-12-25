@@ -123,6 +123,10 @@ class EventServiceProvider extends ServiceProvider
         ReferralSignup::class => [
             ProcessReferralSignup::class,
         ],
+        Registered::class => [
+            ProcessUserRegistration::class,
+            \App\Listeners\ProcessReferralSignup::class . '@handleSignupReward',
+        ],
         ReferralPurchase::class => [
             ProcessReferralPurchase::class,
         ],

@@ -43,10 +43,6 @@ class ReferralProgramResource extends Resource
                             ->rows(3)
                             ->columnSpanFull(),
 
-                        Forms\Components\Toggle::make('is_active')
-                            ->default(true)
-                            ->label('Active'),
-
                         Forms\Components\Select::make('status')
                             ->options([
                                 ReferralProgram::STATUS_DRAFT => 'Draft',
@@ -165,10 +161,6 @@ class ReferralProgramResource extends Resource
 
                 Tables\Columns\TextColumn::make('handle')
                     ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('start_at')

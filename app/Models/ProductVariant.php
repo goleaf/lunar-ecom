@@ -1010,25 +1010,6 @@ class ProductVariant extends LunarProductVariant
         return $this->stock <= $threshold;
     }
 
-    /**
-     * Check if variant has sufficient stock.
-     *
-     * @param  int  $quantity
-     * @return bool
-     */
-    public function hasSufficientStock(int $quantity): bool
-    {
-        if ($this->purchasable === 'never') {
-            return false;
-        }
-
-        if ($this->purchasable === 'in_stock') {
-            return $this->stock >= $quantity;
-        }
-
-        // For 'always', check if we have stock or backorder
-        return ($this->stock + $this->backorder) >= $quantity;
-    }
 
     /**
      * Decrement stock.

@@ -8710,22 +8710,75 @@ Storefront session state is automatically persisted in the Laravel session, so s
 
 ## Channels
 
-This project implements channels following the [Lunar Channels documentation](https://docs.lunarphp.com/1.x/reference/channels):
-
-- **Channel Assignment**: Assign models to different channels (e.g., webstore, mobile app)
-- **Channel Scheduling**: Schedule models to be enabled/disabled on channels at specific dates
-- **Channel Scopes**: Query models by channel with date range support
-- **HasChannels Trait**: Enable channel functionality on your own models
+This project implements channels following the [Lunar Channels documentation](https://docs.lunarphp.com/1.x/reference/channels). Channels allow you to organize and control availability of models (products, collections, etc.) across different channels. The default channel is `webstore`.
 
 **Overview**:
 
-Channels allow you to organize and control availability of models (products, collections, etc.) across different channels. The default channel is `webstore`. Models can be assigned to channels permanently or scheduled for specific date ranges.
+Channels allow you to assign Eloquent models to different channels and specify whether they are enabled permanently or whether they should be scheduled to be enabled. In order to add this kind of functionality to your model, you need to add the `HasChannels` trait.
 
-**Configuration**:
+**Assigning Channels to Models**:
 
-Channel configuration is handled through the `lunar_channels` table and `Lunar\Models\Channel` model. The default channel is typically named "webstore".
+You can assign Eloquent models to different channels and specify whether they are enabled permanently or whether they should be scheduled to be enabled. In order to add this kind of functionality to your model, you need to add the `HasChannels` trait:
 
-**Usage**:
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Traits\HasChannels;
+
+class Product extends Model
+{
+    use HasChannels;
+}
+```
+
+When you add this trait, you will have access to the `scheduleChannel` method:
+
+```php
+use Lunar\Models\Channel;
+use Lunar\Models\Product;
+
+$channel = Channel::first();
+
+$product = Product::find(1);
+
+// Will schedule for this product to be enabled in 14 days for this channel
+// and will be disabled after 24 days
+$product->scheduleChannel($channel, now()->addDays(14), now()->addDays(24));
+
+// Schedule the product to be enabled straight away
+$product->scheduleChannel($channel);
+
+// The schedule method will accept an array or collection of channels
+$product->scheduleChannel(Channel::all());
+```
+
+**Channel Scopes**:
+
+There is also a channel scope available to models which use the `HasChannels` trait:
+
+```php
+use Lunar\Models\Channel;
+use Lunar\Models\Product;
+
+$channel = Channel::first();
+
+// Limit to a single channel
+Product::channel($channel)->get();
+
+// Limit to multiple channels
+Product::channel([$channelA, $channelB])->get();
+
+// Limit to a channel available the next day
+Product::channel($channelA, now()->addDay())->get();
+
+// Limit to a channel within a date range
+Product::channel($channelA, now()->addDay(), now()->addDays(2))->get();
+```
+
+**Usage Examples**:
 
 ```php
 use App\Lunar\Channels\ChannelHelper;
@@ -8734,47 +8787,51 @@ use Lunar\Models\Product;
 
 // Get default channel
 $defaultChannel = ChannelHelper::getDefault();
+$defaultChannel = Channel::getDefault(); // Direct method
 
 // Get all channels
 $channels = ChannelHelper::getAll();
+$channels = Channel::all(); // Direct method
 
 // Find channel by ID or handle
 $channel = ChannelHelper::find(1);
 $channel = ChannelHelper::findByHandle('webstore');
+$channel = Channel::where('handle', 'webstore')->first(); // Direct method
 
 // Schedule a model for a channel (model must use HasChannels trait)
 $product = Product::find(1);
 $channel = Channel::find(1);
 
-// Schedule for immediate availability
-ChannelHelper::scheduleChannelImmediate($product, $channel);
+// Using the trait method directly
+$product->scheduleChannel($channel); // Immediate availability
+$product->scheduleChannel($channel, now()->addDays(14), now()->addDays(24)); // Scheduled
+$product->scheduleChannel(Channel::all()); // Multiple channels
 
-// Schedule for future availability
+// Using ChannelHelper convenience methods
+ChannelHelper::scheduleChannelImmediate($product, $channel);
 ChannelHelper::scheduleChannel(
     $product,
     $channel,
     startsAt: now()->addDays(14),
     endsAt: now()->addDays(24)
 );
-
-// Schedule for multiple channels
 ChannelHelper::scheduleChannel($product, Channel::all());
 
-// Query models by channel
+// Query models by channel using the scope
+$products = Product::channel($channel)->get();
+$products = Product::channel([$channel1, $channel2])->get();
+$products = Product::channel($channel, now()->addDay())->get();
+$products = Product::channel($channel, now()->addDay(), now()->addDays(2))->get();
+
+// Using ChannelHelper convenience methods
 $products = ChannelHelper::queryByChannel(Product::class, $channel)->get();
-
-// Query models by multiple channels
 $products = ChannelHelper::queryByChannels(Product::class, [$channel1, $channel2])->get();
-
-// Query models for channel available on a specific date
 $products = ChannelHelper::queryByChannel(
     Product::class,
     $channel,
     startDate: now()->addDay(),
     endDate: now()->addDay()
 )->get();
-
-// Query models for channel within date range
 $products = ChannelHelper::queryByChannel(
     Product::class,
     $channel,
@@ -8789,6 +8846,7 @@ if (ChannelHelper::isAvailableForChannel($product, $channel)) {
 
 // Get channels for a model
 $productChannels = ChannelHelper::getChannelsForModel($product);
+$productChannels = $product->channels; // Direct relationship
 
 // Create a new channel
 $newChannel = ChannelHelper::create(
@@ -8796,7 +8854,68 @@ $newChannel = ChannelHelper::create(
     handle: 'mobile-app',
     default: false
 );
+$newChannel = Channel::create([
+    'name' => 'Mobile App',
+    'handle' => 'mobile-app',
+    'default' => false,
+]); // Direct method
 ```
+
+**Models That Support Channels**:
+
+Lunar models that support channels (use `HasChannels` trait):
+- `Lunar\Models\Product`
+- `Lunar\Models\Collection`
+- `Lunar\Models\Brand`
+- Other models that use the `HasChannels` trait
+
+**Adding Channels to Your Own Models**:
+
+To add channel support to your own models:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Traits\HasChannels;
+
+class CustomModel extends Model
+{
+    use HasChannels;
+    
+    // ... rest of your model
+}
+```
+
+Now you can use channel scheduling and scopes:
+
+```php
+$customModel = CustomModel::find(1);
+$channel = Channel::first();
+
+// Schedule for channel
+$customModel->scheduleChannel($channel);
+
+// Query by channel
+$models = CustomModel::channel($channel)->get();
+```
+
+**Best Practices**:
+
+- **Default Channel**: Always ensure a default channel exists (typically `webstore`)
+- **Channel Assignment**: Assign models to channels when creating them
+- **Scheduling**: Use scheduling for time-sensitive availability (e.g., product launches)
+- **Date Ranges**: Use date ranges for temporary channel availability
+- **Multiple Channels**: Assign models to multiple channels when needed
+- **Query Optimization**: Use channel scopes to filter queries efficiently
+- **Storefront Integration**: Use channels with storefront session for multi-channel stores
+- **Testing**: Test channel availability with different date ranges
+- **Performance**: Consider caching channel assignments for frequently accessed models
+- **Migration**: Ensure channel assignments are included in data migrations
+
+**Documentation**: See [Lunar Channels documentation](https://docs.lunarphp.com/1.x/reference/channels)
 
 ## Currencies
 

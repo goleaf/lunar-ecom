@@ -2,6 +2,7 @@
 
 namespace App\Services\CartPricing\Pipeline;
 
+use App\Services\PriceListService;
 use Lunar\Models\Cart;
 use Lunar\Models\CartLine;
 use Lunar\Models\ProductVariant;
@@ -11,9 +12,15 @@ use Lunar\Models\ProductVariant;
  * 
  * Checks for active B2B contracts for the customer and applies
  * contract-specific pricing if available.
+ * 
+ * Contract prices override base prices and promotions.
  */
 class ApplyB2BContractStep
 {
+    public function __construct(
+        protected PriceListService $priceListService
+    ) {}
+
     /**
      * Apply B2B contract pricing if available.
      */
@@ -32,59 +39,36 @@ class ApplyB2BContractStep
             return $next($data);
         }
 
-        // Check for B2B contract pricing
-        $contractPrice = $this->getContractPrice($line, $cart);
+        $customer = $cart->customer;
         
-        if ($contractPrice !== null && isset($contractPrice['price']) && $contractPrice['price'] < $currentPrice) {
-            // Contract price overrides base price
+        if (!$customer) {
+            return $next($data);
+        }
+
+        // Get contract price for this variant
+        $contractPrice = $this->priceListService->getContractPrice(
+            $purchasable,
+            $customer,
+            $line->quantity,
+            $currentPrice
+        );
+        
+        if ($contractPrice !== null && isset($contractPrice['price'])) {
+            // Contract price overrides base price (even if higher)
+            // This ensures contract pricing is always applied
             $data['current_price'] = $contractPrice['price'];
             $data['price_source'] = 'contract';
             $data['contract_id'] = $contractPrice['contract_id'] ?? null;
+            $data['price_list_id'] = $contractPrice['price_list_id'] ?? null;
             $data['applied_rules'][] = [
                 'type' => 'b2b_contract',
                 'contract_id' => $contractPrice['contract_id'] ?? null,
+                'price_list_id' => $contractPrice['price_list_id'] ?? null,
                 'version' => $contractPrice['version'] ?? '1.0',
             ];
         }
 
         return $next($data);
-    }
-
-    /**
-     * Get contract price for a line item.
-     * 
-     * This method checks for active B2B contracts. If B2B contracts exist
-     * in the system, integrate with them here. Otherwise, returns null.
-     */
-    protected function getContractPrice(CartLine $line, Cart $cart): ?array
-    {
-        // TODO: Integrate with existing B2B contract system
-        // For now, check if customer has a customer group that might have contract pricing
-        $customer = $cart->customer;
-        
-        if (!$customer) {
-            return null;
-        }
-
-        // Check customer groups for contract pricing
-        // This is a placeholder - replace with actual B2B contract lookup
-                $customerGroup = $customer->customerGroups?->first();
-        
-        if (!$customerGroup) {
-            return null;
-        }
-
-        // If B2B contracts exist, query them here:
-        // $contract = B2BContract::where('customer_id', $customer->id)
-        //     ->where('product_variant_id', $line->purchasable_id)
-        //     ->where('valid_from', '<=', now())
-        //     ->where(function($q) {
-        //         $q->whereNull('valid_to')->orWhere('valid_to', '>=', now());
-        //     })
-        //     ->first();
-        
-        // For now, return null (no contract pricing)
-        return null;
     }
 }
 

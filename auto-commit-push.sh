@@ -193,6 +193,28 @@ EOF
   result="${result//$'\r'/}"
   result="$(printf '%s' "$result" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
   
+  # Normalize spacing: ensure one blank line between file entries (lines starting with *)
+  # but remove trailing blank lines
+  result="$(printf '%s' "$result" | awk '
+    /^[*]/ {
+      if (prev_was_file && prev_line != "") print ""
+      print $0
+      prev_was_file = 1
+      prev_line = $0
+      next
+    }
+    {
+      if (prev_was_file && prev_line != "") {
+        prev_was_file = 0
+      }
+      print $0
+      prev_line = $0
+    }
+    END {
+      # Remove trailing blank lines
+    }
+  ' | sed -E ':a; /^\n*$/{$d;N;ba}')"
+  
   if [[ -z "$result" ]]; then
     result="Update project files
 

@@ -6312,6 +6312,219 @@ php artisan vendor:publish --tag=lunarpanel.pdf
 
 This will create a view called `resources/vendor/lunarpanel/pdf/order.blade.php`, where you will be able to freely customise the PDF you want displayed on download.
 
+**Using OrderHelper**:
+
+The `OrderHelper` class provides convenience methods:
+
+```php
+use App\Lunar\Orders\OrderHelper;
+use Lunar\Models\Order;
+use Lunar\Models\Cart;
+use Lunar\Facades\CartSession;
+
+// Create order from cart (recommended)
+$cart = CartSession::current();
+$order = OrderHelper::createFromCart($cart);
+
+// Create with options
+$order = OrderHelper::createFromCart(
+    $cart,
+    allowMultipleOrders: false,
+    orderIdToUpdate: null
+);
+
+// Check if cart can create order
+if (OrderHelper::canCreateOrder($cart)) {
+    $order = OrderHelper::createFromCart($cart);
+}
+
+// Find order
+$order = OrderHelper::find($orderId);
+$order = OrderHelper::findByReference('ORD-00000001');
+
+// Get orders for user/customer
+$userOrders = OrderHelper::getForUser($userId);
+$customerOrders = OrderHelper::getForCustomer($customerId);
+
+// Check order status
+if (OrderHelper::isDraft($order)) {
+    // Order is still a draft
+}
+
+if (OrderHelper::isPlaced($order)) {
+    // Order has been placed
+}
+
+// Mark order as placed
+$order = OrderHelper::markAsPlaced($order);
+
+// Update order status
+$order = OrderHelper::updateStatus($order, 'awaiting-payment');
+
+// Create order line
+$orderLine = OrderHelper::createLine($order, [
+    'purchasable_type' => $variant->getMorphClass(),
+    'purchasable_id' => $variant->id,
+    'type' => 'physical',
+    'description' => $variant->product->translateAttribute('name'),
+    'identifier' => $variant->sku,
+    'unit_price' => 2000,
+    'quantity' => 2,
+    'sub_total' => 4000,
+    'tax_total' => 0,
+    'total' => 4000,
+]);
+
+// Create order address
+$address = OrderHelper::createAddress($order, [
+    'country_id' => $country->id,
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'line_one' => '123 Main Street',
+    'city' => 'London',
+    'postcode' => 'NW1 1WN',
+    'type' => 'shipping',
+]);
+
+// Get addresses
+$shippingAddress = OrderHelper::getShippingAddress($order);
+$billingAddress = OrderHelper::getBillingAddress($order);
+
+// Create transaction (charge)
+$transaction = OrderHelper::createTransaction($order, [
+    'success' => true,
+    'refund' => false,
+    'driver' => 'stripe',
+    'amount' => $order->total,
+    'reference' => 'ch_1234567890',
+    'status' => 'succeeded',
+    'card_type' => 'visa',
+    'last_four' => '4242',
+]);
+
+// Create refund transaction
+$refund = OrderHelper::createTransaction($order, [
+    'success' => true,
+    'refund' => true,
+    'driver' => 'stripe',
+    'amount' => 1000, // Amount to refund in cents
+    'reference' => 're_1234567890',
+    'status' => 'succeeded',
+]);
+
+// Get transactions
+$transactions = OrderHelper::getTransactions($order);
+$charges = OrderHelper::getCharges($order);
+$refunds = OrderHelper::getRefunds($order);
+
+// Get transaction totals
+$totalCharged = OrderHelper::getTotalCharged($order);
+$totalRefunded = OrderHelper::getTotalRefunded($order);
+$netAmount = OrderHelper::getNetAmount($order); // charged - refunded
+```
+
+**Example: Complete Order Workflow**:
+
+```php
+use Lunar\Models\Cart;
+use Lunar\Models\Order;
+use Lunar\Models\Transaction;
+use Lunar\Facades\CartSession;
+use Lunar\Facades\ShippingManifest;
+
+// 1. Get current cart
+$cart = CartSession::current();
+$cart->calculate();
+
+// 2. Validate cart can create order
+if (!$cart->canCreateOrder()) {
+    throw new \Exception('Cart is not ready to create order');
+}
+
+// 3. Create order from cart
+$order = $cart->createOrder(
+    allowMultipleOrders: false,
+    orderIdToUpdate: null
+);
+
+// 4. Order is created as draft (placed_at is null)
+$order->isDraft(); // true
+$order->isPlaced(); // false
+
+// 5. Process payment (example with Stripe)
+// ... payment processing logic ...
+
+// 6. Create transaction
+$transaction = $order->transactions()->create([
+    'success' => true,
+    'refund' => false,
+    'driver' => 'stripe',
+    'amount' => $order->total,
+    'reference' => $stripePaymentIntent->id,
+    'status' => 'succeeded',
+    'card_type' => 'visa',
+    'last_four' => '4242',
+]);
+
+// 7. Mark order as placed
+$order->update(['placed_at' => now()]);
+
+// 8. Update order status
+$order->update(['status' => 'payment-received']);
+
+// 9. Access order data
+$order->reference;           // Auto-generated reference
+$order->sub_total;            // Subtotal excluding tax
+$order->discount_total;       // Discount amount
+$order->shipping_total;       // Shipping total
+$order->tax_total;           // Tax total
+$order->total;               // Grand total
+
+// 10. Access order lines
+foreach ($order->lines as $line) {
+    $line->description;       // Product description
+    $line->quantity;          // Quantity
+    $line->unit_price;        // Unit price
+    $line->total;             // Line total
+}
+
+// 11. Access addresses
+$shippingAddress = $order->shippingAddress;
+$billingAddress = $order->billingAddress;
+
+// 12. Access transactions
+$charges = $order->charges;   // All charge transactions
+$refunds = $order->refunds;   // All refund transactions
+$allTransactions = $order->transactions; // All transactions
+
+// 13. Calculate payment totals
+$totalCharged = $order->charges->sum('amount');
+$totalRefunded = $order->refunds->sum('amount');
+$netAmount = $totalCharged - $totalRefunded;
+```
+
+**Best Practices**:
+
+- **Create from Cart**: Always use `$cart->createOrder()` instead of creating orders directly
+- **Validate Before Creating**: Always check `$cart->canCreateOrder()` before creating an order
+- **Mark as Placed**: Set `placed_at` only after successful payment confirmation
+- **Store Transactions**: Always create transaction records for payment tracking
+- **Use Order References**: Use the auto-generated reference for customer-facing order numbers
+- **Track Status**: Use order status to track order lifecycle (awaiting-payment, payment-received, dispatched, etc.)
+- **Store Breakdowns**: The JSON breakdown fields (discount_breakdown, shipping_breakdown, tax_breakdown) provide detailed information for reporting
+- **Eager Load**: When loading orders, eager load relationships:
+  ```php
+  Order::with(['lines.purchasable', 'addresses', 'transactions', 'user', 'customer'])->get();
+  ```
+- **Draft Orders**: Keep orders as drafts until payment is confirmed
+- **Transaction Tracking**: Track all payment attempts, not just successful ones
+- **Refund Tracking**: Always create refund transactions when processing refunds
+- **Status Notifications**: Configure status mailers for automated customer communication
+- **Custom Generators**: Use custom reference generators if you need specific formats
+- **Order Pipelines**: Use order pipelines to add custom logic during order creation
+
+**Documentation**: See [Lunar Orders documentation](https://docs.lunarphp.com/1.x/reference/orders)
+
 ## Payments
 
 This project implements payments following the [Lunar Payments documentation](https://docs.lunarphp.com/1.x/reference/payments):

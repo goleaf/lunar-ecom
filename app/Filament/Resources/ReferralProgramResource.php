@@ -47,177 +47,100 @@ class ReferralProgramResource extends Resource
                             ->default(true)
                             ->label('Active'),
 
-                        Forms\Components\DatePicker::make('starts_at')
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                ReferralProgram::STATUS_DRAFT => 'Draft',
+                                ReferralProgram::STATUS_ACTIVE => 'Active',
+                                ReferralProgram::STATUS_PAUSED => 'Paused',
+                                ReferralProgram::STATUS_ARCHIVED => 'Archived',
+                            ])
+                            ->default(ReferralProgram::STATUS_DRAFT)
+                            ->required(),
+
+                        Forms\Components\DatePicker::make('start_at')
                             ->label('Start Date')
                             ->nullable(),
 
-                        Forms\Components\DatePicker::make('ends_at')
+                        Forms\Components\DatePicker::make('end_at')
                             ->label('End Date')
                             ->nullable()
                             ->helperText('Leave empty for programs without expiry'),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Eligibility Rules')
+                Forms\Components\Section::make('Channel & Currency Scope')
                     ->schema([
-                        Forms\Components\Select::make('eligible_customer_groups')
-                            ->label('Eligible Customer Groups')
-                            ->multiple()
-                            ->options(CustomerGroup::pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->helperText('Leave empty to allow all customer groups'),
+                        Forms\Components\TagsInput::make('channel_ids')
+                            ->label('Channel IDs')
+                            ->helperText('Leave empty for all channels'),
 
-                        Forms\Components\TagsInput::make('eligible_users')
-                            ->label('Eligible User IDs')
-                            ->helperText('Specific user IDs (comma-separated). Leave empty for all users.'),
-
-                        Forms\Components\KeyValue::make('eligible_conditions')
-                            ->label('Custom Eligibility Conditions')
-                            ->helperText('Custom conditions (e.g., min_orders, min_spend)'),
-                    ])
-                    ->collapsible()
-                    ->collapsed(),
-
-                Forms\Components\Section::make('Referrer Rewards')
-                    ->schema([
-                        Forms\Components\Repeater::make('referrer_rewards')
-                            ->schema([
-                                Forms\Components\Select::make('action')
-                                    ->options([
-                                        'signup' => 'Signup',
-                                        'first_purchase' => 'First Purchase',
-                                        'repeat_purchase' => 'Repeat Purchase',
-                                    ])
-                                    ->required(),
-
-                                Forms\Components\Select::make('type')
-                                    ->options([
-                                        'discount' => 'Discount Code',
-                                        'credit' => 'Account Credit',
-                                        'percentage' => 'Percentage Discount',
-                                        'fixed_amount' => 'Fixed Amount',
-                                    ])
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('value')
-                                    ->numeric()
-                                    ->required()
-                                    ->helperText('Percentage or amount'),
-
-                                Forms\Components\Select::make('currency_id')
-                                    ->relationship('currency', 'code', fn ($query) => $query->where('enabled', true))
-                                    ->searchable()
-                                    ->preload(),
-
-                                Forms\Components\TextInput::make('max_per_order')
-                                    ->numeric()
-                                    ->label('Max Per Order')
-                                    ->helperText('Maximum discount per order (for percentage)'),
-
-                                Forms\Components\TextInput::make('coupon_code')
-                                    ->label('Custom Coupon Code')
-                                    ->maxLength(255)
-                                    ->helperText('Leave empty to auto-generate'),
-
-                                Forms\Components\TextInput::make('valid_days')
-                                    ->numeric()
-                                    ->default(30)
-                                    ->label('Valid Days')
-                                    ->helperText('How long the reward is valid'),
+                        Forms\Components\Select::make('currency_scope')
+                            ->options([
+                                ReferralProgram::CURRENCY_SCOPE_ALL => 'All Currencies',
+                                ReferralProgram::CURRENCY_SCOPE_SPECIFIC => 'Specific Currencies',
                             ])
-                            ->columns(2)
-                            ->defaultItems(1)
-                            ->collapsible(),
-                    ])
-                    ->collapsible(),
+                            ->default(ReferralProgram::CURRENCY_SCOPE_ALL)
+                            ->required()
+                            ->reactive(),
 
-                Forms\Components\Section::make('Referee (Invited User) Rewards')
-                    ->schema([
-                        Forms\Components\Repeater::make('referee_rewards')
-                            ->schema([
-                                Forms\Components\Select::make('type')
-                                    ->options([
-                                        'discount' => 'Discount Code',
-                                        'percentage' => 'Percentage Discount',
-                                        'fixed_amount' => 'Fixed Amount',
-                                    ])
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('value')
-                                    ->numeric()
-                                    ->required(),
-
-                                Forms\Components\TextInput::make('coupon_code')
-                                    ->label('Coupon Code')
-                                    ->maxLength(255)
-                                    ->helperText('Leave empty to auto-generate'),
-
-                                Forms\Components\TextInput::make('valid_days')
-                                    ->numeric()
-                                    ->default(30)
-                                    ->label('Valid Days'),
-                            ])
-                            ->columns(2)
-                            ->defaultItems(1)
-                            ->collapsible(),
-                    ])
-                    ->collapsible(),
-
-                Forms\Components\Section::make('Limits & Restrictions')
-                    ->schema([
-                        Forms\Components\TextInput::make('max_referrals_per_referrer')
-                            ->numeric()
-                            ->label('Max Referrals Per Referrer')
-                            ->helperText('Leave empty for unlimited'),
-
-                        Forms\Components\TextInput::make('max_referrals_total')
-                            ->numeric()
-                            ->label('Max Total Referrals')
-                            ->helperText('Leave empty for unlimited'),
-
-                        Forms\Components\TextInput::make('max_rewards_per_referrer')
-                            ->numeric()
-                            ->label('Max Rewards Per Referrer')
-                            ->helperText('Leave empty for unlimited'),
-
-                        Forms\Components\Toggle::make('allow_self_referral')
-                            ->label('Allow Self-Referral')
-                            ->default(false),
-
-                        Forms\Components\Toggle::make('require_referee_purchase')
-                            ->label('Require Referee Purchase')
-                            ->default(false)
-                            ->helperText('Require purchase before issuing reward'),
+                        Forms\Components\TagsInput::make('currency_ids')
+                            ->label('Currency IDs')
+                            ->visible(fn ($get) => $get('currency_scope') === ReferralProgram::CURRENCY_SCOPE_SPECIFIC)
+                            ->helperText('Comma-separated currency IDs'),
                     ])
                     ->columns(2)
                     ->collapsible(),
 
-                Forms\Components\Section::make('Stacking & Validity')
+                Forms\Components\Section::make('Audience Scope')
                     ->schema([
-                        Forms\Components\Select::make('stacking_mode')
+                        Forms\Components\Select::make('audience_scope')
                             ->options([
-                                'non_stackable' => 'Non-Stackable',
-                                'stackable' => 'Stackable',
-                                'exclusive' => 'Exclusive',
+                                ReferralProgram::AUDIENCE_SCOPE_ALL => 'All Users',
+                                ReferralProgram::AUDIENCE_SCOPE_USERS => 'Specific Users',
+                                ReferralProgram::AUDIENCE_SCOPE_GROUPS => 'User Groups',
                             ])
-                            ->default('non_stackable')
-                            ->required(),
+                            ->default(ReferralProgram::AUDIENCE_SCOPE_ALL)
+                            ->required()
+                            ->reactive(),
 
-                        Forms\Components\KeyValue::make('stacking_rules')
-                            ->label('Custom Stacking Rules')
-                            ->helperText('Additional stacking configuration'),
+                        Forms\Components\TagsInput::make('audience_user_ids')
+                            ->label('User IDs')
+                            ->visible(fn ($get) => $get('audience_scope') === ReferralProgram::AUDIENCE_SCOPE_USERS)
+                            ->helperText('Comma-separated user IDs'),
+
+                        Forms\Components\Select::make('audience_group_ids')
+                            ->label('User Groups')
+                            ->multiple()
+                            ->options(\App\Models\UserGroup::pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->visible(fn ($get) => $get('audience_scope') === ReferralProgram::AUDIENCE_SCOPE_GROUPS),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+
+                Forms\Components\Section::make('Attribution Settings')
+                    ->schema([
+                        Forms\Components\Toggle::make('last_click_wins')
+                            ->label('Last Click Wins')
+                            ->default(true)
+                            ->helperText('If enabled, last referral click overwrites previous. If disabled, first click is used.'),
+
+                        Forms\Components\TextInput::make('attribution_ttl_days')
+                            ->label('Attribution TTL (Days)')
+                            ->numeric()
+                            ->default(7)
+                            ->minValue(1)
+                            ->maxValue(365)
+                            ->required()
+                            ->helperText('How long referral clicks remain valid for attribution'),
 
                         Forms\Components\TextInput::make('referral_code_validity_days')
                             ->numeric()
                             ->default(365)
                             ->label('Code Validity (Days)')
-                            ->required(),
-
-                        Forms\Components\TextInput::make('reward_validity_days')
-                            ->numeric()
-                            ->label('Reward Validity (Days)')
-                            ->helperText('Leave empty to use program default'),
+                            ->required()
+                            ->helperText('How long referral codes remain valid'),
                     ])
                     ->columns(2)
                     ->collapsible(),

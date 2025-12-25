@@ -110,4 +110,44 @@ class User extends Authenticatable implements LunarUser
         $slug = $this->referral_link_slug ?: $this->referral_code;
         return config('app.url') . '/ref/' . $slug;
     }
+
+    /**
+     * Get user's wallet.
+     */
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Get coupons assigned to this user.
+     */
+    public function coupons()
+    {
+        return $this->hasMany(Coupon::class, 'assigned_to_user_id');
+    }
+
+    /**
+     * Get referral attributions as referee.
+     */
+    public function referralAttributions()
+    {
+        return $this->hasMany(ReferralAttribution::class, 'referee_user_id');
+    }
+
+    /**
+     * Get referral clicks as referrer.
+     */
+    public function referralClicks()
+    {
+        return $this->hasMany(ReferralClick::class, 'referrer_user_id');
+    }
+
+    /**
+     * Get coupon redemptions.
+     */
+    public function couponRedemptions()
+    {
+        return $this->hasMany(CouponRedemption::class);
+    }
 }

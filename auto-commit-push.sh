@@ -28,7 +28,8 @@ Environment:
   CODEX_BIN               Codex binary (default: codex)
 
 Notes:
-  - This sends a truncated staged diff to Codex to generate the commit message.
+  - This sends staged diffs to Codex to generate a detailed commit message with file-by-file descriptions.
+  - Commits are made automatically with the generated message.
   - Press Ctrl+C to stop when running in loop mode.
   - Requires Codex CLI (codex-cli) version 0.73.0 or compatible.
 EOF
@@ -129,16 +130,37 @@ generate_commit_message() {
   local name_status diffstat diff_patch prompt result
   name_status="$(git diff --cached --name-status --no-color)"
   diffstat="$(git diff --cached --stat --no-color)"
-  diff_patch="$(git diff --cached --unified=0 --no-color | head -n 200)"
+  diff_patch="$(git diff --cached --unified=0 --no-color | head -n 500)"
+
+  # Get individual file diffs for detailed descriptions
+  local changed_files
+  changed_files="$(git diff --cached --name-only --no-color)"
+  
+  local file_diffs=""
+  while IFS= read -r file; do
+    if [[ -n "$file" ]]; then
+      local file_diff
+      file_diff="$(git diff --cached --unified=3 --no-color -- "$file" | head -n 100)"
+      file_diffs="${file_diffs}\n\n--- File: $file ---\n${file_diff}"
+    fi
+  done <<< "$changed_files"
 
   prompt="$(cat <<EOF
-Write a Git commit subject line for the staged changes.
+Write a comprehensive Git commit message for the staged changes.
+
+Format:
+- First line: Subject line (imperative mood, max 72 chars)
+- Blank line
+- Detailed description paragraph explaining the overall changes
+- Blank line
+- For each changed file, include a bullet point describing what changed:
+  * filename: description of changes
 
 Rules:
-- Output ONLY the subject line.
-- Imperative mood (e.g., "Add …", "Fix …", "Refactor …", "Enhance …", "Update …").
-- Maximum detailed inforamtion about all changes
-- Be specific (mention the main area if it helps), but keep it short.
+- Subject line: Imperative mood (e.g., "Add …", "Fix …", "Refactor …", "Enhance …", "Update …")
+- Be specific and detailed about what changed in each file
+- Maximum detailed information about all changes
+- Use clear, concise language
 
 Changed files (name-status):
 $name_status
@@ -146,8 +168,8 @@ $name_status
 Diffstat:
 $diffstat
 
-Diff (truncated):
-$diff_patch
+File-by-file diffs:
+$file_diffs
 EOF
 )"
 
@@ -165,9 +187,15 @@ EOF
 
   rm -f "$tmp_out"
 
-  result="$(sanitize_commit_subject "$result")"
+  # Clean up the result but preserve multi-line structure
+  result="${result//$'\r'/}"
+  result="$(printf '%s' "$result" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+  
   if [[ -z "$result" ]]; then
-    result="Update project files"
+    result="Update project files
+
+Changes:
+$name_status"
   fi
 
   printf '%s\n' "$result"
@@ -212,10 +240,19 @@ while :; do
   fi
 
   msg="$(generate_commit_message)"
-  echo "Commit: $msg"
+  echo "Generated commit message:"
+  echo "$msg"
+  echo ""
 
   if ! $dry_run; then
-    git commit -m "$msg"
+    # Create temporary file with commit message
+    commit_msg_file="$(mktemp)"
+    printf '%s\n' "$msg" > "$commit_msg_file"
+    
+    # Use git commit -F to commit automatically with the generated message
+    git commit -F "$commit_msg_file"
+    
+    rm -f "$commit_msg_file"
     push_current_branch
   fi
 

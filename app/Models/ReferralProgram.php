@@ -23,23 +23,17 @@ class ReferralProgram extends Model
         'name',
         'handle',
         'description',
-        'is_active',
-        'starts_at',
-        'ends_at',
-        'eligible_customer_groups',
-        'eligible_users',
-        'eligible_conditions',
-        'referrer_rewards',
-        'referee_rewards',
-        'max_referrals_per_referrer',
-        'max_referrals_total',
-        'max_rewards_per_referrer',
-        'allow_self_referral',
-        'require_referee_purchase',
-        'stacking_mode',
-        'stacking_rules',
+        'status',
+        'start_at',
+        'end_at',
+        'channel_ids',
+        'currency_scope',
+        'currency_ids',
+        'audience_scope',
+        'audience_user_ids',
+        'audience_group_ids',
+        'terms_url',
         'referral_code_validity_days',
-        'reward_validity_days',
         'total_referrals',
         'total_rewards_issued',
         'total_reward_value',
@@ -47,63 +41,56 @@ class ReferralProgram extends Model
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
-        'eligible_customer_groups' => 'array',
-        'eligible_users' => 'array',
-        'eligible_conditions' => 'array',
-        'referrer_rewards' => 'array',
-        'referee_rewards' => 'array',
-        'stacking_rules' => 'array',
-        'allow_self_referral' => 'boolean',
-        'require_referee_purchase' => 'boolean',
-        'max_referrals_per_referrer' => 'integer',
-        'max_referrals_total' => 'integer',
-        'max_rewards_per_referrer' => 'integer',
+        'start_at' => 'datetime',
+        'end_at' => 'datetime',
+        'channel_ids' => 'array',
+        'currency_ids' => 'array',
+        'audience_user_ids' => 'array',
+        'audience_group_ids' => 'array',
         'referral_code_validity_days' => 'integer',
-        'reward_validity_days' => 'integer',
         'total_referrals' => 'integer',
         'total_rewards_issued' => 'integer',
         'total_reward_value' => 'decimal:2',
         'meta' => 'array',
     ];
 
+    // Status constants
+    const STATUS_DRAFT = 'draft';
+    const STATUS_ACTIVE = 'active';
+    const STATUS_PAUSED = 'paused';
+    const STATUS_ARCHIVED = 'archived';
+
+    // Currency scope
+    const CURRENCY_SCOPE_ALL = 'all';
+    const CURRENCY_SCOPE_SPECIFIC = 'specific';
+
+    // Audience scope
+    const AUDIENCE_SCOPE_ALL = 'all';
+    const AUDIENCE_SCOPE_USERS = 'users';
+    const AUDIENCE_SCOPE_GROUPS = 'groups';
+
     /**
-     * Get all referral codes for this program.
+     * Get referral rules for this program.
      */
-    public function referralCodes(): HasMany
+    public function rules(): HasMany
     {
-        return $this->hasMany(ReferralCode::class);
+        return $this->hasMany(ReferralRule::class);
     }
 
     /**
-     * Get active referral codes.
+     * Get active referral rules.
      */
-    public function activeReferralCodes(): HasMany
+    public function activeRules(): HasMany
     {
-        return $this->referralCodes()
-            ->where('is_active', true)
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            });
+        return $this->rules()->where('is_active', true);
     }
 
     /**
-     * Get all referral events.
+     * Get referral attributions.
      */
-    public function events(): HasMany
+    public function attributions(): HasMany
     {
-        return $this->hasMany(ReferralEvent::class);
-    }
-
-    /**
-     * Get all rewards issued.
-     */
-    public function rewards(): HasMany
-    {
-        return $this->hasMany(ReferralReward::class);
+        return $this->hasMany(ReferralAttribution::class, 'program_id');
     }
 
     /**
@@ -115,32 +102,19 @@ class ReferralProgram extends Model
     }
 
     /**
-     * Get eligible customer groups.
-     */
-    public function eligibleCustomerGroups(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            CustomerGroup::class,
-            'referral_program_customer_groups',
-            'referral_program_id',
-            'customer_group_id'
-        );
-    }
-
-    /**
      * Check if program is currently active.
      */
     public function isCurrentlyActive(): bool
     {
-        if (!$this->is_active) {
+        if ($this->status !== self::STATUS_ACTIVE) {
             return false;
         }
 
-        if ($this->starts_at && $this->starts_at->isFuture()) {
+        if ($this->start_at && $this->start_at->isFuture()) {
             return false;
         }
 
-        if ($this->ends_at && $this->ends_at->isPast()) {
+        if ($this->end_at && $this->end_at->isPast()) {
             return false;
         }
 
@@ -148,50 +122,33 @@ class ReferralProgram extends Model
     }
 
     /**
-     * Check if a user/customer is eligible for this program.
+     * Check if a user is eligible for this program.
      */
-    public function isEligible($user = null, $customer = null): bool
+    public function isEligibleForUser(?User $user = null): bool
     {
-        // Check if program is active
         if (!$this->isCurrentlyActive()) {
             return false;
         }
 
-        // Check customer groups
-        if ($this->eligible_customer_groups && $customer) {
-            $customerGroupIds = $customer->customerGroups()->pluck('id')->toArray();
-            $eligibleGroups = array_intersect($this->eligible_customer_groups, $customerGroupIds);
-            if (empty($eligibleGroups)) {
+        if (!$user) {
+            return $this->audience_scope === self::AUDIENCE_SCOPE_ALL;
+        }
+
+        // Check audience scope
+        switch ($this->audience_scope) {
+            case self::AUDIENCE_SCOPE_ALL:
+                return true;
+
+            case self::AUDIENCE_SCOPE_USERS:
+                return $this->audience_user_ids && in_array($user->id, $this->audience_user_ids);
+
+            case self::AUDIENCE_SCOPE_GROUPS:
+                return $this->audience_group_ids && $user->group_id && 
+                       in_array($user->group_id, $this->audience_group_ids);
+
+            default:
                 return false;
-            }
         }
-
-        // Check specific users
-        if ($this->eligible_users && $user) {
-            if (!in_array($user->id, $this->eligible_users)) {
-                return false;
-            }
-        }
-
-        // Check custom conditions
-        if ($this->eligible_conditions) {
-            // Custom logic can be implemented here
-            // For example: min_orders, min_spend, etc.
-        }
-
-        return true;
-    }
-
-    /**
-     * Check if program has reached max referrals limit.
-     */
-    public function hasReachedMaxReferrals(): bool
-    {
-        if ($this->max_referrals_total === null) {
-            return false;
-        }
-
-        return $this->total_referrals >= $this->max_referrals_total;
     }
 
     /**
@@ -199,14 +156,14 @@ class ReferralProgram extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('is_active', true)
+        return $query->where('status', self::STATUS_ACTIVE)
             ->where(function ($q) {
-                $q->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', now());
+                $q->whereNull('start_at')
+                    ->orWhere('start_at', '<=', now());
             })
             ->where(function ($q) {
-                $q->whereNull('ends_at')
-                    ->orWhere('ends_at', '>=', now());
+                $q->whereNull('end_at')
+                    ->orWhere('end_at', '>=', now());
             });
     }
 }

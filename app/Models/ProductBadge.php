@@ -95,19 +95,42 @@ class ProductBadge extends Model
     }
 
     /**
+     * Products relationship through assignments.
+     */
+    public function assignments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductBadgeAssignment::class, 'badge_id');
+    }
+
+    /**
      * Products relationship.
-     *
-     * @return BelongsToMany
      */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(
             \App\Models\Product::class,
-            config('lunar.database.table_prefix') . 'product_badge_product',
-            'product_badge_id',
+            config('lunar.database.table_prefix') . 'product_badge_assignments',
+            'badge_id',
             'product_id'
-        )->withPivot('is_auto_assigned', 'assigned_at', 'expires_at', 'position', 'priority')
+        )->using(ProductBadgeAssignment::class)
+          ->withPivot(['assignment_type', 'rule_id', 'priority', 'display_position', 'visibility_rules', 'starts_at', 'expires_at', 'assigned_at', 'assigned_by', 'is_active'])
           ->withTimestamps();
+    }
+
+    /**
+     * Rules relationship.
+     */
+    public function rules(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductBadgeRule::class, 'badge_id');
+    }
+
+    /**
+     * Performance metrics relationship.
+     */
+    public function performance(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductBadgePerformance::class, 'badge_id');
     }
 
     /**

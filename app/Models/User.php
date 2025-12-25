@@ -22,7 +22,15 @@ class User extends Authenticatable implements LunarUser
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
+        'status',
+        'group_id',
+        'referral_code',
+        'referral_link_slug',
+        'referred_by_user_id',
+        'referred_at',
+        'referral_blocked',
     ];
 
     /**
@@ -45,6 +53,61 @@ class User extends Authenticatable implements LunarUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'referred_at' => 'datetime',
+            'referral_blocked' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the user group.
+     */
+    public function group()
+    {
+        return $this->belongsTo(UserGroup::class, 'group_id');
+    }
+
+    /**
+     * Get the user who referred this user.
+     */
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
+    }
+
+    /**
+     * Get users referred by this user.
+     */
+    public function referees()
+    {
+        return $this->hasMany(User::class, 'referred_by_user_id');
+    }
+
+    /**
+     * Generate a unique referral code.
+     */
+    public function generateReferralCode(): string
+    {
+        if ($this->referral_code) {
+            return $this->referral_code;
+        }
+
+        $code = strtoupper(substr($this->name ?? $this->email, 0, 3)) . strtoupper(\Illuminate\Support\Str::random(6));
+        
+        while (User::where('referral_code', $code)->exists()) {
+            $code = strtoupper(substr($this->name ?? $this->email, 0, 3)) . strtoupper(\Illuminate\Support\Str::random(6));
+        }
+
+        $this->update(['referral_code' => $code]);
+        
+        return $code;
+    }
+
+    /**
+     * Get referral link.
+     */
+    public function getReferralLink(): string
+    {
+        $slug = $this->referral_link_slug ?: $this->referral_code;
+        return config('app.url') . '/ref/' . $slug;
     }
 }

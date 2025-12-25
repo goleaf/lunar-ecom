@@ -99,6 +99,12 @@ class ProductVariant extends LunarProductVariant
         'price_override',
         'cost_price',
         'compare_at_price',
+        'tax_inclusive',
+        'price_rounding_rules',
+        'map_price',
+        'price_locked',
+        'discount_override',
+        'pricing_hook',
         'weight',
         'enabled',
         'low_stock_threshold',
@@ -123,6 +129,11 @@ class ProductVariant extends LunarProductVariant
         'price_override' => 'integer',
         'cost_price' => 'integer',
         'compare_at_price' => 'integer',
+        'tax_inclusive' => 'boolean',
+        'price_rounding_rules' => 'array',
+        'map_price' => 'integer',
+        'price_locked' => 'boolean',
+        'discount_override' => 'array',
         'weight' => 'integer',
         'enabled' => 'boolean',
         'low_stock_threshold' => 'integer',
@@ -1227,6 +1238,94 @@ class ProductVariant extends LunarProductVariant
     public function getAttributeCombination(): array
     {
         return $this->attributeCombination?->combination ?? [];
+    }
+
+    /**
+     * Variant prices relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variantPrices()
+    {
+        return $this->hasMany(\App\Models\VariantPrice::class, 'variant_id');
+    }
+
+    /**
+     * Variant price hooks relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function priceHooks()
+    {
+        return $this->hasMany(\App\Models\VariantPriceHook::class, 'variant_id');
+    }
+
+    /**
+     * Get price using VariantPricingService.
+     *
+     * @param  int  $quantity
+     * @param  \Lunar\Models\Currency|null  $currency
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\CustomerGroup|null  $customerGroup
+     * @param  bool  $includeTax
+     * @return array
+     */
+    public function getPrice(
+        int $quantity = 1,
+        ?\Lunar\Models\Currency $currency = null,
+        ?\Lunar\Models\Channel $channel = null,
+        ?\Lunar\Models\CustomerGroup $customerGroup = null,
+        bool $includeTax = false
+    ): array {
+        $service = app(\App\Services\VariantPricingService::class);
+        return $service->calculatePrice($this, $quantity, $currency, $channel, $customerGroup, $includeTax);
+    }
+
+    /**
+     * Get tiered pricing.
+     *
+     * @param  \Lunar\Models\Currency|null  $currency
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\CustomerGroup|null  $customerGroup
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTieredPricing(
+        ?\Lunar\Models\Currency $currency = null,
+        ?\Lunar\Models\Channel $channel = null,
+        ?\Lunar\Models\CustomerGroup $customerGroup = null
+    ): \Illuminate\Support\Collection {
+        $service = app(\App\Services\VariantPricingService::class);
+        return $service->getTieredPricing($this, $currency, $channel, $customerGroup);
+    }
+
+    /**
+     * Check if price is locked.
+     *
+     * @return bool
+     */
+    public function isPriceLocked(): bool
+    {
+        return $this->price_locked ?? false;
+    }
+
+    /**
+     * Lock price (prevent discounts).
+     *
+     * @return bool
+     */
+    public function lockPrice(): bool
+    {
+        return $this->update(['price_locked' => true]);
+    }
+
+    /**
+     * Unlock price (allow discounts).
+     *
+     * @return bool
+     */
+    public function unlockPrice(): bool
+    {
+        return $this->update(['price_locked' => false]);
     }
 
     /**

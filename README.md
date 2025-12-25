@@ -950,135 +950,1545 @@ All Filament panel customization options are available. For more information, co
 
 ## Attributes
 
-This project implements attributes following the [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes):
+This project implements attributes following the [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes). Attributes allow you to associate custom data to Eloquent models, most commonly used with Products to store and present information to visitors.
 
-- **Field Types**: Text, Number, TranslatedText (with more available)
-- **Attribute Groups**: Logical grouping (e.g., "Product" and "SEO" groups)
-- **Attribute Data**: Stored using proper FieldType objects (e.g., `new \Lunar\FieldTypes\Text('value')`)
-- **Accessing Data**: Use `$product->translateAttribute('handle')` to retrieve attribute values
+**Overview**:
 
-The `AttributeHelper` class provides convenience methods for working with attributes programmatically.
+Attributes enable you to:
+- Store custom data on models (Products, ProductVariants, Collections)
+- Use different field types (Text, Number, TranslatedText, ListField)
+- Organize attributes into logical groups (e.g., "Product", "SEO")
+- Support multi-language content with TranslatedText
+- Control searchability and filterability
+- Define required fields and default values
+
+**Attribute Model**:
+
+```php
+use Lunar\Models\Attribute;
+```
+
+| Field                | Description                                                                       |
+|---------------------|-----------------------------------------------------------------------------------|
+| `attribute_type`    | Morph map of the model type (e.g., 'product', 'product_variant', 'collection')   |
+| `attribute_group_id`| The associated attribute group                                                   |
+| `position`          | Integer for sorting order within attribute groups                                |
+| `name`              | Laravel Collection of translations `{'en': 'Screen Size'}`                        |
+| `handle`            | Kebab-cased reference (e.g., 'screen-size')                                      |
+| `section`           | Optional name to define where attribute should be used                           |
+| `type`              | The field type class (e.g., `Lunar\FieldTypes\Number`)                          |
+| `required`          | Boolean indicating if field is required                                          |
+| `default_value`     | Default value for the attribute                                                  |
+| `configuration`     | Meta data stored as a Laravel Collection                                         |
+| `system`            | If `true`, indicates it should not be deleted                                    |
+| `searchable`        | Boolean indicating if attribute is searchable                                    |
+| `filterable`        | Boolean indicating if attribute can be used for filtering                        |
+
+**Field Types**:
+
+Lunar provides several field types for attributes:
+
+| Type                              | Description                              | Configuration Options                    |
+|-----------------------------------|------------------------------------------|-------------------------------------------|
+| `Lunar\FieldTypes\Number`         | Integer or Decimal values                | -                                         |
+| `Lunar\FieldTypes\Text`           | Single-line, Multi-line, or Rich Text   | `richtext` (boolean)                      |
+| `Lunar\FieldTypes\TranslatedText` | Multi-language text (single/multi/rich) | `richtext` (boolean)                      |
+| `Lunar\FieldTypes\ListField`      | Re-orderable list of text values         | -                                         |
+
+**Models that use Attributes**:
+
+- `Lunar\Models\Product` - Product-level attributes
+- `Lunar\Models\ProductVariant` - Variant-level attributes (e.g., color, size)
+- `Lunar\Models\Collection` - Collection-level attributes
+
+**Saving Attribute Data**:
+
+Attribute data must be stored using proper FieldType objects:
+
+```php
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\Number;
+use Lunar\FieldTypes\TranslatedText;
+use Lunar\Models\Product;
+
+$product = Product::create([
+    'product_type_id' => $productType->id,
+    'status' => 'published',
+    'attribute_data' => collect([
+        'meta_title' => new Text('The best screwdriver you will ever buy!'),
+        'pack_qty' => new Number(2),
+        'description' => new TranslatedText(collect([
+            'en' => new Text('Blue'),
+            'fr' => new Text('Bleu'),
+        ])),
+    ]),
+]);
+```
+
+**Using AttributeHelper**:
+
+The `AttributeHelper` class provides convenience methods:
+
+```php
+use App\Lunar\Attributes\AttributeHelper;
+use Lunar\Models\Product;
+
+// Create field type values
+$text = AttributeHelper::text('Some text');
+$number = AttributeHelper::number(42);
+$translated = AttributeHelper::translatedText([
+    'en' => 'English text',
+    'fr' => 'French text',
+]);
+
+// Get attribute value
+$name = AttributeHelper::get($product, 'name');
+$nameFr = AttributeHelper::get($product, 'name', 'fr');
+
+// Check if attribute exists
+if (AttributeHelper::has($product, 'weight')) {
+    $weight = AttributeHelper::get($product, 'weight');
+}
+
+// Get all attributes as array
+$allAttributes = AttributeHelper::all($product);
+$allAttributesFr = AttributeHelper::all($product, 'fr');
+```
+
+**Accessing Attribute Data**:
+
+When you access the `attribute_data` property, it's cast as a collection and resolved into corresponding field types:
+
+```php
+$product = Product::find(1);
+
+// Access attribute_data collection
+dump($product->attribute_data);
+
+// Output:
+// Illuminate\Support\Collection {
+//   "name" => Lunar\FieldTypes\TranslatedText {
+//     #value: Illuminate\Support\Collection {
+//       "en" => Lunar\FieldTypes\Text { #value: "Leather boots" }
+//       "fr" => Lunar\FieldTypes\Text { #value: "Bottes en cuires" }
+//     }
+//   }
+//   "description" => Lunar\FieldTypes\Text {
+//     #value: "<p>I'm a description!</p>"
+//   }
+// }
+```
+
+**Using translateAttribute()**:
+
+The `translateAttribute()` method retrieves attribute values with automatic locale handling:
+
+```php
+// Get translated attribute (defaults to current locale or first available)
+$name = $product->translateAttribute('name'); // "Leather boots"
+
+// Get specific locale
+$nameFr = $product->translateAttribute('name', 'fr'); // "Bottes en cuires"
+
+// Falls back to default if locale not found
+$nameFoo = $product->translateAttribute('name', 'FOO'); // "Leather boots" (fallback)
+```
+
+**Adding Attributes to Your Own Model**:
+
+You can add attributes to any Eloquent model:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Base\Casts\AsAttributeData;
+use Lunar\Base\Traits\HasAttributes;
+
+class MyCustomModel extends Model
+{
+    use HasAttributes;
+
+    /**
+     * Define which attributes should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'attribute_data' => AsAttributeData::class,
+    ];
+}
+```
+
+Then ensure your model's table has a JSON column called `attribute_data`:
+
+```php
+Schema::table('my_custom_models', function (Blueprint $table) {
+    $table->json('attribute_data')->nullable();
+});
+```
+
+**Advanced Usage**:
+
+Models that use attributes must:
+
+1. **Use the HasAttributes trait**:
+```php
+use Lunar\Base\Traits\HasAttributes;
+
+class ProductType extends Model
+{
+    use HasAttributes;
+}
+```
+
+2. **Cast attribute_data**:
+```php
+use Lunar\Base\Casts\AsAttributeData;
+
+class Product extends Model
+{
+    protected $casts = [
+        'attribute_data' => AsAttributeData::class,
+    ];
+}
+```
+
+**Attribute Groups**:
+
+Attribute Groups organize attributes logically for display purposes (e.g., "SEO" group with "Meta Title" and "Meta Description").
+
+```php
+use Lunar\Models\AttributeGroup;
+
+$seoGroup = AttributeGroup::create([
+    'name' => ['en' => 'SEO'],
+    'handle' => 'seo',
+    'position' => 1,
+]);
+```
+
+| Field    | Description                                           |
+|----------|-------------------------------------------------------|
+| `name`   | Laravel Collection of translations `{'en': 'SEO'}`   |
+| `handle` | Kebab-cased reference (e.g., 'seo')                  |
+| `position` | Integer for sorting order of groups                  |
+
+**Creating Attributes**:
+
+```php
+use Lunar\Models\Attribute;
+use Lunar\Models\AttributeGroup;
+
+$productGroup = AttributeGroup::where('handle', 'product')->first();
+
+// Create a Text attribute
+$description = Attribute::create([
+    'attribute_type' => 'product',
+    'attribute_group_id' => $productGroup->id,
+    'position' => 1,
+    'name' => ['en' => 'Description'],
+    'handle' => 'description',
+    'section' => 'main',
+    'type' => \Lunar\FieldTypes\Text::class,
+    'required' => false,
+    'searchable' => true,
+    'filterable' => false,
+    'system' => false,
+    'default_value' => null,
+    'configuration' => [
+        'richtext' => true, // Enable rich text editor
+    ],
+]);
+
+// Create a Number attribute
+$weight = Attribute::create([
+    'attribute_type' => 'product',
+    'attribute_group_id' => $productGroup->id,
+    'position' => 2,
+    'name' => ['en' => 'Weight (kg)'],
+    'handle' => 'weight',
+    'section' => 'main',
+    'type' => \Lunar\FieldTypes\Number::class,
+    'required' => false,
+    'searchable' => false,
+    'filterable' => true,
+    'system' => false,
+]);
+
+// Create a TranslatedText attribute
+$name = Attribute::create([
+    'attribute_type' => 'product',
+    'attribute_group_id' => $productGroup->id,
+    'position' => 0,
+    'name' => ['en' => 'Name'],
+    'handle' => 'name',
+    'section' => 'main',
+    'type' => \Lunar\FieldTypes\TranslatedText::class,
+    'required' => true,
+    'searchable' => true,
+    'filterable' => false,
+    'system' => true, // System attributes cannot be deleted
+    'configuration' => [
+        'richtext' => false,
+    ],
+]);
+```
+
+**Example: Product with Attributes**:
+
+```php
+use Lunar\Models\Product;
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\Number;
+use Lunar\FieldTypes\TranslatedText;
+
+$product = Product::create([
+    'product_type_id' => $productType->id,
+    'status' => 'published',
+    'attribute_data' => collect([
+        'name' => new TranslatedText(collect([
+            'en' => new Text('Premium Wireless Headphones'),
+            'fr' => new Text('Écouteurs sans fil premium'),
+        ])),
+        'description' => new Text('High-quality wireless headphones with noise cancellation.'),
+        'weight' => new Number(0.25), // 250g
+        'material' => new Text('Plastic, Metal'),
+        'meta_title' => new Text('Premium Wireless Headphones | Noise Cancelling Audio'),
+        'meta_description' => new Text('Discover premium wireless headphones with active noise cancellation.'),
+    ]),
+]);
+
+// Access attributes
+$name = $product->translateAttribute('name'); // "Premium Wireless Headphones"
+$nameFr = $product->translateAttribute('name', 'fr'); // "Écouteurs sans fil premium"
+$weight = $product->translateAttribute('weight'); // 0.25
+$description = $product->translateAttribute('description'); // "High-quality wireless headphones..."
+```
+
+**Best Practices**:
+
+- **Eager Load Attributes**: When loading models, eager load the attribute data required:
+  ```php
+  Product::with('attributeData')->get();
+  ```
+
+- **Use Appropriate Field Types**: 
+  - Use `TranslatedText` for multi-language content (names, descriptions)
+  - Use `Text` for single-language content or HTML
+  - Use `Number` for numeric values (weight, dimensions, quantities)
+  - Use `ListField` for re-orderable lists
+
+- **System Attributes**: Mark core attributes (like 'name') as `system: true` to prevent deletion
+
+- **Searchable vs Filterable**:
+  - Set `searchable: true` for attributes that should appear in search results
+  - Set `filterable: true` for attributes that can be used as filters (e.g., color, size)
+
+- **Attribute Groups**: Organize related attributes into groups (e.g., "Product", "SEO", "Shipping")
+
+- **Sections**: Use the `section` field to organize attributes within the admin panel
+
+**Documentation**: See [Lunar Attributes documentation](https://docs.lunarphp.com/1.x/reference/attributes)
 
 ## Products
 
-This project implements products following the [Lunar Products documentation](https://docs.lunarphp.com/1.x/reference/products):
+This project implements products following the [Lunar Products documentation](https://docs.lunarphp.com/1.x/reference/products). Products are what you sell in your store, with attributes defined against them and variations (variants) available.
 
-- **Product Creation**: Products created with `attribute_data` using FieldType objects
-- **Product Types**: Products belong to product types which define available attributes
-- **Product Identifiers**: SKU, GTIN, MPN, EAN (configurable validation in `config/lunar/products.php`)
-- **Product Options**: System-level options (e.g., Color, Size) with translatable values
-  - Options are defined at system level and shared across products
-  - Option values are translatable
-  - Variants can be generated automatically from option values
-- **Variants**: Products have variants with SKU, pricing, stock, and option values
-  - Products always have at least one variant
-  - Variants can have different SKU, GTIN, MPN, EAN identifiers
-  - Variants support quantity-based price breaks
-- **Customer Groups**: Products can be scheduled for customer groups
-- **Pricing**: Uses `Pricing` facade for fetching prices with quantity breaks and customer groups
-- **Price Breaks**: Quantity-based pricing supported
-- **Customer Group Pricing**: Different prices for different customer groups
+**Overview**:
 
-The `ProductHelper` and `ProductOptionHelper` classes provide convenience methods for working with products.
+Products in Lunar:
+- Always have at least one variant (from a UX perspective, editing a product edits one variant)
+- Belong to a `ProductType` which defines available attributes
+- Have a base SKU and brand name (in addition to custom attributes)
+- Support customer group scheduling
+- Support product options for variant generation
+- Support multiple pricing strategies (base, customer groups, quantity breaks)
 
-Example usage:
+**Creating a Product**:
+
 ```php
+use Lunar\Models\Product;
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\TranslatedText;
+
+$product = Product::create([
+    'product_type_id' => $productTypeId,
+    'status' => 'published', // or 'draft', 'pending'
+    'brand_id' => $brandId, // Optional
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('FooBar'),
+            'fr' => new Text('FooBar FR'),
+        ])),
+        'description' => new Text('This is a Foobar product.'),
+    ],
+]);
+```
+
+**Customer Groups**:
+
+You can assign customer groups to products, allowing you to either always have that product enabled for the customer group, or schedule specific dates when they should be active.
+
+**Attaching Customer Groups**:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\CustomerGroup;
+
+$product = Product::find(1);
+$customerGroup = CustomerGroup::find(1);
+
+// Schedule product to be enabled in 14 days for this customer group
+$product->scheduleCustomerGroup($customerGroup, now()->addDays(14));
+
+// Schedule the product to be enabled straight away
+$product->scheduleCustomerGroup($customerGroup);
+
+// Schedule multiple customer groups
+$product->scheduleCustomerGroup(CustomerGroup::all());
+
+// Schedule with start and end dates
+$product->scheduleCustomerGroup($customerGroup, now()->addDays(7), now()->addDays(30));
+```
+
+**Retrieving Products for a Customer Group**:
+
+Use the `customerGroup` scope to get all products related to a customer group:
+
+```php
+use Lunar\Models\Product;
+
+// Single customer group (ID or model)
+$products = Product::customerGroup(1)->paginate(50);
+
+// Multiple customer groups (array or collection)
+$products = Product::customerGroup([
+    $groupA,
+    $groupB,
+])->paginate(50);
+
+// Using helper
 use App\Lunar\Products\ProductHelper;
+
+$products = ProductHelper::forCustomerGroups($customerGroup)->paginate(50);
+```
+
+**Product Types**:
+
+Product Types (e.g., Television, T-Shirt, Book, Phone) assign appropriate attributes to products. Products of the same type share the same attribute structure.
+
+**Creating a Product Type**:
+
+```php
+use Lunar\Models\ProductType;
+
+$productType = ProductType::create([
+    'name' => 'Boots',
+    'handle' => 'boots', // Optional, auto-generated if omitted
+]);
+```
+
+**Associating Attributes to Product Types**:
+
+Product Types have attributes associated to them, which determine what fields are available when editing products:
+
+```php
+$productType->mappedAttributes()->attach([1, 2, 3]); // Attribute IDs
+
+// You can associate both Product and ProductVariant attributes
+// Product attributes appear on the product
+// ProductVariant attributes appear on the variant
+```
+
+**Retrieving the Product Type Relationship**:
+
+```php
+$product = Product::find(1);
+
+// Get product type
+$productType = $product->productType;
+
+// Eager load
+$product = Product::with('productType')->find(1);
+```
+
+**Product Identifiers**:
+
+You can add product identifiers to each product variant. These fields allow you to identify products and variants for use in internal systems.
+
+**Available Fields**:
+
+| Field | Description |
+|-------|-------------|
+| **SKU** | Stock Keeping Unit - usually eight alphanumeric digits for tracking stock levels internally |
+| **GTIN** | Global Trade Item Number - unique internationally recognized identifier (often with barcode) |
+| **MPN** | Manufacturer Part Number - product identifier from brand/manufacturer |
+| **EAN** | European Article Number - series of letters/numbers for inventory identification |
+
+**Validation**:
+
+Configure identifier validation in `config/lunar/products.php`:
+
+```php
+return [
+    'sku' => [
+        'required' => true,  // Set to true if SKU is required
+        'unique' => false,   // Set to true if SKU must be unique
+    ],
+    'gtin' => [
+        'required' => false,
+        'unique' => false,
+    ],
+    'mpn' => [
+        'required' => false,
+        'unique' => false,
+    ],
+    'ean' => [
+        'required' => false,
+        'unique' => false,
+    ],
+];
+```
+
+**Product Options**:
+
+Product Options define the different options a product has available (e.g., Color, Size). These are directly related to the different variants a product might have. Each `ProductOption` has multiple `ProductOptionValue` models.
+
+Product options and values are defined at a system level and are translatable.
+
+**Creating a ProductOption**:
+
+```php
+use Lunar\Models\ProductOption;
+
+$option = ProductOption::create([
+    'name' => [
+        'en' => 'Colour',
+        'fr' => 'Couleur',
+    ],
+    'label' => [
+        'en' => 'Colour',
+        'fr' => 'Couleur',
+    ],
+]);
+```
+
+**Creating Product Option Values**:
+
+```php
+use Lunar\Models\ProductOptionValue;
+
+$option->values()->createMany([
+    [
+        'name' => [
+            'en' => 'Blue',
+            'fr' => 'Bleu',
+        ],
+    ],
+    [
+        'name' => [
+            'en' => 'Red',
+            'fr' => 'Rouge',
+        ],
+    ],
+]);
+```
+
+**Using ProductOptionHelper**:
+
+```php
 use App\Lunar\Products\ProductOptionHelper;
+
+// Create option with values
+$colorOption = ProductOptionHelper::createOption('Colour', 'Colour', ['Red', 'Blue', 'Green']);
+
+// Create values for existing option
+ProductOptionHelper::createValues($option, ['Yellow', 'Purple']);
+
+// Get product options
+$options = ProductOptionHelper::getProductOptions($product);
+
+// Get variant values
+$values = ProductOptionHelper::getVariantValues($variant);
+```
+
+**Product Option Meta**:
+
+Product Option Values can have meta data stored:
+
+```php
+$value->update([
+    'meta' => [
+        'hex' => '#FF0000', // Color hex code
+        'image' => 'red.jpg',
+    ],
+]);
+```
+
+**Variants**:
+
+Products always have at least one variant. Variants represent different variations of a product (e.g., different sizes, colors).
+
+**Creating Variants**:
+
+```php
+use Lunar\Models\ProductVariant;
+use Lunar\Models\Price;
+use Lunar\Models\Currency;
+
+$variant = ProductVariant::create([
+    'product_id' => $product->id,
+    'sku' => 'PROD-001',
+    'gtin' => '1234567890123', // Optional
+    'mpn' => 'MPN123', // Optional
+    'ean' => 'EAN123', // Optional
+    'tax_class_id' => $taxClass->id,
+    'unit_quantity' => 1,
+    'min_quantity' => 1,
+    'quantity_increment' => 1,
+    'stock' => 100,
+    'backorder' => 0,
+    'purchasable' => 'always', // 'always', 'in_stock', 'never'
+    'shippable' => true,
+    'attribute_data' => [
+        'color' => new Text('Red'),
+        'size' => new Text('Large'),
+    ],
+]);
+
+// Create price for variant
+Price::create([
+    'priceable_type' => ProductVariant::class,
+    'priceable_id' => $variant->id,
+    'price' => 1999, // Price in smallest currency unit (cents for USD)
+    'currency_id' => $currency->id,
+    'tier' => 1,
+]);
+```
+
+**Generating Variants from Options**:
+
+You can automatically generate variants from product option values:
+
+```php
+use Lunar\Hub\Jobs\Products\GenerateVariants;
+use App\Lunar\Products\ProductOptionHelper;
+
+$product = Product::find(1);
+$sizeOption = ProductOption::where('name->en', 'Size')->first();
+$colorOption = ProductOption::where('name->en', 'Colour')->first();
+
+// Get all option value IDs
+$optionValueIds = $sizeOption->values->merge($colorOption->values)->pluck('id');
+
+// Generate variants (dispatches a job)
+GenerateVariants::dispatch($product, $optionValueIds->toArray());
+
+// Or using helper
+ProductOptionHelper::generateVariants($product, $optionValueIds);
+```
+
+When generating variants, the SKU will be derived from the Product's base SKU (if set) and suffixed with `-{count}`.
+
+**Pricing**:
+
+Lunar provides a comprehensive pricing system with support for base pricing, customer group pricing, quantity breaks, and tax-inclusive pricing.
+
+**Overview**:
+
+Pricing in Lunar supports:
+- Base pricing per variant
+- Customer group-specific pricing
+- Quantity-based price breaks
+- Tax-inclusive or tax-exclusive pricing
+- Multiple currencies
+- Custom pricing pipelines
+
+**Price Formatting**:
+
+Prices are stored in the smallest currency unit (e.g., cents for USD). Use the `Price` model's formatting methods:
+
+```php
+$price = Price::find(1);
+
+// Get formatted price
+$formatted = $price->price->formatted; // "$19.99"
+
+// Get decimal value
+$decimal = $price->price->decimal; // 19.99
+
+// Get raw value (in smallest unit)
+$raw = $price->price->value; // 1999
+```
+
+**Base Pricing**:
+
+Create base prices for variants:
+
+```php
+use Lunar\Models\Price;
+use Lunar\Models\ProductVariant;
+use Lunar\Models\Currency;
+
+Price::create([
+    'priceable_type' => ProductVariant::class,
+    'priceable_id' => $variant->id,
+    'price' => 1999, // $19.99
+    'currency_id' => $currency->id,
+    'tier' => 1, // Base tier
+]);
+```
+
+**Customer Group Pricing**:
+
+Create customer group-specific prices:
+
+```php
+use Lunar\Models\Price;
+use Lunar\Models\CustomerGroup;
+
+Price::create([
+    'priceable_type' => ProductVariant::class,
+    'priceable_id' => $variant->id,
+    'price' => 1799, // $17.99 for this customer group
+    'currency_id' => $currency->id,
+    'customer_group_id' => $customerGroup->id,
+    'tier' => 1,
+]);
+```
+
+**Price Break Pricing**:
+
+Create quantity-based price breaks:
+
+```php
+// Base price (1-9 items)
+Price::create([
+    'priceable_type' => ProductVariant::class,
+    'priceable_id' => $variant->id,
+    'price' => 199, // $1.99
+    'currency_id' => $currency->id,
+    'tier' => 1,
+    'min_quantity' => 1,
+]);
+
+// Price break (10+ items)
+Price::create([
+    'priceable_type' => ProductVariant::class,
+    'priceable_id' => $variant->id,
+    'price' => 150, // $1.50
+    'currency_id' => $currency->id,
+    'tier' => 1,
+    'min_quantity' => 10,
+]);
+```
+
+**Fetching the Price**:
+
+Use the `Pricing` facade to fetch prices:
+
+**Minimum Example**:
+
+```php
 use Lunar\Facades\Pricing;
 
-// Get price for a variant
+// Quantity of 1 is implied when not passed
+$pricing = Pricing::for($variant)->get();
+```
+
+**With Quantities**:
+
+```php
+$pricing = Pricing::qty(5)->for($variant)->get();
+```
+
+**With Customer Groups**:
+
+```php
+// Multiple customer groups
+$pricing = Pricing::customerGroups($groups)->for($variant)->get();
+
+// Single customer group
+$pricing = Pricing::customerGroup($group)->for($variant)->get();
+
+// If not passed, Lunar uses the default customer group
+```
+
+**Specific to a User**:
+
+```php
+// Guest price (always return guest price)
+$pricing = Pricing::guest()->for($variant)->get();
+
+// Specific user
+$pricing = Pricing::user($user)->for($variant)->get();
+
+// Current authenticated user (default behavior)
+$pricing = Pricing::for($variant)->get();
+```
+
+**With a Specific Currency**:
+
+```php
+use Lunar\Models\Currency;
+
+$currency = Currency::where('code', 'USD')->first();
+$pricing = Pricing::currency($currency)->for($variant)->get();
+
+// Default currency is implied if not passed
+```
+
+**For a Model**:
+
+If your model implements the `HasPrices` trait (like `ProductVariant`):
+
+```php
+$pricing = $variant->pricing()->qty(5)->get();
+```
+
+**PricingResponse Object**:
+
+The `get()` method returns a `PricingResponse` object:
+
+```php
+$pricing = Pricing::for($variant)->get();
+
+// The price that was matched given the criteria
+$pricing->matched; // Lunar\Models\Price
+
+// The base price associated to the variant
+$pricing->base; // Lunar\Models\Price
+
+// Collection of all price quantity breaks available
+$pricing->priceBreaks; // Collection<Price>
+
+// All customer group pricing available
+$pricing->customerGroupPrices; // Collection<Price>
+```
+
+**Getting All Prices for a Product**:
+
+Instead of loading all variants and fetching prices, use the `prices` relationship:
+
+```php
+$product = Product::find(1);
+$allPrices = $product->prices; // Collection of all Price models from all variants
+```
+
+**Using ProductHelper**:
+
+```php
+use App\Lunar\Products\ProductHelper;
+
+// Get price for variant
 $price = ProductHelper::getPrice($variant, 5); // quantity 5
 
 // Get full pricing information
 $pricing = ProductHelper::getPricing($variant, 1, $customerGroup);
-// $pricing->matched, $pricing->base, $pricing->priceBreaks, $pricing->customerGroupPrices
-
-// Schedule product for customer groups
-ProductHelper::scheduleCustomerGroups($product, $customerGroups, now()->addDays(14));
-
-// Get products for customer groups
-$products = ProductHelper::forCustomerGroups($customerGroup)->paginate(50);
-
-// Create product option with values
-$colorOption = ProductOptionHelper::createOption('Colour', 'Colour', ['Red', 'Blue', 'Green']);
-
-// Generate variants using option values
-ProductOptionHelper::generateVariants($product, $optionValueIds);
-
-// Or use Pricing facade directly
-use Lunar\Facades\Pricing;
-
-$pricing = Pricing::qty(5)->for($variant)->get();
-// $pricing->matched, $pricing->base, $pricing->priceBreaks, $pricing->customerGroupPrices
-
-// Get price for specific customer group
-$pricing = Pricing::customerGroup($customerGroup)->for($variant)->get();
-
-// Get price with currency
-$pricing = Pricing::currency($currency)->for($variant)->get();
+// Returns PricingResponse with matched, base, priceBreaks, customerGroupPrices
 ```
+
+**Storing Prices Inclusive of Tax**:
+
+Lunar allows you to store pricing inclusive of tax for charm pricing (e.g., $9.99):
+
+1. Set `stored_inclusive_of_tax` to `true` in `config/lunar/pricing.php`:
+
+```php
+return [
+    'stored_inclusive_of_tax' => true,
+    // ...
+];
+```
+
+2. Ensure your default Tax Zone is set up correctly with tax rates
+
+3. The cart will automatically calculate tax
+
+4. Use these methods on the `Price` model:
+
+```php
+$price = Price::find(1);
+
+// Get price including tax
+$priceIncTax = $price->priceIncTax();
+
+// Get price excluding tax
+$priceExTax = $price->priceExTax();
+
+// Get compare price including tax
+$comparePriceIncTax = $price->comparePriceIncTax();
+```
+
+**Customising Prices with Pipelines**:
+
+You can customize pricing using pipelines defined in `config/lunar/pricing.php`:
+
+```php
+// config/lunar/pricing.php
+return [
+    'pipelines' => [
+        App\Pipelines\Pricing\CustomPricingPipeline::class,
+    ],
+];
+```
+
+**Example Pipeline**:
+
+```php
+<?php
+
+namespace App\Pipelines\Pricing;
+
+use Closure;
+use Lunar\Base\PricingManagerInterface;
+
+class CustomPricingPipeline
+{
+    public function handle(PricingManagerInterface $pricingManager, Closure $next)
+    {
+        $matchedPrice = $pricingManager->pricing->matched;
+
+        // Modify the price
+        $matchedPrice->price->value = 200;
+
+        $pricingManager->pricing->matched = $matchedPrice;
+
+        return $next($pricingManager);
+    }
+}
+```
+
+Pipelines run from top to bottom in the configuration order.
+
+**Product Shipping**:
+
+Products and variants can have shipping information (dimensions, weight) for shipping calculations.
+
+**Product Dimensions**:
+
+Configure measurement units in `config/lunar/products.php`:
+
+```php
+return [
+    'dimensions' => [
+        'unit' => 'cm', // or 'in', 'm', 'ft'
+        'weight_unit' => 'kg', // or 'g', 'lb', 'oz'
+    ],
+];
+```
+
+**Getting and Converting Measurement Values**:
+
+```php
+$variant = ProductVariant::find(1);
+
+// Get dimensions
+$length = $variant->length_value; // Raw value
+$width = $variant->width_value;
+$height = $variant->height_value;
+$weight = $variant->weight_value;
+
+// Convert to different units (if conversion methods available)
+// Note: Conversion methods depend on Lunar version
+```
+
+**Volume Calculation**:
+
+Lunar can calculate volume from dimensions for shipping calculations.
+
+**Full Example: Creating a Product with Variants**:
+
+Here's a complete example creating Dr. Martens boots with multiple variants:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\ProductType;
+use Lunar\Models\ProductOption;
+use Lunar\Models\ProductOptionValue;
+use Lunar\Models\ProductVariant;
+use Lunar\Models\Price;
+use Lunar\Models\Currency;
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\TranslatedText;
+use Lunar\Hub\Jobs\Products\GenerateVariants;
+
+// 1. Set up the product type
+$productType = ProductType::create([
+    'name' => 'Boots',
+]);
+
+// Associate attributes to product type (assuming attributes exist)
+$productType->mappedAttributes()->attach([1, 2, 3]); // Attribute IDs
+
+// 2. Create the initial product
+$product = Product::create([
+    'product_type_id' => $productType->id,
+    'status' => 'published',
+    'brand_id' => $brandId, // Optional
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('1460 PATENT LEATHER BOOTS'),
+        ])),
+        'description' => new Text('Even more shades from our archive...'),
+    ],
+]);
+
+// 3. Create Product Options
+$colour = ProductOption::create([
+    'name' => ['en' => 'Colour'],
+    'label' => ['en' => 'Colour'],
+]);
+
+$size = ProductOption::create([
+    'name' => ['en' => 'Size'],
+    'label' => ['en' => 'Size'],
+]);
+
+// 4. Create Product Option Values
+$colour->values()->createMany([
+    ['name' => ['en' => 'Black']],
+    ['name' => ['en' => 'White']],
+    ['name' => ['en' => 'Pale Pink']],
+    ['name' => ['en' => 'Mid Blue']],
+]);
+
+$size->values()->createMany([
+    ['name' => ['en' => '3']],
+    ['name' => ['en' => '6']],
+    // ... more sizes
+]);
+
+// 5. Generate the variants
+$optionValueIds = $size->values->merge($colour->values)->pluck('id');
+GenerateVariants::dispatch($product, $optionValueIds->toArray());
+
+// After variants are generated, set pricing for each variant
+$currency = Currency::where('code', 'USD')->first();
+$variants = $product->variants;
+
+foreach ($variants as $variant) {
+    Price::create([
+        'priceable_type' => ProductVariant::class,
+        'priceable_id' => $variant->id,
+        'price' => 14999, // $149.99
+        'currency_id' => $currency->id,
+        'tier' => 1,
+    ]);
+}
+```
+
+**Best Practices**:
+
+- **Always Create Variants**: Products must have at least one variant
+- **Use Product Types**: Organize products by type for consistent attribute management
+- **Eager Load Relationships**: When loading products, eager load variants, prices, and options:
+  ```php
+  Product::with(['variants.prices', 'productType', 'options.values'])->get();
+  ```
+- **Validate Identifiers**: Configure SKU/GTIN/MPN/EAN validation based on your needs
+- **Use Price Breaks**: Implement quantity-based pricing for bulk discounts
+- **Customer Group Pricing**: Use customer group pricing for B2B scenarios
+- **Generate Variants**: Use the GenerateVariants job for products with multiple options
+
+**Documentation**: See [Lunar Products documentation](https://docs.lunarphp.com/1.x/reference/products)
 
 ## Media
 
-This project implements media handling following the [Lunar Media documentation](https://docs.lunarphp.com/1.x/reference/media):
+This project implements media handling following the [Lunar Media documentation](https://docs.lunarphp.com/1.x/reference/media). Lunar uses the [Spatie Laravel Media Library](https://spatie.be/docs/laravel-medialibrary) package for handling media across the platform.
 
-- **Media Library**: Uses Spatie Laravel Media Library package
-- **Supported Models**: Products and Collections support media
-- **Custom Media Definitions**: Custom conversions and collections defined in `CustomMediaDefinitions`
-- **Fallback Images**: Configured via `lunar/media` config or `.env` (FALLBACK_IMAGE_URL, FALLBACK_IMAGE_PATH)
-- **Media Collections**: Uses 'images' collection by default
-- **Conversions**: Supports 'small', 'thumb', 'medium', 'large', 'zoom' conversions
+**Overview**:
 
-**Configuration**:
+Lunar's media system provides:
+- Image uploads and management using Spatie Media Library
+- Automatic image conversions (thumbnails, sizes)
+- Fallback images for models without media
+- Custom media definitions for different models
+- Support for Products and Collections
+- FilePond integration for admin panel uploads
 
-Add fallback image configuration to your `.env` file:
+**Base Configuration**:
+
+Configuration is managed by the Spatie Media Library package. You can optionally publish the configuration:
+
+```bash
+php artisan vendor:publish --provider="Spatie\MediaLibrary\MediaLibraryServiceProvider" --tag="config"
+```
+
+**Supported Models**:
+
+The following models currently support media:
+- `Lunar\Models\Product`
+- `Lunar\Models\Collection`
+
+**Adding Media to Models**:
+
+If you've used the Spatie Media Library package before, you'll feel right at home:
+
+```php
+use Lunar\Models\Product;
+
+$product = Product::find(123);
+
+// Add media from uploaded file
+$product->addMedia($request->file('image'))->toMediaCollection('images');
+
+// Add media from path
+$product->addMediaFromUrl('https://example.com/image.jpg')->toMediaCollection('images');
+
+// Add media with custom properties
+$product->addMedia($file)
+    ->withCustomProperties(['alt' => 'Product image'])
+    ->toMediaCollection('images');
+```
+
+For more information, see [Associating files](https://spatie.be/docs/laravel-medialibrary/v10/basic-usage/associating-files) in the Spatie Media Library documentation.
+
+**Fetching Images**:
+
+```php
+use Lunar\Models\Product;
+
+$product = Product::find(123);
+
+// Get all images from collection
+$images = $product->getMedia('images');
+
+// Get first image
+$firstImage = $product->getFirstMedia('images');
+
+// Get first image URL
+$imageUrl = $product->getFirstMediaUrl('images');
+
+// Get first image URL with conversion
+$thumbnailUrl = $product->getFirstMediaUrl('images', 'thumb');
+
+// Get first image path
+$imagePath = $product->getFirstMediaPath('images');
+```
+
+For more information, see [Retrieving media](https://spatie.be/docs/laravel-medialibrary/v10/basic-usage/retrieving-media) in the Spatie Media Library documentation.
+
+**Fallback Images**:
+
+If your model does not contain any images, calling `getFirstMediaUrl()` or `getFirstMediaPath()` will return `null`. You can provide fallback paths/URLs in the config or `.env`:
+
+**Configuration** (`config/lunar/media.php`):
+
+```php
+'fallback' => [
+    'url' => env('FALLBACK_IMAGE_URL', null),
+    'path' => env('FALLBACK_IMAGE_PATH', null),
+]
+```
+
+**Environment Variables** (`.env`):
+
 ```env
 FALLBACK_IMAGE_URL=https://example.com/images/placeholder.jpg
 FALLBACK_IMAGE_PATH=/path/to/placeholder.jpg
 ```
 
-The `MediaHelper` class provides convenience methods for working with media programmatically.
+**Media Collections & Conversions**:
 
-Example usage:
+Lunar provides a way to customize media collections and conversions for each model that implements the `HasMedia` trait. Default settings are in `config/lunar/media.php`.
+
+**Custom Media Definitions**:
+
+To create custom media definitions, implement the `MediaDefinitionsInterface`:
+
+```php
+use Lunar\Base\MediaDefinitionsInterface;
+use Spatie\Image\Enums\Fit;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\MediaCollection;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+
+class CustomMediaDefinitions implements MediaDefinitionsInterface
+{
+    public function registerMediaConversions(HasMedia $model, Media $media = null): void
+    {
+        // Add a conversion for the admin panel
+        $model->addMediaConversion('small')
+            ->fit(Fit::Fill, 300, 300)
+            ->sharpen(10)
+            ->keepOriginalImageFormat();
+
+        // Additional conversions for storefront
+        $model->addMediaConversion('thumb')
+            ->fit(Fit::Fill, 400, 400)
+            ->sharpen(10)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('medium')
+            ->fit(Fit::Fill, 800, 800)
+            ->sharpen(10)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('large')
+            ->fit(Fit::Fill, 1200, 1200)
+            ->sharpen(10)
+            ->keepOriginalImageFormat();
+    }
+
+    public function registerMediaCollections(HasMedia $model): void
+    {
+        $fallbackUrl = config('lunar.media.fallback.url');
+        $fallbackPath = config('lunar.media.fallback.path');
+
+        // Reset to avoid duplication
+        $model->mediaCollections = [];
+
+        $collection = $model->addMediaCollection('images');
+
+        if ($fallbackUrl) {
+            $collection = $collection->useFallbackUrl($fallbackUrl);
+        }
+
+        if ($fallbackPath) {
+            $collection = $collection->useFallbackPath($fallbackPath);
+        }
+
+        $this->registerCollectionConversions($collection, $model);
+    }
+
+    protected function registerCollectionConversions(MediaCollection $collection, HasMedia $model): void
+    {
+        $conversions = [
+            'zoom' => ['width' => 500, 'height' => 500],
+            'large' => ['width' => 800, 'height' => 800],
+            'medium' => ['width' => 500, 'height' => 500],
+        ];
+
+        $collection->registerMediaConversions(function (Media $media) use ($model, $conversions) {
+            foreach ($conversions as $key => $conversion) {
+                $model->addMediaConversion($key)
+                    ->fit(Fit::Fill, $conversion['width'], $conversion['height'])
+                    ->keepOriginalImageFormat();
+            }
+        });
+    }
+
+    public function getMediaCollectionTitles(): array
+    {
+        return [
+            'images' => 'Images',
+        ];
+    }
+
+    public function getMediaCollectionDescriptions(): array
+    {
+        return [
+            'images' => '',
+        ];
+    }
+}
+```
+
+**Register Custom Definitions**:
+
+Register your custom class in `config/lunar/media.php`:
+
+```php
+return [
+    'definitions' => [
+        \Lunar\Models\Product::class => CustomMediaDefinitions::class,
+        \Lunar\Models\Collection::class => CustomMediaDefinitions::class,
+    ],
+    
+    'collection' => 'images',
+    
+    'fallback' => [
+        'url' => env('FALLBACK_IMAGE_URL', null),
+        'path' => env('FALLBACK_IMAGE_PATH', null),
+    ],
+];
+```
+
+**Generate Media Conversions**:
+
+To regenerate conversions (e.g., if you've changed the configuration), run:
+
+```bash
+php artisan media-library:regenerate
+```
+
+This creates queue jobs for each media entry to be re-processed. More information can be found on the [Spatie Media Library website](https://spatie.be/docs/laravel-medialibrary/v10/converting-images/regenerating-images).
+
+**Using MediaHelper**:
+
+The `MediaHelper` class provides convenience methods:
+
 ```php
 use App\Lunar\Media\MediaHelper;
+use Lunar\Models\Product;
 
-// Get images
+$product = Product::find(1);
+
+// Get all images
 $images = MediaHelper::getImages($product);
 
 // Get first image URL
 $imageUrl = MediaHelper::getFirstImageUrl($product, 'images', 'large');
 
+// Get first image path
+$imagePath = MediaHelper::getFirstImagePath($product, 'images', 'thumb');
+
 // Add image
 MediaHelper::addImage($product, $request->file('image'));
 
-// Or use directly with Spatie Media Library
-$product->addMedia($request->file('image'))->toMediaCollection('images');
-$product->getMedia('images');
-$product->getFirstMediaUrl('images', 'large');
+// Get thumbnail URL
+$thumbnail = MediaHelper::getThumbnailUrl($product, 'thumb');
+
+// Check if model has images
+if (MediaHelper::hasImages($product)) {
+    // Model has images
+}
+
+// Get all image URLs
+$allUrls = MediaHelper::getAllImageUrls($product, 'images', 'large');
 ```
+
+**Extending Your Own Models**:
+
+You can extend your own models to use media, either by using Lunar's implementation or by implementing Spatie Media Library directly.
+
+**Extending with Lunar**:
+
+To enable image transformations on your models within Lunar, simply add the `HasMedia` trait:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Base\Traits\HasMedia;
+
+class YourCustomModel extends Model
+{
+    use HasMedia;
+}
+```
+
+Now your models will auto-generate transforms as defined in your configuration and still use Spatie Media Library under the hood.
+
+**Using Spatie Media Library Directly**:
+
+If you want to use Spatie Media Library directly, follow their guides. However, you will not have access to Lunar's transformations or any other Lunar features.
+
+**Example: Complete Media Workflow**:
+
+```php
+use Lunar\Models\Product;
+use App\Lunar\Media\MediaHelper;
+
+$product = Product::find(1);
+
+// Add multiple images
+foreach ($request->file('images') as $file) {
+    MediaHelper::addImage($product, $file);
+}
+
+// Get all images with conversions
+$images = $product->getMedia('images')->map(function ($media) {
+    return [
+        'id' => $media->id,
+        'original' => $media->getUrl(),
+        'thumb' => $media->getUrl('thumb'),
+        'medium' => $media->getUrl('medium'),
+        'large' => $media->getUrl('large'),
+        'name' => $media->name,
+    ];
+});
+
+// Get first image with fallback
+$primaryImage = MediaHelper::getFirstImageUrl($product, 'images', 'large')
+    ?? config('lunar.media.fallback.url');
+
+// Delete specific image
+$product->clearMediaCollection('images');
+$product->deleteMedia($mediaId);
+```
+
+**Best Practices**:
+
+- **Eager Load Media**: When loading models, eager load media for better performance:
+  ```php
+  Product::with('media')->get();
+  ```
+
+- **Use Conversions**: Always use conversions for different display sizes (thumb, medium, large) instead of resizing in the browser
+
+- **Fallback Images**: Always configure fallback images for better UX when products don't have images
+
+- **Custom Definitions**: Create custom media definitions for different model types if you need different conversions
+
+- **Regenerate Conversions**: After changing conversion settings, run `php artisan media-library:regenerate`
+
+- **File Validation**: Validate uploaded files before adding to models:
+  ```php
+  $request->validate([
+      'image' => 'required|image|max:2048',
+  ]);
+  ```
+
+**Documentation**: 
+- See [Lunar Media documentation](https://docs.lunarphp.com/1.x/reference/media)
+- See [Spatie Media Library documentation](https://spatie.be/docs/laravel-medialibrary)
 
 ## Collections
 
-This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections):
+This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections). Collections are similar to Categories and allow you to organize products either explicitly or via criteria (like tags) for use on your storefront.
 
-- **Collection Groups**: Collections belong to collection groups (e.g., "Main Catalogue")
-- **Collections**: Created with `attribute_data` using FieldType objects (e.g., `new \Lunar\FieldTypes\TranslatedText(...)`)
-- **Nested Collections**: Child collections using nested sets (`appendNode()`)
-- **Adding Products**: Products added with positions using `sync()` method
-- **Sorting Products**: Collections support multiple sort types:
-  - `min_price:asc` / `min_price:desc` - Sort by minimum variant price
-  - `sku:asc` / `sku:desc` - Sort by SKU
-  - `custom` - Manual position ordering (default)
+**Overview**:
 
-The `CollectionHelper` class provides convenience methods for working with collections programmatically.
+Collections enable you to:
+- Organize products into logical groups (similar to categories)
+- Create nested hierarchies with parent and child collections
+- Add products explicitly or via criteria (e.g., tags)
+- Sort products using various criteria
+- Group collections into collection groups for flexibility (menus, landing pages)
 
-Example usage:
+**Collection Groups**:
+
+Collection Groups organize collections logically. A collection must belong to a collection group.
+
+**Create a Collection Group**:
+
+```php
+use Lunar\Models\CollectionGroup;
+
+$group = CollectionGroup::create([
+    'name' => 'Main Catalogue',
+    'handle' => 'main-catalogue', // Will auto-generate if omitted
+]);
+```
+
+**Collections**:
+
+Collections are hierarchical models that have products associated with them. They use the Laravel Nested Set package for hierarchy management.
+
+**Create a Collection**:
+
+```php
+use Lunar\Models\Collection;
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\TranslatedText;
+
+$collection = Collection::create([
+    'collection_group_id' => $group->id,
+    'type' => 'static', // 'static' or 'dynamic' (for tag-based collections)
+    'sort' => 'custom', // Sort type (see Sorting Products below)
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('Clearance'),
+            'fr' => new Text('Liquidation'),
+        ])),
+    ],
+]);
+```
+
+**Add a Child Collection**:
+
+Collections can have child collections, forming a nested hierarchy:
+
+```php
+use Lunar\Models\Collection;
+
+// Create child collection
+$child = Collection::create([
+    'collection_group_id' => $group->id,
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('Child Collection'),
+        ])),
+    ],
+]);
+
+// Add child to parent using appendNode (Laravel Nested Set)
+$collection->appendNode($child);
+```
+
+This results in:
+```
+- Clearance
+    - Child Collection
+```
+
+Lunar uses the [Laravel Nested Set](https://github.com/lazychaser/laravel-nestedset) package, so you can use all its methods for managing hierarchies:
+- `appendNode()` - Add as last child
+- `prependNode()` - Add as first child
+- `insertAfter()` - Insert after sibling
+- `insertBefore()` - Insert before sibling
+- `children` - Get child collections
+- `parent` - Get parent collection
+- `ancestors` - Get all ancestors
+- `descendants` - Get all descendants
+- `breadcrumb` - Get breadcrumb path
+
+**Adding Products**:
+
+Products are related to collections using a `BelongsToMany` relationship with a pivot column for `position`:
+
+```php
+use Lunar\Models\Collection;
+use Lunar\Models\Product;
+
+$collection = Collection::find(1);
+
+// Add products with positions
+$products = [
+    1 => ['position' => 1], // Product ID 1 at position 1
+    2 => ['position' => 2], // Product ID 2 at position 2
+    3 => ['position' => 3], // Product ID 3 at position 3
+];
+
+$collection->products()->sync($products);
+
+// Or use syncWithoutDetaching to add without removing existing
+$collection->products()->syncWithoutDetaching([
+    4 => ['position' => 4],
+]);
+
+// Or attach a single product
+$collection->products()->attach($productId, ['position' => 5]);
+
+// Remove products
+$collection->products()->detach([1, 2]);
+```
+
+**Sorting Products**:
+
+Lunar provides several built-in sorting criteria for products in collections:
+
+| Sort Type        | Description                                    |
+|------------------|------------------------------------------------|
+| `min_price:asc`  | Sort by minimum variant price (ascending)      |
+| `min_price:desc` | Sort by minimum variant price (descending)     |
+| `sku:asc`        | Sort by SKU (ascending)                        |
+| `sku:desc`       | Sort by SKU (descending)                       |
+| `custom`         | Manual position ordering (uses pivot position) |
+
+**Setting Sort Type**:
+
+```php
+$collection->sort = 'min_price:asc';
+$collection->save();
+```
+
+When you update products in a collection, Lunar automatically sorts them according to the collection's sort type.
+
+**Using CollectionHelper**:
+
+The `CollectionHelper` class provides convenience methods:
+
 ```php
 use App\Lunar\Collections\CollectionHelper;
+use Lunar\Models\Collection;
 
-// Get sorted products from a collection
+$collection = Collection::find(1);
+
+// Get sorted products (respects collection's sort type)
 $products = CollectionHelper::getSortedProducts($collection);
 
 // Add products with positions
@@ -1087,137 +2497,947 @@ CollectionHelper::addProducts($collection, [
     2 => ['position' => 2],
 ]);
 
-// Create child collection
+// Create and add child collection
 $child = Collection::create([/*...*/]);
-CollectionHelper::addChildCollection($parent, $child);
+CollectionHelper::addChildCollection($collection, $child);
+
+// Get child collections
+$children = CollectionHelper::getChildren($collection);
+
+// Get breadcrumb path
+$breadcrumb = CollectionHelper::getBreadcrumb($collection);
 ```
+
+**Storefront Integration**:
+
+The `CollectionController` demonstrates how to display collections:
+
+```php
+use Lunar\Models\Collection;
+use Lunar\Models\Url;
+use App\Lunar\Collections\CollectionHelper;
+
+// Find collection by slug
+$url = Url::where('slug', $slug)
+    ->where('element_type', Collection::class)
+    ->firstOrFail();
+
+$collection = Collection::with(['group', 'children', 'media', 'urls'])
+    ->findOrFail($url->element_id);
+
+// Get sorted products
+$products = CollectionHelper::getSortedProducts($collection);
+
+// Get breadcrumb for navigation
+$breadcrumb = $collection->breadcrumb;
+```
+
+**Collection Types**:
+
+Collections can be:
+- **Static**: Products are explicitly added to the collection
+- **Dynamic**: Products are automatically included based on criteria (e.g., tags)
+
+**Example: Complete Collection Setup**:
+
+```php
+use Lunar\Models\CollectionGroup;
+use Lunar\Models\Collection;
+use Lunar\Models\Product;
+use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\TranslatedText;
+
+// 1. Create collection group
+$group = CollectionGroup::create([
+    'name' => 'Main Catalogue',
+    'handle' => 'main-catalogue',
+]);
+
+// 2. Create parent collection
+$electronics = Collection::create([
+    'collection_group_id' => $group->id,
+    'type' => 'static',
+    'sort' => 'min_price:asc',
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('Electronics'),
+        ])),
+    ],
+]);
+
+// 3. Create child collection
+$phones = Collection::create([
+    'collection_group_id' => $group->id,
+    'type' => 'static',
+    'sort' => 'sku:asc',
+    'attribute_data' => [
+        'name' => new TranslatedText(collect([
+            'en' => new Text('Phones'),
+        ])),
+    ],
+]);
+
+// 4. Add child to parent
+$electronics->appendNode($phones);
+
+// 5. Add products with positions
+$products = Product::whereIn('id', [1, 2, 3])->get();
+$phones->products()->sync([
+    1 => ['position' => 1],
+    2 => ['position' => 2],
+    3 => ['position' => 3],
+]);
+
+// 6. Get sorted products
+$sortedProducts = CollectionHelper::getSortedProducts($phones);
+```
+
+**Best Practices**:
+
+- **Collection Groups**: Use collection groups to organize collections for different purposes (menus, landing pages, navigation)
+- **Nested Collections**: Use child collections to create category hierarchies
+- **Sort Types**: Choose appropriate sort types based on your storefront needs
+- **Eager Loading**: Always eager load relationships when displaying collections:
+  ```php
+  Collection::with(['group', 'children', 'products.variants.prices', 'urls'])->get();
+  ```
+- **Position Management**: Use positions for custom sorting to control product order
+- **Dynamic Collections**: Consider using dynamic collections with tags for automatic product inclusion
+
+**Database Schema**:
+
+| Field                | Description                                    |
+|----------------------|------------------------------------------------|
+| `id`                 | Primary key                                    |
+| `collection_group_id`| Foreign key to collection groups               |
+| `type`               | Collection type ('static' or 'dynamic')        |
+| `sort`               | Sort type (min_price:asc, sku:asc, custom, etc.) |
+| `attribute_data`     | JSON attribute data                            |
+| `_lft`, `_rgt`       | Nested set left/right values                  |
+| `parent_id`          | Parent collection ID (for nested sets)         |
+| `created_at`         | Timestamp                                      |
+| `updated_at`         | Timestamp                                      |
+| `deleted_at`         | Soft delete timestamp                          |
+
+**Documentation**: See [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections)
 
 ## Product Associations
 
-This project implements product associations as described in the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations):
+This project implements product associations as described in the [Lunar Associations documentation](https://docs.lunarphp.com/1.x/reference/associations). Associations allow you to relate products to each other for cross-selling, up-selling, and showing alternatives.
 
-- **Cross-sell**: Complementary products (e.g., headphones with smartphones)
-- **Up-sell**: Higher value alternatives (e.g., premium versions)
-- **Alternate**: Alternative product options
+**Overview**:
 
-The storefront displays associations on product detail pages. Associations are managed via:
-- `AssociationManager` class for synchronous operations (seeders, commands)
-- `Product::associate()` method for asynchronous operations (queued jobs)
-- `ProductAssociationController` for API management
+Associations enable you to:
+- **Cross-sell**: Suggest complementary products (e.g., headphones with smartphones, cases with phones)
+- **Up-sell**: Promote higher-value alternatives (e.g., premium versions, larger storage)
+- **Alternate**: Show alternative product options (e.g., when out of stock or similar products)
+- **Custom types**: Create your own association types for specific use cases
 
-Example usage:
+**Loading Associations**:
+
+```php
+use Lunar\Models\Product;
+
+$product = Product::find(1);
+
+// Get all associations
+$associations = $product->associations;
+
+// Each association provides:
+$association->parent;  // The owning product
+$association->target; // The associated product
+$association->type;   // The association type (cross-sell, up-sell, alternate)
+```
+
+**Types of Association**:
+
+### Cross Sell
+
+Cross-selling encourages customers to purchase complementary products in addition to their original purchase.
+
+**Creating Cross-sell Associations**:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
+
+// Single product
+$product->associate(
+    $crossSellProduct,
+    ProductAssociationEnum::CROSS_SELL
+);
+
+// Multiple products at once
+$product->associate(
+    [$productA, $productB],
+    ProductAssociationEnum::CROSS_SELL
+);
+```
+
+**Fetching Cross-sell Products**:
+
+```php
+// Via relationship scope
+$crossSellProducts = $product->associations()
+    ->crossSell()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+
+// Via type scope
+$crossSellProducts = $product->associations()
+    ->type(ProductAssociationEnum::CROSS_SELL)
+    ->get()
+    ->pluck('target');
+```
+
+### Up Sell
+
+Upselling encourages customers to upgrade or include add-ons to increase order value.
+
+**Creating Up-sell Associations**:
+
+```php
+// Single product
+$product->associate(
+    $upSellProduct,
+    ProductAssociationEnum::UP_SELL
+);
+
+// Multiple products
+$product->associate(
+    [$productA, $productB],
+    ProductAssociationEnum::UP_SELL
+);
+```
+
+**Fetching Up-sell Products**:
+
+```php
+// Via relationship scope
+$upSellProducts = $product->associations()
+    ->upSell()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+
+// Via type scope
+$upSellProducts = $product->associations()
+    ->type(ProductAssociationEnum::UP_SELL)
+    ->get()
+    ->pluck('target');
+```
+
+### Alternate
+
+Alternate products are alternatives to the current product, useful when products are out of stock or you want to show similar options.
+
+**Creating Alternate Associations**:
+
+```php
+// Single product
+$product->associate(
+    $alternateProduct,
+    ProductAssociationEnum::ALTERNATE
+);
+
+// Multiple products
+$product->associate(
+    [$productA, $productB],
+    ProductAssociationEnum::ALTERNATE
+);
+```
+
+**Fetching Alternate Products**:
+
+```php
+// Via relationship scope
+$alternateProducts = $product->associations()
+    ->alternate()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+
+// Via type scope
+$alternateProducts = $product->associations()
+    ->type(ProductAssociationEnum::ALTERNATE)
+    ->get()
+    ->pluck('target');
+```
+
+### Custom Types
+
+You can create custom association types beyond the built-in ones:
+
+```php
+// Create custom association type
+$product->associate(
+    $targetProduct,
+    'my-custom-type'
+);
+
+// Fetch custom type associations
+$customAssociations = $product->associations()
+    ->type('my-custom-type')
+    ->get()
+    ->pluck('target');
+```
+
+**Removing Associations**:
+
+```php
+use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
+
+// Remove all associations for a product
+$product->dissociate($associatedProduct);
+
+// Remove from multiple products (array or collection)
+$product->dissociate([$productA, $productB]);
+
+// Remove only specific association type
+$product->dissociate(
+    $associatedProduct,
+    ProductAssociationEnum::CROSS_SELL
+);
+```
+
+**Synchronous vs Asynchronous Operations**:
+
+Lunar provides two ways to create associations:
+
+1. **Asynchronous (Queued)**: `Product::associate()` dispatches a job (recommended for web requests)
+2. **Synchronous**: Use `AssociationManager` for immediate creation (recommended for seeders, commands)
+
+**Using AssociationManager (Synchronous)**:
+
 ```php
 use App\Lunar\Associations\AssociationManager;
 use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
 
 $manager = new AssociationManager();
-$manager->associate($product, $targetProduct, ProductAssociationEnum::CROSS_SELL);
+
+// Associate single product
+$manager->associate(
+    $product,
+    $targetProduct,
+    ProductAssociationEnum::CROSS_SELL
+);
+
+// Associate multiple products
+$manager->associate(
+    $product,
+    [$productA, $productB],
+    ProductAssociationEnum::UP_SELL
+);
+
+// Dissociate products
+$manager->dissociate($product, $targetProduct);
+$manager->dissociate($product, $targetProduct, ProductAssociationEnum::CROSS_SELL);
 ```
+
+**Storefront Integration**:
+
+The `ProductController` demonstrates how to load and display associations:
+
+```php
+use Lunar\Models\Product;
+
+$product = Product::with([
+    'associations.target.variants.prices',
+    'associations.target.images',
+])->find($id);
+
+// Get associations by type
+$crossSell = $product->associations()
+    ->crossSell()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+
+$upSell = $product->associations()
+    ->upSell()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+
+$alternate = $product->associations()
+    ->alternate()
+    ->with('target.variants.prices', 'target.images')
+    ->get()
+    ->pluck('target');
+```
+
+**API Management**:
+
+The `ProductAssociationController` provides API endpoints for managing associations:
+
+- `GET /api/products/{product}/associations` - Get all associations
+- `POST /api/products/{product}/associations` - Create association
+- `DELETE /api/products/{product}/associations/{targetProduct}` - Remove association
+
+**Database Schema**:
+
+| Field                    | Description                      |
+|--------------------------|----------------------------------|
+| `id`                     | Primary key                      |
+| `product_parent_id`      | The owning product               |
+| `product_target_id`      | The associated product           |
+| `type`                   | Association type (cross-sell, up-sell, alternate, or custom) |
+| `created_at`             | Timestamp                        |
+| `updated_at`             | Timestamp                        |
+
+**Example Use Cases**:
+
+1. **E-commerce Storefront**: Display "Customers also bought" (cross-sell), "Upgrade to Pro" (up-sell), "Similar products" (alternate)
+2. **Product Recommendations**: Use associations to power recommendation engines
+3. **Bundle Suggestions**: Cross-sell complementary products to create bundles
+4. **Stock Alternatives**: Show alternate products when items are out of stock
+5. **Upsell Campaigns**: Promote premium versions or add-ons during checkout
+
+**Best Practices**:
+
+- Use cross-sell for complementary products that enhance the original purchase
+- Use up-sell for higher-value alternatives that increase order value
+- Use alternate for similar products or when showing alternatives
+- Eager load associations with `->with('target.variants.prices', 'target.images')` for better performance
+- Use `AssociationManager` in seeders and commands to avoid queued jobs
+- Use `Product::associate()` in web requests for better performance (queued)
 
 ## Search
 
-This project implements search following the [Lunar Search documentation](https://docs.lunarphp.com/1.x/reference/search):
+This project implements search following the [Lunar Search documentation](https://docs.lunarphp.com/1.x/reference/search). Search is configured using the Laravel Scout package, which provides search out of the box and makes it easy to customize and tailor searching to your needs.
 
-- **Laravel Scout**: Uses Laravel Scout package for search functionality
-- **Searchable Models**: Products, Collections, Customers, Orders, ProductOptions, and Brands are searchable
-- **Engine Mapping**: Different models can use different search engines (e.g., Algolia for Products, Meilisearch for Collections)
-- **Indexers**: Custom indexers for each model type handle how data is indexed
-- **Soft Deletes**: Scout soft_delete is set to `true` to prevent soft-deleted models from appearing in search results
+**Overview**:
+
+Lunar's search system:
+- Uses Laravel Scout for search functionality
+- Supports multiple search engines (database, Meilisearch, Algolia, etc.)
+- Allows different models to use different search engines
+- Provides custom indexers for controlling how data is indexed
+- Handles soft deletes automatically
+
+**Initial Setup**:
+
+The database driver provides basic search to get you up and running, but you'll likely want to implement something with more power, such as Meilisearch or Algolia.
 
 **Configuration**:
 
-1. Set your Scout driver in `.env`:
+1. **Set Scout Driver in `.env`**:
+
 ```env
 SCOUT_DRIVER=database  # or meilisearch, algolia, etc.
 SCOUT_SOFT_DELETE=true  # Required by Lunar - prevents soft-deleted models from appearing in search
 ```
 
-2. If you need to publish Scout config (optional):
+2. **Publish Scout Config (Optional)**:
+
 ```bash
 php artisan vendor:publish --provider="Laravel\Scout\ScoutServiceProvider"
 ```
 
-   Then ensure `soft_delete` is set to `true` in `config/scout.php`:
+Then ensure `soft_delete` is set to `true` in `config/scout.php`:
+
 ```php
 'soft_delete' => env('SCOUT_SOFT_DELETE', true),
 ```
 
-3. Configure engine mapping in `config/lunar/search.php`:
+**Important**: By default, Scout has `soft_delete` set to `false`. You **must** set this to `true` otherwise you will see soft-deleted models appear in your search results.
+
+3. **Configure Models for Indexing**:
+
+In `config/lunar/search.php`, you can specify which models should be indexed:
+
 ```php
-'engine_map' => [
-    Lunar\Models\Product::class => 'algolia',
-    Lunar\Models\Collection::class => 'meilisearch',
-    Lunar\Models\Order::class => 'meilisearch',
+'models' => [
+    // These models are required by the system, do not change them.
+    \Lunar\Models\Collection::class,
+    \Lunar\Models\Product::class,
+    \Lunar\Models\ProductOption::class,
+    \Lunar\Models\Order::class,
+    \Lunar\Models\Customer::class,
+    \Lunar\Models\Brand::class,
+    
+    // Below you can add your own models for indexing
+    // App\Models\Example::class,
 ],
 ```
 
-4. Index your models:
-```bash
-# Index all models listed in config/lunar/search.php
-php artisan lunar:search:index
+4. **Configure Indexers**:
 
-# For Meilisearch, set up filterable and searchable attributes
+Map model classes to their indexer classes in `config/lunar/search.php`:
+
+```php
+'indexers' => [
+    \Lunar\Models\Product::class => \Lunar\Search\ProductIndexer::class,
+    \Lunar\Models\Collection::class => \Lunar\Search\CollectionIndexer::class,
+    // Use custom indexer for products
+    // \Lunar\Models\Product::class => \App\Lunar\Search\Indexers\CustomProductIndexer::class,
+],
+```
+
+**Index Records**:
+
+If you installed Lunar in an existing project and want to use the database records with the search engine, or you need to do maintenance on the indexes, use the index command:
+
+```bash
+php artisan lunar:search:index
+```
+
+This command will import the records of the models listed in `config/lunar/search.php`. Use `--help` to see available options:
+
+```bash
+php artisan lunar:search:index --help
+```
+
+**Meilisearch Setup**:
+
+If you're using the Meilisearch package, use the command to create filterable and searchable attributes on Meilisearch indexes:
+
+```bash
 php artisan lunar:meilisearch:setup
 ```
 
-**Usage**:
+This sets up the proper configuration for Meilisearch indexes, including:
+- Searchable attributes
+- Filterable attributes
+- Sortable attributes
+- Ranking rules
+
+**Engine Mapping**:
+
+By default, Scout will use the driver defined in your `.env` file as `SCOUT_DRIVER`. So if that's set to `meilisearch`, all your models will be indexed via the Meilisearch driver.
+
+This can present issues if you want to use a service like Algolia for Products - you wouldn't want all your Orders being indexed there since it will ramp up the record count and the cost.
+
+Lunar allows you to define what driver you want to use per model. It's all defined in `config/lunar/search.php`:
 
 ```php
-use App\Lunar\Search\SearchHelper;
+'engine_map' => [
+    \Lunar\Models\Product::class => 'algolia',
+    \Lunar\Models\Order::class => 'meilisearch',
+    \Lunar\Models\Collection::class => 'meilisearch',
+    \Lunar\Models\Customer::class => 'database',
+],
+```
+
+If a model class isn't added to the config, it will use the Scout default (from `SCOUT_DRIVER`).
+
+**Usage**:
+
+**Basic Search**:
+
+```php
 use Lunar\Models\Product;
 
 // Search products using Scout
 $products = Product::search('query')
     ->where('status', 'published')
     ->paginate(12);
+```
 
-// Or use the helper
+**Using SearchHelper**:
+
+```php
+use App\Lunar\Search\SearchHelper;
+
+// Search products with pagination
 $products = SearchHelper::searchProducts('query', 12, 1);
 
-// Get search results as collection
+// Get search results as collection (without pagination)
 $results = SearchHelper::searchProductsCollection('query', 10);
+
+// Check if search is configured
+if (SearchHelper::isConfigured()) {
+    // Search is ready to use
+}
+
+// Get current Scout driver
+$driver = SearchHelper::getDriver();
+```
+
+**Advanced Search**:
+
+```php
+use Lunar\Models\Product;
+
+// Search with filters (Meilisearch/Algolia)
+$products = Product::search('query')
+    ->where('status', 'published')
+    ->where('product_type_id', 1)
+    ->where('brand_id', 5)
+    ->paginate(12);
+
+// Search with sorting
+$products = Product::search('query')
+    ->orderBy('created_at', 'desc')
+    ->paginate(12);
+
+// Search with eager loading
+$products = Product::search('query')
+    ->with(['variants.prices', 'media', 'collections'])
+    ->paginate(12);
+```
+
+**Storefront Integration**:
+
+The `SearchController` demonstrates how to implement search in your storefront:
+
+```php
+use App\Http\Controllers\Storefront\SearchController;
+use Illuminate\Http\Request;
+
+// In your routes
+Route::get('/search', [SearchController::class, 'index']);
+
+// The controller handles:
+// - Query parameter extraction
+// - Scout search with fallback to database
+// - Pagination
+// - Error handling
 ```
 
 **Available Drivers**:
-- `database` - Basic database search (default, no setup required)
-- `meilisearch` - Full-text search engine (requires Meilisearch installation)
-- `algolia` - Cloud search service (requires Algolia account)
-- Custom drivers can be configured via `config/lunar/search.php`
+
+| Driver | Description | Setup Required |
+|--------|-------------|----------------|
+| `database` | Basic database search (default) | No setup required |
+| `meilisearch` | Full-text search engine | Requires Meilisearch installation |
+| `algolia` | Cloud search service | Requires Algolia account and API keys |
+| Custom | Custom search implementation | Requires custom driver implementation |
+
+**Meilisearch Setup**:
+
+1. Install Meilisearch:
+```bash
+# Using Docker
+docker run -d -p 7700:7700 getmeili/meilisearch:latest
+
+# Or install via package manager
+# See: https://www.meilisearch.com/docs/learn/getting_started/installation
+```
+
+2. Configure in `.env`:
+```env
+SCOUT_DRIVER=meilisearch
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=your_master_key  # Optional, for production
+```
+
+3. Set up indexes:
+```bash
+php artisan lunar:meilisearch:setup
+```
+
+**Algolia Setup**:
+
+1. Get Algolia credentials from your Algolia dashboard
+
+2. Configure in `.env`:
+```env
+SCOUT_DRIVER=algolia
+ALGOLIA_APP_ID=your_app_id
+ALGOLIA_SECRET=your_secret_key
+```
+
+3. Install Algolia Scout driver:
+```bash
+composer require algolia/algoliasearch-client-php
+```
 
 **Custom Indexers**:
 
-Create custom indexers to control how models are indexed. See the [Extending Search documentation](https://docs.lunarphp.com/1.x/extending/search) and the Extension Points section below for details.
+Create custom indexers to control how models are indexed. The project includes a `CustomProductIndexer` at `app/Lunar/Search/Indexers/CustomProductIndexer.php` as an example.
 
-The project includes a `CustomProductIndexer` at `app/Lunar/Search/Indexers/CustomProductIndexer.php` as an example.
+**Register Custom Indexer**:
+
+In `config/lunar/search.php`:
+
+```php
+'indexers' => [
+    \Lunar\Models\Product::class => \App\Lunar\Search\Indexers\CustomProductIndexer::class,
+],
+```
+
+**Custom Indexer Example**:
+
+```php
+use Lunar\Search\ScoutIndexer;
+use Lunar\Models\Product;
+
+class CustomProductIndexer extends ScoutIndexer
+{
+    public function searchableAs(Model $model): string
+    {
+        return 'products';
+    }
+
+    public function shouldBeSearchable(Model $model): bool
+    {
+        // Only index published products
+        return $model->status === 'published';
+    }
+
+    public function makeAllSearchableUsing(Builder $query): Builder
+    {
+        return $query->with(['variants', 'media', 'collections', 'tags']);
+    }
+
+    public function getSortableFields(): array
+    {
+        return ['created_at', 'updated_at', 'price'];
+    }
+
+    public function getFilterableFields(): array
+    {
+        return ['status', 'product_type_id', 'brand_id'];
+    }
+
+    public function toSearchableArray(Model $model, string $engine): array
+    {
+        // Define what data gets indexed
+        return [
+            'id' => $model->id,
+            'name' => $model->translateAttribute('name'),
+            'status' => $model->status,
+            // ... more fields
+        ];
+    }
+}
+```
+
+**Searchable Models**:
+
+The following models are searchable by default:
+- `Lunar\Models\Product`
+- `Lunar\Models\Collection`
+- `Lunar\Models\Customer`
+- `Lunar\Models\Order`
+- `Lunar\Models\ProductOption`
+- `Lunar\Models\Brand`
+
+**Adding Your Own Models**:
+
+To make your own models searchable:
+
+1. Add the model to `config/lunar/search.php`:
+
+```php
+'models' => [
+    // ... existing models ...
+    App\Models\YourModel::class,
+],
+```
+
+2. Make your model use Scout's `Searchable` trait:
+
+```php
+use Laravel\Scout\Searchable;
+
+class YourModel extends Model
+{
+    use Searchable;
+    
+    // Implement toSearchableArray() if needed
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            // ... more fields
+        ];
+    }
+}
+```
+
+3. Optionally create a custom indexer (see above)
+
+4. Index your models:
+
+```bash
+php artisan lunar:search:index
+```
+
+**Best Practices**:
+
+- **Always Set `soft_delete` to `true`**: Prevents soft-deleted models from appearing in search results
+- **Use Engine Mapping**: Use different engines for different models to optimize costs and performance
+- **Eager Load Relationships**: In custom indexers, use `makeAllSearchableUsing()` to eager load relationships
+- **Index Regularly**: Run `php artisan lunar:search:index` after bulk imports or updates
+- **Use Appropriate Drivers**: 
+  - Use `database` for development and small datasets
+  - Use `meilisearch` for full-text search with good performance
+  - Use `algolia` for cloud-based search with advanced features
+- **Custom Indexers**: Create custom indexers to control exactly what gets indexed and how
+- **Filter Published Content**: Always filter by status in your search queries (e.g., `->where('status', 'published')`)
+
+**Documentation**: See [Lunar Search documentation](https://docs.lunarphp.com/1.x/reference/search)
 
 ## URLs
 
-This project implements URLs following the [Lunar URLs documentation](https://docs.lunarphp.com/1.x/reference/urls):
+This project implements URLs following the [Lunar URLs documentation](https://docs.lunarphp.com/1.x/reference/urls). URLs are not to be confused with Routes in Laravel. They allow you to create vanity URLs for resources without having to use IDs.
 
-- **URL Slugs**: Products and Collections use URL slugs instead of IDs (e.g., `/products/apple-iphone` instead of `/products/1`)
-- **HasUrls Trait**: Models use the `HasUrls` trait to support URLs (Products and Collections have this by default)
-- **Default URLs**: Only one default URL per language per resource
-- **Automatic Generation**: URLs are automatically generated using the `UrlGenerator` class (configured in `config/lunar/urls.php`)
-- **Language Support**: URLs are language-specific (each language can have its own slug)
+**Overview**:
 
-**Configuration**:
+URLs in Lunar:
+- Provide SEO-friendly slugs instead of IDs (e.g., `/products/apple-iphone` instead of `/products/1`)
+- Are language-specific (each language can have its own slug)
+- Support default URLs (only one default URL per language per resource)
+- Can be automatically generated from model attributes
+- Are polymorphic (can be attached to any model using the `HasUrls` trait)
 
-URLs are configured in `config/lunar/urls.php`:
+**Creating a URL**:
 
 ```php
-// Enable/disable automatic URL generation
-'generator' => UrlGenerator::class, // or null to disable
+use Lunar\Models\Url;
+use Lunar\Models\Product;
+use Lunar\Models\Language;
 
-// Set whether URLs are required
-'required' => true,
+$product = Product::find(1);
+$language = Language::where('code', 'en')->first();
+
+// Create a URL
+$url = Url::create([
+    'slug' => 'apple-iphone',
+    'language_id' => $language->id,
+    'element_type' => Product::class,
+    'element_id' => $product->id,
+    'default' => true,
+]);
 ```
 
-**Usage**:
+**Default URLs**:
+
+A URL cannot share the same `slug` and `language_id` columns. You can only have one `default` URL per language for that resource.
+
+If you add a new default URL for a language which already has one, the new URL will override and become the new default:
+
+```php
+use Lunar\Models\Url;
+use Lunar\Models\Language;
+
+$language = Language::find(1);
+
+// Create first default URL
+$urlA = Url::create([
+    'slug' => 'apple-iphone',
+    'language_id' => $language->id,
+    'element_type' => Product::class,
+    'element_id' => 1,
+    'default' => true,
+]);
+
+$urlA->default; // true
+
+// Create second default URL (same language)
+$urlB = Url::create([
+    'slug' => 'apple-iphone-26',
+    'language_id' => $language->id,
+    'element_type' => Product::class,
+    'element_id' => 1,
+    'default' => true,
+]);
+
+$urlA->refresh();
+$urlA->default; // false (automatically updated)
+$urlB->default; // true (new default)
+
+// Create default URL for different language (no conflict)
+$urlC = Url::create([
+    'slug' => 'apple-iphone-french',
+    'language_id' => 2, // Different language
+    'element_type' => Product::class,
+    'element_id' => 1,
+    'default' => true,
+]);
+
+$urlA->default; // false
+$urlB->default; // true (still default for language 1)
+$urlC->default; // true (default for language 2)
+```
+
+**Deleting a URL**:
+
+When you delete a URL, if it was the default, Lunar will automatically look for a non-default URL of the same language and assign that as the new default:
+
+```php
+use Lunar\Models\Url;
+
+$urlA = Url::create([
+    'slug' => 'apple-iphone',
+    'language_id' => 1,
+    'element_type' => Product::class,
+    'element_id' => 1,
+    'default' => true,
+]);
+
+$urlB = Url::create([
+    'slug' => 'apple-iphone-26',
+    'language_id' => 1,
+    'element_type' => Product::class,
+    'element_id' => 1,
+    'default' => false,
+]);
+
+$urlB->default; // false
+
+// Delete the default URL
+$urlA->delete();
+
+// Lunar automatically promotes the non-default URL
+$urlB->refresh();
+$urlB->default; // true (automatically updated)
+```
+
+**Adding URL Support to Models**:
+
+Out of the box, Lunar has pre-configured models which have URLs:
+- `Lunar\Models\Product`
+- `Lunar\Models\Collection`
+
+You can add URLs to your own models by using the `HasUrls` trait:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Base\Traits\HasUrls;
+
+class MyModel extends Model
+{
+    use HasUrls;
+    
+    // ... rest of your model
+}
+```
+
+You will then have access to the `urls` relationship which is polymorphic:
+
+```php
+$myModel = MyModel::find(1);
+
+// Get all URLs for the model
+$myModel->urls; // Collection of Url models
+
+// Get default URL
+$defaultUrl = $myModel->urls->where('default', true)->first();
+
+// Get slug
+$slug = $myModel->urls->first()->slug;
+```
+
+**Using UrlHelper**:
+
+The `UrlHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Urls\UrlHelper;
 use Lunar\Models\Product;
 use Lunar\Models\Language;
+
+$product = Product::find(1);
+$language = Language::where('code', 'en')->first();
 
 // Create a URL for a model
 $url = UrlHelper::create($product, 'apple-iphone', $language, true);
@@ -1225,80 +3445,587 @@ $url = UrlHelper::create($product, 'apple-iphone', $language, true);
 // Get default URL for a model
 $defaultUrl = UrlHelper::getDefaultUrl($product, $language);
 
-// Get default slug
+// Get default slug (convenience method)
 $slug = UrlHelper::getDefaultSlug($product);
-
-// Update or create default URL
-UrlHelper::updateOrCreateDefault($product, 'new-slug');
-
-// Check if slug is available
-$available = UrlHelper::isSlugAvailable('my-slug', $language);
 
 // Get all URLs for a model
 $urls = UrlHelper::getUrls($product);
 
-// Using the relationship directly (if model uses HasUrls trait)
-$product->urls; // Collection of all URLs
-$product->urls->where('default', true)->first(); // Default URL
-$product->urls->first()->slug; // Get slug
+// Update or create default URL
+$url = UrlHelper::updateOrCreateDefault($product, 'new-slug', $language);
 ```
 
-**Adding URL Support to Custom Models**:
+**Automatically Generating URLs**:
+
+You can tell Lunar to generate URLs for models that use the `HasUrls` trait automatically by setting the `generator` config option in `config/lunar/urls.php`.
+
+**Configuration**:
 
 ```php
-use Lunar\Base\Traits\HasUrls;
-
-class MyModel extends Model
-{
-    use HasUrls;
+// config/lunar/urls.php
+return [
+    // Set whether URLs are required
+    'required' => true,
     
-    // Now you can use:
-    // $model->urls; // Get all URLs
+    // URL generator class (or null to disable)
+    'generator' => \Lunar\Generators\UrlGenerator::class,
+];
+```
+
+By default, this will use the default language and take the `name` attribute as the slug. The default generator uses `Str::slug()` to create URL-friendly slugs.
+
+**Disable Automatic Generation**:
+
+To disable automatic URL generation:
+
+```php
+return [
+    'generator' => null,
+];
+```
+
+**Custom URL Generator**:
+
+You can create your own URL generator class. It just needs to have a `handle` method which accepts a `Model`:
+
+```php
+<?php
+
+namespace App\Generators;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Lunar\Models\Language;
+use Lunar\Models\Url;
+
+class MyCustomUrlGenerator
+{
+    public function handle(Model $model): void
+    {
+        // Get default language
+        $language = Language::where('default', true)->first();
+        
+        if (!$language) {
+            return;
+        }
+        
+        // Generate slug from model's name attribute
+        $name = $model->translateAttribute('name');
+        $slug = Str::slug($name);
+        
+        // Ensure slug is unique for this language
+        $uniqueSlug = $this->makeUniqueSlug($slug, $language->id, $model);
+        
+        // Create or update the default URL
+        Url::updateOrCreate(
+            [
+                'element_type' => $model->getMorphClass(),
+                'element_id' => $model->id,
+                'language_id' => $language->id,
+                'default' => true,
+            ],
+            [
+                'slug' => $uniqueSlug,
+            ]
+        );
+    }
+    
+    protected function makeUniqueSlug(string $slug, int $languageId, Model $model): string
+    {
+        $baseSlug = $slug;
+        $counter = 1;
+        
+        while (Url::where('slug', $slug)
+            ->where('language_id', $languageId)
+            ->where('element_type', '!=', $model->getMorphClass())
+            ->where('element_id', '!=', $model->id)
+            ->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        return $slug;
+    }
 }
+```
+
+Then register it in `config/lunar/urls.php`:
+
+```php
+return [
+    'generator' => \App\Generators\MyCustomUrlGenerator::class,
+];
 ```
 
 **Storefront Usage**:
 
-The storefront uses URLs to generate SEO-friendly links:
-- Products: `/products/{slug}`
-- Collections: `/collections/{slug}`
+The storefront uses URLs to generate SEO-friendly links and find resources by slug:
 
-Controllers find resources by slug:
+**Finding Products by Slug**:
+
 ```php
-$url = Url::where('slug', $slug)
-    ->where('element_type', Product::class)
-    ->firstOrFail();
+use Lunar\Models\Url;
+use Lunar\Models\Product;
+
+// In your controller
+public function show(string $slug)
+{
+    // Find product by URL slug
+    $url = Url::where('slug', $slug)
+        ->where('element_type', Product::class)
+        ->firstOrFail();
     
-$product = Product::findOrFail($url->element_id);
+    $product = Product::with(['variants.prices', 'media', 'collections'])
+        ->findOrFail($url->element_id);
+    
+    return view('storefront.products.show', compact('product'));
+}
 ```
+
+**Finding Collections by Slug**:
+
+```php
+use Lunar\Models\Url;
+use Lunar\Models\Collection;
+
+// In your controller
+public function show(string $slug)
+{
+    // Find collection by URL slug
+    $url = Url::where('slug', $slug)
+        ->where('element_type', Collection::class)
+        ->firstOrFail();
+    
+    $collection = Collection::with(['group', 'children', 'media', 'urls'])
+        ->findOrFail($url->element_id);
+    
+    return view('storefront.collections.show', compact('collection'));
+}
+```
+
+**Generating Links**:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\Collection;
+
+$product = Product::find(1);
+$collection = Collection::find(1);
+
+// Get default URL slug
+$productSlug = $product->urls->where('default', true)->first()?->slug;
+$collectionSlug = $collection->urls->where('default', true)->first()?->slug;
+
+// Generate URLs
+$productUrl = route('products.show', $productSlug);
+$collectionUrl = route('collections.show', $collectionSlug);
+```
+
+**Route Examples**:
+
+```php
+// routes/web.php
+Route::get('/products/{slug}', [ProductController::class, 'show'])
+    ->name('products.show');
+
+Route::get('/collections/{slug}', [CollectionController::class, 'show'])
+    ->name('collections.show');
+```
+
+**Database Schema**:
+
+| Field         | Description                                    |
+|---------------|------------------------------------------------|
+| `id`          | Primary key                                    |
+| `language_id` | Foreign key to languages                       |
+| `element_type`| Polymorphic type (e.g., Product, Collection)   |
+| `element_id`  | Polymorphic ID                                 |
+| `slug`        | URL slug (unique per language)                 |
+| `default`     | Boolean indicating if this is the default URL  |
+| `created_at`  | Timestamp                                      |
+| `updated_at`  | Timestamp                                      |
+
+**Best Practices**:
+
+- **Use Slugs Instead of IDs**: Always use slugs in your storefront URLs for SEO and user-friendliness
+- **Language-Specific URLs**: Create separate URLs for each language if you support multiple languages
+- **Default URLs**: Always have a default URL for each language to ensure resources are accessible
+- **Unique Slugs**: Ensure slugs are unique per language (Lunar handles this automatically)
+- **Eager Load URLs**: When loading models, eager load URLs if you'll need them:
+  ```php
+  Product::with('urls')->get();
+  ```
+- **Automatic Generation**: Use automatic URL generation for convenience, but customize the generator if needed
+- **Slug Validation**: Validate slugs when creating/updating URLs to ensure they're URL-friendly
+
+**Documentation**: See [Lunar URLs documentation](https://docs.lunarphp.com/1.x/reference/urls)
 
 ## Addresses
 
-This project implements addresses following the [Lunar Addresses documentation](https://docs.lunarphp.com/1.x/reference/addresses):
+This project implements addresses following the [Lunar Addresses documentation](https://docs.lunarphp.com/1.x/reference/addresses). Customers may save addresses to make checking-out easier and quicker.
 
-- **Addresses**: Customer addresses with shipping and billing defaults
-- **Countries**: Country data with ISO2, ISO3 codes
-- **States**: State/province data linked to countries
-- **Address Data Import**: Command to import countries and states from external database
+**Overview**:
 
-**Setup**:
+Lunar's address system provides:
+- Customer address management with shipping and billing defaults
+- Country data with ISO2, ISO3 codes, phone codes, and flags
+- State/province data linked to countries
+- Address data import from external database
+- Support for delivery instructions and contact information
 
-1. Import address data (countries and states):
-```bash
-php artisan lunar:import:address-data
+**Addresses**:
+
+The `Address` model stores customer addresses with the following fields:
+
+| Field                  | Description                                               |
+|------------------------|-----------------------------------------------------------|
+| `id`                   | Primary key                                               |
+| `customer_id`          | Foreign key to customers (nullable)                       |
+| `title`                | Title (Mr, Mrs, etc.) - nullable                          |
+| `first_name`           | First name                                                |
+| `last_name`            | Last name                                                 |
+| `company_name`         | Company name - nullable                                   |
+| `line_one`             | First address line                                        |
+| `line_two`             | Second address line - nullable                           |
+| `line_three`           | Third address line - nullable                            |
+| `city`                 | City                                                     |
+| `state`                | State/province - nullable                                |
+| `postcode`             | Postal/ZIP code - nullable                               |
+| `country_id`           | Foreign key to countries                                 |
+| `delivery_instructions`| Delivery instructions - nullable                         |
+| `contact_email`        | Contact email - nullable                                 |
+| `contact_phone`        | Contact phone - nullable                                 |
+| `last_used_at`         | Timestamp for when the address was last used in an order |
+| `meta`                 | JSON metadata - nullable                                 |
+| `shipping_default`     | Boolean - default shipping address                        |
+| `billing_default`      | Boolean - default billing address                        |
+| `created_at`           | Timestamp                                                |
+| `updated_at`           | Timestamp                                                |
+
+**Creating an Address**:
+
+```php
+use Lunar\Models\Address;
+use Lunar\Models\Country;
+use Lunar\Models\Customer;
+
+$customer = Customer::find(1);
+$country = Country::where('iso2', 'US')->first();
+
+$address = Address::create([
+    'customer_id' => $customer->id,
+    'title' => 'Mr',
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'company_name' => 'Acme Corp',
+    'line_one' => '123 Main Street',
+    'line_two' => 'Suite 100',
+    'line_three' => null,
+    'city' => 'New York',
+    'state' => 'NY',
+    'postcode' => '10001',
+    'country_id' => $country->id,
+    'delivery_instructions' => 'Leave at front door',
+    'contact_email' => 'john@example.com',
+    'contact_phone' => '+1-555-123-4567',
+    'shipping_default' => true,
+    'billing_default' => true,
+    'meta' => [
+        'custom_field' => 'value',
+    ],
+]);
 ```
 
-This command imports country and state data from the [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database).
+**Using AddressHelper**:
 
-**Usage**:
+The `AddressHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Addresses\AddressHelper;
 use Lunar\Models\Address;
 use Lunar\Models\Country;
-use Lunar\Models\State;
+use Lunar\Models\Customer;
+
+$customer = Customer::find(1);
 
 // Create an address
+$address = AddressHelper::create($customer->id, [
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'line_one' => '123 Main Street',
+    'city' => 'New York',
+    'country_id' => $country->id,
+    'shipping_default' => true,
+]);
+
+// Get all addresses for a customer
+$addresses = AddressHelper::getForCustomer($customer->id);
+
+// Get default shipping address
+$shippingAddress = AddressHelper::getDefaultShipping($customer->id);
+
+// Get default billing address
+$billingAddress = AddressHelper::getDefaultBilling($customer->id);
+
+// Set an address as default shipping
+AddressHelper::setDefaultShipping($address);
+
+// Set an address as default billing
+AddressHelper::setDefaultBilling($address);
+
+// Mark address as used (updates last_used_at)
+AddressHelper::markAsUsed($address);
+
+// Format address as string
+$formatted = AddressHelper::format($address);
+```
+
+**Countries**:
+
+The `Country` model stores country data:
+
+| Field       | Description |
+|-------------|-------------|
+| `id`        | Primary key |
+| `name`      | Country name |
+| `iso3`      | ISO 3166-1 alpha-3 code (3 letters) |
+| `iso2`      | ISO 3166-1 alpha-2 code (2 letters) |
+| `phonecode` | Phone country code |
+| `capital`   | Capital city |
+| `currency`  | Currency code |
+| `native`    | Native name |
+| `emoji`     | Flag emoji |
+| `emoji_u`   | Flag emoji Unicode |
+| `created_at`| Timestamp |
+| `updated_at`| Timestamp |
+
+**Working with Countries**:
+
+```php
+use Lunar\Models\Country;
+use App\Lunar\Addresses\AddressHelper;
+
+// Get all countries
+$countries = Country::orderBy('name')->get();
+
+// Or using helper
+$countries = AddressHelper::getCountries();
+
+// Get country by ISO2 code
+$country = Country::where('iso2', 'US')->first();
+// Or using helper
+$country = AddressHelper::getCountryByIso2('US');
+
+// Get country by ISO3 code
+$country = Country::where('iso3', 'USA')->first();
+// Or using helper
+$country = AddressHelper::getCountryByIso3('USA');
+
+// Access country properties
+$country->name;      // "United States"
+$country->iso2;      // "US"
+$country->iso3;      // "USA"
+$country->phonecode; // "+1"
+$country->currency;  // "USD"
+$country->emoji;     // "🇺🇸"
+```
+
+**States**:
+
+The `State` model stores state/province data linked to countries:
+
+| Field       | Description |
+|-------------|-------------|
+| `id`        | Primary key |
+| `country_id`| Foreign key to countries |
+| `name`      | State/province name |
+| `code`      | State/province code (e.g., "NY", "CA") |
+| `created_at`| Timestamp |
+| `updated_at`| Timestamp |
+
+**Working with States**:
+
+```php
+use Lunar\Models\State;
+use Lunar\Models\Country;
+use App\Lunar\Addresses\AddressHelper;
+
+$country = Country::where('iso2', 'US')->first();
+
+// Get all states for a country
+$states = State::where('country_id', $country->id)
+    ->orderBy('name')
+    ->get();
+
+// Or using helper
+$states = AddressHelper::getStates($country);
+$states = AddressHelper::getStates($country->id);
+
+// Get state by code
+$state = State::where('country_id', $country->id)
+    ->where('code', 'NY')
+    ->first();
+
+// Or using helper
+$state = AddressHelper::getStateByCode($country, 'NY');
+$state = AddressHelper::getStateByCode($country->id, 'NY');
+
+// Access state properties
+$state->name;        // "New York"
+$state->code;        // "NY"
+$state->country_id;  // 1
+```
+
+**Address Data Import**:
+
+Data for Countries and States is provided by the [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database). You can use the following command to import countries and states:
+
+```bash
+php artisan lunar:import:address-data
+```
+
+This command will:
+- Import all countries with ISO2, ISO3, phone codes, currencies, and flags
+- Import all states/provinces linked to their countries
+- Update existing records if they already exist
+
+**Setup**:
+
+1. **Import address data** (countries and states):
+```bash
+php artisan lunar:import:address-data
+```
+
+This is a one-time setup command that populates your database with country and state data.
+
+**Example: Complete Address Workflow**:
+
+```php
+use Lunar\Models\Address;
+use Lunar\Models\Country;
+use Lunar\Models\State;
+use Lunar\Models\Customer;
+use App\Lunar\Addresses\AddressHelper;
+
+// 1. Get or import countries/states (run import command first)
+$country = Country::where('iso2', 'US')->first();
+$state = State::where('country_id', $country->id)
+    ->where('code', 'NY')
+    ->first();
+
+// 2. Create an address for a customer
+$customer = Customer::find(1);
+
+$address = Address::create([
+    'customer_id' => $customer->id,
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'line_one' => '123 Main Street',
+    'city' => 'New York',
+    'state' => $state->code, // "NY"
+    'postcode' => '10001',
+    'country_id' => $country->id,
+    'shipping_default' => true,
+    'billing_default' => true,
+]);
+
+// 3. Get customer's addresses
+$addresses = $customer->addresses; // Relationship
+
+// 4. Get default addresses
+$shippingAddress = AddressHelper::getDefaultShipping($customer->id);
+$billingAddress = AddressHelper::getDefaultBilling($customer->id);
+
+// 5. Update default addresses
+AddressHelper::setDefaultShipping($address);
+AddressHelper::setDefaultBilling($address);
+
+// 6. Format address for display
+$formatted = AddressHelper::format($address);
+// Output:
+// John Doe
+// 123 Main Street
+// New York, NY 10001
+// United States
+```
+
+**Using Addresses in Carts and Orders**:
+
+Addresses are used in carts and orders for shipping and billing:
+
+```php
+use Lunar\Models\Cart;
+use Lunar\Models\Address;
+
+$cart = Cart::find(1);
+$address = Address::find(1);
+
+// Set shipping address on cart
+$cart->setShippingAddress($address);
+
+// Set billing address on cart
+$cart->setBillingAddress($address);
+
+// Get addresses from cart
+$shippingAddress = $cart->shippingAddress;
+$billingAddress = $cart->billingAddress;
+```
+
+**Address Relationships**:
+
+```php
+use Lunar\Models\Address;
+use Lunar\Models\Customer;
+use Lunar\Models\Country;
+use Lunar\Models\State;
+
+$address = Address::find(1);
+
+// Get customer
+$customer = $address->customer;
+
+// Get country
+$country = $address->country;
+
+// Get state (if using State model relationship)
+// Note: The state field is stored as a string, not a relationship
+// You can manually look up the State model if needed:
+$state = State::where('country_id', $address->country_id)
+    ->where('code', $address->state)
+    ->first();
+```
+
+**Best Practices**:
+
+- **Import Address Data First**: Run `php artisan lunar:import:address-data` before creating addresses
+- **Use Country IDs**: Always use `country_id` instead of country names for consistency
+- **Set Defaults**: Set default shipping and billing addresses for better UX
+- **Track Usage**: Use `last_used_at` to show recently used addresses first
+- **Validate Addresses**: Validate address data before saving (country exists, state valid for country, etc.)
+- **Format Consistently**: Use `AddressHelper::format()` for consistent address display
+- **Eager Load**: When loading addresses, eager load country relationship:
+  ```php
+  Address::with('country')->get();
+  ```
+- **Handle Null States**: Some countries don't have states - handle this in your forms
+- **Meta Field**: Use the `meta` JSON field for custom address data if needed
+
+**Database Schema**:
+
+**Addresses Table**:
+- Foreign keys: `customer_id`, `country_id`
+- Indexes: `shipping_default`, `billing_default`
+- JSON field: `meta` for custom data
+
+**Countries Table**:
+- Unique indexes: `iso2`, `iso3`
+- Contains comprehensive country data
+
+**States Table**:
+- Foreign key: `country_id`
+- Contains state/province data linked to countries
+
+**Documentation**: See [Lunar Addresses documentation](https://docs.lunarphp.com/1.x/reference/addresses)
 $address = AddressHelper::create($customerId, [
     'title' => 'Mr',
     'first_name' => 'John',
@@ -1380,40 +4107,551 @@ $formatted = AddressHelper::format($address);
 
 ## Carts
 
-This project implements carts following the [Lunar Carts documentation](https://docs.lunarphp.com/1.x/reference/carts):
+This project implements carts following the [Lunar Carts documentation](https://docs.lunarphp.com/1.x/reference/carts). Carts are a collection of products (or other custom purchasable types) that you would like to order.
 
-- **Cart Management**: Carts belong to users/customers and contain purchasable items
-- **Cart Lines**: Individual items in the cart with quantities and metadata
-- **Dynamic Pricing**: Cart prices are calculated dynamically (not stored)
-- **Cart Session**: Session-based cart management via `CartSession` facade
-- **Validation**: Automatic validation when adding items to cart
-- **Tax Calculation**: Tax calculated based on shipping/billing addresses
-- **Fingerprinting**: Cart fingerprinting for change detection
-- **Address Support**: Shipping and billing addresses for tax and shipping calculation
+**Overview**:
 
-**Configuration**:
+Carts in Lunar:
+- Belong to Users (which relate to Customers)
+- Contain purchasable items with quantities
+- Have dynamically calculated prices (not stored, unlike Orders)
+- Support guest and authenticated users
+- Can be merged when users log in
+- Support shipping and billing addresses for tax calculation
+- Include validation when adding items
 
-Cart configuration is in `config/lunar/cart.php` and `config/lunar/cart_session.php`:
+**Carts**:
+
+The `Cart` model has the following fields:
+
+| Field                      | Description                                                                     |
+|----------------------------|---------------------------------------------------------------------------------|
+| `id`                       | Unique ID for the cart                                                         |
+| `user_id`                  | User ID - can be null for guest users                                           |
+| `customer_id`              | Customer ID - can be null                                                       |
+| `merged_id`                | If a cart was merged with another cart, defines the cart it was merged into    |
+| `currency_id`              | Carts can only be for a single currency                                         |
+| `channel_id`               | Channel ID                                                                      |
+| `coupon_code`              | Can be null, stores a promotional coupon code (e.g., SALE20)                   |
+| `created_at`               | Creation timestamp                                                              |
+| `updated_at`               | Last update timestamp (when an order was created from the cart via checkout)    |
+| `meta`                     | JSON data for saving any custom information                                     |
+
+**Creating a Cart**:
 
 ```php
-// config/lunar/cart_session.php
-'session_key' => 'lunar_cart', // Session key for cart ID
-'auto_create' => false, // Auto-create cart if none exists
-'allow_multiple_orders_per_cart' => false, // Multiple orders per cart
+use Lunar\Models\Cart;
+use Lunar\Models\Currency;
+use Lunar\Models\Channel;
+
+$currency = Currency::getDefault();
+$channel = Channel::getDefault();
+
+$cart = Cart::create([
+    'currency_id' => $currency->id,
+    'channel_id' => $channel->id,
+]);
 ```
 
-**Usage**:
+**Cart Lines**:
+
+The `CartLine` model represents individual items in the cart:
+
+| Field             | Description                                  |
+|-------------------|----------------------------------------------|
+| `id`              | Primary key                                   |
+| `cart_id`         | Foreign key to cart                           |
+| `purchasable_type`| Morph type (e.g., ProductVariant)             |
+| `purchasable_id`  | Morph ID                                      |
+| `quantity`        | Quantity of items                             |
+| `meta`            | JSON data for saving any custom information   |
+| `created_at`      | Creation timestamp                            |
+| `updated_at`      | Last update timestamp                         |
+
+**Creating Cart Lines**:
+
+```php
+use Lunar\Models\Cart;
+use Lunar\Models\CartLine;
+use Lunar\Models\ProductVariant;
+
+$purchasable = ProductVariant::find(1);
+
+// Create cart line directly
+$cartLine = new CartLine([
+    'cart_id' => $cart->id,
+    'purchasable_type' => $purchasable->getMorphClass(),
+    'purchasable_id' => $purchasable->id,
+    'quantity' => 2,
+    'meta' => [
+        'personalization' => 'Love you mum xxx',
+    ],
+]);
+$cartLine->save();
+
+// Or use the relationship on the cart
+$cart->lines()->create([
+    'purchasable_type' => $purchasable->getMorphClass(),
+    'purchasable_id' => $purchasable->id,
+    'quantity' => 2,
+    'meta' => ['custom' => 'data'],
+]);
+```
+
+**Validation**:
+
+When adding items to a cart, there are a series of validation actions which are run, defined in `config/lunar/cart.php`. These actions will throw a `Lunar\Exceptions\Carts\CartException`:
+
+```php
+use Lunar\Facades\CartSession;
+use Lunar\Models\ProductVariant;
+use Lunar\Exceptions\Carts\CartException;
+
+$purchasable = ProductVariant::find(1);
+
+try {
+    CartSession::add($purchasable, 500);
+} catch (CartException $e) {
+    $error = $e->getMessage();
+    // Handle validation error (e.g., insufficient stock, invalid quantity)
+}
+```
+
+**Hydrating the Cart Totals**:
+
+To get all calculated totals and tax, call `calculate()` on the cart:
+
+```php
+$cart = CartSession::current();
+$cart->calculate();
+```
+
+This creates a "hydrated" version of your cart with the following properties. All values return a `Lunar\DataTypes\Price` object with `value`, `formatted`, and `decimal` properties:
+
+**Cart Properties**:
+
+```php
+// Cart totals
+$cart->total;                    // Total price value for the cart
+$cart->subTotal;                 // Cart sub total, excluding tax
+$cart->subTotalDiscounted;       // Cart sub total, minus the discount amount
+$cart->shippingTotal;            // Monetary value for the shipping total (if applicable)
+$cart->taxTotal;                 // Monetary value for the amount of tax applied
+$cart->discountTotal;            // Monetary value for the discount total
+
+// Breakdowns (collections)
+$cart->taxBreakdown;             // Collection of all taxes applied across all lines
+$cart->discountBreakdown;        // Collection of how discounts were calculated
+$cart->shippingBreakdown;        // Collection of the shipping breakdown for the cart
+$cart->shippingSubTotal;         // Shipping total, excluding tax
+
+// Access breakdown data
+foreach ($cart->taxBreakdown as $taxRate) {
+    $taxRate->name;              // Tax rate name
+    $taxRate->total->value;      // Tax amount
+    $taxRate->total->formatted;  // Formatted tax amount
+}
+
+foreach ($cart->shippingBreakdown->items as $shippingBreakdown) {
+    $shippingBreakdown->name;        // Shipping option name
+    $shippingBreakdown->identifier;  // Shipping option identifier
+    $shippingBreakdown->price->formatted(); // Formatted price
+}
+
+foreach ($cart->discountBreakdown as $discountBreakdown) {
+    $discountBreakdown->discount_id; // Discount ID
+    foreach ($discountBreakdown->lines as $discountLine) {
+        $discountLine->quantity;  // Quantity affected
+        $discountLine->line;      // Cart line reference
+    }
+    $discountBreakdown->total->value; // Discount amount
+}
+```
+
+**Cart Line Properties**:
+
+```php
+foreach ($cart->lines as $cartLine) {
+    $cartLine->unitPrice;            // Monetary value for a single item
+    $cartLine->unitPriceInclTax;     // Monetary value for a single item, including tax
+    $cartLine->total;                // Total price value for the line
+    $cartLine->subTotal;             // Sub total, excluding tax
+    $cartLine->subTotalDiscounted;   // Sub total, minus the discount amount
+    $cartLine->taxAmount;            // Monetary value for the amount of tax applied
+    $cartLine->taxBreakdown;         // Collection of all taxes applied to this line
+    $cartLine->discountTotal;        // Monetary value for the discount total
+}
+```
+
+**Modifying Carts**:
+
+If you need to programmatically change Cart values (e.g., custom discounts or prices), you will want to extend the Cart using pipelines. See the [Extending Carts documentation](https://docs.lunarphp.com/1.x/extending/carts) and the Extension Points section below.
+
+**Calculating Tax**:
+
+During the cart's lifetime, you may not have access to address information, which can be a pain when you want to accurately display the amount of tax applied. Some countries don't even show tax until they reach checkout.
+
+When you calculate the cart totals, you can set the billing and/or shipping address on the cart, which will then be used when calculating which tax breakdowns should be applied:
+
+```php
+use Lunar\Models\Country;
+
+$shippingAddress = [
+    'country_id' => Country::where('iso2', 'US')->first()->id,
+    'title' => null,
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'company_name' => null,
+    'line_one' => '123 Main Street',
+    'line_two' => null,
+    'line_three' => null,
+    'city' => 'New York',
+    'state' => 'NY',
+    'postcode' => '10001',
+    'delivery_instructions' => null,
+    'contact_email' => 'john@example.com',
+    'contact_phone' => '+1-555-123-4567',
+];
+
+$cart->setShippingAddress($shippingAddress);
+$cart->setBillingAddress($shippingAddress); // Can be different
+$cart->calculate(); // Tax will now be calculated based on addresses
+```
+
+**Cart Session Manager**:
+
+Lunar provides a `CartSession` facade for managing carts in sessions. This handles cart persistence, user association, and cart merging.
+
+**Available Config**:
+
+Configuration is in `config/lunar/cart_session.php`:
+
+| Config Option                    | Description                                                                     | Default     |
+|----------------------------------|---------------------------------------------------------------------------------|-------------|
+| `session_key`                    | What key to use when storing the cart id in the session                        | `lunar_cart`|
+| `auto_create`                    | If no current basket exists, should we create one in the database?             | `false`     |
+| `allow_multiple_orders_per_cart`| Whether carts can have multiple orders associated to them                      | `false`     |
+| `delete_on_forget`               | Whether the cart should be soft deleted when the user logs out                 | `true`      |
+
+**Getting the Cart Session Instance**:
+
+You can either use the facade or inject the `CartSession` into your code:
+
+```php
+use Lunar\Facades\CartSession;
+
+// Using facade
+$cart = CartSession::current();
+
+// Or inject into constructor
+use Lunar\Base\CartSessionInterface;
+
+public function __construct(
+    protected CartSessionInterface $cartSession
+) {
+    // ...
+}
+
+$cart = $this->cartSession->current();
+```
+
+**Fetching the Current Cart**:
+
+```php
+use Lunar\Facades\CartSession;
+
+$cart = CartSession::current();
+```
+
+When you call `current()`, you have two options: return `null` if they don't have a cart, or create one straight away. By default, carts are not created initially as this could lead to many cart models being created for no good reason. If you want to enable this functionality, adjust the config in `config/lunar/cart_session.php`:
+
+```php
+'auto_create' => true, // Auto-create cart if none exists
+```
+
+**Forgetting the Cart**:
+
+Forgetting the cart will remove it from the user session and also soft-delete the cart in the database:
+
+```php
+CartSession::forget();
+```
+
+If you don't want to delete the cart, you can pass the following parameter:
+
+```php
+CartSession::forget(delete: false); // Only removes from session, doesn't delete
+```
+
+**Using a Specific Cart**:
+
+You may want to manually specify which cart should be used for the session:
+
+```php
+use Lunar\Facades\CartSession;
+use Lunar\Models\Cart;
+
+$cart = Cart::find(1);
+CartSession::use($cart);
+```
+
+**Add a Cart Line**:
+
+```php
+use Lunar\Facades\CartSession;
+use Lunar\Models\ProductVariant;
+
+$purchasable = ProductVariant::find(1);
+CartSession::add($purchasable, $quantity);
+```
+
+**Add Multiple Lines**:
+
+```php
+CartSession::addLines([
+    [
+        'purchasable' => ProductVariant::find(123),
+        'quantity' => 25,
+        'meta' => ['foo' => 'bar'],
+    ],
+    [
+        'purchasable' => ProductVariant::find(456),
+        'quantity' => 10,
+        'meta' => ['custom' => 'data'],
+    ],
+]);
+```
+
+Accepts a `collection` or an `array`.
+
+**Update a Single Line**:
+
+```php
+CartSession::updateLine($cartLineId, $quantity, $meta);
+```
+
+**Update Multiple Lines**:
+
+```php
+CartSession::updateLines(collect([
+    [
+        'id' => 1,
+        'quantity' => 25,
+        'meta' => ['foo' => 'bar'],
+    ],
+    [
+        'id' => 2,
+        'quantity' => 10,
+        'meta' => ['custom' => 'data'],
+    ],
+]));
+```
+
+**Remove a Line**:
+
+```php
+CartSession::remove($cartLineId);
+```
+
+**Clear a Cart**:
+
+This will remove all lines from the cart:
+
+```php
+CartSession::clear();
+```
+
+**Associating a Cart to a User**:
+
+You can easily associate a cart to a user:
+
+```php
+use App\Models\User;
+
+$user = User::find(1);
+CartSession::associate($user, 'merge'); // or 'override'
+```
+
+The second parameter determines the policy:
+- `'merge'` - Merge guest cart with user's existing cart (default)
+- `'override'` - Replace user's cart with guest cart
+
+**Associating a Cart to a Customer**:
+
+You can easily associate a cart to a customer:
+
+```php
+use Lunar\Models\Customer;
+
+$customer = Customer::find(1);
+CartSession::setCustomer($customer);
+```
+
+**Adding Shipping/Billing Address**:
+
+As outlined above, you can add shipping/billing addresses to the cart:
+
+```php
+$cart->setShippingAddress([
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'line_one' => '123 Main Street',
+    'line_two' => null,
+    'line_three' => null,
+    'city' => 'New York',
+    'state' => 'NY',
+    'postcode' => '10001',
+    'country_id' => 1,
+]);
+
+$cart->setBillingAddress([
+    // Same structure as shipping address
+]);
+```
+
+You can easily retrieve these addresses:
+
+```php
+$cart->shippingAddress; // CartAddress model or null
+$cart->billingAddress;  // CartAddress model or null
+```
+
+**ShippingOption Override**:
+
+In some cases you might want to present an estimated shipping cost without users having to fill out a full shipping address. This is where the `ShippingOptionOverride` comes in. If set on the cart, it can be used to calculate shipping for a single request:
+
+```php
+use Lunar\Models\Country;
+
+$shippingOption = $cart->getEstimatedShipping([
+    'postcode' => '123456',
+    'state' => 'Essex',
+    'country' => Country::first(),
+]);
+```
+
+This will return an estimated (cheapest) shipping option for the cart, based on its current totals. By default this will not be taken into account when calculating shipping in the cart pipelines. To enable that, pass an extra parameter:
+
+```php
+$shippingOption = $cart->getEstimatedShipping([
+    'postcode' => '123456',
+    'state' => 'Essex',
+    'country' => Country::first(),
+], setOverride: true);
+```
+
+Now when the pipelines are run, the option returned by `getEstimatedShipping` will be used when calculating shipping totals, bypassing any other logic. Note this will only happen for that one request.
+
+If you are using the `CartSession` manager, you can easily set the parameters you want to estimate shipping so you don't need to pass them each time:
+
+```php
+CartSession::estimateShippingUsing([
+    'postcode' => '123456',
+    'state' => 'Essex',
+    'country' => Country::first(),
+]);
+```
+
+You can also manually set the shipping method override directly on the cart:
+
+```php
+use Lunar\DataTypes\ShippingOption;
+
+$cart->shippingOptionOverride = new ShippingOption(
+    name: 'Estimated Shipping',
+    description: 'Estimated shipping cost',
+    identifier: 'ESTIMATED',
+    price: new Price(1000, $cart->currency, 1),
+    taxClass: $taxClass
+);
+```
+
+Calling `CartSession::current()` by itself won't trigger the shipping override, but you can pass the `estimateShipping` parameter to enable it:
+
+```php
+// Will not use the shipping override, default behaviour
+CartSession::current();
+
+// Will use the shipping override, based on what is set using `estimateShippingUsing`
+CartSession::current(estimateShipping: true);
+```
+
+**Handling User Login**:
+
+When a user logs in, you will likely want to check if they have a cart associated to their account and use that, or if they have started a cart as a guest and logged in, you will likely want to handle this.
+
+Lunar takes the pain out of this by listening to the authentication events and responding automatically by associating any previous guest cart they may have had and, depending on your `auth_policy` (in `config/lunar/cart_session.php`), merge or override the basket on their account.
+
+**Determining Cart Changes**:
+
+Carts by nature are dynamic, which means anything can change at any moment. This means it can be quite challenging to determine whether a cart has changed from the one currently loaded. For example, if the user goes to checkout and changes their cart on another tab, how does the checkout know there has been a change?
+
+To help this, a cart will have a fingerprint generated which you can check to determine whether there have been any changes and if so, refresh the cart:
+
+```php
+$cart = CartSession::current();
+$cart->calculate();
+
+// Get fingerprint
+$fingerprint = $cart->fingerprint();
+
+// Later, check if cart has changed
+try {
+    $cart->checkFingerprint($fingerprint);
+    // Cart hasn't changed
+} catch (\Lunar\Exceptions\FingerprintMismatchException $e) {
+    // Cart has changed, refresh it
+    $cart = CartSession::current();
+    $cart->calculate();
+}
+```
+
+**Changing the Underlying Class**:
+
+The class which generates the fingerprint is referenced in `config/lunar/cart.php`:
+
+```php
+return [
+    // ...
+    'fingerprint_generator' => Lunar\Actions\Carts\GenerateFingerprint::class,
+];
+```
+
+In most cases you won't need to change this.
+
+**Pruning Cart Data**:
+
+Over time you will experience a build up of carts in your database that you may want to regularly remove. You can enable automatic removal of these carts using the `lunar.carts.prune_tables.enabled` config. By setting this to `true`, any carts without an order associated will be removed after 90 days (configurable).
+
+You can change the number of days carts are retained for using the `lunar.carts.prune_tables.prune_interval` config. If you have specific needs around pruning, you can also change the `lunar.carts.prune_tables.pipelines` array to determine what carts should be removed:
+
+```php
+// config/lunar/cart.php
+return [
+    // ...
+    'prune_tables' => [
+        'enabled' => false, // Set to true to enable pruning
+        
+        'pipelines' => [
+            Lunar\Pipelines\CartPrune\PruneAfter::class,
+            Lunar\Pipelines\CartPrune\WithoutOrders::class,
+        ],
+        
+        'prune_interval' => 90, // days
+    ],
+];
+```
+
+**Using CartHelper**:
+
+The `CartHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Carts\CartHelper;
-use Lunar\Facades\CartSession;
-use Lunar\Models\Cart;
 use Lunar\Models\ProductVariant;
 
 // Get current cart
 $cart = CartHelper::current();
-// or
-$cart = CartSession::current();
 
 // Create a new cart
 $cart = CartHelper::create($currencyId, $channelId, $userId, $customerId);
@@ -1434,6 +4672,12 @@ CartHelper::addLines([
 // Update line
 CartHelper::updateLine($cartLineId, 5);
 
+// Update multiple lines
+CartHelper::updateLines([
+    ['id' => 1, 'quantity' => 3],
+    ['id' => 2, 'quantity' => 5],
+]);
+
 // Remove line
 CartHelper::remove($cartLineId);
 
@@ -1441,29 +4685,10 @@ CartHelper::remove($cartLineId);
 CartHelper::clear();
 
 // Calculate cart totals (hydrate the cart)
-$cart->calculate();
+CartHelper::calculate($cart);
 
-// Access calculated values (after calculate())
-$cart->total; // Total price
-$cart->subTotal; // Subtotal excluding tax
-$cart->subTotalDiscounted; // Subtotal minus discounts
-$cart->shippingTotal; // Shipping total
-$cart->taxTotal; // Tax total
-$cart->discountTotal; // Discount total
-$cart->taxBreakdown; // Collection of tax breakdowns
-$cart->discountBreakdown; // Collection of discount breakdowns
-$cart->shippingBreakdown; // Collection of shipping breakdowns
-
-// Cart line values (after calculate())
-foreach ($cart->lines as $line) {
-    $line->unitPrice; // Price per unit
-    $line->unitPriceInclTax; // Price per unit including tax
-    $line->total; // Total for line
-    $line->subTotal; // Subtotal excluding tax
-    $line->subTotalDiscounted; // Subtotal minus discounts
-    $line->taxAmount; // Tax amount
-    $line->discountTotal; // Discount total
-}
+// Get cart totals as array
+$totals = CartHelper::getTotals($cart);
 
 // Set addresses for tax calculation
 CartHelper::setShippingAddress([
@@ -1492,58 +4717,110 @@ $shippingOption = CartHelper::getEstimatedShipping([
     'country' => $country,
 ], setOverride: true);
 
+// Set shipping estimation parameters
+CartHelper::estimateShippingUsing([
+    'postcode' => '123456',
+    'state' => 'Essex',
+    'country' => $country,
+]);
+
+// Get current cart with shipping estimation
+$cart = CartHelper::currentWithShipping(true);
+
 // Forget cart
 CartHelper::forget(); // Removes from session and deletes
 CartHelper::forget(delete: false); // Only removes from session
+
+// Use a specific cart
+CartHelper::use($cart);
 ```
 
-**Extending Carts**:
-
-Lunar allows you to extend cart functionality through pipelines and validators:
-
-- **Pipelines**: Modify cart behavior during calculation (e.g., custom discounts, metadata)
-- **Validators**: Add validation logic for cart actions (e.g., quantity limits, stock checks)
-
-See the [Extending Carts documentation](https://docs.lunarphp.com/1.x/extending/carts) and the Extension Points section below for examples.
-
-**Cart Fields**:
-
-- `id` - Unique cart ID
-- `user_id` - User ID (nullable for guests)
-- `customer_id` - Customer ID (nullable)
-- `merged_id` - ID of cart this was merged into (nullable)
-- `currency_id` - Currency ID
-- `channel_id` - Channel ID
-- `coupon_code` - Promotional coupon code (nullable)
-- `meta` - JSON metadata
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Cart Line Fields**:
-
-- `id` - Line ID
-- `cart_id` - Cart ID
-- `purchasable_type` - Type of purchasable (e.g., ProductVariant)
-- `purchasable_id` - ID of purchasable
-- `quantity` - Quantity
-- `meta` - JSON metadata
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Cart Pruning**:
-
-Enable automatic cart cleanup in `config/lunar/cart.php`:
+**Example: Complete Cart Workflow**:
 
 ```php
-'prune_tables' => [
-    'enabled' => true,
-    'prune_interval' => 90, // days
-    'pipelines' => [
-        \Lunar\Pipelines\CartPrune\PruneAfter::class,
-        \Lunar\Pipelines\CartPrune\WithoutOrders::class,
-    ],
-],
+use Lunar\Facades\CartSession;
+use Lunar\Models\ProductVariant;
+use Lunar\Models\Country;
+use Lunar\Exceptions\Carts\CartException;
+
+// 1. Get or create cart
+$cart = CartSession::current();
+if (!$cart) {
+    $cart = Cart::create([
+        'currency_id' => Currency::getDefault()->id,
+        'channel_id' => Channel::getDefault()->id,
+    ]);
+    CartSession::use($cart);
+}
+
+// 2. Add items to cart
+$variant = ProductVariant::find(1);
+try {
+    CartSession::add($variant, 2, [
+        'gift_message' => 'Happy Birthday!',
+    ]);
+} catch (CartException $e) {
+    // Handle error (e.g., insufficient stock)
+    return back()->with('error', $e->getMessage());
+}
+
+// 3. Set addresses for tax calculation
+$country = Country::where('iso2', 'US')->first();
+$cart->setShippingAddress([
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'line_one' => '123 Main Street',
+    'city' => 'New York',
+    'state' => 'NY',
+    'postcode' => '10001',
+    'country_id' => $country->id,
+]);
+
+// 4. Calculate cart totals
+$cart->calculate();
+
+// 5. Access calculated values
+$total = $cart->total->formatted; // "$199.99"
+$subTotal = $cart->subTotal->formatted; // "$179.99"
+$taxTotal = $cart->taxTotal->formatted; // "$20.00"
+$shippingTotal = $cart->shippingTotal->formatted; // "$10.00"
+
+// 6. Get breakdowns
+foreach ($cart->taxBreakdown as $tax) {
+    echo $tax->name . ': ' . $tax->total->formatted;
+}
+
+// 7. Check fingerprint for changes
+$fingerprint = $cart->fingerprint();
+// Store fingerprint in session or pass to frontend
+
+// Later, check if cart changed
+try {
+    $cart->checkFingerprint($fingerprint);
+    // Cart hasn't changed
+} catch (\Lunar\Exceptions\FingerprintMismatchException $e) {
+    // Cart has changed, refresh
+    $cart = CartSession::current();
+    $cart->calculate();
+}
 ```
+
+**Best Practices**:
+
+- **Always Calculate**: Call `$cart->calculate()` before accessing cart totals
+- **Handle Validation**: Wrap cart operations in try-catch for `CartException`
+- **Set Addresses**: Set shipping/billing addresses before calculating tax
+- **Use Fingerprinting**: Use cart fingerprints to detect changes in multi-tab scenarios
+- **Eager Load**: When loading carts, eager load relationships:
+  ```php
+  Cart::with(['lines.purchasable.prices', 'currency', 'channel'])->get();
+  ```
+- **Cart Pruning**: Enable cart pruning to clean up old carts automatically
+- **Session Management**: Use `CartSession` facade for consistent cart management
+- **Guest Carts**: Allow guest carts but associate them when users log in
+- **Error Handling**: Always handle `CartException` when adding/updating cart items
+
+**Documentation**: See [Lunar Carts documentation](https://docs.lunarphp.com/1.x/reference/carts)
 
 ## Customers
 

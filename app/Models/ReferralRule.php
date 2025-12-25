@@ -32,6 +32,8 @@ class ReferralRule extends Model
         'priority',
         'validation_window_days',
         'fraud_policy_id',
+        'tiered_rewards',
+        'coupon_validity_days',
         'is_active',
     ];
 

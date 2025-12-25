@@ -77,7 +77,7 @@ class ReferralAttributionService
      */
     public function getCodeFromCookie(): ?string
     {
-        return Cookie::get(self::COOKIE_NAME);
+        return request()->cookie(self::COOKIE_NAME);
     }
 
     /**
@@ -85,7 +85,9 @@ class ReferralAttributionService
      */
     public function clearCookie(): void
     {
-        Cookie::queue(Cookie::forget(self::COOKIE_NAME));
+        Cookie::queue(
+            Cookie::make(self::COOKIE_NAME, '', -1)
+        );
     }
 
     /**

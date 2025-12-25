@@ -248,11 +248,13 @@ class ReferralProgramResource extends Resource
                     ->boolean()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('starts_at')
+                Tables\Columns\TextColumn::make('start_at')
+                    ->label('Start Date')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('ends_at')
+                Tables\Columns\TextColumn::make('end_at')
+                    ->label('End Date')
                     ->date()
                     ->sortable()
                     ->placeholder('No expiry'),

@@ -298,13 +298,34 @@ class CompleteSeeder extends Seeder
             Category::factory()->count(fake()->numberBetween(2, 4))->withParent($rootCategory)->create();
         }
 
-        // Step 14: Create reviews
+        // Step 14: Create reviews with media and helpful votes
         $this->command->info('⭐ Creating reviews...');
+        $customers = Customer::all();
+        $reviews = collect();
         foreach ($products->random(30) as $product) {
-            Review::factory()
+            $productReviews = Review::factory()
                 ->count(fake()->numberBetween(1, 5))
                 ->create([
                     'product_id' => $product->id,
+                ]);
+            $reviews = $reviews->merge($productReviews);
+        }
+
+        // Add media to some reviews
+        foreach ($reviews->random(fake()->numberBetween(10, 20)) as $review) {
+            \App\Models\ReviewMedia::factory()
+                ->count(fake()->numberBetween(1, 3))
+                ->create([
+                    'review_id' => $review->id,
+                ]);
+        }
+
+        // Add helpful votes to some reviews
+        foreach ($reviews->random(fake()->numberBetween(15, 30)) as $review) {
+            \App\Models\ReviewHelpfulVote::factory()
+                ->count(fake()->numberBetween(1, 5))
+                ->create([
+                    'review_id' => $review->id,
                 ]);
         }
 

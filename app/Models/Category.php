@@ -461,7 +461,7 @@ class Category extends Model implements HasMedia
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('display_order')->orderBy('name');
+        return $query->orderBy('display_order')->orderBy('id');
     }
 }
 

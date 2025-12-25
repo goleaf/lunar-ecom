@@ -184,4 +184,56 @@ class InventoryController extends Controller
 
         return response()->json($availability);
     }
+
+    /**
+     * Handle barcode scan for quick stock updates.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function barcodeScan(Request $request): JsonResponse
+    {
+        // Admin-only: require staff authentication
+        if (!auth('staff')->check()) {
+            abort(403, 'Unauthorized');
+        }
+
+        $validated = $request->validate([
+            'barcode' => 'required|string',
+        ]);
+
+        // Find product variant by barcode
+        $variant = ProductVariant::where('barcode', $validated['barcode'])
+            ->orWhere('sku', $validated['barcode'])
+            ->with('product')
+            ->first();
+
+        if (!$variant) {
+            return response()->json([
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        // Get inventory levels
+        $levels = InventoryLevel::where('product_variant_id', $variant->id)
+            ->with('warehouse')
+            ->get();
+
+        return response()->json([
+            'product_variant_id' => $variant->id,
+            'product_name' => $variant->product->translateAttribute('name'),
+            'sku' => $variant->sku,
+            'barcode' => $variant->barcode,
+            'inventory_levels' => $levels->map(function ($level) {
+                return [
+                    'warehouse_id' => $level->warehouse_id,
+                    'warehouse_name' => $level->warehouse->name,
+                    'quantity' => $level->quantity,
+                    'available_quantity' => $level->available_quantity,
+                    'reserved_quantity' => $level->reserved_quantity,
+                    'status' => $level->status,
+                ];
+            }),
+        ]);
+    }
 }

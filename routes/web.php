@@ -66,6 +66,17 @@ Route::prefix('admin/reviews')->name('admin.reviews.')->middleware(['auth', 'adm
     Route::get('/statistics', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'statistics'])->name('statistics');
 });
 
+// Admin Stock Management
+Route::prefix('admin/stock')->name('admin.stock.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\StockManagementController::class, 'index'])->name('index');
+    Route::get('/statistics', [\App\Http\Controllers\Admin\StockManagementController::class, 'statistics'])->name('statistics');
+    Route::get('/movements', [\App\Http\Controllers\Admin\StockManagementController::class, 'movements'])->name('movements');
+    Route::get('/variants/{variant}', [\App\Http\Controllers\Admin\StockManagementController::class, 'show'])->name('show');
+    Route::post('/variants/{variant}/adjust', [\App\Http\Controllers\Admin\StockManagementController::class, 'adjustStock'])->name('adjust');
+    Route::post('/variants/{variant}/transfer', [\App\Http\Controllers\Admin\StockManagementController::class, 'transferStock'])->name('transfer');
+    Route::post('/alerts/{alert}/resolve', [\App\Http\Controllers\Admin\StockManagementController::class, 'resolveAlert'])->name('resolve-alert');
+});
+
 // Admin Order Status Management
 Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->group(function () {
     Route::get('/statuses', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getAvailableStatuses'])->name('statuses');

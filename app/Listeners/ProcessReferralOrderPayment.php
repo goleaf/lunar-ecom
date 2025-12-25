@@ -41,10 +41,11 @@ class ProcessReferralOrderPayment implements ShouldQueue
             return;
         }
 
-        // Check if this is first paid order
+        // Check if this is first paid order (Lunar uses placed_at to indicate payment)
         $paidOrdersCount = $order->customer->orders()
-            ->whereIn('status', ['payment-received', 'completed'])
+            ->whereNotNull('placed_at')
             ->where('id', '!=', $order->id)
+            ->where('placed_at', '<', $order->placed_at)
             ->count();
 
         if ($paidOrdersCount === 0) {

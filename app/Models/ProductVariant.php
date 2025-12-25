@@ -553,6 +553,36 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Inventory levels relationship (multi-warehouse).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function inventoryLevels()
+    {
+        return $this->hasMany(\App\Models\InventoryLevel::class, 'product_variant_id');
+    }
+
+    /**
+     * Stock reservations relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function stockReservations()
+    {
+        return $this->hasMany(\App\Models\StockReservation::class, 'product_variant_id');
+    }
+
+    /**
+     * Stock movements relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function stockMovements()
+    {
+        return $this->hasMany(\App\Models\StockMovement::class, 'product_variant_id');
+    }
+
+    /**
      * Get price using MatrixPricingService.
      *
      * @param  int  $quantity

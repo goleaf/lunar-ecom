@@ -571,7 +571,7 @@ class FactoryTest extends TestCase
 
     public function test_product_view_factory_for_user_works(): void
     {
-        $user = User::factory()->create();
+        $user = \App\Models\User::factory()->create();
         $view = \App\Models\ProductView::factory()->forUser($user)->create();
 
         $this->assertEquals($user->id, $view->user_id);

@@ -98,6 +98,16 @@ class InventoryLevel extends Model
     }
 
     /**
+     * Stock movements relationship.
+     *
+     * @return HasMany
+     */
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class, 'inventory_level_id');
+    }
+
+    /**
      * Stock reservations relationship.
      *
      * @return HasMany

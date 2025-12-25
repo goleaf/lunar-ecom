@@ -5335,15 +5335,213 @@ $userCustomer = $user->latestCustomer();
 
 ## Discounts
 
-This project implements discounts following the [Lunar Discounts documentation](https://docs.lunarphp.com/1.x/reference/discounts):
+This project implements discounts following the [Lunar Discounts documentation](https://docs.lunarphp.com/1.x/reference/discounts). Discounts allow you to apply various promotional offers to carts, including coupons, buy-X-get-Y offers, and custom discount types.
 
-- **Discount Model**: Store discount information with scheduling, usage limits, and priority
-- **Discount Types**: Built-in types (Coupon, BuyXGetY) and custom discount types
-- **Discount Purchasables**: Relate purchasables to discounts as conditions or rewards
-- **Discount Scopes**: Query active, usable, and product-specific discounts
-- **Discount Cache**: Performance caching with reset capability
+**Overview**:
 
-**Usage**:
+Discounts in Lunar:
+- Support scheduling with start and end dates
+- Have usage limits (max uses storewide)
+- Support priority ordering
+- Can stop other discounts from applying
+- Support conditions and rewards via purchasables
+- Are cached for performance
+- Support custom discount types
+
+**Discounts**:
+
+The `Discount` model has the following fields:
+
+| Field       | Description                                                | Example                               |
+|-------------|------------------------------------------------------------|---------------------------------------|
+| `id`        | Primary key                                                |                                       |
+| `name`      | The given name for the discount                            | "20% Off Sale"                        |
+| `handle`    | The unique handle for the discount                         | "20_off_sale"                         |
+| `type`      | The type of discount                                       | `Lunar\DiscountTypes\Coupon`          |
+| `data`      | JSON data to be used by the type class                     | `{"coupon": "SAVE20", "min_prices": {...}}` |
+| `starts_at` | The datetime the discount starts (required)                | `2022-06-17 13:30:55`                 |
+| `ends_at`   | The datetime the discount expires (if NULL it won't expire)| `2022-07-17 13:30:55` or `null`       |
+| `uses`      | How many uses the discount has had                         | `42`                                  |
+| `max_uses`  | The maximum times this discount can be applied storewide  | `100` or `null`                       |
+| `priority`  | The order of priority (higher = more priority)             | `1`, `2`, `3`                         |
+| `stop`      | Whether this discount will stop others after propagating   | `true` or `false`                     |
+| `created_at`| Creation timestamp                                          |                                       |
+| `updated_at`| Last update timestamp                                       |                                       |
+
+**Creating a Discount**:
+
+```php
+use Lunar\Models\Discount;
+
+$discount = Discount::create([
+    'name' => '20% Coupon',
+    'handle' => '20_coupon',
+    'type' => 'Lunar\DiscountTypes\Coupon',
+    'data' => [
+        'coupon' => '20OFF',
+        'min_prices' => [
+            'USD' => 2000 // $20 minimum
+        ],
+    ],
+    'starts_at' => '2022-06-17 13:30:55',
+    'ends_at' => null, // Won't expire
+    'max_uses' => null, // Unlimited uses
+    'priority' => 1,
+    'stop' => false,
+]);
+```
+
+**Fetching a Discount**:
+
+The following scopes are available:
+
+```php
+use Lunar\Models\Discount;
+
+/**
+ * Query for discounts using the starts_at and ends_at dates.
+ * Returns discounts that are currently active (between start and end dates).
+ */
+$activeDiscounts = Discount::active()->get();
+
+/**
+ * Query for discounts where the uses column is less than the max_uses column
+ * or max_uses is null (unlimited).
+ */
+$usableDiscounts = Discount::usable()->get();
+
+/**
+ * Query for discounts where the associated products are of a certain type,
+ * based on given product ids.
+ * 
+ * @param array|Collection $productIds Product IDs to search for
+ * @param string $type 'condition' or 'reward' (default: 'condition')
+ */
+$productDiscounts = Discount::products([1, 2, 3], 'condition')->get();
+$rewardDiscounts = Discount::products([1, 2, 3], 'reward')->get();
+
+// Combine scopes
+$availableDiscounts = Discount::active()->usable()->get();
+```
+
+**Resetting the Discount Cache**:
+
+For performance reasons, the applicable discounts are cached per request. If you need to reset this cache (for example, after adding a discount code), you should call `resetDiscounts()`:
+
+```php
+use Lunar\Models\Discount;
+
+Discount::resetDiscounts();
+```
+
+This is useful when:
+- Adding a new discount programmatically
+- Modifying discount data
+- Testing discount functionality
+- After bulk discount imports
+
+**Discount Purchasable**:
+
+You can relate a purchasable to a discount via the `DiscountPurchasable` model. Each has a type for whether it's a `condition` or `reward`:
+
+- **`condition`**: If your discount requires these purchasable models to be in the cart to activate
+- **`reward`**: Once the conditions are met, discount one or more of these purchasable models
+
+The `DiscountPurchasable` model has the following fields:
+
+| Field             | Description         | Example           |
+|-------------------|---------------------|-------------------|
+| `id`              | Primary key         |                   |
+| `discount_id`     | Foreign key to discount |              |
+| `purchasable_type`| Morph type          | `product_variant` |
+| `purchasable_id`  | Morph ID            |                   |
+| `type`            | `condition` or `reward` | `condition`    |
+| `created_at`      | Creation timestamp  |                   |
+| `updated_at`      | Last update timestamp |                 |
+
+**Relationships**:
+
+Discounts have the following relationships:
+- **Purchasables**: `discount_purchasables` pivot table (many-to-many polymorphic)
+- **Users**: `discount_user` pivot table (many-to-many)
+- **Customer Groups**: `customer_group_discount` pivot table (many-to-many)
+- **Brands**: `brand_discount` pivot table (many-to-many)
+- **Collections**: `discount_collections` pivot table (many-to-many)
+
+**Adding Your Own Discount Type**:
+
+You can create custom discount types by extending `AbstractDiscountType`:
+
+```php
+<?php
+
+namespace App\Lunar\Discounts\DiscountTypes;
+
+use Lunar\Models\Cart;
+use Lunar\DiscountTypes\AbstractDiscountType;
+use Lunar\DataTypes\Price;
+
+class MyCustomDiscountType extends AbstractDiscountType
+{
+    /**
+     * Return the name of the discount.
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return 'Custom Discount Type';
+    }
+
+    /**
+     * Called just before cart totals are calculated.
+     * 
+     * Apply the discount logic to the cart.
+     *
+     * @param Cart $cart
+     * @return Cart
+     */
+    public function apply(Cart $cart): Cart
+    {
+        // Access discount data via $this->discount
+        // Access discount purchasables via $this->discount->purchasables
+        
+        // Example: Apply 10% discount
+        $percentage = $this->discount->data['percentage'] ?? 10;
+        $discountAmount = (int) ($cart->subTotal->value * ($percentage / 100));
+        
+        // Apply discount to cart
+        $cart->discount_total = new Price($discountAmount, $cart->currency, 1);
+        
+        return $cart;
+    }
+}
+```
+
+**Registering Custom Discount Types**:
+
+Register your custom discount type in `AppServiceProvider::boot()`:
+
+```php
+use Lunar\Facades\Discounts;
+
+public function boot(): void
+{
+    Discounts::addType(\App\Lunar\Discounts\DiscountTypes\MyCustomDiscountType::class);
+}
+```
+
+Or use the helper:
+
+```php
+use App\Lunar\Discounts\DiscountHelper;
+
+DiscountHelper::registerType(\App\Lunar\Discounts\DiscountTypes\MyCustomDiscountType::class);
+```
+
+**Using DiscountHelper**:
+
+The `DiscountHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Discounts\DiscountHelper;
@@ -5365,7 +5563,7 @@ $discount = DiscountHelper::create([
     'ends_at' => now()->addDays(30),
     'max_uses' => 100,
     'priority' => 1,
-    'stop' => false, // Whether to stop other discounts after this one
+    'stop' => false,
 ]);
 
 // Create a coupon discount (convenience method)
@@ -5383,20 +5581,24 @@ $coupon = DiscountHelper::createCoupon(
     ]
 );
 
+// Find discount by ID
+$discount = DiscountHelper::find(1);
+
 // Find discount by handle
 $discount = DiscountHelper::findByHandle('20_coupon');
 
-// Get active discounts
+// Get active discounts (between starts_at and ends_at)
 $activeDiscounts = DiscountHelper::getActive();
 
-// Get usable discounts (uses < max_uses)
+// Get usable discounts (uses < max_uses or max_uses is null)
 $usableDiscounts = DiscountHelper::getUsable();
 
 // Get available discounts (active and usable)
 $availableDiscounts = DiscountHelper::getAvailable();
 
-// Query discounts by products
+// Query discounts by associated products
 $productDiscounts = DiscountHelper::getByProducts([1, 2, 3], 'condition');
+$rewardDiscounts = DiscountHelper::getByProducts([1, 2, 3], 'reward');
 
 // Add purchasable conditions (items required to activate discount)
 $variant = ProductVariant::find(1);
@@ -5429,60 +5631,126 @@ if (DiscountHelper::isActive($discount)) {
 // Increment uses count
 DiscountHelper::incrementUses($discount);
 
-// Register custom discount type (in AppServiceProvider::boot())
-// Discounts::addType(\App\Lunar\Discounts\DiscountTypes\CustomPercentageDiscount::class);
+// Register custom discount type
+DiscountHelper::registerType(\App\Lunar\Discounts\DiscountTypes\MyCustomDiscountType::class);
 ```
 
-**Discount Fields**:
-
-- `id` - Unique discount ID
-- `name` - Discount name
-- `handle` - Unique handle
-- `type` - Discount type class (e.g., `Lunar\DiscountTypes\Coupon`)
-- `data` - JSON data used by the discount type
-- `starts_at` - Start datetime (required)
-- `ends_at` - End datetime (nullable, won't expire if null)
-- `uses` - Number of times discount has been used
-- `max_uses` - Maximum uses storewide (nullable)
-- `priority` - Priority order (higher = more priority)
-- `stop` - Whether to stop other discounts after this one
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Discount Purchasable Fields**:
-
-- `id` - Unique ID
-- `discount_id` - Discount ID
-- `purchasable_type` - Type of purchasable (e.g., `product_variant`)
-- `purchasable_id` - ID of purchasable
-- `type` - Either `condition` or `reward`
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Discount Scopes**:
-
-- `Discount::active()` - Discounts between starts_at and ends_at
-- `Discount::usable()` - Discounts where uses < max_uses or max_uses is null
-- `Discount::products($productIds, $type)` - Discounts with associated products
-
-**Custom Discount Types**:
-
-Create custom discount types by extending `AbstractDiscountType`:
+**Example: Complete Discount Workflow**:
 
 ```php
-<?php
+use Lunar\Models\Discount;
+use Lunar\Models\ProductVariant;
+use Carbon\Carbon;
 
-namespace App\Lunar\Discounts\DiscountTypes;
+// 1. Create a discount
+$discount = Discount::create([
+    'name' => 'Summer Sale',
+    'handle' => 'summer_sale',
+    'type' => 'Lunar\DiscountTypes\Coupon',
+    'data' => [
+        'coupon' => 'SUMMER20',
+        'min_prices' => [
+            'USD' => 5000, // $50 minimum
+        ],
+    ],
+    'starts_at' => Carbon::now(),
+    'ends_at' => Carbon::now()->addDays(30),
+    'max_uses' => 1000,
+    'priority' => 1,
+    'stop' => false,
+]);
 
-use Lunar\Models\Cart;
-use Lunar\DiscountTypes\AbstractDiscountType;
+// 2. Add conditions (products required in cart)
+$variant1 = ProductVariant::find(1);
+$variant2 = ProductVariant::find(2);
+$discount->purchasables()->create([
+    'purchasable_type' => $variant1->getMorphClass(),
+    'purchasable_id' => $variant1->id,
+    'type' => 'condition',
+]);
+$discount->purchasables()->create([
+    'purchasable_type' => $variant2->getMorphClass(),
+    'purchasable_id' => $variant2->id,
+    'type' => 'condition',
+]);
 
-class CustomPercentageDiscount extends AbstractDiscountType
-{
-    public function getName(): string
-    {
-        return 'Custom Percentage Discount';
-    }
+// 3. Add rewards (products that get discounted)
+$variant3 = ProductVariant::find(3);
+$discount->purchasables()->create([
+    'purchasable_type' => $variant3->getMorphClass(),
+    'purchasable_id' => $variant3->id,
+    'type' => 'reward',
+]);
+
+// 4. Query active and usable discounts
+$availableDiscounts = Discount::active()->usable()->get();
+
+// 5. Query discounts by products
+$productDiscounts = Discount::products([1, 2, 3], 'condition')->get();
+
+// 6. Reset cache after modifications
+Discount::resetDiscounts();
+
+// 7. Check if discount can be used
+if ($discount->uses < $discount->max_uses || $discount->max_uses === null) {
+    // Discount can be used
+}
+
+// 8. Increment uses when applied
+$discount->increment('uses');
+```
+
+**Discount Priority and Stop**:
+
+- **Priority**: Higher priority discounts are applied first. If multiple discounts can apply, priority determines the order.
+- **Stop**: When `stop` is `true`, this discount will prevent other discounts from being applied after it. This is useful for exclusive offers.
+
+**Example with Priority and Stop**:
+
+```php
+// High priority discount that stops others
+$exclusiveDiscount = Discount::create([
+    'name' => 'Exclusive 50% Off',
+    'handle' => 'exclusive_50',
+    'type' => 'Lunar\DiscountTypes\Coupon',
+    'data' => ['coupon' => 'EXCLUSIVE50'],
+    'starts_at' => now(),
+    'ends_at' => now()->addDays(7),
+    'priority' => 10, // High priority
+    'stop' => true,    // Stops other discounts
+]);
+
+// Lower priority discount (won't apply if exclusive is used)
+$regularDiscount = Discount::create([
+    'name' => 'Regular 10% Off',
+    'handle' => 'regular_10',
+    'type' => 'Lunar\DiscountTypes\Coupon',
+    'data' => ['coupon' => 'REGULAR10'],
+    'starts_at' => now(),
+    'ends_at' => now()->addDays(30),
+    'priority' => 1,  // Lower priority
+    'stop' => false,
+]);
+```
+
+**Best Practices**:
+
+- **Use Handles**: Always use unique handles for discounts to make them easy to reference
+- **Set Expiration Dates**: Use `ends_at` to prevent discounts from running indefinitely
+- **Limit Uses**: Set `max_uses` to control how many times a discount can be applied
+- **Use Priority**: Set appropriate priorities to control which discounts apply first
+- **Use Stop Flag**: Set `stop` to `true` for exclusive discounts that shouldn't stack
+- **Reset Cache**: Always reset the discount cache after programmatically creating or modifying discounts
+- **Check Active/Usable**: Always check if a discount is active and usable before applying
+- **Track Uses**: Increment the `uses` counter when a discount is successfully applied
+- **Conditions vs Rewards**: Use conditions for required items, rewards for items that get discounted
+- **Test Discounts**: Test discount logic thoroughly, especially with multiple discounts and priorities
+- **Eager Load**: When loading discounts, eager load relationships:
+  ```php
+  Discount::with(['purchasables.purchasable'])->get();
+  ```
+
+**Documentation**: See [Lunar Discounts documentation](https://docs.lunarphp.com/1.x/reference/discounts)
 
     public function apply(Cart $cart): Cart
     {

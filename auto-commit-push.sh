@@ -155,12 +155,14 @@ Format:
 - Blank line
 - For each changed file, include a bullet point describing what changed:
   * filename: description of changes
+  (blank line between each file description, but NO blank line after the last file)
 
 Rules:
 - Subject line: Imperative mood (e.g., "Add …", "Fix …", "Refactor …", "Enhance …", "Update …")
 - Be specific and detailed about what changed in each file
 - Maximum detailed information about all changes
 - Use clear, concise language
+- Add one blank line between each file bullet point, but do NOT add a blank line after the last file
 
 Changed files (name-status):
 $name_status

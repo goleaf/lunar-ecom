@@ -11,7 +11,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 /**
  * Custom Media Definitions for Lunar Models.
  * 
- * Provides custom media collections and conversions for Products and Collections.
+ * Provides custom media collections and conversions for Products, Collections, and Brands.
+ * Includes responsive images, optimization, and multiple size conversions.
  * See: https://docs.lunarphp.com/1.x/reference/media
  */
 class CustomMediaDefinitions implements MediaDefinitionsInterface
@@ -25,26 +26,76 @@ class CustomMediaDefinitions implements MediaDefinitionsInterface
      */
     public function registerMediaConversions(HasMedia $model, Media $media = null): void
     {
-        // Add a conversion for the admin panel to use
+        // Small thumbnail for admin panel and thumbnails
         $model->addMediaConversion('small')
             ->fit(Fit::Fill, 300, 300)
             ->sharpen(10)
+            ->quality(85)
             ->keepOriginalImageFormat();
 
-        // Additional conversions for storefront use
+        // Thumbnail for product cards and listings
         $model->addMediaConversion('thumb')
             ->fit(Fit::Fill, 400, 400)
             ->sharpen(10)
+            ->quality(85)
             ->keepOriginalImageFormat();
 
+        // Medium size for product detail pages
         $model->addMediaConversion('medium')
             ->fit(Fit::Fill, 800, 800)
             ->sharpen(10)
+            ->quality(90)
             ->keepOriginalImageFormat();
 
+        // Large size for zoom/lightbox
         $model->addMediaConversion('large')
             ->fit(Fit::Fill, 1200, 1200)
             ->sharpen(10)
+            ->quality(92)
+            ->keepOriginalImageFormat();
+
+        // Extra large for high-DPI displays
+        $model->addMediaConversion('xlarge')
+            ->fit(Fit::Fill, 1920, 1920)
+            ->sharpen(10)
+            ->quality(95)
+            ->keepOriginalImageFormat();
+
+        // Responsive image sizes for srcset
+        $model->addMediaConversion('responsive_320')
+            ->width(320)
+            ->sharpen(10)
+            ->quality(85)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('responsive_640')
+            ->width(640)
+            ->sharpen(10)
+            ->quality(85)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('responsive_768')
+            ->width(768)
+            ->sharpen(10)
+            ->quality(85)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('responsive_1024')
+            ->width(1024)
+            ->sharpen(10)
+            ->quality(90)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('responsive_1280')
+            ->width(1280)
+            ->sharpen(10)
+            ->quality(90)
+            ->keepOriginalImageFormat();
+
+        $model->addMediaConversion('responsive_1920')
+            ->width(1920)
+            ->sharpen(10)
+            ->quality(92)
             ->keepOriginalImageFormat();
     }
 

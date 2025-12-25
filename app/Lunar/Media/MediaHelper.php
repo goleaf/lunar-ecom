@@ -140,6 +140,135 @@ class MediaHelper
             ];
         });
     }
+
+    /**
+     * Get responsive image srcset for a media item.
+     * 
+     * @param Media $media
+     * @param array $breakpoints Optional custom breakpoints
+     * @return string Srcset string
+     */
+    public static function getResponsiveSrcset(Media $media, array $breakpoints = null): string
+    {
+        $breakpoints = $breakpoints ?? config('lunar.media.responsive.breakpoints', [320, 640, 768, 1024, 1280, 1920]);
+        $srcset = [];
+
+        foreach ($breakpoints as $width) {
+            $conversion = 'responsive_' . $width;
+            try {
+                $url = $media->getUrl($conversion);
+                $srcset[] = "{$url} {$width}w";
+            } catch (\Exception $e) {
+                // Conversion might not exist, skip it
+                continue;
+            }
+        }
+
+        return implode(', ', $srcset);
+    }
+
+    /**
+     * Get responsive image attributes (srcset and sizes).
+     * 
+     * @param Media $media
+     * @param string $sizeType Size type from config (default, product_card, product_detail)
+     * @param array $breakpoints Optional custom breakpoints
+     * @return array Array with 'srcset' and 'sizes' keys
+     */
+    public static function getResponsiveAttributes(Media $media, string $sizeType = 'default', array $breakpoints = null): array
+    {
+        $srcset = static::getResponsiveSrcset($media, $breakpoints);
+        $sizes = config("lunar.media.responsive.sizes.{$sizeType}", config('lunar.media.responsive.sizes.default'));
+
+        return [
+            'srcset' => $srcset,
+            'sizes' => $sizes,
+        ];
+    }
+
+    /**
+     * Get responsive image HTML attributes string.
+     * 
+     * @param Media $media
+     * @param string $sizeType
+     * @param array $breakpoints
+     * @return string HTML attributes string
+     */
+    public static function getResponsiveAttributesString(Media $media, string $sizeType = 'default', array $breakpoints = null): string
+    {
+        $attrs = static::getResponsiveAttributes($media, $sizeType, $breakpoints);
+        
+        $html = '';
+        if (!empty($attrs['srcset'])) {
+            $html .= 'srcset="' . htmlspecialchars($attrs['srcset']) . '" ';
+        }
+        if (!empty($attrs['sizes'])) {
+            $html .= 'sizes="' . htmlspecialchars($attrs['sizes']) . '"';
+        }
+
+        return trim($html);
+    }
+
+    /**
+     * Add multiple images to a model.
+     * 
+     * @param HasMedia $model
+     * @param array $files Array of uploaded files
+     * @param string $collectionName
+     * @return Collection Collection of Media models
+     */
+    public static function addMultipleImages(HasMedia $model, array $files, string $collectionName = 'images'): Collection
+    {
+        $mediaItems = collect();
+
+        foreach ($files as $file) {
+            if ($file && $file->isValid()) {
+                $media = $model->addMedia($file)
+                    ->withCustomProperties(['order' => $mediaItems->count()])
+                    ->toMediaCollection($collectionName);
+                $mediaItems->push($media);
+            }
+        }
+
+        return $mediaItems;
+    }
+
+    /**
+     * Delete a media item by ID.
+     * 
+     * @param HasMedia $model
+     * @param int $mediaId
+     * @return bool
+     */
+    public static function deleteImage(HasMedia $model, int $mediaId): bool
+    {
+        $media = $model->getMedia()->firstWhere('id', $mediaId);
+        
+        if ($media) {
+            $media->delete();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Reorder media items.
+     * 
+     * @param HasMedia $model
+     * @param array $mediaIds Array of media IDs in desired order
+     * @return void
+     */
+    public static function reorderImages(HasMedia $model, array $mediaIds): void
+    {
+        foreach ($mediaIds as $index => $mediaId) {
+            $media = $model->getMedia()->firstWhere('id', $mediaId);
+            if ($media) {
+                $media->setCustomProperty('order', $index);
+                $media->save();
+            }
+        }
+    }
 }
 
 

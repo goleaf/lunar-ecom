@@ -157,16 +157,67 @@ class OrderHelper
     }
 
     /**
-     * Update order status.
+     * Update order status with history tracking and notifications.
      * 
      * @param Order $order
      * @param string $status
+     * @param string|null $notes Optional notes about the status change
+     * @param array|null $meta Optional metadata
      * @return Order
      */
-    public static function updateStatus(Order $order, string $status): Order
+    public static function updateStatus(Order $order, string $status, ?string $notes = null, ?array $meta = null): Order
     {
-        $order->update(['status' => $status]);
-        return $order->fresh();
+        $service = app(\App\Services\OrderStatusService::class);
+        return $service->updateStatus($order, $status, $notes, $meta);
+    }
+
+    /**
+     * Get status history for an order.
+     * 
+     * @param Order $order
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getStatusHistory(Order $order)
+    {
+        $service = app(\App\Services\OrderStatusService::class);
+        return $service->getStatusHistory($order);
+    }
+
+    /**
+     * Get orders filtered by status.
+     * 
+     * @param string $status
+     * @param int|null $limit
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getOrdersByStatus(string $status, ?int $limit = null)
+    {
+        $service = app(\App\Services\OrderStatusService::class);
+        return $service->getOrdersByStatus($status, $limit);
+    }
+
+    /**
+     * Get complete order history with status changes.
+     * 
+     * @param Order $order
+     * @return array
+     */
+    public static function getOrderHistory(Order $order): array
+    {
+        $service = app(\App\Services\OrderStatusService::class);
+        return $service->getOrderHistory($order);
+    }
+
+    /**
+     * Get status label for an order.
+     * 
+     * @param Order $order
+     * @return string
+     */
+    public static function getStatusLabel(Order $order): string
+    {
+        $service = app(\App\Services\OrderStatusService::class);
+        return $service->getStatusLabel($order->status);
     }
 
     /**

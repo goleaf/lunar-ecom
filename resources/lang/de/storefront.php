@@ -1,0 +1,85 @@
+<?php
+
+return [
+    'nav' => [
+        'products' => 'Produkte',
+        'collections' => 'Kollektionen',
+        'cart' => 'Warenkorb',
+        'search' => 'Suchen',
+        'search_placeholder' => 'Suchen...',
+    ],
+    'product' => [
+        'view_details' => 'Details Anzeigen',
+        'add_to_cart' => 'In den Warenkorb',
+        'quantity' => 'Menge',
+        'price' => 'Preis',
+        'no_image' => 'Kein Bild',
+    ],
+    'cart' => [
+        'title' => 'Warenkorb',
+        'empty' => 'Ihr Warenkorb ist leer.',
+        'continue_shopping' => 'Weiter Einkaufen',
+        'product' => 'Produkt',
+        'price' => 'Preis',
+        'quantity' => 'Menge',
+        'total' => 'Gesamt',
+        'actions' => 'Aktionen',
+        'update' => 'Aktualisieren',
+        'remove' => 'Entfernen',
+        'subtotal' => 'Zwischensumme',
+        'tax' => 'Steuer',
+        'shipping' => 'Versand',
+        'total_label' => 'Gesamt',
+        'proceed_to_checkout' => 'Zur Kasse',
+    ],
+    'checkout' => [
+        'title' => 'Kasse',
+        'shipping_address' => 'Lieferadresse',
+        'billing_address' => 'Rechnungsadresse',
+        'order_summary' => 'Bestellübersicht',
+        "first_name" => 'Vorname',
+        "last_name" => 'Nachname',
+        "address_line_one" => 'Adresszeile 1',
+        "city" => 'Stadt',
+        "postcode" => 'Postleitzahl',
+        "country" => 'Land',
+        "select_country" => 'Land Auswählen',
+        "place_order" => 'Bestellung Aufgeben',
+    ],
+    'collection' => [
+        'no_products' => 'Keine Produkte in dieser Kollektion.',
+        'sub_collections' => 'Unterkollektionen',
+    ],
+    'common' => [
+        'loading' => 'Lädt...',
+        'error' => 'Ein Fehler ist aufgetreten',
+    ],
+    'products' => 'Produkte',
+    'no_products' => 'Keine Produkte gefunden.',
+    'home' => 'Startseite',
+    
+    // Categories
+    'categories' => 'Kategorien',
+    'category' => 'Kategorie',
+    'subcategories' => 'Unterkategorien',
+    'all_categories' => 'Alle Kategorien',
+    'category_products' => 'Produkte in :category',
+    
+    // Filters
+    'filters' => 'Filter',
+    'price_range' => 'Preisspanne',
+    'brand' => 'Marke',
+    'all_brands' => 'Alle Marken',
+    'sort_by' => 'Sortieren Nach',
+    'sort' => [
+        'default' => 'Standard',
+        'price_asc' => 'Preis: Niedrig zu Hoch',
+        'price_desc' => 'Preis: Hoch zu Niedrig',
+        'name_asc' => 'Name: A bis Z',
+        'name_desc' => 'Name: Z bis A',
+        'newest' => 'Neueste zuerst',
+    ],
+    'apply_filters' => 'Filter Anwenden',
+    'clear_filters' => 'Filter Zurücksetzen',
+];
+

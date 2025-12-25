@@ -91,10 +91,12 @@ class LanguageHelper
      */
     public static function setDefault(Language|string $language): Language
     {
+        $languageCode = is_string($language) ? $language : $language->code;
+        
         if (is_string($language)) {
             $language = static::findByCode($language);
             if (!$language) {
-                throw new \InvalidArgumentException("Language with code '{$language}' not found");
+                throw new \InvalidArgumentException("Language with code '{$languageCode}' not found");
             }
         }
 

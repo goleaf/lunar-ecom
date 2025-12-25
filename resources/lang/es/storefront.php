@@ -1,0 +1,85 @@
+<?php
+
+return [
+    'nav' => [
+        'products' => 'Productos',
+        'collections' => 'Colecciones',
+        'cart' => 'Carrito',
+        'search' => 'Buscar',
+        'search_placeholder' => 'Buscar...',
+    ],
+    'product' => [
+        'view_details' => 'Ver Detalles',
+        'add_to_cart' => 'Añadir al Carrito',
+        'quantity' => 'Cantidad',
+        'price' => 'Precio',
+        'no_image' => 'Sin Imagen',
+    ],
+    'cart' => [
+        'title' => 'Carrito de Compras',
+        'empty' => 'Tu carrito está vacío.',
+        'continue_shopping' => 'Continuar Comprando',
+        'product' => 'Producto',
+        'price' => 'Precio',
+        'quantity' => 'Cantidad',
+        'total' => 'Total',
+        'actions' => 'Acciones',
+        'update' => 'Actualizar',
+        'remove' => 'Eliminar',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Impuesto',
+        'shipping' => 'Envío',
+        'total_label' => 'Total',
+        'proceed_to_checkout' => 'Proceder al Pago',
+    ],
+    'checkout' => [
+        'title' => 'Pago',
+        'shipping_address' => 'Dirección de Envío',
+        'billing_address' => 'Dirección de Facturación',
+        'order_summary' => 'Resumen del Pedido',
+        "first_name" => 'Nombre',
+        "last_name" => 'Apellido',
+        "address_line_one" => 'Dirección Línea 1',
+        "city" => 'Ciudad',
+        "postcode" => 'Código Postal',
+        "country" => 'País',
+        "select_country" => 'Seleccionar País',
+        "place_order" => 'Realizar Pedido',
+    ],
+    'collection' => [
+        'no_products' => 'No hay productos en esta colección.',
+        'sub_collections' => 'Sub-colecciones',
+    ],
+    'common' => [
+        'loading' => 'Cargando...',
+        'error' => 'Ocurrió un error',
+    ],
+    'products' => 'Productos',
+    'no_products' => 'No se encontraron productos.',
+    'home' => 'Inicio',
+    
+    // Categories
+    'categories' => 'Categorías',
+    'category' => 'Categoría',
+    'subcategories' => 'Subcategorías',
+    'all_categories' => 'Todas las Categorías',
+    'category_products' => 'Productos en :category',
+    
+    // Filters
+    'filters' => 'Filtros',
+    'price_range' => 'Rango de Precios',
+    'brand' => 'Marca',
+    'all_brands' => 'Todas las Marcas',
+    'sort_by' => 'Ordenar Por',
+    'sort' => [
+        'default' => 'Por Defecto',
+        'price_asc' => 'Precio: Menor a Mayor',
+        'price_desc' => 'Precio: Mayor a Menor',
+        'name_asc' => 'Nombre: A a Z',
+        'name_desc' => 'Nombre: Z a A',
+        'newest' => 'Más Recientes',
+    ],
+    'apply_filters' => 'Aplicar Filtros',
+    'clear_filters' => 'Limpiar Filtros',
+];
+

@@ -1,18 +1,22 @@
 <div class="bg-white rounded-lg shadow overflow-hidden">
     @php
-        // Get first image URL using Lunar Media - see: https://docs.lunarphp.com/1.x/reference/media
-        $imageUrl = $product->getFirstMediaUrl('images', 'thumb') 
-            ?? $product->getFirstMediaUrl('images') 
-            ?? config('lunar.media.fallback.url');
+        $firstMedia = $product->getFirstMedia('images');
     @endphp
 
-    @if($imageUrl)
-        <img src="{{ $imageUrl }}" 
-             alt="{{ $product->translateAttribute('name') }}" 
-             class="w-full h-48 object-cover">
+    @if($firstMedia)
+        @include('storefront.components.responsive-image', [
+            'media' => $firstMedia,
+            'model' => $product,
+            'collectionName' => 'images',
+            'conversion' => 'thumb',
+            'sizeType' => 'product_card',
+            'alt' => $product->translateAttribute('name'),
+            'class' => 'w-full h-48 object-cover',
+            'loading' => 'lazy'
+        ])
     @else
         <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-            <span class="text-gray-400">No Image</span>
+            <span class="text-gray-400">{{ __('storefront.product.no_image') }}</span>
         </div>
     @endif
     <div class="p-4">
@@ -36,7 +40,7 @@
             </p>
         @endif
         <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-            View Details
+            {{ __('storefront.product.view_details') }}
         </a>
     </div>
 </div>

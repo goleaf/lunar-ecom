@@ -44,6 +44,9 @@ class CartController extends Controller
 
         $variant = ProductVariant::findOrFail($request->variant_id);
         
+        // Ensure user can view this variant (can only add purchasable variants to cart)
+        $this->authorize('view', $variant);
+        
         // Check if variant is purchasable
         if (!$variant->purchasable) {
             return response()->json(['error' => 'This item is not available for purchase'], 400);

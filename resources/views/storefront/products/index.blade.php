@@ -1,12 +1,112 @@
 @extends('storefront.layout')
 
-@section('title', 'Products')
+@section('title', $metaTags['title'] ?? 'Products')
+
+@section('meta')
+    <meta name="description" content="{{ $metaTags['description'] }}">
+    <meta property="og:title" content="{{ $metaTags['og:title'] }}">
+    <meta property="og:description" content="{{ $metaTags['og:description'] }}">
+    <meta property="og:type" content="{{ $metaTags['og:type'] }}">
+    <meta property="og:url" content="{{ $metaTags['og:url'] }}">
+    <link rel="canonical" href="{{ $metaTags['canonical'] }}">
+@endsection
 
 @section('content')
 <div class="px-4 py-6">
-    <h1 class="text-3xl font-bold mb-6">Products</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">{{ __('storefront.nav.products') }}</h1>
+    </div>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {{-- Filters Sidebar --}}
+        <aside class="lg:col-span-1">
+            <div class="bg-white p-4 rounded-lg shadow sticky top-4">
+                <h2 class="text-lg font-semibold mb-4">{{ __('storefront.filters') }}</h2>
+                
+                <form method="GET" action="{{ route('storefront.products.index') }}" id="filter-form">
+                    {{-- Brand Filter --}}
+                    @if(isset($brands) && $brands->count() > 0)
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">{{ __('storefront.brand') }}</label>
+                            <select name="brand_id" class="border rounded px-3 py-1 w-full">
+                                <option value="">{{ __('storefront.all_brands') }}</option>
+                                @foreach($brands as $brand)
+                                    <option value="{{ $brand->id }}" {{ request('brand_id') == $brand->id ? 'selected' : '' }}>
+                                        {{ $brand->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+
+                    {{-- Attribute Filters --}}
+                    @if(isset($groupedAttributes) && $groupedAttributes->count() > 0)
+                        @include('storefront.components.attribute-filters', [
+                            'groupedAttributes' => $groupedAttributes,
+                            'activeFilters' => $activeFilters ?? [],
+                            'baseUrl' => route('storefront.products.index')
+                        ])
+                    @endif
+
+                    {{-- Sort --}}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">{{ __('storefront.sort_by') }}</label>
+                        <select name="sort" class="border rounded px-3 py-1 w-full">
+                            <option value="default" {{ request('sort') == 'default' ? 'selected' : '' }}>{{ __('storefront.sort.default') }}</option>
+                            <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('storefront.sort.price_asc') }}</option>
+                            <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('storefront.sort.price_desc') }}</option>
+                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('storefront.sort.newest') }}</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-2">
+                        {{ __('storefront.apply_filters') }}
+                    </button>
+                    @if(request()->hasAny(['brand_id', 'sort']) || !empty($activeFilters ?? []))
+                        <a href="{{ route('storefront.products.index') }}" class="block text-center text-blue-600 hover:text-blue-800 text-sm">
+                            {{ __('storefront.clear_filters') }}
+                        </a>
+                    @endif
+                </form>
+            </div>
+        </aside>
+
+        {{-- Products Grid --}}
+        <div class="lg:col-span-3">
+
+            {{-- Active Filters Display --}}
+            @if(request('brand_id') || !empty($activeFilters ?? []))
+                <div class="mb-4 p-3 bg-blue-50 rounded flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-medium">Active filters:</span>
+                    @if(request('brand_id'))
+                        @php
+                            $selectedBrand = $brands->firstWhere('id', request('brand_id'));
+                        @endphp
+                        @if($selectedBrand)
+                            <span class="text-sm bg-white px-2 py-1 rounded">
+                                Brand: {{ $selectedBrand->name }}
+                                <a href="{{ route('storefront.products.index', array_merge(request()->except('brand_id'), $activeFilters ?? [])) }}" class="ml-1 text-red-600">×</a>
+                            </span>
+                        @endif
+                    @endif
+                    @if(!empty($activeFilters ?? []))
+                        @foreach($activeFilters as $handle => $value)
+                            @php
+                                $attribute = \App\Models\Attribute::where('handle', $handle)->first();
+                            @endphp
+                            @if($attribute)
+                                <span class="text-sm bg-white px-2 py-1 rounded">
+                                    {{ \App\Lunar\Attributes\AttributeFilterHelper::getFilterDisplayName($attribute) }}: 
+                                    {{ is_array($value) ? implode(', ', $value) : \App\Lunar\Attributes\AttributeFilterHelper::formatFilterValue($attribute, $value) }}
+                                    <a href="{{ route('storefront.products.index', array_merge(request()->except($handle), ['brand_id' => request('brand_id')])) }}" class="ml-1 text-red-600">×</a>
+                                </span>
+                            @endif
+                        @endforeach
+                    @endif
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @forelse($products as $product)
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 @php
@@ -49,7 +149,7 @@
                         </p>
                     @endif
                     <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="mt-3 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                        View Details
+                        {{ __('storefront.product.view_details') }}
                     </a>
                 </div>
             </div>
@@ -60,8 +160,10 @@
         @endforelse
     </div>
 
-    <div class="mt-6">
-        {{ $products->links() }}
+            <div class="mt-6">
+                {{ $products->links() }}
+            </div>
+        </div>
     </div>
 </div>
 @endsection

@@ -41,25 +41,39 @@ class DatabaseSeeder extends Seeder
         }
 
         // Seed Lunar demo data
-        // You can choose to use either:
-        // 1. LunarDemoSeeder - Creates detailed demo data with specific products
-        // 2. FactorySeeder - Creates data using factories (more flexible)
+        // You can choose from several options:
         
-        // Option 1: Use LunarDemoSeeder (default)
+        // Option 1: Use LunarDemoSeeder (default) - Creates detailed demo data with specific products
+        // $this->call([
+        //     LunarDemoSeeder::class,
+        // ]);
+        
+        // Option 5: Use CompleteSeeder with all new factories - Maximum comprehensive seeding
         $this->call([
-            LunarDemoSeeder::class,
+            CompleteSeeder::class,
+            CategorySeeder::class,
+            ReviewSeeder::class,
+            SearchSeeder::class,
         ]);
         
-        // Option 2: Use FactorySeeder instead (uncomment to use)
+        // Option 2: Use FactorySeeder - Creates data using factories (more flexible)
         // $this->call([
         //     FactorySeeder::class,
         // ]);
         
-        // Option 3: Use both (uncomment to use)
+        // Option 3: Use CompleteSeeder - Maximum comprehensive seeder with everything
+        // $this->call([
+        //     CompleteSeeder::class,
+        // ]);
+        
+        // Option 4: Use individual seeders for specific data
         // $this->call([
         //     FactorySeeder::class,
         //     ProductSeeder::class,
         //     CollectionSeeder::class,
+        //     CustomerSeeder::class,
+        //     CartSeeder::class,
+        //     OrderSeeder::class,
         // ]);
     }
 }

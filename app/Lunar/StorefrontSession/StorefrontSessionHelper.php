@@ -3,11 +3,13 @@
 namespace App\Lunar\StorefrontSession;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use Lunar\Facades\StorefrontSession;
 use Lunar\Models\Channel;
 use Lunar\Models\Currency;
 use Lunar\Models\Customer;
 use Lunar\Models\CustomerGroup;
+use Lunar\Models\Language;
 
 /**
  * Helper class for working with Lunar Storefront Session.
@@ -182,9 +184,77 @@ class StorefrontSessionHelper
     }
 
     /**
+     * Initialize the language.
+     * 
+     * Sets the language based on what's been previously set (from the session),
+     * otherwise uses the default language.
+     * 
+     * @return Language|null
+     */
+    public static function initLanguage(): ?Language
+    {
+        $languageCode = session('storefront_language');
+        
+        if ($languageCode) {
+            $language = Language::where('code', $languageCode)->first();
+            if ($language) {
+                App::setLocale($language->code);
+                return $language;
+            }
+        }
+
+        // Use default language
+        $defaultLanguage = Language::getDefault();
+        if ($defaultLanguage) {
+            App::setLocale($defaultLanguage->code);
+            session(['storefront_language' => $defaultLanguage->code]);
+            return $defaultLanguage;
+        }
+
+        // Fallback to 'en' if no default language is set
+        App::setLocale('en');
+        return null;
+    }
+
+    /**
+     * Set the language.
+     * 
+     * @param Language|string $language Language instance or code (e.g., 'en', 'fr')
+     * @return void
+     */
+    public static function setLanguage(Language|string $language): void
+    {
+        if (is_string($language)) {
+            $language = Language::where('code', $language)->first();
+            if (!$language) {
+                throw new \InvalidArgumentException("Language with code '{$language}' not found");
+            }
+        }
+
+        session(['storefront_language' => $language->code]);
+        App::setLocale($language->code);
+    }
+
+    /**
+     * Get the current language.
+     * 
+     * @return Language|null
+     */
+    public static function getLanguage(): ?Language
+    {
+        $languageCode = session('storefront_language');
+        
+        if ($languageCode) {
+            return Language::where('code', $languageCode)->first();
+        }
+
+        return Language::getDefault();
+    }
+
+    /**
      * Initialize all storefront session components.
      * 
-     * This initializes channel, currency, customer groups, and customer.
+     * This initializes channel, currency, customer groups, customer, and language.
      * Useful for setting up the entire storefront session at once.
      * 
      * @return array Array containing initialized components
@@ -196,6 +266,7 @@ class StorefrontSessionHelper
             'currency' => static::initCurrency(),
             'customerGroups' => static::initCustomerGroups(),
             'customer' => static::initCustomer(),
+            'language' => static::initLanguage(),
         ];
     }
 }

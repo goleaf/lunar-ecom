@@ -19,6 +19,8 @@ class ProductVariantController extends Controller
      */
     public function store(Request $request, Product $product): JsonResponse
     {
+        $this->authorize('create', ProductVariant::class);
+        
         $validated = $request->validate([
             'sku' => 'required|string|unique:lunar_product_variants,sku',
             'gtin' => 'nullable|string',
@@ -51,6 +53,8 @@ class ProductVariantController extends Controller
      */
     public function updateStock(Request $request, ProductVariant $variant): JsonResponse
     {
+        $this->authorize('update', $variant);
+        
         $validated = $request->validate([
             'stock' => 'required|integer|min:0'
         ]);
@@ -106,6 +110,8 @@ class ProductVariantController extends Controller
      */
     public function update(Request $request, ProductVariant $variant): JsonResponse
     {
+        $this->authorize('update', $variant);
+        
         $validated = $request->validate([
             'sku' => 'string|unique:lunar_product_variants,sku,' . $variant->id,
             'gtin' => 'nullable|string',
@@ -133,6 +139,8 @@ class ProductVariantController extends Controller
      */
     public function destroy(ProductVariant $variant): JsonResponse
     {
+        $this->authorize('delete', $variant);
+        
         $variant->delete();
 
         return response()->json([

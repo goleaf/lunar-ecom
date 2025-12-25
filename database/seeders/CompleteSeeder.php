@@ -3,11 +3,19 @@
 namespace Database\Seeders;
 
 use App\Models\Attribute;
+use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\ProductVariant;
+use App\Models\Review;
+use App\Models\SearchAnalytic;
+use App\Models\SearchSynonym;
 use Illuminate\Database\Seeder;
+use Database\Factories\DiscountFactory;
+use Database\Factories\TagFactory;
+use Database\Factories\TransactionFactory;
+use Database\Factories\UrlFactory;
 use Lunar\Models\Address;
 use Lunar\Models\Cart;
 use Lunar\Models\CartLine;
@@ -17,11 +25,15 @@ use Lunar\Models\Country;
 use Lunar\Models\Currency;
 use Lunar\Models\Customer;
 use Lunar\Models\CustomerGroup;
+use Lunar\Models\Discount;
 use Lunar\Models\Language;
 use Lunar\Models\Order;
 use Lunar\Models\OrderLine;
 use Lunar\Models\Price;
+use Lunar\Models\Tag;
 use Lunar\Models\TaxClass;
+use Lunar\Models\Transaction;
+use Lunar\Models\Url;
 use Lunar\Models\User;
 
 /**
@@ -174,7 +186,47 @@ class CompleteSeeder extends Seeder
             }
         }
 
-        // Step 8: Create orders with order lines
+        // Step 8: Create URLs for products
+        $this->command->info('🔗 Creating product URLs...');
+        foreach ($products as $product) {
+            UrlFactory::new()
+                ->forElement($product)
+                ->default()
+                ->create([
+                    'slug' => str($product->translateAttribute('name'))->slug(),
+                ]);
+        }
+
+        // Step 9: Create tags and attach to products
+        $this->command->info('🏷️ Creating tags...');
+        $tags = TagFactory::new()->count(15)->create();
+        foreach ($products->random(30) as $product) {
+            $product->tags()->attach($tags->random(fake()->numberBetween(1, 3))->pluck('id')->toArray());
+        }
+
+        // Step 10: Create discounts
+        $this->command->info('💰 Creating discounts...');
+        $discounts = DiscountFactory::new()
+            ->count(10)
+            ->active()
+            ->create();
+        
+        // Mix of percentage and fixed discounts
+        DiscountFactory::new()
+            ->count(5)
+            ->percentage(fake()->numberBetween(10, 50))
+            ->withCoupon()
+            ->active()
+            ->create();
+        
+        DiscountFactory::new()
+            ->count(5)
+            ->fixed(fake()->numberBetween(1000, 10000))
+            ->withCoupon()
+            ->active()
+            ->create();
+
+        // Step 11: Create orders with order lines
         $this->command->info('📦 Creating orders...');
         $orders = Order::factory()
             ->count(40)
@@ -227,6 +279,39 @@ class CompleteSeeder extends Seeder
                 }
             }
         }
+
+        // Step 12: Create transactions for orders
+        $this->command->info('💳 Creating transactions...');
+        foreach ($orders->random(30) as $order) {
+            TransactionFactory::new()
+                ->successful()
+                ->create([
+                    'order_id' => $order->id,
+                    'amount' => $order->total,
+                ]);
+        }
+
+        // Step 13: Create categories
+        $this->command->info('📂 Creating categories...');
+        $rootCategories = Category::factory()->count(5)->create();
+        foreach ($rootCategories as $rootCategory) {
+            Category::factory()->count(fake()->numberBetween(2, 4))->withParent($rootCategory)->create();
+        }
+
+        // Step 14: Create reviews
+        $this->command->info('⭐ Creating reviews...');
+        foreach ($products->random(30) as $product) {
+            Review::factory()
+                ->count(fake()->numberBetween(1, 5))
+                ->create([
+                    'product_id' => $product->id,
+                ]);
+        }
+
+        // Step 15: Create search analytics and synonyms
+        $this->command->info('🔍 Creating search analytics and synonyms...');
+        \App\Models\SearchAnalytic::factory()->count(50)->create();
+        \App\Models\SearchSynonym::factory()->count(10)->create();
 
         $this->command->info('✅ Complete seeding finished!');
         $this->command->info("📊 Created:");

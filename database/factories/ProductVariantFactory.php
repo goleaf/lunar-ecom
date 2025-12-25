@@ -97,7 +97,8 @@ class ProductVariantFactory extends Factory
             foreach ($attributes as $key => $value) {
                 if (is_string($value)) {
                     $attributeData[$key] = new Text($value);
-                } elseif ($value instanceof \Lunar\FieldTypes\FieldType) {
+                } elseif (is_object($value) && method_exists($value, 'getValue')) {
+                    // Check if it's a FieldType by checking for getValue method
                     $attributeData[$key] = $value;
                 }
             }
@@ -114,16 +115,27 @@ class ProductVariantFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (ProductVariant $variant) {
-            // Create a default price if currency exists
+            // Create a default price if currency and customer group exist
             $currency = \Lunar\Models\Currency::where('default', true)->first();
-            if ($currency && !$variant->prices()->where('currency_id', $currency->id)->exists()) {
-                \Lunar\Models\Price::create([
-                    'price' => fake()->randomFloat(2, 10, 1000),
-                    'compare_price' => fake()->optional(0.3)->randomFloat(2, 1000, 2000),
-                    'currency_id' => $currency->id,
-                    'priceable_type' => ProductVariant::class,
-                    'priceable_id' => $variant->id,
-                ]);
+            $customerGroup = \Lunar\Models\CustomerGroup::where('default', true)->first();
+            
+            if ($currency && $customerGroup) {
+                // Check if price already exists
+                $existingPrice = $variant->prices()
+                    ->where('currency_id', $currency->id)
+                    ->where('customer_group_id', $customerGroup->id)
+                    ->first();
+                
+                if (!$existingPrice) {
+                    \Lunar\Models\Price::create([
+                        'price' => fake()->numberBetween(1000, 100000), // In cents
+                        'compare_price' => fake()->optional(0.3)->numberBetween(100000, 200000),
+                        'currency_id' => $currency->id,
+                        'customer_group_id' => $customerGroup->id,
+                        'priceable_type' => ProductVariant::class,
+                        'priceable_id' => $variant->id,
+                    ]);
+                }
             }
         });
     }

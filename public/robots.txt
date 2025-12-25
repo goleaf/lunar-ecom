@@ -1,2 +1,16 @@
+# Robots.txt for Lunar E-commerce Store
+# This file is a fallback. For dynamic robots.txt, use /robots route
+# https://www.robotstxt.org/
+
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /api/
+Disallow: /search-analytics/
+Disallow: /*?*sort=*
+Disallow: /*?*filter=*
+
+# Sitemap location (update with your domain)
+Sitemap: https://yourdomain.com/sitemap/

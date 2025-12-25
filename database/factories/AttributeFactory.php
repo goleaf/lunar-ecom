@@ -32,29 +32,33 @@ class AttributeFactory extends Factory
         return [
             'attribute_type' => $attributeType,
             'attribute_group_id' => function () use ($attributeType) {
-                return AttributeGroup::firstOrCreate(
-                    ['handle' => $attributeType],
-                    [
-                        'name' => [
-                            'en' => ucfirst($attributeType),
-                        ],
+                // Use existing attribute group from test setup if available
+                $handle = $attributeType === 'product' ? 'product_attributes' : 'collection_attributes';
+                $group = AttributeGroup::where('handle', $handle)->first();
+                
+                if (!$group) {
+                    $group = AttributeGroup::create([
+                        'handle' => $handle,
+                        'name' => ['en' => ucfirst($attributeType) . ' Attributes'],
                         'attributable_type' => $attributeType === 'product' 
                             ? \App\Models\Product::class 
                             : \App\Models\Collection::class,
                         'position' => 0,
-                    ]
-                )->id;
+                    ]);
+                }
+                
+                return $group->id;
             },
             'position' => fake()->numberBetween(0, 100),
-            'name' => [
+            'name' => json_encode([
                 'en' => ucfirst($name),
-            ],
+            ]),
             'handle' => $handle,
             'section' => 'main',
             'type' => \Lunar\FieldTypes\Text::class,
             'required' => false,
             'default_value' => null,
-            'configuration' => [],
+            'configuration' => json_encode([]),
             'system' => false,
         ];
     }

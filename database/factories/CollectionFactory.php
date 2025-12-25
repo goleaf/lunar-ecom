@@ -33,9 +33,7 @@ class CollectionFactory extends Factory
                 return CollectionGroup::firstOrCreate(
                     ['handle' => 'default'],
                     [
-                        'name' => [
-                            'en' => 'Default',
-                        ],
+                        'name' => 'Default',
                     ]
                 )->id;
             },
@@ -58,7 +56,8 @@ class CollectionFactory extends Factory
             foreach ($attributes as $key => $value) {
                 if (is_string($value)) {
                     $attributeData[$key] = new Text($value);
-                } elseif ($value instanceof \Lunar\FieldTypes\FieldType) {
+                } elseif (is_object($value) && method_exists($value, 'getValue')) {
+                    // Check if it's a FieldType by checking for getValue method
                     $attributeData[$key] = $value;
                 }
             }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Lunar\Models\Product;
 use Lunar\Search\ScoutIndexer;
+use Lunar\Facades\Pricing;
 
 /**
  * Example custom product indexer for extending Lunar search.
@@ -61,12 +62,15 @@ class CustomProductIndexer extends ScoutIndexer
     {
         return $query->with([
             'thumbnail',
-            'variants',
+            'variants.prices',
+            'variants.stock',
             'productType',
             'brand',
-            'media', // Eager load media for indexing
-            'collections', // Eager load collections
-            'tags', // Eager load tags
+            'media',
+            'collections',
+            'categories',
+            'attributeValues.attribute',
+            'tags',
         ]);
     }
 
@@ -104,7 +108,8 @@ class CustomProductIndexer extends ScoutIndexer
         return [
             'created_at',
             'updated_at',
-            'price', // Example: if you index price information
+            'price_min', // Sort by minimum price
+            'price_max', // Sort by maximum price
         ];
     }
 
@@ -122,7 +127,10 @@ class CustomProductIndexer extends ScoutIndexer
             'status', // Filter by product status
             'product_type_id', // Filter by product type
             'brand_id', // Filter by brand
-            // Add more filterable fields as needed
+            'category_ids', // Filter by categories
+            'price_min', // Filter by minimum price
+            'price_max', // Filter by maximum price
+            'in_stock', // Filter by stock availability
         ];
     }
 
@@ -130,9 +138,10 @@ class CustomProductIndexer extends ScoutIndexer
      * Return an array representing what should be sent to the search service.
      * 
      * This is where you define the actual data that gets indexed.
+     * Includes: name, description, SKU, brand, category names, attribute values.
      * 
      * @param Model $model
-     * @param string $engine The search engine being used (e.g., 'algolia', 'meilisearch', 'database')
+     * @param string $engine The search engine being used (e.g., 'algolia', 'database')
      * @return array
      */
     public function toSearchableArray(Model $model, string $engine): array
@@ -144,37 +153,148 @@ class CustomProductIndexer extends ScoutIndexer
         // Start with the base searchable attributes (handles searchable attributes from hub)
         $array = $this->mapSearchableAttributes($model);
 
-        // Add custom fields for searching
+        // Get product name and description
+        $name = $model->translateAttribute('name') ?? '';
+        $description = $model->translateAttribute('description') ?? '';
+
+        // Get SKU from custom field or variants
+        $sku = $model->sku;
+        if (!$sku && $model->relationLoaded('variants')) {
+            $sku = $model->variants->first()?->sku;
+        }
+
+        // Get brand name
+        $brandName = null;
+        if ($model->brand) {
+            $brandName = $model->brand->name;
+        }
+
+        // Get category names
+        $categoryNames = [];
+        if ($model->relationLoaded('categories')) {
+            $categoryNames = $model->categories->map(function ($category) {
+                return $category->getName();
+            })->filter()->values()->toArray();
+        } elseif ($model->relationLoaded('collections')) {
+            // Fallback to collections if categories not loaded
+            $categoryNames = $model->collections->map(function ($collection) {
+                return $collection->translateAttribute('name');
+            })->filter()->values()->toArray();
+        }
+
+        // Get attribute values
+        $attributeValues = [];
+        if ($model->relationLoaded('attributeValues')) {
+            $attributeValues = $model->attributeValues->map(function ($attributeValue) {
+                return $attributeValue->getDisplayValue();
+            })->filter()->values()->toArray();
+        }
+
+        // Calculate price range
+        $priceMin = null;
+        $priceMax = null;
+        $inStock = false;
+        if ($model->relationLoaded('variants')) {
+            $prices = [];
+            foreach ($model->variants as $variant) {
+                // Use Pricing facade to get the matched price
+                $pricing = Pricing::for($variant)->get();
+                if ($pricing->matched && $pricing->matched->price) {
+                    $prices[] = $pricing->matched->price->value;
+                }
+            }
+            if (!empty($prices)) {
+                $priceMin = min($prices);
+                $priceMax = max($prices);
+            }
+            
+            // Check if any variant is in stock
+            $inStock = $model->variants->contains(function ($variant) {
+                return $variant->stock > 0 || $variant->backorder;
+            });
+        }
+
+        // Get product URL slug
+        $slug = null;
+        if ($model->relationLoaded('urls')) {
+            $slug = $model->urls->first()?->slug;
+        }
+
+        // Get image URL
+        $imageUrl = null;
+        if ($model->relationLoaded('media')) {
+            $imageUrl = $model->getFirstMediaUrl('images', 'thumb');
+        }
+
+        // Build searchable array
         $array = array_merge($array, [
             'id' => $model->id,
             'status' => $model->status,
             'product_type_id' => $model->product_type_id,
             'created_at' => $model->created_at?->timestamp,
             'updated_at' => $model->updated_at?->timestamp,
+            
+            // Searchable fields (high priority for relevance)
+            'name' => $name,
+            'description' => strip_tags($description), // Remove HTML tags
+            'sku' => $sku,
+            'brand_name' => $brandName,
+            'category_names' => $categoryNames,
+            'attribute_values' => $attributeValues,
+            
+            // Filterable fields
+            'brand_id' => $model->brand_id,
+            'category_ids' => $model->relationLoaded('categories') 
+                ? $model->categories->pluck('id')->toArray()
+                : ($model->relationLoaded('collections') 
+                    ? $model->collections->pluck('id')->toArray() 
+                    : []),
+            'price_min' => $priceMin,
+            'price_max' => $priceMax,
+            'in_stock' => $inStock,
+            
+            // Additional searchable data
+            'skus' => $model->relationLoaded('variants') 
+                ? $model->variants->pluck('sku')->filter()->values()->toArray() 
+                : [],
+            
+            // Display fields (for frontend)
+            'slug' => $slug,
+            'image_url' => $imageUrl,
         ]);
 
-        // Add brand information if available
-        if ($model->brand) {
-            $array['brand_id'] = $model->brand->id;
-            $array['brand_name'] = $model->brand->name;
-        }
-
-        // Add variant SKUs for searching
-        if ($model->relationLoaded('variants')) {
-            $array['skus'] = $model->variants->pluck('sku')->filter()->values()->toArray();
-        }
-
-        // Add collection IDs for filtering
-        if ($model->relationLoaded('collections')) {
-            $array['collection_ids'] = $model->collections->pluck('id')->toArray();
-        }
-
-        // Add tag values for filtering/searching
-        if ($model->relationLoaded('tags')) {
-            $array['tags'] = $model->tags->pluck('value')->toArray();
-        }
-
         return $array;
+    }
+
+    /**
+     * Get searchable attributes from model.
+     * 
+     * @param Model $model
+     * @return array
+     */
+    protected function mapSearchableAttributes(Model $model): array
+    {
+        if (!$model instanceof Product) {
+            return [];
+        }
+
+        $attributes = [];
+        
+        // Get all searchable attributes from attribute_data
+        foreach ($model->attribute_data ?? [] as $handle => $fieldType) {
+            $attribute = \Lunar\Models\Attribute::where('handle', $handle)
+                ->where('searchable', true)
+                ->first();
+            
+            if ($attribute) {
+                $value = $model->translateAttribute($handle);
+                if ($value) {
+                    $attributes[$handle] = is_string($value) ? strip_tags($value) : $value;
+                }
+            }
+        }
+
+        return $attributes;
     }
 }
 

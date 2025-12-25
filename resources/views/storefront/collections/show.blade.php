@@ -1,6 +1,18 @@
 @extends('storefront.layout')
 
-@section('title', $collection->translateAttribute('name'))
+@section('title', $metaTags['title'] ?? $collection->translateAttribute('name'))
+
+@section('meta')
+    <meta name="description" content="{{ $metaTags['description'] }}">
+    <meta property="og:title" content="{{ $metaTags['og:title'] }}">
+    <meta property="og:description" content="{{ $metaTags['og:description'] }}">
+    @if($metaTags['og:image'])
+        <meta property="og:image" content="{{ $metaTags['og:image'] }}">
+    @endif
+    <meta property="og:type" content="{{ $metaTags['og:type'] }}">
+    <meta property="og:url" content="{{ $metaTags['og:url'] }}">
+    <link rel="canonical" href="{{ $metaTags['canonical'] }}">
+@endsection
 
 @section('content')
 <div class="px-4 py-6">

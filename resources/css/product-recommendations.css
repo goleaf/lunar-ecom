@@ -1,0 +1,127 @@
+/**
+ * Product Recommendations Styles
+ */
+
+.product-recommendations {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.recommendations-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #111827;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.recommendation-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background: #fff;
+}
+
+.recommendation-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recommendation-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.recommendation-image {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #f9fafb;
+}
+
+.recommendation-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.recommendation-item:hover .recommendation-image img {
+    transform: scale(1.05);
+}
+
+.recommendation-info {
+    padding: 1rem;
+}
+
+.recommendation-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #111827;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    min-height: 2.8em;
+}
+
+.recommendation-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+}
+
+.recommendation-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.recommendation-rating .star {
+    color: #d1d5db;
+    font-size: 0.875rem;
+}
+
+.recommendation-rating .star.full {
+    color: #fbbf24;
+}
+
+.recommendation-rating .star.half {
+    background: linear-gradient(90deg, #fbbf24 50%, #d1d5db 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Location-specific styles */
+.product-recommendations[data-location="cart"] {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+}
+
+.product-recommendations[data-location="post_purchase"] {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .recommendations-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+}
+

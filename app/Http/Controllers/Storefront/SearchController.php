@@ -3,54 +3,162 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
-use App\Lunar\Search\SearchHelper;
+use App\Services\SearchService;
 use Illuminate\Http\Request;
-use Lunar\Models\Product;
+use Illuminate\Http\JsonResponse;
 
 class SearchController extends Controller
 {
+    public function __construct(
+        protected SearchService $searchService
+    ) {}
+
     /**
-     * Display search results.
+     * Display search results with faceted search.
      * 
-     * Uses Laravel Scout for search via Lunar's Searchable trait.
-     * See: https://docs.lunarphp.com/1.x/reference/search
+     * Uses local database queries for search functionality.
      */
     public function index(Request $request)
     {
         $query = $request->get('q', '');
-        $products = collect();
-        $currentPage = $request->get('page', 1);
-
-        if ($query) {
-            // Use Laravel Scout for search (configured via config/scout.php)
-            // Products use the Searchable trait from Lunar which provides
-            // integration with Scout and proper indexing via indexers
-            try {
-                $products = Product::search($query)
-                    ->where('status', 'published')
-                    ->with(['variants.prices', 'media']) // Eager load relationships
-                    ->paginate(12, 'page', $currentPage)
-                    ->appends($request->query());
-            } catch (\Exception $e) {
-                // Fallback to simple database search if Scout is not configured
-                // This handles cases where Scout driver is not set up yet
-                \Log::warning('Scout search failed, falling back to database search: ' . $e->getMessage());
-                
-                $products = Product::with(['variants.prices', 'media'])
-                    ->where('status', 'published')
-                    ->whereHas('urls', function ($q) use ($query) {
-                        $q->where('slug', 'like', "%{$query}%");
-                    })
-                    ->orWhereHas('variants', function ($q) use ($query) {
-                        $q->where('sku', 'like', "%{$query}%");
-                    })
-                    ->latest()
-                    ->paginate(12)
-                    ->appends($request->query());
-            }
+        
+        if (empty($query)) {
+            return view('storefront.search.index', [
+                'products' => collect(),
+                'query' => '',
+                'facets' => [],
+            ]);
         }
 
-        return view('storefront.search.index', compact('products', 'query'));
+        // Get filters from request
+        $filters = $this->parseFilters($request);
+        
+        // Perform search with filters
+        $result = $this->searchService->searchWithFilters($query, $filters, [
+            'per_page' => $request->get('per_page', 24),
+            'page' => $request->get('page', 1),
+            'sort' => $request->get('sort', 'relevance'),
+        ]);
+
+        return view('storefront.search.index', [
+            'products' => $result['results'],
+            'query' => $query,
+            'facets' => $result['facets'],
+            'filters' => $filters,
+        ]);
+    }
+
+    /**
+     * Get autocomplete suggestions.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function autocomplete(Request $request): JsonResponse
+    {
+        $query = $request->get('q', '');
+        $limit = (int) $request->get('limit', 10);
+
+        if (strlen($query) < 2) {
+            return response()->json(['data' => []]);
+        }
+
+        $suggestions = $this->searchService->searchSuggestions($query, $limit);
+        $history = $this->searchService->getSearchHistory(5);
+
+        return response()->json([
+            'data' => $suggestions,
+            'history' => $history,
+        ]);
+    }
+
+    /**
+     * Track product click from search results.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function trackClick(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'query' => 'required|string',
+            'product_id' => 'required|integer|exists:lunar_products,id',
+        ]);
+
+        $this->searchService->trackClick($validated['query'], $validated['product_id']);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get popular searches.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function popularSearches(Request $request): JsonResponse
+    {
+        $period = $request->get('period', 'week');
+        $limit = (int) $request->get('limit', 10);
+
+        $searches = $this->searchService->popularSearches($limit, $period);
+
+        return response()->json([
+            'data' => $searches,
+        ]);
+    }
+
+    /**
+     * Get trending searches.
+     *
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function trendingSearches(Request $request): JsonResponse
+    {
+        $limit = (int) $request->get('limit', 10);
+
+        $searches = $this->searchService->trendingSearches($limit);
+
+        return response()->json([
+            'data' => $searches,
+        ]);
+    }
+
+    /**
+     * Parse filters from request.
+     *
+     * @param  Request  $request
+     * @return array
+     */
+    protected function parseFilters(Request $request): array
+    {
+        $filters = [];
+
+        // Category filter
+        if ($request->has('category_id')) {
+            $filters['category_ids'] = (array) $request->get('category_id');
+        }
+
+        // Brand filter
+        if ($request->has('brand_id')) {
+            $filters['brand_id'] = $request->get('brand_id');
+        }
+
+        // Price range filter
+        if ($request->has('price_min')) {
+            $filters['price_min'] = (int) ($request->get('price_min') * 100); // Convert to cents
+        }
+        if ($request->has('price_max')) {
+            $filters['price_max'] = (int) ($request->get('price_max') * 100); // Convert to cents
+        }
+
+        // In stock filter
+        if ($request->has('in_stock')) {
+            $filters['in_stock'] = filter_var($request->get('in_stock'), FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return $filters;
     }
 }
 

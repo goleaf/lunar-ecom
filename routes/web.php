@@ -6,6 +6,14 @@ use App\Http\Controllers\Storefront\CollectionController;
 use App\Http\Controllers\Storefront\SearchController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\CurrencyController;
+use App\Http\Controllers\Storefront\LanguageController;
+use App\Http\Controllers\Storefront\BrandController;
+use App\Http\Controllers\Storefront\MediaController;
+use App\Http\Controllers\Storefront\VariantController;
+
+// Dynamic robots.txt
+Route::get('/robots.txt', [\App\Http\Controllers\Storefront\RobotsController::class, 'index'])->name('robots');
 
 Route::get('/', [ProductController::class, 'index'])->name('storefront.home');
 
@@ -15,18 +23,208 @@ Route::get('/products/{slug}', [ProductController::class, 'show'])->name('storef
 Route::get('/collections', [CollectionController::class, 'index'])->name('storefront.collections.index');
 Route::get('/collections/{slug}', [CollectionController::class, 'show'])->name('storefront.collections.show');
 
+// Category routes with SEO-friendly URLs
+Route::prefix('categories')->name('categories.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CategoryController::class, 'roots'])->name('index');
+    Route::get('/tree', [\App\Http\Controllers\CategoryController::class, 'tree'])->name('tree');
+    Route::get('/flat', [\App\Http\Controllers\CategoryController::class, 'flatList'])->name('flat');
+    Route::get('/navigation', [\App\Http\Controllers\CategoryController::class, 'navigation'])->name('navigation');
+    Route::get('/{category}/breadcrumb', [\App\Http\Controllers\CategoryController::class, 'breadcrumb'])->name('breadcrumb');
+    // SEO-friendly category URLs (supports nested paths like /categories/electronics/phones/smartphones)
+    Route::get('/{path}', [\App\Http\Controllers\Storefront\CategoryController::class, 'show'])
+        ->where('path', '.*')
+        ->name('show');
+});
+
 Route::get('/search', [SearchController::class, 'index'])->name('storefront.search.index');
+Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])->name('storefront.search.autocomplete');
+Route::post('/search/track-click', [SearchController::class, 'trackClick'])->name('storefront.search.track-click');
+Route::get('/search/popular', [SearchController::class, 'popularSearches'])->name('storefront.search.popular');
+Route::get('/search/trending', [SearchController::class, 'trendingSearches'])->name('storefront.search.trending');
+
+// Product Reviews
+Route::prefix('products/{product}/reviews')->name('storefront.reviews.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\ReviewController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Storefront\ReviewController::class, 'store'])->name('store')->middleware('auth');
+    Route::get('/guidelines', [\App\Http\Controllers\Storefront\ReviewController::class, 'guidelines'])->name('guidelines');
+});
+
+Route::prefix('reviews/{review}')->name('storefront.reviews.')->group(function () {
+    Route::post('/helpful', [\App\Http\Controllers\Storefront\ReviewController::class, 'markHelpful'])->name('helpful');
+    Route::post('/report', [\App\Http\Controllers\Storefront\ReviewController::class, 'report'])->name('report');
+});
+
+// Admin Review Moderation
+Route::prefix('admin/reviews')->name('admin.reviews.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/moderation', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'index'])->name('moderation');
+    Route::get('/{review}', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'show'])->name('show');
+    Route::post('/{review}/approve', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'approve'])->name('approve');
+    Route::post('/{review}/reject', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'reject'])->name('reject');
+    Route::post('/bulk-approve', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'bulkApprove'])->name('bulk-approve');
+    Route::post('/bulk-reject', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'bulkReject'])->name('bulk-reject');
+    Route::post('/{review}/response', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'addResponse'])->name('add-response');
+    Route::get('/statistics', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'statistics'])->name('statistics');
+});
+
+// Admin Order Status Management
+Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->group(function () {
+    Route::get('/statuses', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getAvailableStatuses'])->name('statuses');
+    Route::get('/status/{status}', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getOrdersByStatus'])->name('by-status');
+    Route::post('/{order}/status', [\App\Http\Controllers\Admin\OrderStatusController::class, 'updateStatus'])->name('update-status');
+    Route::get('/{order}/status-history', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getStatusHistory'])->name('status-history');
+    Route::get('/{order}/history', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getOrderHistory'])->name('history');
+});
+
+// Product Recommendations
+Route::prefix('products/{product}/recommendations')->name('storefront.recommendations.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\RecommendationController::class, 'index'])->name('index');
+    Route::post('/track-view', [\App\Http\Controllers\Storefront\RecommendationController::class, 'trackView'])->name('track-view');
+    Route::get('/frequently-bought-together', [\App\Http\Controllers\Storefront\RecommendationController::class, 'frequentlyBoughtTogether'])->name('frequently-bought-together');
+});
+
+Route::prefix('recommendations')->name('storefront.recommendations.')->group(function () {
+    Route::post('/track-click', [\App\Http\Controllers\Storefront\RecommendationController::class, 'trackClick'])->name('track-click');
+    Route::get('/personalized', [\App\Http\Controllers\Storefront\RecommendationController::class, 'personalized'])->name('personalized');
+});
+
+// Stock Reservations (for checkout)
+Route::prefix('stock-reservations')->name('storefront.stock-reservations.')->group(function () {
+    Route::post('/reserve', [\App\Http\Controllers\Storefront\StockReservationController::class, 'reserve'])->name('reserve');
+    Route::post('/release', [\App\Http\Controllers\Storefront\StockReservationController::class, 'release'])->name('release');
+});
+
+// Admin Inventory Management
+Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
+    Route::post('/adjust', [\App\Http\Controllers\Admin\InventoryController::class, 'adjust'])->name('adjust');
+    Route::post('/transfer', [\App\Http\Controllers\Admin\InventoryController::class, 'transfer'])->name('transfer');
+    Route::get('/check-availability', [\App\Http\Controllers\Admin\InventoryController::class, 'checkAvailability'])->name('check-availability');
+    Route::get('/purchase-order-suggestions', [\App\Http\Controllers\Admin\InventoryController::class, 'purchaseOrderSuggestions'])->name('purchase-order-suggestions');
+    Route::post('/barcode-scan', [\App\Http\Controllers\Admin\InventoryController::class, 'barcodeScan'])->name('barcode-scan');
+});
+
+// Admin Inventory Reports
+Route::prefix('admin/inventory/reports')->name('admin.inventory.reports.')->middleware(['auth'])->group(function () {
+    Route::get('/stock-valuation', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockValuation'])->name('stock-valuation');
+    Route::get('/inventory-turnover', [\App\Http\Controllers\Admin\InventoryReportController::class, 'inventoryTurnover'])->name('inventory-turnover');
+    Route::get('/dead-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'deadStock'])->name('dead-stock');
+    Route::get('/fast-moving-items', [\App\Http\Controllers\Admin\InventoryReportController::class, 'fastMovingItems'])->name('fast-moving-items');
+});
+
+// Admin Inventory Import/Export
+Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
+    Route::get('/export', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'export'])->name('export');
+    Route::post('/import', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'import'])->name('import');
+});
+
+// Search Analytics (admin/analytics endpoints)
+Route::prefix('search-analytics')->name('storefront.search-analytics.')->group(function () {
+    Route::get('/statistics', [\App\Http\Controllers\Storefront\SearchAnalyticsController::class, 'statistics'])->name('statistics');
+    Route::get('/zero-results', [\App\Http\Controllers\Storefront\SearchAnalyticsController::class, 'zeroResults'])->name('zero-results');
+    Route::get('/trends', [\App\Http\Controllers\Storefront\SearchAnalyticsController::class, 'trends'])->name('trends');
+    Route::get('/most-clicked', [\App\Http\Controllers\Storefront\SearchAnalyticsController::class, 'mostClicked'])->name('most-clicked');
+});
 
 Route::prefix('cart')->name('storefront.cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::get('/summary', [CartController::class, 'summary'])->name('summary');
     Route::post('/add', [CartController::class, 'add'])->name('add');
     Route::put('/{lineId}', [CartController::class, 'update'])->name('update');
     Route::delete('/{lineId}', [CartController::class, 'remove'])->name('remove');
     Route::delete('/', [CartController::class, 'clear'])->name('clear');
+    Route::post('/discount/apply', [CartController::class, 'applyDiscount'])->name('discount.apply');
+    Route::post('/discount/remove', [CartController::class, 'removeDiscount'])->name('discount.remove');
 });
 
 Route::prefix('checkout')->name('storefront.checkout.')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('index');
     Route::post('/', [CheckoutController::class, 'store'])->name('store');
     Route::get('/confirmation/{order}', [CheckoutController::class, 'confirmation'])->name('confirmation');
+});
+
+Route::prefix('currency')->name('storefront.currency.')->group(function () {
+    Route::get('/', [CurrencyController::class, 'index'])->name('index');
+    Route::post('/switch', [CurrencyController::class, 'switch'])->name('switch');
+    Route::get('/current', [CurrencyController::class, 'current'])->name('current');
+});
+
+Route::prefix('addresses')->name('storefront.addresses.')->middleware('auth')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\AddressController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Storefront\AddressController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Storefront\AddressController::class, 'store'])->name('store');
+    Route::get('/{address}/edit', [\App\Http\Controllers\Storefront\AddressController::class, 'edit'])->name('edit');
+    Route::put('/{address}', [\App\Http\Controllers\Storefront\AddressController::class, 'update'])->name('update');
+    Route::delete('/{address}', [\App\Http\Controllers\Storefront\AddressController::class, 'destroy'])->name('destroy');
+    Route::post('/{address}/default-shipping', [\App\Http\Controllers\Storefront\AddressController::class, 'setDefaultShipping'])->name('set-default-shipping');
+    Route::post('/{address}/default-billing', [\App\Http\Controllers\Storefront\AddressController::class, 'setDefaultBilling'])->name('set-default-billing');
+});
+
+Route::prefix('language')->name('storefront.language.')->group(function () {
+    Route::get('/', [LanguageController::class, 'index'])->name('index');
+    Route::post('/switch', [LanguageController::class, 'switch'])->name('switch');
+    Route::get('/current', [LanguageController::class, 'current'])->name('current');
+});
+
+Route::prefix('brands')->name('storefront.brands.')->group(function () {
+    Route::get('/', [BrandController::class, 'index'])->name('index');
+    Route::get('/api', [BrandController::class, 'api'])->name('api');
+    Route::get('/{slug}', [BrandController::class, 'show'])->name('show');
+});
+
+Route::prefix('media')->name('storefront.media.')->middleware(['web'])->group(function () {
+    Route::post('/product/{productId}/upload', [MediaController::class, 'uploadProductImages'])->name('product.upload');
+    Route::post('/collection/{collectionId}/upload', [MediaController::class, 'uploadCollectionImages'])->name('collection.upload');
+    Route::post('/brand/{brandId}/logo', [MediaController::class, 'uploadBrandLogo'])->name('brand.logo');
+    Route::delete('/{modelType}/{modelId}/{mediaId}', [MediaController::class, 'deleteMedia'])->name('delete');
+    Route::post('/{modelType}/{modelId}/reorder', [MediaController::class, 'reorderMedia'])->name('reorder');
+});
+
+Route::prefix('products/{product}/variants')->name('storefront.variants.')->middleware(['web'])->group(function () {
+    Route::get('/', [VariantController::class, 'index'])->name('index');
+    Route::post('/generate', [VariantController::class, 'generate'])->name('generate');
+    Route::post('/', [VariantController::class, 'store'])->name('store');
+});
+
+Route::prefix('variants')->name('storefront.variants.')->middleware(['web'])->group(function () {
+    Route::get('/{variant}', [VariantController::class, 'show'])->name('show');
+    Route::put('/{variant}', [VariantController::class, 'update'])->name('update');
+    Route::delete('/{variant}', [VariantController::class, 'destroy'])->name('destroy');
+    Route::post('/{variant}/stock', [VariantController::class, 'updateStock'])->name('stock.update');
+    Route::post('/{variant}/images', [VariantController::class, 'attachImage'])->name('images.attach');
+    Route::delete('/{variant}/images/{mediaId}', [VariantController::class, 'detachImage'])->name('images.detach');
+    Route::post('/{variant}/images/primary', [VariantController::class, 'setPrimaryImage'])->name('images.primary');
+});
+
+// GDPR Compliance Routes
+Route::prefix('gdpr')->name('gdpr.')->group(function () {
+    // Cookie Consent
+    Route::prefix('cookie-consent')->name('cookie-consent.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Gdpr\CookieConsentController::class, 'show'])->name('show');
+        Route::post('/', [\App\Http\Controllers\Gdpr\CookieConsentController::class, 'store'])->name('store');
+        Route::put('/', [\App\Http\Controllers\Gdpr\CookieConsentController::class, 'update'])->name('update');
+    });
+
+    // Privacy Policy
+    Route::prefix('privacy-policy')->name('privacy-policy.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'show'])->name('show');
+        Route::get('/versions', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'index'])->name('index');
+        Route::get('/version/{version}', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'version'])->name('version');
+    });
+
+    // Privacy Settings (requires authentication)
+    Route::prefix('privacy-settings')->name('privacy-settings.')->middleware('auth')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Gdpr\PrivacySettingsController::class, 'index'])->name('index');
+        Route::put('/', [\App\Http\Controllers\Gdpr\PrivacySettingsController::class, 'update'])->name('update');
+    });
+
+    // GDPR Requests
+    Route::prefix('request')->name('request.')->group(function () {
+        Route::get('/create', function () {
+            $type = request()->get('type', 'export');
+            return view('gdpr.request-form', ['type' => $type]);
+        })->name('create');
+        Route::post('/', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'store'])->name('store');
+        Route::get('/verify/{token}', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'verify'])->name('verify');
+        Route::get('/download/{token}', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'download'])->name('download');
+    });
 });

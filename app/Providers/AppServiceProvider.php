@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Facades\LunarPanel;
+use Lunar\Facades\Discounts;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -134,18 +135,29 @@ class AppServiceProvider extends ServiceProvider
         //     return $app->make(\App\Lunar\Taxation\Drivers\CustomTaxDriver::class);
         // });
 
-        // Register custom Lunar models (if needed)
-        // Uncomment the lines below to use your custom models:
+        // Register custom Lunar models
+        // Register the extended Product model with custom attributes
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Product::class,
+            \App\Models\Product::class,
+        );
         
-        // Single model replacement:
-        // \Lunar\Facades\ModelManifest::replace(
-        //     \Lunar\Models\Contracts\Product::class,
-        //     \App\Models\Product::class,
-        // );
+        // Register the extended ProductVariant model
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\ProductVariant::class,
+            \App\Models\ProductVariant::class,
+        );
         
         // Or register all models in a directory:
         // \Lunar\Facades\ModelManifest::addDirectory(__DIR__.'/../Models');
         
         // See: https://docs.lunarphp.com/1.x/extending/models
+
+        // Register custom discount types
+        Discounts::addType(\App\Lunar\Discounts\DiscountTypes\PercentageDiscount::class);
+        Discounts::addType(\App\Lunar\Discounts\DiscountTypes\FixedAmountDiscount::class);
+        Discounts::addType(\App\Lunar\Discounts\DiscountTypes\BOGODiscount::class);
+        Discounts::addType(\App\Lunar\Discounts\DiscountTypes\CategoryDiscount::class);
+        Discounts::addType(\App\Lunar\Discounts\DiscountTypes\ProductDiscount::class);
     }
 }

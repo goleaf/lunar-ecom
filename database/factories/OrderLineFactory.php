@@ -3,6 +3,9 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Lunar\Base\ValueObjects\Cart\TaxBreakdown;
+use Lunar\Base\ValueObjects\Cart\TaxBreakdownAmount;
+use Lunar\Models\Currency;
 use Lunar\Models\Order;
 use Lunar\Models\OrderLine;
 use Lunar\Models\ProductVariant;
@@ -32,6 +35,30 @@ class OrderLineFactory extends Factory
         $discountTotal = fake()->numberBetween(0, (int) ($subTotal * 0.2));
         $taxTotal = (int) (($subTotal - $discountTotal) * 0.2);
         $total = $subTotal - $discountTotal + $taxTotal;
+        
+        // Create tax breakdown
+        $currency = Currency::where('default', true)->first() ?? Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1.00,
+                'decimal_places' => 2,
+                'default' => true,
+                'enabled' => true,
+            ]
+        );
+        
+        $taxBreakdown = new TaxBreakdown();
+        if ($taxTotal > 0) {
+            $taxBreakdown->addAmount(
+                new TaxBreakdownAmount(
+                    price: new \Lunar\DataTypes\Price($taxTotal, $currency, 1),
+                    description: 'Tax',
+                    identifier: 'vat',
+                    percentage: 20.0
+                )
+            );
+        }
 
         return [
             'order_id' => Order::factory(),
@@ -40,13 +67,13 @@ class OrderLineFactory extends Factory
             'type' => 'physical',
             'description' => fake()->sentence(),
             'option' => fake()->optional(0.3)->sentence(),
-            'identifier' => fake()->optional(0.5)->bothify('SKU-####'),
+            'identifier' => fake()->bothify('SKU-####'),
             'unit_price' => $unitPrice,
             'unit_quantity' => 1,
             'quantity' => $quantity,
             'sub_total' => $subTotal,
             'discount_total' => $discountTotal,
-            'tax_breakdown' => [],
+            'tax_breakdown' => $taxBreakdown,
             'tax_total' => $taxTotal,
             'total' => $total,
             'notes' => fake()->optional(0.2)->sentence(),

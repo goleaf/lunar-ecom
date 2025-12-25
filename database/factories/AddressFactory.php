@@ -39,8 +39,8 @@ class AddressFactory extends Factory
                         'capital' => 'Washington',
                         'currency' => 'USD',
                         'native' => 'United States',
-                        'region' => 'Americas',
-                        'subregion' => 'Northern America',
+                        'emoji' => '🇺🇸',
+                        'emoji_u' => 'U+1F1FA U+1F1F8',
                     ]
                 )->id;
             },

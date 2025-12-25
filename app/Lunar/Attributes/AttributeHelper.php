@@ -99,6 +99,49 @@ class AttributeHelper
             return [$key => $value->getValue() ?? $value];
         })->toArray();
     }
+
+    /**
+     * Get an attribute value with fallback support.
+     * 
+     * Tries the requested locale first, then falls back to default language,
+     * then to the first available translation.
+     * 
+     * @param Product $product
+     * @param string $handle The attribute handle
+     * @param string|null $locale Optional locale (defaults to current locale)
+     * @param string|null $fallbackLocale Optional fallback locale (defaults to default language)
+     * @return mixed The attribute value
+     */
+    public static function getWithFallback(Product $product, string $handle, ?string $locale = null, ?string $fallbackLocale = null): mixed
+    {
+        // Use current locale if not specified
+        if ($locale === null) {
+            $locale = app()->getLocale();
+        }
+
+        // Get default language if fallback not specified
+        if ($fallbackLocale === null) {
+            $defaultLanguage = \Lunar\Models\Language::getDefault();
+            $fallbackLocale = $defaultLanguage ? $defaultLanguage->code : 'en';
+        }
+
+        // Try requested locale first
+        $value = $product->translateAttribute($handle, $locale);
+        if ($value !== null) {
+            return $value;
+        }
+
+        // Fallback to default language
+        if ($locale !== $fallbackLocale) {
+            $value = $product->translateAttribute($handle, $fallbackLocale);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        // Last resort: use translateAttribute without locale (uses first available)
+        return $product->translateAttribute($handle);
+    }
 }
 
 

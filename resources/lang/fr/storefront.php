@@ -1,0 +1,85 @@
+<?php
+
+return [
+    'nav' => [
+        'products' => 'Produits',
+        'collections' => 'Collections',
+        'cart' => 'Panier',
+        'search' => 'Rechercher',
+        'search_placeholder' => 'Rechercher...',
+    ],
+    'product' => [
+        'view_details' => 'Voir les Détails',
+        'add_to_cart' => 'Ajouter au Panier',
+        'quantity' => 'Quantité',
+        'price' => 'Prix',
+        'no_image' => 'Aucune Image',
+    ],
+    'cart' => [
+        'title' => 'Panier d\'Achat',
+        'empty' => 'Votre panier est vide.',
+        'continue_shopping' => 'Continuer les Achats',
+        'product' => 'Produit',
+        'price' => 'Prix',
+        'quantity' => 'Quantité',
+        'total' => 'Total',
+        'actions' => 'Actions',
+        'update' => 'Mettre à Jour',
+        'remove' => 'Supprimer',
+        'subtotal' => 'Sous-total',
+        'tax' => 'Taxe',
+        'shipping' => 'Livraison',
+        'total_label' => 'Total',
+        'proceed_to_checkout' => 'Passer à la Caisse',
+    ],
+    'checkout' => [
+        'title' => 'Paiement',
+        'shipping_address' => 'Adresse de Livraison',
+        'billing_address' => 'Adresse de Facturation',
+        'order_summary' => 'Résumé de la Commande',
+        "first_name" => 'Prénom',
+        "last_name" => 'Nom',
+        "address_line_one" => 'Adresse Ligne 1',
+        "city" => 'Ville',
+        "postcode" => 'Code Postal',
+        "country" => 'Pays',
+        "select_country" => 'Sélectionner un Pays',
+        "place_order" => 'Passer la Commande',
+    ],
+    'collection' => [
+        'no_products' => 'Aucun produit dans cette collection.',
+        'sub_collections' => 'Sous-collections',
+    ],
+    'common' => [
+        'loading' => 'Chargement...',
+        'error' => 'Une erreur s\'est produite',
+    ],
+    'products' => 'Produits',
+    'no_products' => 'Aucun produit trouvé.',
+    'home' => 'Accueil',
+    
+    // Categories
+    'categories' => 'Catégories',
+    'category' => 'Catégorie',
+    'subcategories' => 'Sous-catégories',
+    'all_categories' => 'Toutes les Catégories',
+    'category_products' => 'Produits dans :category',
+    
+    // Filters
+    'filters' => 'Filtres',
+    'price_range' => 'Gamme de Prix',
+    'brand' => 'Marque',
+    'all_brands' => 'Toutes les Marques',
+    'sort_by' => 'Trier Par',
+    'sort' => [
+        'default' => 'Par Défaut',
+        'price_asc' => 'Prix: Bas à Élevé',
+        'price_desc' => 'Prix: Élevé à Bas',
+        'name_asc' => 'Nom: A à Z',
+        'name_desc' => 'Nom: Z à A',
+        'newest' => 'Plus Récent',
+    ],
+    'apply_filters' => 'Appliquer les Filtres',
+    'clear_filters' => 'Effacer les Filtres',
+];
+

@@ -33,6 +33,8 @@ class CollectionController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->authorize('create', Collection::class);
+        
         $validated = $request->validate([
             'collection_group_id' => 'required|exists:lunar_collection_groups,id',
             'sort' => 'integer|min:0',
@@ -53,6 +55,8 @@ class CollectionController extends Controller
      */
     public function show(Collection $collection): JsonResponse
     {
+        $this->authorize('view', $collection);
+        
         return response()->json([
             'data' => $collection->load(['products.variants', 'group'])
         ]);
@@ -63,6 +67,8 @@ class CollectionController extends Controller
      */
     public function update(Request $request, Collection $collection): JsonResponse
     {
+        $this->authorize('update', $collection);
+        
         $validated = $request->validate([
             'collection_group_id' => 'exists:lunar_collection_groups,id',
             'sort' => 'integer|min:0',
@@ -88,6 +94,8 @@ class CollectionController extends Controller
      */
     public function destroy(Collection $collection): JsonResponse
     {
+        $this->authorize('delete', $collection);
+        
         $collection->delete();
 
         return response()->json([
@@ -100,6 +108,8 @@ class CollectionController extends Controller
      */
     public function addProducts(Request $request, Collection $collection): JsonResponse
     {
+        $this->authorize('update', $collection);
+        
         $validated = $request->validate([
             'product_ids' => 'required|array',
             'product_ids.*' => 'exists:lunar_products,id',
@@ -118,6 +128,8 @@ class CollectionController extends Controller
      */
     public function removeProducts(Request $request, Collection $collection): JsonResponse
     {
+        $this->authorize('update', $collection);
+        
         $validated = $request->validate([
             'product_ids' => 'required|array',
             'product_ids.*' => 'exists:lunar_products,id',

@@ -1,0 +1,85 @@
+<?php
+
+return [
+    'nav' => [
+        'products' => '产品',
+        'collections' => '系列',
+        'cart' => '购物车',
+        'search' => '搜索',
+        'search_placeholder' => '搜索...',
+    ],
+    'product' => [
+        'view_details' => '查看详情',
+        'add_to_cart' => '加入购物车',
+        'quantity' => '数量',
+        'price' => '价格',
+        'no_image' => '无图片',
+    ],
+    'cart' => [
+        'title' => '购物车',
+        'empty' => '您的购物车是空的。',
+        'continue_shopping' => '继续购物',
+        'product' => '产品',
+        'price' => '价格',
+        'quantity' => '数量',
+        'total' => '总计',
+        'actions' => '操作',
+        'update' => '更新',
+        'remove' => '移除',
+        'subtotal' => '小计',
+        'tax' => '税费',
+        'shipping' => '运费',
+        'total_label' => '总计',
+        'proceed_to_checkout' => '前往结账',
+    ],
+    'checkout' => [
+        'title' => '结账',
+        'shipping_address' => '配送地址',
+        'billing_address' => '账单地址',
+        'order_summary' => '订单摘要',
+        "first_name" => '名',
+        "last_name" => '姓',
+        "address_line_one" => '地址第一行',
+        "city" => '城市',
+        "postcode" => '邮政编码',
+        "country" => '国家',
+        "select_country" => '选择国家',
+        "place_order" => '提交订单',
+    ],
+    'collection' => [
+        'no_products' => '此系列中没有产品。',
+        'sub_collections' => '子系列',
+    ],
+    'common' => [
+        'loading' => '加载中...',
+        'error' => '发生错误',
+    ],
+    'products' => '产品',
+    'no_products' => '未找到产品。',
+    'home' => '首页',
+    
+    // Categories
+    'categories' => '分类',
+    'category' => '分类',
+    'subcategories' => '子分类',
+    'all_categories' => '所有分类',
+    'category_products' => ':category 中的产品',
+    
+    // Filters
+    'filters' => '筛选',
+    'price_range' => '价格范围',
+    'brand' => '品牌',
+    'all_brands' => '所有品牌',
+    'sort_by' => '排序方式',
+    'sort' => [
+        'default' => '默认',
+        'price_asc' => '价格：从低到高',
+        'price_desc' => '价格：从高到低',
+        'name_asc' => '名称：A 到 Z',
+        'name_desc' => '名称：Z 到 A',
+        'newest' => '最新',
+    ],
+    'apply_filters' => '应用筛选',
+    'clear_filters' => '清除筛选',
+];
+

@@ -13,7 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            \App\Http\Middleware\LanguageDetectionMiddleware::class,
             \App\Http\Middleware\StorefrontSessionMiddleware::class,
+            \App\Http\Middleware\TrackProductView::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

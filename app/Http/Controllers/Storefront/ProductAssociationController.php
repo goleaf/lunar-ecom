@@ -27,6 +27,8 @@ class ProductAssociationController extends Controller
      */
     public function store(Request $request, Product $product)
     {
+        $this->authorize('update', $product);
+        
         $request->validate([
             'target_product_id' => 'required|exists:lunar_products,id',
             'type' => 'required|in:cross-sell,up-sell,alternate',
@@ -55,6 +57,8 @@ class ProductAssociationController extends Controller
      */
     public function destroy(Product $product, Product $targetProduct, Request $request)
     {
+        $this->authorize('update', $product);
+        
         $type = $request->get('type'); // Optional: if provided, only remove that type
 
         $enumType = null;
@@ -81,6 +85,9 @@ class ProductAssociationController extends Controller
      */
     public function index(Product $product, Request $request)
     {
+        // Ensure user can view the product
+        $this->authorize('view', $product);
+        
         $type = $request->get('type'); // Optional filter by type
 
         $query = $product->associations()->with('target.variants.prices', 'target.images');

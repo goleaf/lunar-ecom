@@ -1,0 +1,95 @@
+<?php
+
+return [
+    'nav' => [
+        'products' => 'Products',
+        'collections' => 'Collections',
+        'cart' => 'Cart',
+        'search' => 'Search',
+        'search_placeholder' => 'Search...',
+    ],
+    'product' => [
+        'view_details' => 'View Details',
+        'add_to_cart' => 'Add to Cart',
+        'quantity' => 'Quantity',
+        'price' => 'Price',
+        'no_image' => 'No Image',
+    ],
+    'cart' => [
+        'title' => 'Shopping Cart',
+        'empty' => 'Your cart is empty.',
+        'continue_shopping' => 'Continue Shopping',
+        'product' => 'Product',
+        'price' => 'Price',
+        'quantity' => 'Quantity',
+        'total' => 'Total',
+        'actions' => 'Actions',
+        'update' => 'Update',
+        'remove' => 'Remove',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Tax',
+        'shipping' => 'Shipping',
+        'total_label' => 'Total',
+        'proceed_to_checkout' => 'Proceed to Checkout',
+    ],
+    'checkout' => [
+        'title' => 'Checkout',
+        'shipping_address' => 'Shipping Address',
+        'billing_address' => 'Billing Address',
+        'order_summary' => 'Order Summary',
+        "first_name" => 'First Name',
+        "last_name" => 'Last Name',
+        "address_line_one" => 'Address Line 1',
+        "city" => 'City',
+        "postcode" => 'Postcode',
+        "country" => 'Country',
+        "select_country" => 'Select Country',
+        "place_order" => 'Place Order',
+    ],
+    'collection' => [
+        'no_products' => 'No products in this collection.',
+        'sub_collections' => 'Sub-collections',
+    ],
+    'common' => [
+        'loading' => 'Loading...',
+        'error' => 'An error occurred',
+    ],
+    'products' => 'Products',
+    'no_products' => 'No products found.',
+    'home' => 'Home',
+    
+    // Categories
+    'categories' => 'Categories',
+    'category' => 'Category',
+    'subcategories' => 'Subcategories',
+    'all_categories' => 'All Categories',
+    'category_products' => 'Products in :category',
+    
+    // Filters
+    'filters' => 'Filters',
+    'price_range' => 'Price Range',
+    'brand' => 'Brand',
+    'all_brands' => 'All Brands',
+    'sort_by' => 'Sort By',
+    'sort' => [
+        'default' => 'Default',
+        'price_asc' => 'Price: Low to High',
+        'price_desc' => 'Price: High to Low',
+        'name_asc' => 'Name: A to Z',
+        'name_desc' => 'Name: Z to A',
+        'newest' => 'Newest First',
+    ],
+    'apply_filters' => 'Apply Filters',
+    'clear_filters' => 'Clear Filters',
+    
+    // Recommendations
+    'recommendations' => [
+        'related_products' => 'Related Products',
+        'frequently_bought_together' => 'Frequently Bought Together',
+        'customers_also_viewed' => 'Customers Also Viewed',
+        'personalized_for_you' => 'Personalized for You',
+        'you_may_also_like' => 'You May Also Like',
+        'based_on_your_history' => 'Based on Your Browsing History',
+    ],
+];
+

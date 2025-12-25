@@ -30,7 +30,7 @@ class CustomerFactory extends Factory
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'company_name' => fake()->optional(0.3)->company(),
-            'vat_no' => fake()->optional(0.2)->bothify('VAT#######'),
+            'tax_identifier' => fake()->optional(0.2)->bothify('VAT#######'),
             'account_ref' => fake()->optional(0.2)->bothify('ACC-####-???'),
             'meta' => [],
         ];
@@ -43,7 +43,7 @@ class CustomerFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'company_name' => fake()->company(),
-            'vat_no' => fake()->bothify('VAT#######'),
+            'tax_identifier' => fake()->bothify('VAT#######'),
         ]);
     }
 
@@ -52,14 +52,10 @@ class CustomerFactory extends Factory
      */
     public function withUser(?User $user = null): static
     {
-        return $this->state(function (array $attributes) use ($user) {
-            $user = $user ?? User::factory()->create();
-            
-            return [];
-        })->afterCreating(function (Customer $customer) use ($user) {
-            if ($user) {
-                $customer->users()->attach($user->id);
-            }
+        $userToAttach = $user ?? User::factory()->create();
+        
+        return $this->afterCreating(function (Customer $customer) use ($userToAttach) {
+            $customer->users()->attach($userToAttach->id);
         });
     }
 }

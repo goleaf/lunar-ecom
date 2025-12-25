@@ -281,6 +281,106 @@ class DiscountHelper
 
         return true;
     }
+
+    /**
+     * Find a discount by coupon code.
+     * 
+     * @param string $couponCode
+     * @return Discount|null
+     */
+    public static function findByCouponCode(string $couponCode): ?Discount
+    {
+        return Discount::where('coupon', strtoupper(trim($couponCode)))->first();
+    }
+
+    /**
+     * Check if a discount is valid for a given cart value.
+     * 
+     * @param Discount $discount
+     * @param int $cartValue Cart value in cents
+     * @return bool
+     */
+    public static function isValidForCartValue(Discount $discount, int $cartValue): bool
+    {
+        $minCartValue = $discount->data['min_cart_value'] ?? 0;
+        return $cartValue >= $minCartValue;
+    }
+
+    /**
+     * Get the discount amount for a given cart value.
+     * 
+     * @param Discount $discount
+     * @param int $cartValue Cart value in cents
+     * @return int Discount amount in cents
+     */
+    public static function calculateDiscountAmount(Discount $discount, int $cartValue): int
+    {
+        $percentage = $discount->data['percentage'] ?? null;
+        $fixedAmount = $discount->data['fixed_amount'] ?? null;
+        $maxDiscountAmount = $discount->data['max_discount_amount'] ?? null;
+
+        if ($percentage !== null) {
+            $discountAmount = (int) round($cartValue * ($percentage / 100));
+            
+            if ($maxDiscountAmount !== null && $discountAmount > $maxDiscountAmount) {
+                $discountAmount = $maxDiscountAmount;
+            }
+            
+            return $discountAmount;
+        }
+
+        if ($fixedAmount !== null) {
+            return min($fixedAmount, $cartValue);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Check if discount is valid for current day/time.
+     * 
+     * @param Discount $discount
+     * @return bool
+     */
+    public static function isValidForCurrentTime(Discount $discount): bool
+    {
+        $allowedDays = $discount->data['allowed_days'] ?? [];
+        $timeStart = $discount->data['time_start'] ?? null;
+        $timeEnd = $discount->data['time_end'] ?? null;
+
+        // Check day restriction
+        if (!empty($allowedDays)) {
+            $currentDay = now()->dayOfWeek;
+            if (!in_array($currentDay, $allowedDays)) {
+                return false;
+            }
+        }
+
+        // Check time window
+        if ($timeStart && $timeEnd) {
+            $currentTime = now()->format('H:i');
+            if ($currentTime < $timeStart || $currentTime > $timeEnd) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Delete a discount and all its related data.
+     * 
+     * @param Discount $discount
+     * @return bool
+     */
+    public static function delete(Discount $discount): bool
+    {
+        // Delete related purchasables
+        $discount->purchasables()->delete();
+        
+        // Delete the discount
+        return $discount->delete();
+    }
 }
 
 

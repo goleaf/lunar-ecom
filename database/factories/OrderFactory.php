@@ -4,7 +4,10 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Lunar\Base\ValueObjects\Cart\TaxBreakdown;
+use Lunar\Base\ValueObjects\Cart\TaxBreakdownAmount;
 use Lunar\Models\Channel;
+use Lunar\Models\Currency;
 use Lunar\Models\Customer;
 use Lunar\Models\Order;
 
@@ -32,6 +35,30 @@ class OrderFactory extends Factory
         $shippingTotal = fake()->numberBetween(500, 5000);
         $taxTotal = (int) (($subTotal - $discountTotal) * 0.2); // 20% tax
         $total = $subTotal - $discountTotal + $shippingTotal + $taxTotal;
+        
+        // Create tax breakdown
+        $currency = Currency::where('default', true)->first() ?? Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1.00,
+                'decimal_places' => 2,
+                'default' => true,
+                'enabled' => true,
+            ]
+        );
+        
+        $taxBreakdown = new TaxBreakdown();
+        if ($taxTotal > 0) {
+            $taxBreakdown->addAmount(
+                new TaxBreakdownAmount(
+                    price: new \Lunar\DataTypes\Price($taxTotal, $currency, 1),
+                    description: 'Tax',
+                    identifier: 'vat',
+                    percentage: 20.0
+                )
+            );
+        }
 
         return [
             'user_id' => null,
@@ -51,8 +78,10 @@ class OrderFactory extends Factory
             'customer_reference' => fake()->optional(0.3)->bothify('CUST-####'),
             'sub_total' => $subTotal,
             'discount_total' => $discountTotal,
+            'discount_breakdown' => [],
             'shipping_total' => $shippingTotal,
-            'tax_breakdown' => [],
+            'shipping_breakdown' => [],
+            'tax_breakdown' => $taxBreakdown,
             'tax_total' => $taxTotal,
             'total' => $total,
             'notes' => fake()->optional(0.2)->sentence(),

@@ -21,7 +21,15 @@ class CollectionController extends Controller
             ->latest()
             ->paginate(12);
 
-        return view('storefront.collections.index', compact('collections'));
+        // Get SEO data
+        $metaTags = \App\Services\SEOService::getDefaultMetaTags(
+            'Collections',
+            'Browse our product collections. Discover curated selections of products.',
+            null,
+            request()->url()
+        );
+
+        return view('storefront.collections.index', compact('collections', 'metaTags'));
     }
 
     /**
@@ -48,6 +56,9 @@ class CollectionController extends Controller
         // See: https://docs.lunarphp.com/1.x/reference/media
         $collection = Collection::with(['group', 'children', 'media', 'urls'])->findOrFail($url->element_id);
 
+        // Check if user can view this collection
+        $this->authorize('view', $collection);
+
         // Get products with proper sorting based on collection's sort type
         $products = \App\Lunar\Collections\CollectionHelper::getSortedProducts($collection);
         
@@ -66,7 +77,33 @@ class CollectionController extends Controller
         // Get breadcrumb for navigation
         $breadcrumb = $collection->breadcrumb;
 
-        return view('storefront.collections.show', compact('collection', 'products', 'breadcrumb'));
+        // Get SEO data
+        $defaultUrl = $collection->urls->where('default', true)->first();
+        $canonicalUrl = $defaultUrl 
+            ? route('storefront.collections.show', $defaultUrl->slug)
+            : url('/collections/' . $collection->id);
+
+        $metaTags = [
+            'title' => $collection->translate('name') . ' - Collections',
+            'description' => $collection->translate('description') 
+                ? mb_substr(strip_tags($collection->translate('description')), 0, 160)
+                : "Browse products in {$collection->translate('name')} collection.",
+            'og:title' => $collection->translate('name'),
+            'og:description' => $collection->translate('description') 
+                ? mb_substr(strip_tags($collection->translate('description')), 0, 160)
+                : "Browse products in {$collection->translate('name')} collection.",
+            'og:image' => $collection->getFirstMediaUrl('images', 'large'),
+            'og:type' => 'website',
+            'og:url' => $canonicalUrl,
+            'canonical' => $canonicalUrl,
+        ];
+
+        return view('storefront.collections.show', compact(
+            'collection', 
+            'products', 
+            'breadcrumb',
+            'metaTags'
+        ));
     }
 }
 

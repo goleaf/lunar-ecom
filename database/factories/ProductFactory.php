@@ -38,7 +38,7 @@ class ProductFactory extends Factory
                 ])),
                 'description' => new Text(fake()->paragraph()),
             ]),
-            'brand' => fake()->optional()->company(),
+            'brand_id' => null, // Brands are optional, can be set via withBrand() method
         ];
     }
 
@@ -73,7 +73,8 @@ class ProductFactory extends Factory
             foreach ($attributes as $key => $value) {
                 if (is_string($value)) {
                     $attributeData[$key] = new Text($value);
-                } elseif ($value instanceof \Lunar\FieldTypes\FieldType) {
+                } elseif (is_object($value) && method_exists($value, 'getValue')) {
+                    // Check if it's a FieldType by checking for getValue method
                     $attributeData[$key] = $value;
                 }
             }
@@ -101,11 +102,20 @@ class ProductFactory extends Factory
     /**
      * Indicate that the product has a brand.
      */
-    public function withBrand(?string $brand = null): static
+    public function withBrand($brand = null): static
     {
-        return $this->state(fn (array $attributes) => [
-            'brand' => $brand ?? fake()->company(),
-        ]);
+        return $this->state(function (array $attributes) use ($brand) {
+            if ($brand instanceof \Lunar\Models\Brand) {
+                return ['brand_id' => $brand->id];
+            }
+            
+            // Create or get brand by name
+            $brandModel = \Lunar\Models\Brand::firstOrCreate(
+                ['name' => $brand ?? fake()->company()]
+            );
+            
+            return ['brand_id' => $brandModel->id];
+        });
     }
 
     /**

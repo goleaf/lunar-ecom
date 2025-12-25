@@ -74,6 +74,9 @@ class CurrencyHelper
      * @param int $decimalPlaces Number of decimal places (typically 2)
      * @param bool $enabled Whether the currency is enabled
      * @param bool $default Whether this is the default currency
+     * @param string|null $format Currency format string (e.g., '{symbol}{value}' or '{value} {symbol}')
+     * @param string|null $decimalPoint Decimal point character (default: '.')
+     * @param string|null $thousandPoint Thousand separator character (default: ',')
      * @return Currency
      */
     public static function create(
@@ -82,7 +85,10 @@ class CurrencyHelper
         float $exchangeRate = 1.0000,
         int $decimalPlaces = 2,
         bool $enabled = true,
-        bool $default = false
+        bool $default = false,
+        ?string $format = null,
+        ?string $decimalPoint = null,
+        ?string $thousandPoint = null
     ): Currency {
         return Currency::create([
             'code' => $code,
@@ -91,6 +97,9 @@ class CurrencyHelper
             'decimal_places' => $decimalPlaces,
             'enabled' => $enabled,
             'default' => $default,
+            'format' => $format ?? '{symbol}{value}',
+            'decimal_point' => $decimalPoint ?? '.',
+            'thousand_point' => $thousandPoint ?? ',',
         ]);
     }
 
@@ -132,17 +141,20 @@ class CurrencyHelper
         Currency|string $fromCurrency,
         Currency|string $toCurrency
     ): float {
+        $fromCurrencyCode = is_string($fromCurrency) ? $fromCurrency : $fromCurrency->code;
+        $toCurrencyCode = is_string($toCurrency) ? $toCurrency : $toCurrency->code;
+
         if (is_string($fromCurrency)) {
             $fromCurrency = static::findByCode($fromCurrency);
             if (!$fromCurrency) {
-                throw new \InvalidArgumentException("Source currency '{$fromCurrency}' not found");
+                throw new \InvalidArgumentException("Source currency '{$fromCurrencyCode}' not found");
             }
         }
 
         if (is_string($toCurrency)) {
             $toCurrency = static::findByCode($toCurrency);
             if (!$toCurrency) {
-                throw new \InvalidArgumentException("Target currency '{$toCurrency}' not found");
+                throw new \InvalidArgumentException("Target currency '{$toCurrencyCode}' not found");
             }
         }
 

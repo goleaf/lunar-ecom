@@ -88,6 +88,9 @@ class CheckoutController extends Controller
      */
     public function confirmation(Order $order)
     {
+        // Ensure user can view this order (owns the order)
+        $this->authorize('view', $order);
+        
         return view('storefront.checkout.confirmation', compact('order'));
     }
 }

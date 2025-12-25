@@ -58,16 +58,66 @@ return [
     | make sense for the store you're building.
     |
     */
-    'draft_status' => 'awaiting-payment',
+    'draft_status' => 'pending',
 
     'statuses' => [
+        'pending' => [
+            'label' => 'Pending',
+            'color' => '#f59e0b',
+            'mailers' => [],
+            'notifications' => [
+                \App\Notifications\OrderStatusUpdatedNotification::class,
+            ],
+            'favourite' => true,
+        ],
 
+        'processing' => [
+            'label' => 'Processing',
+            'color' => '#3b82f6',
+            'mailers' => [],
+            'notifications' => [
+                \App\Notifications\OrderStatusUpdatedNotification::class,
+            ],
+            'favourite' => true,
+        ],
+
+        'shipped' => [
+            'label' => 'Shipped',
+            'color' => '#10b981',
+            'mailers' => [],
+            'notifications' => [
+                \App\Notifications\OrderShippedNotification::class,
+            ],
+            'favourite' => true,
+        ],
+
+        'completed' => [
+            'label' => 'Completed',
+            'color' => '#059669',
+            'mailers' => [],
+            'notifications' => [
+                \App\Notifications\OrderStatusUpdatedNotification::class,
+            ],
+            'favourite' => true,
+        ],
+
+        'cancelled' => [
+            'label' => 'Cancelled',
+            'color' => '#ef4444',
+            'mailers' => [],
+            'notifications' => [
+                \App\Notifications\OrderStatusUpdatedNotification::class,
+            ],
+            'favourite' => true,
+        ],
+
+        // Legacy statuses (kept for backward compatibility)
         'awaiting-payment' => [
             'label' => 'Awaiting Payment',
             'color' => '#848a8c',
             'mailers' => [],
             'notifications' => [],
-            'favourite' => true,
+            'favourite' => false,
         ],
 
         'payment-offline' => [
@@ -75,7 +125,7 @@ return [
             'color' => '#0A81D7',
             'mailers' => [],
             'notifications' => [],
-            'favourite' => true,
+            'favourite' => false,
         ],
 
         'payment-received' => [
@@ -83,16 +133,15 @@ return [
             'color' => '#6a67ce',
             'mailers' => [],
             'notifications' => [],
-            'favourite' => true,
+            'favourite' => false,
         ],
 
         'dispatched' => [
             'label' => 'Dispatched',
             'mailers' => [],
             'notifications' => [],
-            'favourite' => true,
+            'favourite' => false,
         ],
-
     ],
 
     /*

@@ -46,12 +46,8 @@ return [
     |
     */
     'engine_map' => [
-        // Example: Use Algolia for Products
-        // \Lunar\Models\Product::class => 'algolia',
-        
-        // Example: Use Meilisearch for Orders and Collections
-        // \Lunar\Models\Order::class => 'meilisearch',
-        // \Lunar\Models\Collection::class => 'meilisearch',
+        // Use configured Scout driver for Products (meilisearch or algolia)
+        \Lunar\Models\Product::class => env('SCOUT_DRIVER', 'meilisearch'),
     ],
 
     /*
@@ -72,9 +68,8 @@ return [
         \Lunar\Models\Collection::class => \Lunar\Search\CollectionIndexer::class,
         \Lunar\Models\Customer::class => \Lunar\Search\CustomerIndexer::class,
         \Lunar\Models\Order::class => \Lunar\Search\OrderIndexer::class,
-        // Example: Use custom indexer for products
-        // \Lunar\Models\Product::class => \App\Lunar\Search\Indexers\CustomProductIndexer::class,
-        \Lunar\Models\Product::class => \Lunar\Search\ProductIndexer::class,
+        // Use custom indexer for products with advanced search fields
+        \Lunar\Models\Product::class => \App\Lunar\Search\Indexers\CustomProductIndexer::class,
         \Lunar\Models\ProductOption::class => \Lunar\Search\ProductOptionIndexer::class,
     ],
 

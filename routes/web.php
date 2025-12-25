@@ -157,6 +157,28 @@ Route::prefix('coming-soon')->name('storefront.coming-soon.')->group(function ()
     Route::get('/unsubscribe/{token}', [\App\Http\Controllers\Storefront\ComingSoonController::class, 'unsubscribe'])->name('unsubscribe');
 });
 
+// Product Questions & Answers
+Route::prefix('products/{product}/questions')->name('storefront.products.questions.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'store'])->name('store');
+    Route::get('/search', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'search'])->name('search');
+    Route::post('/{question}/answer', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'answer'])->name('answer');
+    Route::post('/{question}/helpful', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'markHelpful'])->name('helpful');
+    Route::post('/{question}/answers/{answer}/helpful', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'markAnswerHelpful'])->name('answer.helpful');
+    Route::post('/{question}/view', [\App\Http\Controllers\Storefront\ProductQuestionController::class, 'view'])->name('view');
+});
+
+// Admin Product Questions & Answers
+Route::prefix('admin/products/questions')->name('admin.products.questions.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'index'])->name('index');
+    Route::get('/{question}', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'show'])->name('show');
+    Route::post('/{question}/moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'moderate'])->name('moderate');
+    Route::post('/{question}/answer', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'answer'])->name('answer');
+    Route::post('/{question}/answers/{answer}/moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'moderateAnswer'])->name('answer.moderate');
+    Route::post('/bulk-moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'bulkModerate'])->name('bulk-moderate');
+    Route::get('/products/{product}/metrics', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'metrics'])->name('metrics');
+});
+
 // Admin Product Badges
 Route::prefix('admin/badges')->name('admin.badges.')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeController::class)->parameters(['' => 'badge']);

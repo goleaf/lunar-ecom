@@ -865,18 +865,31 @@ class ProductVariant extends LunarProductVariant
      * Get thumbnail image URL.
      *
      * @param  string  $conversion
+     * @param  int|null  $channelId
+     * @param  string|null  $locale
      * @return string|null
      */
-    public function getThumbnailUrl(string $conversion = 'thumb'): ?string
+    public function getThumbnailUrl(string $conversion = 'thumb', ?int $channelId = null, ?string $locale = null): ?string
     {
-        $thumbnail = $this->getThumbnail();
+        $primaryImage = $this->getPrimaryImage($channelId, $locale);
         
-        if (!$thumbnail) {
-            // Fallback to product image
-            return $this->product?->getFirstMediaUrl('images', $conversion);
+        if ($primaryImage && $primaryImage->media) {
+            return $primaryImage->media->getUrl($conversion) ?? $primaryImage->media->getUrl();
         }
+        
+        // Fallback to product image
+        return $this->product?->getFirstMediaUrl('images', $conversion);
+    }
 
-        return $thumbnail->getUrl($conversion) ?? $thumbnail->getUrl();
+    /**
+     * Get thumbnail (legacy method).
+     *
+     * @return \Spatie\MediaLibrary\MediaCollections\Models\Media|null
+     */
+    public function getThumbnail()
+    {
+        $primaryImage = $this->getPrimaryImage();
+        return $primaryImage?->media;
     }
 
     /**

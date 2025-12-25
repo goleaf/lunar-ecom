@@ -51,6 +51,8 @@ class ReferralRule extends Model
         'cooldown_days' => 'integer',
         'priority' => 'integer',
         'validation_window_days' => 'integer',
+        'tiered_rewards' => 'array',
+        'coupon_validity_days' => 'integer',
         'is_active' => 'boolean',
     ];
 

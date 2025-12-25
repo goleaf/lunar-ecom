@@ -880,47 +880,79 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
-     * Attach an image to this variant.
+     * Attach media to this variant.
+     *
+     * @param  int  $mediaId
+     * @param  array  $options
+     * @return VariantMedia
+     */
+    public function attachMedia(int $mediaId, array $options = []): VariantMedia
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->attachMedia($this, $mediaId, $options);
+    }
+
+    /**
+     * Attach an image to this variant (legacy method).
      *
      * @param  \Spatie\MediaLibrary\MediaCollections\Models\Media  $media
      * @param  bool  $primary
-     * @return void
+     * @param  array  $options
+     * @return VariantMedia
      */
-    public function attachImage($media, bool $primary = false): void
+    public function attachImage($media, bool $primary = false, array $options = []): VariantMedia
     {
-        // If setting as primary, unset other primary images
-        if ($primary) {
-            $this->images()->updateExistingPivot(
-                $this->images()->pluck('media_id')->toArray(),
-                ['primary' => false]
-            );
-        }
-
-        $this->images()->syncWithoutDetaching([
-            $media->id => ['primary' => $primary]
-        ]);
+        $options['primary'] = $primary;
+        $options['media_type'] = $options['media_type'] ?? 'image';
+        return $this->attachMedia($media->id, $options);
     }
 
     /**
      * Set primary image for this variant.
      *
-     * @param  \Spatie\MediaLibrary\MediaCollections\Models\Media  $media
-     * @return void
+     * @param  int  $mediaId
+     * @param  string|null  $mediaType
+     * @return bool
      */
-    public function setPrimaryImage($media): void
+    public function setPrimaryImage(int $mediaId, ?string $mediaType = null): bool
     {
-        $this->attachImage($media, true);
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->setPrimaryMedia($this, $mediaId, $mediaType);
     }
 
     /**
-     * Detach an image from this variant.
+     * Detach media from this variant.
      *
      * @param  int  $mediaId
+     * @return bool
+     */
+    public function detachMedia(int $mediaId): bool
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->detachMedia($this, $mediaId);
+    }
+
+    /**
+     * Detach an image from this variant (legacy method).
+     *
+     * @param  int  $mediaId
+     * @return bool
+     */
+    public function detachImage(int $mediaId): bool
+    {
+        return $this->detachMedia($mediaId);
+    }
+
+    /**
+     * Reorder media.
+     *
+     * @param  array  $mediaIds
      * @return void
      */
-    public function detachImage(int $mediaId): void
+    public function reorderMedia(array $mediaIds): void
     {
-        $this->images()->detach($mediaId);
+        $service = app(\App\Services\VariantMediaService::class);
+        $service->reorderMedia($this, $mediaIds);
     }
 
     /**

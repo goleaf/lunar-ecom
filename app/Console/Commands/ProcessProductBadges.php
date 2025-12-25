@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\ProductBadgeService;
+use App\Services\BadgeService;
 use Illuminate\Console\Command;
 
 /**
@@ -15,31 +15,36 @@ class ProcessProductBadges extends Command
      *
      * @var string
      */
-    protected $signature = 'products:process-badges';
+    protected $signature = 'products:process-badges {--product-id= : Process specific product only}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Process auto-assignment of product badges and remove expired assignments';
+    protected $description = 'Process auto-assignment of product badges based on rules';
 
     /**
      * Execute the console command.
      */
-    public function handle(ProductBadgeService $service): int
+    public function handle(BadgeService $service): int
     {
         $this->info('Processing product badges...');
 
-        // Process auto-assignment
-        $processed = $service->processAutoAssignment();
-        $this->info("Processed {$processed} products for auto-assignment.");
+        $productId = $this->option('product-id');
+        $product = $productId ? \App\Models\Product::find($productId) : null;
+
+        // Evaluate automatic badges
+        $assigned = $service->evaluateAutomaticBadges($product);
+        $this->info("Assigned {$assigned} badges.");
 
         // Remove expired assignments
-        $removed = $service->removeExpiredAssignments();
-        $this->info("Removed {$removed} expired badge assignments.");
+        $removed = \App\Models\ProductBadgeAssignment::where('expires_at', '<=', now())
+            ->where('is_active', true)
+            ->update(['is_active' => false]);
+
+        $this->info("Deactivated {$removed} expired badge assignments.");
 
         return Command::SUCCESS;
     }
 }
-

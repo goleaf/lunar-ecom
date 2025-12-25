@@ -84,8 +84,8 @@ class ProductSchedule extends Model
         'expires_at' => 'datetime',
         'start_date' => 'date',
         'end_date' => 'date',
-        'time_start' => 'datetime',
-        'time_end' => 'datetime',
+        'time_start' => 'datetime', // Stored as TIME in DB, but cast to datetime for easier comparison
+        'time_end' => 'datetime', // Stored as TIME in DB, but cast to datetime for easier comparison
         'days_of_week' => 'array',
         'is_active' => 'boolean',
         'sale_price' => 'decimal:2',
@@ -212,16 +212,17 @@ class ProductSchedule extends Model
 
         // Check time range if specified
         if ($this->time_start && $this->time_end) {
-            $startTime = \Carbon\Carbon::parse($this->time_start)->setTimezone($this->timezone ?? config('app.timezone', 'UTC'));
-            $endTime = \Carbon\Carbon::parse($this->time_end)->setTimezone($this->timezone ?? config('app.timezone', 'UTC'));
+            // Parse time strings (TIME columns return as 'H:i:s' strings)
+            $timeStart = is_string($this->time_start) ? $this->time_start : $this->time_start->format('H:i:s');
+            $timeEnd = is_string($this->time_end) ? $this->time_end : $this->time_end->format('H:i:s');
 
-            // Adjust start/end time to today's date for comparison
-            $startTime->setDate($now->year, $now->month, $now->day);
-            $endTime->setDate($now->year, $now->month, $now->day);
+            $startTime = $now->copy()->setTimeFromTimeString($timeStart);
+            $endTime = $now->copy()->setTimeFromTimeString($timeEnd);
 
             // If end time is before start time, it spans midnight
             if ($endTime->lt($startTime)) {
-                return $now->between($startTime, $endTime->addDay());
+                $endTime->addDay();
+                return $now->between($startTime, $endTime) || $now->copy()->addDay()->between($startTime, $endTime);
             }
 
             return $now->between($startTime, $endTime);
@@ -258,6 +259,14 @@ class ProductSchedule extends Model
     public function isTimeLimited(): bool
     {
         return $this->type === 'time_limited' && $this->expires_at;
+    }
+
+    /**
+     * Check if product is coming soon.
+     */
+    public function isComingSoon(): bool
+    {
+        return $this->type === 'coming_soon' && $this->expected_available_at && $this->expected_available_at->isFuture();
     }
 
     /**
@@ -311,6 +320,58 @@ class ProductSchedule extends Model
     {
         return $query->where('scheduled_at', '>', now())
             ->where('is_active', true);
+    }
+
+    /**
+     * Scope to get flash sales.
+     */
+    public function scopeFlashSales($query)
+    {
+        return $query->where('type', 'flash_sale');
+    }
+
+    /**
+     * Scope to get seasonal schedules.
+     */
+    public function scopeSeasonal($query)
+    {
+        return $query->where('type', 'seasonal');
+    }
+
+    /**
+     * Scope to get time-limited schedules.
+     */
+    public function scopeTimeLimited($query)
+    {
+        return $query->where('type', 'time_limited');
+    }
+
+    /**
+     * Scope to get schedules that are currently active based on their recurrence pattern.
+     */
+    public function scopeActiveNow($query)
+    {
+        $now = now();
+        return $query->where('is_active', true)
+            ->where(function ($q) use ($now) {
+                $q->where(function ($subQ) use ($now) { // One-time schedules that are due
+                    $subQ->where('schedule_type', 'one_time')
+                         ->where('scheduled_at', '<=', $now)
+                         ->where(function ($subSubQ) use ($now) {
+                             $subSubQ->whereNull('expires_at')
+                                     ->orWhere('expires_at', '>', $now);
+                         })
+                         ->whereNull('executed_at');
+                })->orWhere(function ($subQ) use ($now) { // Recurring schedules that are currently active
+                    $subQ->where('schedule_type', 'recurring')
+                         ->where('scheduled_at', '<=', $now) // Overall schedule start
+                         ->where(function ($subSubQ) use ($now) {
+                             $subSubQ->whereNull('expires_at')
+                                     ->orWhere('expires_at', '>', $now); // Overall schedule end
+                         })
+                         ->where('is_recurring', true);
+                });
+            });
     }
 }
 

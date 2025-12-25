@@ -150,6 +150,56 @@ class VariantGenerator
     }
 
     /**
+     * Generate variants with dependency validation.
+     *
+     * @param  Product  $product
+     * @param  array  $options
+     * @param  array  $defaults
+     * @return Collection
+     */
+    public function generateVariantsWithDependencies(
+        Product $product,
+        array $options = [],
+        array $defaults = []
+    ): Collection {
+        $combinationService = app(VariantAttributeCombinationService::class);
+        $dependencyService = app(VariantDependencyService::class);
+
+        // Get all combinations
+        $allCombinations = $combinationService->generateAllCombinations($product);
+
+        // Filter by dependencies
+        $validCombinations = [];
+        foreach ($allCombinations as $combination) {
+            $validation = $combinationService->validateCombination($product, $combination);
+            if ($validation['valid']) {
+                $validCombinations[] = $combination;
+            }
+        }
+
+        // Generate variants for valid combinations
+        $createdVariants = collect();
+
+        foreach ($validCombinations as $combination) {
+            try {
+                $variant = $combinationService->createVariantFromCombination($product, $combination, [
+                    'status' => $defaults['status'] ?? 'active',
+                    'variant_data' => $defaults,
+                ]);
+                $createdVariants->push($variant);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to create variant", [
+                    'product_id' => $product->id,
+                    'combination' => $combination,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $createdVariants;
+    }
+
+    /**
      * Generate SKU for a variant.
      *
      * @param  Product  $product

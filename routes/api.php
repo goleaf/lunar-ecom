@@ -58,3 +58,16 @@ Route::prefix('metrics')->name('api.metrics.')->middleware(['auth'])->group(func
     Route::get('/pricing', [\App\Http\Controllers\Api\MetricsController::class, 'pricing'])->name('pricing');
     Route::get('/cache-hit-ratio/{type?}', [\App\Http\Controllers\Api\MetricsController::class, 'cacheHitRatio'])->name('cacheHitRatio');
 });
+
+// Referral routes
+Route::prefix('referrals')->name('api.referrals.')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/my-codes', [\App\Http\Controllers\Api\ReferralController::class, 'myCodes'])->name('myCodes');
+    Route::get('/stats', [\App\Http\Controllers\Api\ReferralController::class, 'stats'])->name('stats');
+    Route::get('/rewards', [\App\Http\Controllers\Api\ReferralController::class, 'rewards'])->name('rewards');
+});
+
+// Public referral routes
+Route::prefix('referrals')->name('api.referrals.')->group(function () {
+    Route::get('/code/{slug}', [\App\Http\Controllers\Api\ReferralController::class, 'getCode'])->name('getCode');
+    Route::post('/track/{slug}', [\App\Http\Controllers\Api\ReferralController::class, 'trackClick'])->name('trackClick');
+});

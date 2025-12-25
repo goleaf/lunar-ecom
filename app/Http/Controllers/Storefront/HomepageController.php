@@ -21,14 +21,16 @@ class HomepageController extends Controller
     public function index(Request $request)
     {
         // Get featured collections
-        $featuredCollections = Collection::homepage()
+        $featuredCollections = Collection::query()
+            ->homepage()
             ->with(['products' => function ($query) {
                 $query->limit(8);
             }])
             ->get();
 
         // Get bestseller collection
-        $bestsellers = Collection::ofType('bestsellers')
+        $bestsellers = Collection::query()
+            ->ofType('bestsellers')
             ->active()
             ->with(['products' => function ($query) {
                 $query->limit(12);
@@ -36,7 +38,8 @@ class HomepageController extends Controller
             ->first();
 
         // Get new arrivals collection
-        $newArrivals = Collection::ofType('new_arrivals')
+        $newArrivals = Collection::query()
+            ->ofType('new_arrivals')
             ->active()
             ->with(['products' => function ($query) {
                 $query->limit(12);

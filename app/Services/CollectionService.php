@@ -91,7 +91,8 @@ class CollectionService
      */
     public function getCollectionsByType(CollectionType $type): EloquentCollection
     {
-        return Collection::ofType($type)
+        return Collection::query()
+            ->ofType($type->value)
             ->with(['products', 'group'])
             ->orderBy('sort')
             ->get();

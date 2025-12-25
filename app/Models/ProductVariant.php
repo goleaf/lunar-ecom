@@ -883,10 +883,11 @@ class ProductVariant extends LunarProductVariant
 
     /**
      * Get thumbnail (legacy method).
+     * Compatible with Lunar's base method signature.
      *
      * @return \Spatie\MediaLibrary\MediaCollections\Models\Media|null
      */
-    public function getThumbnail()
+    public function getThumbnail(): ?\Spatie\MediaLibrary\MediaCollections\Models\Media
     {
         $primaryImage = $this->getPrimaryImage();
         return $primaryImage?->media;

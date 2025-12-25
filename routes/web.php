@@ -18,6 +18,12 @@ Route::get('/robots.txt', [\App\Http\Controllers\Storefront\RobotsController::cl
 Route::get('/', [\App\Http\Controllers\Storefront\HomepageController::class, 'index'])->name('storefront.homepage');
 Route::get('/home', [ProductController::class, 'index'])->name('storefront.home');
 
+// Referral link tracking (must be before other routes to catch ref parameter)
+Route::get('/ref/{ref}', function ($ref) {
+    // Redirect to homepage with ref parameter
+    return redirect()->route('storefront.homepage', ['ref' => $ref]);
+})->name('referral.link');
+
 Route::get('/products', [ProductController::class, 'index'])->name('storefront.products.index');
 Route::get('/products/{slug}', [ProductController::class, 'show'])->name('storefront.products.show');
 

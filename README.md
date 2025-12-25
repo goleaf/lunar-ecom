@@ -6527,22 +6527,22 @@ $netAmount = $totalCharged - $totalRefunded;
 
 ## Payments
 
-This project implements payments following the [Lunar Payments documentation](https://docs.lunarphp.com/1.x/reference/payments):
+This project implements payments following the [Lunar Payments documentation](https://docs.lunarphp.com/1.x/reference/payments). If you're looking for a guide on how to create your own Payment Driver, or for a more in-depth look at how they work, head over to the [Extending Payments documentation](https://docs.lunarphp.com/1.x/extending/payments).
 
-- **Payment Drivers**: Driver-based payment system supporting multiple payment providers
-- **Payment Types**: Configure different payment types (card, cash-in-hand, etc.) with different drivers
-- **Payment Authorization**: Authorize payments through payment drivers
-- **Payment Checks**: Access payment validation checks (3DSecure, credit checks, etc.)
-- **Configuration**: Flexible payment configuration per payment type
+**Overview**:
+
+Lunar takes a driver-based approach with Payments, meaning you are free to use either addons to support the provider you wish to use, or you can create your own to meet your exact needs.
 
 **Configuration**:
 
-Payment configuration is in `config/lunar/payments.php`:
+All configuration for payments is located in `config/lunar/payments.php`. Here you can specify different types of payments and the driver each one should use:
 
 ```php
+<?php
+
 return [
-    'default' => env('PAYMENTS_TYPE', 'offline'),
-    
+    'default' => env('PAYMENTS_TYPE', 'cash-in-hand'),
+
     'types' => [
         'cash-in-hand' => [
             'driver' => 'offline',
@@ -6556,12 +6556,103 @@ return [
 ];
 ```
 
+**Configuration Options**:
+
+- **`default`**: The default payment type to use when none is specified
+- **`types`**: Array of payment types, each with:
+  - **`driver`**: The payment driver to use (e.g., 'stripe', 'offline', 'custom')
+  - **`released`**: The order status to set when payment is released
+
 **Usage**:
+
+To use a payment driver, you need to pass the type of payment you wish to use. This will then return an instance of the driver:
+
+```php
+use Lunar\Facades\Payments;
+use Lunar\Models\Cart;
+use Lunar\Facades\CartSession;
+
+// Get a payment driver
+$driver = Payments::driver('card');
+```
+
+We can then set the cart:
+
+```php
+$cart = CartSession::current();
+$driver->cart($cart);
+```
+
+Set any additional data that the driver may need:
+
+```php
+$driver->withData([
+    'payment_token' => $token,
+]);
+```
+
+Finally, we can authorize the payment:
+
+```php
+$result = $driver->authorize();
+```
+
+The `authorize()` method returns a `PaymentAuthorize` DTO which contains:
+- `success`: Whether the payment was successful
+- `message`: Any message from the payment provider
+- `orderId`: The order ID if an order was created
+- `paymentType`: The payment type used
+- `transaction`: The transaction model if one was created
+
+**Complete Payment Flow Example**:
+
+```php
+use Lunar\Facades\Payments;
+use Lunar\Facades\CartSession;
+use Lunar\Models\Cart;
+
+// 1. Get the current cart
+$cart = CartSession::current();
+
+// 2. Get the payment driver for the payment type
+$driver = Payments::driver('card');
+
+// 3. Set the cart on the driver
+$driver->cart($cart);
+
+// 4. Set any additional data (e.g., payment token from Stripe)
+$driver->withData([
+    'payment_token' => $request->input('payment_token'),
+    // Add any other data your payment driver needs
+]);
+
+// 5. Authorize the payment
+$result = $driver->authorize();
+
+// 6. Handle the result
+if ($result->success) {
+    // Payment successful
+    $order = $result->order; // Order was created automatically
+    $transaction = $result->transaction; // Transaction was created
+    
+    // Redirect to success page
+    return redirect()->route('checkout.success', $order);
+} else {
+    // Payment failed
+    return back()->with('error', $result->message);
+}
+```
+
+**Using PaymentHelper**:
+
+The `PaymentHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Payments\PaymentHelper;
-use Lunar\Facades\Payments;
+use Lunar\Facades\CartSession;
 use Lunar\Models\Cart;
+
+$cart = CartSession::current();
 
 // Get a payment driver
 $driver = PaymentHelper::driver('card');
@@ -6571,8 +6662,7 @@ $driver = Payments::driver('card');
 // Get default payment driver
 $defaultDriver = PaymentHelper::defaultDriver();
 
-// Process a payment for a cart
-$cart = CartSession::current();
+// Process a payment for a cart (all in one method)
 $result = PaymentHelper::processPayment($cart, 'card', [
     'payment_token' => 'tok_1234567890',
 ]);
@@ -6580,28 +6670,13 @@ $result = PaymentHelper::processPayment($cart, 'card', [
 // Process payment with token (convenience method)
 $result = PaymentHelper::processWithToken($cart, 'card', 'tok_1234567890');
 
-// Manual payment processing
+// Manual payment processing (step by step)
 $driver = Payments::driver('card');
 $driver->cart($cart);
 $driver->withData([
     'payment_token' => $token,
 ]);
 $result = $driver->authorize();
-
-// Access payment checks from transaction
-$transaction = $order->transactions()->first();
-$checks = PaymentHelper::getPaymentChecks($transaction);
-
-foreach ($checks as $check) {
-    $check->successful; // bool
-    $check->label;      // string
-    $check->message;    // string
-}
-
-// Check if all payment checks were successful
-if (PaymentHelper::allChecksSuccessful($transaction)) {
-    // All checks passed
-}
 
 // Get payment type configuration
 $config = PaymentHelper::getPaymentTypeConfig('card');
@@ -6621,43 +6696,184 @@ $types = PaymentHelper::getAvailablePaymentTypes();
 // Returns: ['cash-in-hand', 'card']
 ```
 
-**Payment Flow**:
+**Payment Checks**:
 
-1. Get payment driver: `Payments::driver($type)`
-2. Set cart: `$driver->cart($cart)`
-3. Set additional data: `$driver->withData([...])`
-4. Authorize payment: `$driver->authorize()`
-5. Handle result: The `authorize()` method returns a `PaymentAuthorize` DTO
+Some providers return information based on checks that can occur before payment is validated and completed. This is usually related to 3DSecure but in some cases can relate to credit checks or anything the payment provider has deemed relevant to the transaction.
+
+You can get access to these checks via the `paymentChecks()` method on the `Transaction`:
+
+```php
+use Lunar\Models\Transaction;
+use Lunar\Models\Order;
+
+$order = Order::find(1);
+$transaction = $order->transactions()->first();
+
+// Get payment checks
+foreach ($transaction->paymentChecks() as $check) {
+    $check->successful; // bool - Whether the check passed
+    $check->label;      // string - Check label (e.g., '3DSecure')
+    $check->message;    // string - Check message/description
+}
+```
+
+**Using PaymentHelper for Payment Checks**:
+
+```php
+use App\Lunar\Payments\PaymentHelper;
+
+$transaction = $order->transactions()->first();
+
+// Get payment checks
+$checks = PaymentHelper::getPaymentChecks($transaction);
+
+foreach ($checks as $check) {
+    $check->successful; // bool
+    $check->label;      // string
+    $check->message;    // string
+}
+
+// Check if all payment checks were successful
+if (PaymentHelper::allChecksSuccessful($transaction)) {
+    // All checks passed
+}
+```
 
 **Payment Types**:
 
 Each payment type in the configuration specifies:
-- `driver`: The payment driver to use (e.g., 'stripe', 'offline')
-- `released`: The order status to set when payment is released
+- **`driver`**: The payment driver to use (e.g., 'stripe', 'offline', 'custom')
+- **`released`**: The order status to set when payment is released (e.g., 'payment-received', 'payment-offline')
 
-**Payment Checks**:
+**Payment Drivers**:
 
-Some payment providers return validation checks (e.g., 3DSecure, credit checks). Access these via:
-
-```php
-foreach ($transaction->paymentChecks() as $check) {
-    $check->successful; // Whether the check passed
-    $check->label;      // Check label
-    $check->message;    // Check message/description
-}
-```
+Payment drivers handle the actual payment processing. Lunar provides:
+- **Offline Driver**: For cash-in-hand or manual payment processing
+- **Stripe Driver**: Available via the `lunarphp/stripe` addon
+- **PayPal Driver**: Available via the `lunarphp/paypal` addon
+- **Custom Drivers**: You can create your own by extending `AbstractPayment`
 
 **Payment Addons**:
 
-Lunar supports payment addons for integrating with payment providers. The most common addon is Stripe. See the [Stripe Payment Addon](#stripe-payment-addon) section below for installation and usage.
+Lunar supports payment addons for integrating with payment providers. The most common addons are:
+- **Stripe**: See the [Stripe Payment Addon](#stripe-payment-addon) section below
+- **PayPal**: See the [PayPal Payment Addon](#paypal-payment-addon) section below
 
 **Custom Payment Drivers**:
 
 Create custom payment drivers by extending `AbstractPayment`. See the [Extending Lunar Payments documentation](https://docs.lunarphp.com/1.x/extending/payments) and the Extension Points section below for details.
 
 The project includes example payment drivers:
-- `CustomPayment.php` - Complete custom payment driver example with proper transaction handling
-- `DummyPaymentProvider.php` - Dummy payment for development/testing
+- **`CustomPayment.php`**: Complete custom payment driver example with proper transaction handling
+- **`DummyPaymentProvider.php`**: Dummy payment for development/testing
+
+**Payment Flow Summary**:
+
+1. **Get Payment Driver**: `Payments::driver($type)` - Returns driver instance for the payment type
+2. **Set Cart**: `$driver->cart($cart)` - Associate cart with the driver
+3. **Set Additional Data**: `$driver->withData([...])` - Pass any data the driver needs (e.g., payment tokens)
+4. **Authorize Payment**: `$driver->authorize()` - Process the payment and return `PaymentAuthorize` DTO
+5. **Handle Result**: Check `$result->success` and handle accordingly
+
+**Best Practices**:
+
+- **Use Payment Types**: Configure payment types in `config/lunar/payments.php` rather than hardcoding driver names
+- **Handle Errors**: Always wrap payment authorization in try/catch blocks
+- **Check Payment Result**: Always check `$result->success` before proceeding
+- **Store Transactions**: Payment drivers automatically create transactions, but verify they exist
+- **Payment Checks**: Check payment validation results (3DSecure, etc.) before considering payment complete
+- **Order Status**: Use the `released` status from payment type configuration to set order status
+- **Error Messages**: Display user-friendly error messages from `$result->message`
+- **Test Payments**: Use test/sandbox modes for payment providers during development
+- **Webhooks**: Set up webhooks for payment providers to handle asynchronous payment updates
+- **Transaction Tracking**: Always track all payment attempts, not just successful ones
+- **Refunds**: Use payment drivers' `refund()` method for processing refunds
+- **Security**: Never store sensitive payment data (tokens, card numbers) in your database
+- **PCI Compliance**: Follow PCI compliance guidelines when handling payment data
+
+**Example: Complete Payment Processing**:
+
+```php
+use Lunar\Facades\Payments;
+use Lunar\Facades\CartSession;
+use Illuminate\Http\Request;
+
+public function processPayment(Request $request)
+{
+    try {
+        // 1. Get current cart
+        $cart = CartSession::current();
+        
+        if (!$cart || $cart->lines->isEmpty()) {
+            return back()->with('error', 'Your cart is empty');
+        }
+        
+        // 2. Validate cart can create order
+        if (!$cart->canCreateOrder()) {
+            return back()->with('error', 'Cart is not ready for checkout');
+        }
+        
+        // 3. Get payment driver
+        $driver = Payments::driver($request->input('payment_type', 'card'));
+        
+        // 4. Set cart
+        $driver->cart($cart);
+        
+        // 5. Set payment data (e.g., Stripe payment token)
+        $driver->withData([
+            'payment_token' => $request->input('payment_token'),
+            'payment_method_id' => $request->input('payment_method_id'),
+        ]);
+        
+        // 6. Authorize payment
+        $result = $driver->authorize();
+        
+        // 7. Handle result
+        if ($result->success) {
+            // Payment successful - order was created automatically
+            $order = $result->order;
+            $transaction = $result->transaction;
+            
+            // Check payment checks if available
+            if ($transaction) {
+                $checks = $transaction->paymentChecks();
+                foreach ($checks as $check) {
+                    if (!$check->successful) {
+                        // Some checks failed - handle accordingly
+                        \Log::warning('Payment check failed', [
+                            'check' => $check->label,
+                            'message' => $check->message,
+                        ]);
+                    }
+                }
+            }
+            
+            // Clear cart from session
+            CartSession::forget();
+            
+            // Redirect to success page
+            return redirect()->route('checkout.success', $order)
+                ->with('success', 'Payment processed successfully');
+        } else {
+            // Payment failed
+            return back()->with('error', $result->message ?? 'Payment failed');
+        }
+    } catch (\Lunar\Exceptions\CartException $e) {
+        // Cart validation errors
+        return back()->with('error', $e->getMessage());
+    } catch (\Exception $e) {
+        // Other errors
+        \Log::error('Payment processing error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        
+        return back()->with('error', 'An error occurred processing your payment');
+    }
+}
+```
+
+**Documentation**: See [Lunar Payments documentation](https://docs.lunarphp.com/1.x/reference/payments)
 
 ### Stripe Payment Addon
 

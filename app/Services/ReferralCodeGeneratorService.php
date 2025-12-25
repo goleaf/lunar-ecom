@@ -74,8 +74,7 @@ class ReferralCodeGeneratorService
     {
         $code = strtoupper($code);
 
-        return DB::table('reserved_referral_codes')
-            ->whereRaw('UPPER(code) = ?', [$code])
+        return ReservedReferralCode::whereRaw('UPPER(code) = ?', [$code])
             ->where('is_active', true)
             ->where(function ($query) {
                 $query->whereNull('expires_at')
@@ -180,10 +179,7 @@ class ReferralCodeGeneratorService
         }
 
         // Check if already reserved
-        if (DB::table('reserved_referral_codes')
-            ->whereRaw('UPPER(code) = ?', [$code])
-            ->where('is_active', true)
-            ->exists()) {
+        if ($this->isReserved($code)) {
             return false;
         }
 

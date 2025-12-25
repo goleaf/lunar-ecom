@@ -85,6 +85,16 @@ Route::prefix('bundles')->name('storefront.bundles.')->group(function () {
     Route::get('/{bundle}/calculate-price', [\App\Http\Controllers\Storefront\BundleController::class, 'calculatePrice'])->name('calculate-price');
 });
 
+// Admin Bundle Management
+Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\Admin\BundleController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('store');
+    Route::get('/{bundle}/edit', [\App\Http\Controllers\Admin\BundleController::class, 'edit'])->name('edit');
+    Route::put('/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'update'])->name('update');
+    Route::delete('/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'destroy'])->name('destroy');
+});
+
 // Admin Order Status Management
 Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->group(function () {
     Route::get('/statuses', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getAvailableStatuses'])->name('statuses');

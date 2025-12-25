@@ -4,6 +4,7 @@ return [
     'nav' => [
         'products' => 'Products',
         'collections' => 'Collections',
+        'bundles' => 'Bundles',
         'cart' => 'Cart',
         'search' => 'Search',
         'search_placeholder' => 'Search...',

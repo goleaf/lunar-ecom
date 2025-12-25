@@ -49,6 +49,9 @@
                         <a href="{{ route('storefront.products.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                             {{ __('storefront.nav.products') }}
                         </a>
+                        <a href="{{ route('storefront.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                            {{ __('storefront.nav.bundles') }}
+                        </a>
                         <a href="{{ route('storefront.collections.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                             {{ __('storefront.nav.collections') }}
                         </a>
@@ -57,6 +60,9 @@
                         </a>
                         <a href="{{ route('storefront.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                             Brands
+                        </a>
+                        <a href="{{ route('storefront.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                            {{ __('storefront.nav.bundles') }}
                         </a>
                     </div>
                 </div>

@@ -279,7 +279,7 @@ class ComparisonService
      * @param  Product  $product
      * @return int  Price in cents
      */
-    protected function getProductPrice(Product $product): int
+    public function getProductPrice(Product $product): int
     {
         $variants = $product->variants;
         if ($variants->isEmpty()) {

@@ -299,15 +299,19 @@ class CompleteSeeder extends Seeder
         $this->command->info('📂 Creating categories...');
         $rootCategories = collect();
         for ($i = 0; $i < 5; $i++) {
-            $category = Category::factory()->make();
+            $categoryData = Category::factory()->make()->toArray();
+            $category = new Category($categoryData);
+            $category->save();
             $category->makeRoot()->save();
             $category->refresh();
             $rootCategories->push($category);
         }
         foreach ($rootCategories as $rootCategory) {
+            $rootCategory->refresh(); // Ensure lft/rgt values are loaded
             $childCount = fake()->numberBetween(2, 4);
             for ($j = 0; $j < $childCount; $j++) {
-                $child = Category::factory()->make();
+                $childData = Category::factory()->make()->toArray();
+                $child = new Category($childData);
                 $rootCategory->appendNode($child);
             }
         }

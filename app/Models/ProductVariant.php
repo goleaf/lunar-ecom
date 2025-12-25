@@ -238,14 +238,48 @@ class ProductVariant extends LunarProductVariant
             }
         };
 
+        $eanRule = ['nullable', 'string', 'size:13'];
+        $eanRule[] = function ($attribute, $value, $fail) {
+            if ($value && !(new static)->validateEan13($value)) {
+                $fail('The EAN must be a valid EAN-13 format.');
+            }
+        };
+
+        $upcRule = ['nullable', 'string', 'size:12'];
+        $upcRule[] = function ($attribute, $value, $fail) {
+            if ($value && !(new static)->validateUPC($value)) {
+                $fail('The UPC must be a valid 12-digit format.');
+            }
+        };
+
+        $isbnRule = ['nullable', 'string', 'size:13'];
+        $isbnRule[] = function ($attribute, $value, $fail) {
+            if ($value && !(new static)->validateISBN($value)) {
+                $fail('The ISBN must be a valid ISBN-13 format.');
+            }
+        };
+
         return [
+            'uuid' => ['nullable', 'uuid', 'unique:' . $tableName . ',uuid,' . ($variantId ?? 'NULL') . ',id'],
+            'sku' => ['nullable', 'string', 'max:255', 'unique:' . $tableName . ',sku,' . ($variantId ?? 'NULL') . ',id'],
+            'gtin' => ['nullable', 'string', 'max:14'],
+            'ean' => $eanRule,
+            'upc' => $upcRule,
+            'isbn' => $isbnRule,
+            'barcode' => $barcodeRule,
+            'internal_reference' => ['nullable', 'string', 'max:100'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'variant_name' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'in:active,inactive,archived'],
+            'visibility' => ['nullable', 'in:public,hidden,channel_specific'],
+            'channel_visibility' => ['nullable', 'array'],
+            'channel_visibility.*' => ['integer', 'exists:' . config('lunar.database.table_prefix') . 'channels,id'],
+            'sku_format' => ['nullable', 'array'],
             'price_override' => ['nullable', 'integer', 'min:0'],
             'cost_price' => ['nullable', 'integer', 'min:0'],
             'compare_at_price' => ['nullable', 'integer', 'min:0'],
             'weight' => ['nullable', 'integer', 'min:0'],
-            'barcode' => $barcodeRule,
             'enabled' => ['nullable', 'boolean'],
-            'variant_name' => ['nullable', 'string', 'max:255'],
             'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
             'position' => ['nullable', 'integer', 'min:0'],
             'meta_title' => ['nullable', 'string', 'max:255'],

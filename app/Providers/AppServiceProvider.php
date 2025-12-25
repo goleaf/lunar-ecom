@@ -177,6 +177,7 @@ class AppServiceProvider extends ServiceProvider
         Cart::observe(CartObserver::class);
         CartLine::observe(CartLineObserver::class);
         \Lunar\Models\Order::observe(\App\Observers\OrderObserver::class);
+        User::observe(UserObserver::class);
 
         // Schedule product schedule processing (runs every hour)
         if (app()->runningInConsole()) {

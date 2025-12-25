@@ -848,6 +848,14 @@ class Product extends LunarProduct
     }
 
     /**
+     * Product badge assignments relationship.
+     */
+    public function badgeAssignments()
+    {
+        return $this->hasMany(\App\Models\ProductBadgeAssignment::class, 'product_id');
+    }
+
+    /**
      * Product badges relationship.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -856,11 +864,23 @@ class Product extends LunarProduct
     {
         return $this->belongsToMany(
             \App\Models\ProductBadge::class,
-            config('lunar.database.table_prefix') . 'product_badge_product',
+            config('lunar.database.table_prefix') . 'product_badge_assignments',
             'product_id',
-            'product_badge_id'
-        )->withPivot('is_auto_assigned', 'assigned_at', 'expires_at', 'position', 'priority')
+            'badge_id'
+        )->using(\App\Models\ProductBadgeAssignment::class)
+          ->withPivot(['assignment_type', 'rule_id', 'priority', 'display_position', 'visibility_rules', 'starts_at', 'expires_at', 'assigned_at', 'assigned_by', 'is_active'])
           ->withTimestamps();
+    }
+
+    /**
+     * Get active badges for this product.
+     *
+     * @param  string|null  $context
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActiveBadges(?string $context = null)
+    {
+        return app(\App\Services\BadgeService::class)->getProductBadges($this, $context);
     }
 
     /**

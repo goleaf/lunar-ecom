@@ -1339,6 +1339,74 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Get available stock.
+     *
+     * @param  int|null  $warehouseId
+     * @return int
+     */
+    public function getAvailableStock(?int $warehouseId = null): int
+    {
+        $service = app(\App\Services\VariantInventoryService::class);
+        return $service->getAvailableStock($this, $warehouseId);
+    }
+
+    /**
+     * Check if variant has sufficient stock.
+     *
+     * @param  int  $quantity
+     * @param  int|null  $warehouseId
+     * @return bool
+     */
+    public function hasSufficientStock(int $quantity, ?int $warehouseId = null): bool
+    {
+        $service = app(\App\Services\VariantInventoryService::class);
+        return $service->hasSufficientStock($this, $quantity, $warehouseId);
+    }
+
+    /**
+     * Get stock status.
+     *
+     * @param  int|null  $warehouseId
+     * @return string
+     */
+    public function getStockStatus(?int $warehouseId = null): string
+    {
+        $service = app(\App\Services\VariantInventoryService::class);
+        return $service->getStockStatus($this, $warehouseId);
+    }
+
+    /**
+     * Get stock breakdown by warehouse.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getStockBreakdown(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantInventoryService::class);
+        return $service->getStockBreakdown($this);
+    }
+
+    /**
+     * Check if variant is virtual (services/digital).
+     *
+     * @return bool
+     */
+    public function isVirtual(): bool
+    {
+        return $this->is_virtual ?? false;
+    }
+
+    /**
+     * Check if backorder is allowed.
+     *
+     * @return bool
+     */
+    public function allowsBackorder(): bool
+    {
+        return in_array($this->backorder_allowed ?? 'no', ['yes', 'limit']);
+    }
+
+    /**
      * Get variant-specific SEO meta title.
      * Falls back to product meta title or product name if not set.
      *

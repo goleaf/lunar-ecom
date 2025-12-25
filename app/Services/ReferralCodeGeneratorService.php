@@ -55,8 +55,8 @@ class ReferralCodeGeneratorService
             $code = strtoupper($prefix) . $code;
         }
 
-        // Ensure uniqueness
-        while ($this->codeExists($code)) {
+        // Ensure uniqueness (check both users and reserved codes)
+        while ($this->codeExists($code) || $this->isReserved($code)) {
             $code = $this->generateCode($length);
             if ($prefix) {
                 $code = strtoupper($prefix) . $code;
@@ -64,6 +64,23 @@ class ReferralCodeGeneratorService
         }
 
         return $code;
+    }
+
+    /**
+     * Check if code is reserved.
+     */
+    protected function isReserved(string $code): bool
+    {
+        $code = strtoupper($code);
+
+        return DB::table('reserved_referral_codes')
+            ->whereRaw('UPPER(code) = ?', [$code])
+            ->where('is_active', true)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->exists();
     }
 
     /**
@@ -161,8 +178,14 @@ class ReferralCodeGeneratorService
             return false;
         }
 
-        // Store in reserved codes table (if you create one)
-        // For now, we'll just validate it can be used
+        // Check if already reserved
+        if (DB::table('reserved_referral_codes')
+            ->whereRaw('UPPER(code) = ?', [$code])
+            ->where('is_active', true)
+            ->exists()) {
+            return false;
+        }
+
         return true;
     }
 

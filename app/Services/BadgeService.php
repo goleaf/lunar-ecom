@@ -461,7 +461,7 @@ class BadgeService
             $query->where('period_end', '<=', $endDate);
         }
 
-        return $query->selectRaw('
+        $result = $query->selectRaw('
                 SUM(views) as total_views,
                 SUM(clicks) as total_clicks,
                 SUM(add_to_cart) as total_add_to_cart,
@@ -471,8 +471,18 @@ class BadgeService
                 AVG(conversion_rate) as avg_cr,
                 AVG(add_to_cart_rate) as avg_atc_rate
             ')
-            ->first()
-            ->toArray();
+            ->first();
+
+        return $result ? $result->toArray() : [
+            'total_views' => 0,
+            'total_clicks' => 0,
+            'total_add_to_cart' => 0,
+            'total_purchases' => 0,
+            'total_revenue' => 0,
+            'avg_ctr' => 0,
+            'avg_cr' => 0,
+            'avg_atc_rate' => 0,
+        ];
     }
 }
 

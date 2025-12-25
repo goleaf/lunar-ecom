@@ -58,11 +58,16 @@ class ReferralAttributionService
         ]);
 
         // Store in cookie based on last-click-wins setting
-        if ($lastClickWins || !Cookie::has(self::COOKIE_NAME)) {
+        // Note: Cookie::has() doesn't work for queued cookies, so we check request cookies
+        $hasCookie = request()->cookie(self::COOKIE_NAME);
+        
+        if ($lastClickWins || !$hasCookie) {
             Cookie::queue(
-                self::COOKIE_NAME,
-                $referralCode,
-                now()->addDays(self::COOKIE_TTL)->diffInMinutes()
+                Cookie::make(
+                    self::COOKIE_NAME,
+                    $referralCode,
+                    now()->addDays(self::COOKIE_TTL)->diffInMinutes()
+                )
             );
         }
     }

@@ -3,50 +3,40 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\ProductBadge;
-use App\Services\ProductBadgeService;
+use App\Services\BadgeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
-/**
- * Admin controller for product badges.
- */
 class ProductBadgeController extends Controller
 {
     public function __construct(
-        protected ProductBadgeService $badgeService
+        protected BadgeService $badgeService
     ) {}
 
     /**
-     * Display badges index.
-     *
-     * @return \Illuminate\View\View
+     * Display a listing of badges.
      */
     public function index()
     {
-        $badges = ProductBadge::orderBy('priority', 'desc')
+        $badges = ProductBadge::withCount('assignments')
+            ->orderBy('priority', 'desc')
             ->orderBy('name')
             ->paginate(20);
 
-        return view('admin.products.badges.index', compact('badges'));
+        return view('admin.badges.index', compact('badges'));
     }
 
     /**
-     * Show badge creation form.
-     *
-     * @return \Illuminate\View\View
+     * Show the form for creating a new badge.
      */
     public function create()
     {
-        return view('admin.products.badges.create');
+        return view('admin.badges.create');
     }
 
     /**
-     * Store a new badge.
-     *
-     * @param  Request  $request
-     * @return JsonResponse|\Illuminate\Http\RedirectResponse
+     * Store a newly created badge.
      */
     public function store(Request $request)
     {
@@ -62,15 +52,15 @@ class ProductBadgeController extends Controller
             'icon' => 'nullable|string|max:255',
             'position' => 'required|in:top-left,top-right,bottom-left,bottom-right,center',
             'style' => 'required|in:rounded,square,pill,custom',
-            'font_size' => 'required|integer|min:8|max:24',
-            'padding_x' => 'required|integer|min:0|max:32',
-            'padding_y' => 'required|integer|min:0|max:32',
-            'border_radius' => 'required|integer|min:0|max:50',
+            'font_size' => 'nullable|integer|min:8|max:24',
+            'padding_x' => 'nullable|integer|min:0|max:20',
+            'padding_y' => 'nullable|integer|min:0|max:20',
+            'border_radius' => 'nullable|integer|min:0|max:50',
             'show_icon' => 'boolean',
             'animated' => 'boolean',
             'animation_type' => 'nullable|string|max:50',
             'is_active' => 'boolean',
-            'priority' => 'required|integer|min:0|max:100',
+            'priority' => 'nullable|integer|min:0|max:100',
             'max_display_count' => 'nullable|integer|min:1',
             'auto_assign' => 'boolean',
             'assignment_rules' => 'nullable|array',
@@ -79,48 +69,32 @@ class ProductBadgeController extends Controller
             'ends_at' => 'nullable|date|after:starts_at',
         ]);
 
-        try {
-            $badge = ProductBadge::create($validated);
+        $badge = ProductBadge::create($validated);
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Badge created successfully',
-                    'badge' => $badge,
-                ]);
-            }
-
-            return redirect()->route('admin.products.badges.index')
-                ->with('success', 'Badge created successfully');
-        } catch (\Exception $e) {
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create badge: ' . $e->getMessage(),
-                ], 500);
-            }
-
-            return back()->withErrors(['error' => 'Failed to create badge: ' . $e->getMessage()]);
-        }
+        return redirect()->route('admin.badges.index')
+            ->with('success', 'Badge created successfully.');
     }
 
     /**
-     * Show badge edit form.
-     *
-     * @param  ProductBadge  $badge
-     * @return \Illuminate\View\View
+     * Display the specified badge.
+     */
+    public function show(ProductBadge $badge)
+    {
+        $badge->load(['assignments.product', 'rules', 'performance']);
+        
+        return view('admin.badges.show', compact('badge'));
+    }
+
+    /**
+     * Show the form for editing the specified badge.
      */
     public function edit(ProductBadge $badge)
     {
-        return view('admin.products.badges.edit', compact('badge'));
+        return view('admin.badges.edit', compact('badge'));
     }
 
     /**
-     * Update badge.
-     *
-     * @param  Request  $request
-     * @param  ProductBadge  $badge
-     * @return JsonResponse|\Illuminate\Http\RedirectResponse
+     * Update the specified badge.
      */
     public function update(Request $request, ProductBadge $badge)
     {
@@ -136,15 +110,15 @@ class ProductBadgeController extends Controller
             'icon' => 'nullable|string|max:255',
             'position' => 'required|in:top-left,top-right,bottom-left,bottom-right,center',
             'style' => 'required|in:rounded,square,pill,custom',
-            'font_size' => 'required|integer|min:8|max:24',
-            'padding_x' => 'required|integer|min:0|max:32',
-            'padding_y' => 'required|integer|min:0|max:32',
-            'border_radius' => 'required|integer|min:0|max:50',
+            'font_size' => 'nullable|integer|min:8|max:24',
+            'padding_x' => 'nullable|integer|min:0|max:20',
+            'padding_y' => 'nullable|integer|min:0|max:20',
+            'border_radius' => 'nullable|integer|min:0|max:50',
             'show_icon' => 'boolean',
             'animated' => 'boolean',
             'animation_type' => 'nullable|string|max:50',
             'is_active' => 'boolean',
-            'priority' => 'required|integer|min:0|max:100',
+            'priority' => 'nullable|integer|min:0|max:100',
             'max_display_count' => 'nullable|integer|min:1',
             'auto_assign' => 'boolean',
             'assignment_rules' => 'nullable|array',
@@ -153,137 +127,59 @@ class ProductBadgeController extends Controller
             'ends_at' => 'nullable|date|after:starts_at',
         ]);
 
-        try {
-            $badge->update($validated);
+        $badge->update($validated);
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Badge updated successfully',
-                    'badge' => $badge->fresh(),
-                ]);
-            }
-
-            return redirect()->route('admin.products.badges.index')
-                ->with('success', 'Badge updated successfully');
-        } catch (\Exception $e) {
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update badge: ' . $e->getMessage(),
-                ], 500);
-            }
-
-            return back()->withErrors(['error' => 'Failed to update badge: ' . $e->getMessage()]);
-        }
+        return redirect()->route('admin.badges.index')
+            ->with('success', 'Badge updated successfully.');
     }
 
     /**
-     * Delete badge.
-     *
-     * @param  ProductBadge  $badge
-     * @return JsonResponse|\Illuminate\Http\RedirectResponse
+     * Remove the specified badge.
      */
     public function destroy(ProductBadge $badge)
     {
-        try {
-            $badge->delete();
+        $badge->delete();
 
-            if (request()->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Badge deleted successfully',
-                ]);
-            }
-
-            return redirect()->route('admin.products.badges.index')
-                ->with('success', 'Badge deleted successfully');
-        } catch (\Exception $e) {
-            if (request()->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to delete badge: ' . $e->getMessage(),
-                ], 500);
-            }
-
-            return back()->withErrors(['error' => 'Failed to delete badge: ' . $e->getMessage()]);
-        }
+        return redirect()->route('admin.badges.index')
+            ->with('success', 'Badge deleted successfully.');
     }
 
     /**
-     * Assign badge to product.
-     *
-     * @param  Request  $request
-     * @param  Product  $product
-     * @return JsonResponse
+     * Preview badge styling.
      */
-    public function assignToProduct(Request $request, Product $product): JsonResponse
+    public function preview(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'badge_id' => 'required|exists:lunar_product_badges,id',
-            'expires_at' => 'nullable|date',
-            'position' => 'nullable|string',
-            'priority' => 'nullable|integer',
+        $data = $request->only([
+            'label', 'color', 'background_color', 'border_color',
+            'icon', 'style', 'font_size', 'padding_x', 'padding_y',
+            'border_radius', 'show_icon', 'animated', 'animation_type'
         ]);
 
-        $badge = ProductBadge::findOrFail($validated['badge_id']);
-
-        $this->badgeService->assignBadge($product, $badge, [
-            'expires_at' => $validated['expires_at'] ?? null,
-            'position' => $validated['position'] ?? null,
-            'priority' => $validated['priority'] ?? null,
-        ]);
+        $badge = new ProductBadge($data);
+        $badge->name = $data['label'] ?? 'Preview';
 
         return response()->json([
-            'success' => true,
-            'message' => 'Badge assigned successfully',
+            'html' => view('admin.badges.preview', compact('badge'))->render(),
+            'styles' => $badge->getInlineStyles(),
+            'classes' => $badge->getCssClasses(),
         ]);
     }
 
     /**
-     * Remove badge from product.
-     *
-     * @param  Request  $request
-     * @param  Product  $product
-     * @return JsonResponse
+     * Get badge performance data.
      */
-    public function removeFromProduct(Request $request, Product $product): JsonResponse
+    public function performance(ProductBadge $badge, Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'badge_id' => 'required|exists:lunar_product_badges,id',
-        ]);
+        $startDate = $request->input('start_date') 
+            ? \Carbon\Carbon::parse($request->input('start_date'))
+            : now()->subDays(30);
+        
+        $endDate = $request->input('end_date')
+            ? \Carbon\Carbon::parse($request->input('end_date'))
+            : now();
 
-        $badge = ProductBadge::findOrFail($validated['badge_id']);
+        $performance = $this->badgeService->getBadgePerformance($badge, $startDate, $endDate);
 
-        $this->badgeService->removeBadge($product, $badge);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Badge removed successfully',
-        ]);
-    }
-
-    /**
-     * Process auto-assignment for all products.
-     *
-     * @return JsonResponse
-     */
-    public function processAutoAssignment(): JsonResponse
-    {
-        try {
-            $processed = $this->badgeService->processAutoAssignment();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Processed {$processed} products",
-                'processed' => $processed,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to process auto-assignment: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json($performance);
     }
 }
-

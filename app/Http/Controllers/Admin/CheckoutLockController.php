@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CheckoutLockResource;
 use App\Models\CheckoutLock;
 use App\Services\CheckoutService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -82,7 +84,7 @@ class CheckoutLockController extends Controller
     /**
      * Get checkout statistics.
      */
-    public function statistics(Request $request)
+    public function statistics(Request $request): JsonResponse
     {
         $hours = (int) ($request->input('hours', 24));
         $since = now()->subHours($hours);
@@ -113,6 +115,21 @@ class CheckoutLockController extends Controller
             : 0;
 
         return response()->json($stats);
+    }
+
+    /**
+     * Get checkout lock as JSON (API endpoint).
+     */
+    public function showJson(CheckoutLock $checkoutLock): JsonResponse
+    {
+        $checkoutLock->load([
+            'cart.lines.purchasable',
+            'priceSnapshots',
+            'stockReservations.productVariant',
+            'user',
+        ]);
+
+        return new CheckoutLockResource($checkoutLock);
     }
 }
 

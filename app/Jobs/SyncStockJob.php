@@ -73,7 +73,8 @@ class SyncStockJob implements ShouldQueue
     protected function syncVariantStock(ProductVariant $variant, InventoryService $inventoryService): void
     {
         // Update variant stock from inventory levels
-        $totalStock = $inventoryService->getTotalStock($variant, $this->warehouseId);
+        $availability = $inventoryService->checkAvailability($variant, 1, $this->warehouseId);
+        $totalStock = $availability['total_available'] ?? 0;
         $variant->update(['stock' => $totalStock]);
     }
 

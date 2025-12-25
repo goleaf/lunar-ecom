@@ -224,6 +224,7 @@ Route::prefix('admin/checkout-locks')->name('admin.checkout-locks.')->middleware
     Route::get('/', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'index'])->name('index');
     Route::get('/statistics', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'statistics'])->name('statistics');
     Route::get('/{checkoutLock}', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'show'])->name('show');
+    Route::get('/{checkoutLock}/json', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'showJson'])->name('show.json');
     Route::post('/{checkoutLock}/release', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'release'])->name('release');
 });
 

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\ProductVariant;
 use App\Models\PriceMatrix;
+use App\Services\Cache\PricingCacheService;
+use App\Services\Observability\PricingMetricsService;
 use Lunar\Models\Price;
 use Lunar\Models\Currency;
 use Lunar\Models\CustomerGroup;
@@ -29,10 +31,17 @@ use Carbon\Carbon;
 class AdvancedPricingService
 {
     protected MatrixPricingService $matrixPricingService;
+    protected PricingCacheService $cacheService;
+    protected PricingMetricsService $metricsService;
 
-    public function __construct(MatrixPricingService $matrixPricingService)
-    {
+    public function __construct(
+        MatrixPricingService $matrixPricingService,
+        PricingCacheService $cacheService,
+        PricingMetricsService $metricsService
+    ) {
         $this->matrixPricingService = $matrixPricingService;
+        $this->cacheService = $cacheService;
+        $this->metricsService = $metricsService;
     }
 
     /**
@@ -138,6 +147,7 @@ class AdvancedPricingService
 
     /**
      * Get base price from Lunar pricing system or variant override.
+     * Uses cache for performance.
      */
     protected function getBasePrice(
         ProductVariant $variant,
@@ -146,42 +156,68 @@ class AdvancedPricingService
         ?CustomerGroup $customerGroup,
         ?Channel $channel
     ): int {
-        // Check for variant price override
+        $startTime = microtime(true);
+        $fromCache = false;
+
+        // Check for variant price override (not cached)
         if ($variant->price_override !== null) {
             return $variant->price_override;
         }
 
-        // Check for channel-specific price
-        if ($channel) {
-            $channelPrice = Price::where('priceable_type', ProductVariant::class)
-                ->where('priceable_id', $variant->id)
-                ->where('currency_id', $currency->id)
-                ->where('channel_id', $channel->id)
-                ->when($customerGroup, function ($q) use ($customerGroup) {
-                    $q->where('customer_group_id', $customerGroup->id);
-                })
-                ->whereNull('customer_group_id') // Fallback to non-group price
-                ->orderBy('tier')
-                ->first();
+        // Try cache first
+        $cachedPrice = $this->cacheService->getBasePrice(
+            $variant->id,
+            $currency->id,
+            $customerGroup?->id,
+            $channel?->id,
+            $quantity
+        );
 
-            if ($channelPrice) {
-                return $channelPrice->price;
+        if ($cachedPrice !== null) {
+            $fromCache = true;
+            $this->metricsService->recordCacheHit('base_price');
+        } else {
+            $this->metricsService->recordCacheMiss('base_price');
+
+            // Check for channel-specific price
+            if ($channel) {
+                $channelPrice = Price::where('priceable_type', ProductVariant::class)
+                    ->where('priceable_id', $variant->id)
+                    ->where('currency_id', $currency->id)
+                    ->where('channel_id', $channel->id)
+                    ->when($customerGroup, function ($q) use ($customerGroup) {
+                        $q->where('customer_group_id', $customerGroup->id);
+                    })
+                    ->whereNull('customer_group_id') // Fallback to non-group price
+                    ->orderBy('tier')
+                    ->first();
+
+                if ($channelPrice) {
+                    $cachedPrice = $channelPrice->price;
+                }
+            }
+
+            // Use Lunar's pricing facade if no cached price
+            if ($cachedPrice === null) {
+                $pricing = \Lunar\Facades\Pricing::qty($quantity)->for($variant);
+                
+                if ($currency) {
+                    $pricing = $pricing->currency($currency);
+                }
+                
+                if ($customerGroup) {
+                    $pricing = $pricing->customerGroup($customerGroup);
+                }
+
+                $response = $pricing->get();
+                $cachedPrice = $response->matched?->price?->value ?? 0;
             }
         }
 
-        // Use Lunar's pricing facade
-        $pricing = \Lunar\Facades\Pricing::qty($quantity)->for($variant);
-        
-        if ($currency) {
-            $pricing = $pricing->currency($currency);
-        }
-        
-        if ($customerGroup) {
-            $pricing = $pricing->customerGroup($customerGroup);
-        }
+        $duration = (microtime(true) - $startTime) * 1000;
+        $this->metricsService->recordPriceCalculation('base_price_resolution', $duration, $fromCache);
 
-        $response = $pricing->get();
-        return $response->matched?->price?->value ?? 0;
+        return $cachedPrice ?? 0;
     }
 
     /**

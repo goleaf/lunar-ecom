@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Helpers\CheckoutHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CheckoutStatusResource;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class CheckoutStatusController extends Controller
             $status['state_name'] = CheckoutHelper::getStateName($status['state']);
         }
 
-        return response()->json($status);
+        return new CheckoutStatusResource($status);
     }
 
     /**

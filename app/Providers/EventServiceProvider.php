@@ -109,7 +109,11 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register model observers for cache invalidation
+        Price::observe(InvalidatePriceCache::class);
+        Discount::observe(InvalidatePromotionCache::class);
+        Currency::observe(InvalidateCurrencyCache::class);
+        ProductVariant::observe(InvalidateStockCache::class);
     }
 
     /**

@@ -43,7 +43,7 @@ class SalesRepsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->getStateUsing(fn ($record): string => $record->name)
+                    ->getStateUsing(fn ($record): string => $record->name ?? 'N/A')
                     ->searchable(),
 
                 Tables\Columns\IconColumn::make('is_primary')

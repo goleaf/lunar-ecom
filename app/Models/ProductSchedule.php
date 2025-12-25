@@ -119,6 +119,30 @@ class ProductSchedule extends Model
     }
 
     /**
+     * Creator relationship.
+     */
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Updater relationship.
+     */
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * History relationship.
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(ProductScheduleHistory::class);
+    }
+
+    /**
      * Check if schedule is due.
      *
      * @return bool
@@ -129,8 +153,81 @@ class ProductSchedule extends Model
             return false;
         }
 
-        return $this->scheduled_at->isPast() && 
-               (!$this->expires_at || $this->expires_at->isFuture());
+        // For one-time schedules
+        if ($this->schedule_type === 'one_time') {
+            return $this->scheduled_at->isPast() &&
+                   (!$this->expires_at || $this->expires_at->isFuture()) &&
+                   !$this->executed_at; // Ensure it hasn't been executed yet
+        }
+
+        // For recurring schedules, check if it's currently active within its recurrence pattern
+        if ($this->schedule_type === 'recurring') {
+            return $this->isCurrentlyActive();
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a recurring schedule is currently active based on its pattern.
+     */
+    public function isCurrentlyActive(): bool
+    {
+        if (!$this->is_active || !$this->is_recurring) {
+            return false;
+        }
+
+        $now = now()->setTimezone($this->timezone ?? config('app.timezone', 'UTC'));
+
+        // Check date range for the overall schedule
+        if ($this->scheduled_at->isFuture() || ($this->expires_at && $this->expires_at->isPast())) {
+            return false;
+        }
+
+        // Check recurrence pattern
+        switch ($this->recurrence_pattern) {
+            case 'daily':
+                // Always active within the date range
+                break;
+            case 'weekly':
+                if (!in_array($now->dayOfWeek, $this->days_of_week ?? [])) {
+                    return false;
+                }
+                break;
+            case 'monthly':
+                // Assuming recurrence_config might hold specific days of month or 'first monday' etc.
+                // For simplicity, let's assume it's active all month if no specific day is set
+                // Or if recurrence_config specifies a day, check that.
+                // For now, just check if it's within the month range if no specific day is configured.
+                // More complex logic would be needed here based on actual config.
+                break;
+            case 'yearly':
+                if ($now->month !== $this->scheduled_at->month || $now->day !== $this->scheduled_at->day) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+        }
+
+        // Check time range if specified
+        if ($this->time_start && $this->time_end) {
+            $startTime = \Carbon\Carbon::parse($this->time_start)->setTimezone($this->timezone ?? config('app.timezone', 'UTC'));
+            $endTime = \Carbon\Carbon::parse($this->time_end)->setTimezone($this->timezone ?? config('app.timezone', 'UTC'));
+
+            // Adjust start/end time to today's date for comparison
+            $startTime->setDate($now->year, $now->month, $now->day);
+            $endTime->setDate($now->year, $now->month, $now->day);
+
+            // If end time is before start time, it spans midnight
+            if ($endTime->lt($startTime)) {
+                return $now->between($startTime, $endTime->addDay());
+            }
+
+            return $now->between($startTime, $endTime);
+        }
+
+        return true;
     }
 
     /**

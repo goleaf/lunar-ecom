@@ -52,3 +52,9 @@ Route::prefix('reports/pricing')->name('api.reports.pricing.')->middleware(['aut
     Route::get('/by-region', [\App\Http\Controllers\PricingReportController::class, 'byRegion'])->name('byRegion');
     Route::get('/price-history', [\App\Http\Controllers\PricingReportController::class, 'priceHistory'])->name('priceHistory');
 });
+
+// Metrics and observability routes (admin)
+Route::prefix('metrics')->name('api.metrics.')->middleware(['auth'])->group(function () {
+    Route::get('/pricing', [\App\Http\Controllers\Api\MetricsController::class, 'pricing'])->name('pricing');
+    Route::get('/cache-hit-ratio/{type?}', [\App\Http\Controllers\Api\MetricsController::class, 'cacheHitRatio'])->name('cacheHitRatio');
+});

@@ -22,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'protect.checkout.cart' => \App\Http\Middleware\ProtectCheckoutCart::class,
             'throttle.checkout' => \App\Http\Middleware\ThrottleCheckout::class,
+            'rate.limit.checkout' => \App\Http\Middleware\RateLimitCheckout::class,
+            'idempotent' => \App\Http\Middleware\IdempotentRequest::class,
+            'http.cache' => \App\Http\Middleware\HttpCache::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

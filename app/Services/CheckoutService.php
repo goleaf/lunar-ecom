@@ -280,13 +280,18 @@ class CheckoutService
      */
     public function resumeCheckout(CheckoutLock $lock, array $paymentData = []): \Lunar\Models\Order
     {
-        if (!$lock->canResume()) {
-            throw new \Exception('Checkout cannot be resumed. Lock is expired or invalid.');
+        // Validate can resume
+        $validation = $this->validator->canResume($lock);
+        if (!$validation['valid']) {
+            throw new \Exception(implode(', ', $validation['errors']));
         }
 
-        // Validate lock belongs to current session
-        if ($lock->session_id !== session()->getId()) {
-            throw new \Exception('Checkout lock does not belong to current session.');
+        // Validate payment data if provided
+        if (!empty($paymentData)) {
+            $paymentValidation = $this->validator->validatePaymentData($paymentData);
+            if (!$paymentValidation['valid']) {
+                throw new \Exception(implode(', ', $paymentValidation['errors']));
+            }
         }
 
         // Continue from current state

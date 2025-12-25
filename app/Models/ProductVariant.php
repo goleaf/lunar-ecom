@@ -1768,15 +1768,53 @@ class ProductVariant extends LunarProductVariant
     /**
      * Get variant SEO meta tags array.
      *
+     * @param  string|null  $locale
      * @return array
      */
-    public function getSEOMetaTags(): array
+    public function getSEOMetaTags(?string $locale = null): array
     {
-        return [
-            'title' => $this->getMetaTitle(),
-            'description' => $this->getMetaDescription(),
-            'keywords' => $this->getMetaKeywords(),
-        ];
+        return \App\Lunar\Variants\VariantSEO::getMetaTags($this, $locale);
+    }
+
+    /**
+     * Get variant URL.
+     *
+     * @return string
+     */
+    public function getVariantUrl(): string
+    {
+        return \App\Lunar\Variants\VariantSEO::getVariantUrl($this);
+    }
+
+    /**
+     * Get canonical URL.
+     *
+     * @return string
+     */
+    public function getCanonicalUrl(): string
+    {
+        return \App\Lunar\Variants\VariantSEO::getCanonicalUrl($this);
+    }
+
+    /**
+     * Get robots meta tag.
+     *
+     * @return string
+     */
+    public function getRobotsMeta(): string
+    {
+        return \App\Lunar\Variants\VariantSEO::getRobotsMeta($this);
+    }
+
+    /**
+     * Get structured data (JSON-LD).
+     *
+     * @param  string|null  $locale
+     * @return array
+     */
+    public function getStructuredData(?string $locale = null): array
+    {
+        return \App\Lunar\Variants\VariantSEO::getStructuredData($this, $locale);
     }
 
     /**

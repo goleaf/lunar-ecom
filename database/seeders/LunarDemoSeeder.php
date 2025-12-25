@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use App\Lunar\Associations\AssociationManager;
+use App\Lunar\Taxation\TaxHelper;
 use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
 use Lunar\Models\Attribute;
 use Lunar\Models\AttributeGroup;
@@ -12,6 +13,7 @@ use Lunar\Models\Channel;
 use Lunar\Models\Collection;
 use Lunar\Models\CollectionGroup;
 use Lunar\Models\Currency;
+use Lunar\Models\CustomerGroup;
 use Lunar\Models\Language;
 use Lunar\Models\Price;
 use Lunar\Models\Product;
@@ -19,10 +21,16 @@ use Lunar\Models\ProductAssociation;
 use Lunar\Models\ProductType;
 use Lunar\Models\ProductVariant;
 use Lunar\Models\Tag;
+use Lunar\Models\TaxClass;
 use Lunar\Models\Url;
 
 class LunarDemoSeeder extends Seeder
 {
+    /**
+     * Default tax class for product variants
+     */
+    protected ?TaxClass $taxClass = null;
+
     /**
      * Seed the application's database with demo Lunar data.
      */
@@ -30,11 +38,15 @@ class LunarDemoSeeder extends Seeder
     {
         $this->command->info('Seeding Lunar demo data...');
 
-        // Step 1: Create Channels, Currencies, and Languages
-        $this->command->info('Creating channels, currencies, and languages...');
+        // Step 1: Create Channels, Currencies, Languages, and Customer Groups
+        $this->command->info('Creating channels, currencies, languages, and customer groups...');
         $channel = $this->createChannel();
         $currency = $this->createCurrency();
         $language = $this->createLanguage();
+        $this->createCustomerGroup();
+        
+        // Create default tax class for product variants
+        $this->taxClass = $this->getOrCreateDefaultTaxClass();
 
         // Step 2: Create Attribute Groups and Attributes
         $this->command->info('Creating attributes...');
@@ -100,17 +112,49 @@ class LunarDemoSeeder extends Seeder
         );
     }
 
+    protected function createCustomerGroup(): CustomerGroup
+    {
+        return CustomerGroup::firstOrCreate(
+            ['handle' => 'retail'],
+            [
+                'name' => 'Retail',
+                'default' => true,
+            ]
+        );
+    }
+
+    protected function getOrCreateDefaultTaxClass(): TaxClass
+    {
+        // Try to get default tax class
+        $taxClass = TaxHelper::getDefaultTaxClass();
+        
+        // If no default exists, create one
+        if (!$taxClass) {
+            $taxClass = TaxHelper::createTaxClass('Default', true);
+        }
+        
+        return $taxClass;
+    }
+
     protected function createAttributes(): array
     {
         // Create attribute groups
         $productGroup = AttributeGroup::firstOrCreate(
             ['handle' => 'product'],
-            ['name' => 'Product']
+            [
+                'name' => 'Product',
+                'attributable_type' => Product::class,
+                'position' => 0,
+            ]
         );
 
         $shippingGroup = AttributeGroup::firstOrCreate(
             ['handle' => 'shipping'],
-            ['name' => 'Shipping']
+            [
+                'name' => 'Shipping',
+                'attributable_type' => Product::class,
+                'position' => 1,
+            ]
         );
 
         // Create attributes following Lunar Attributes documentation
@@ -251,7 +295,11 @@ class LunarDemoSeeder extends Seeder
         // Create SEO attribute group
         $seoGroup = AttributeGroup::firstOrCreate(
             ['handle' => 'seo'],
-            ['name' => 'SEO']
+            [
+                'name' => 'SEO',
+                'attributable_type' => Product::class,
+                'position' => 2,
+            ]
         );
 
         // Meta Title attribute (SEO group)
@@ -302,7 +350,6 @@ class LunarDemoSeeder extends Seeder
     protected function createProductType(array $attributes): ProductType
     {
         $productType = ProductType::firstOrCreate(
-            ['handle' => 'physical'],
             ['name' => 'Physical Product']
         );
 
@@ -329,65 +376,74 @@ class LunarDemoSeeder extends Seeder
 
         $collections = [];
 
+        // Helper function to find or create collection by name
+        $findOrCreateCollection = function ($name, $data) use ($group) {
+            // Try to find existing collection by name in attribute_data
+            $existing = Collection::where('collection_group_id', $group->id)
+                ->get()
+                ->first(function ($collection) use ($name) {
+                    $attributeData = $collection->attribute_data;
+                    if (isset($attributeData['name']) && $attributeData['name'] instanceof \Lunar\FieldTypes\TranslatedText) {
+                        $values = $attributeData['name']->getValue();
+                        return isset($values['en']) && $values['en']->getValue() === $name;
+                    }
+                    return false;
+                });
+
+            if ($existing) {
+                return $existing;
+            }
+
+            return Collection::create($data);
+        };
+
         // Create collections using attribute_data with FieldType objects
         // Collections follow the same pattern as products for attributes
-        $collections['electronics'] = Collection::firstOrCreate(
-            ['handle' => 'electronics'],
-            [
-                'collection_group_id' => $group->id,
-                'type' => 'static',
-                'sort' => 'min_price:asc', // Sort by minimum price ascending
-                'attribute_data' => [
-                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
-                        'en' => new \Lunar\FieldTypes\Text('Electronics'),
-                    ])),
-                ],
-            ]
-        );
+        $collections['electronics'] = $findOrCreateCollection('Electronics', [
+            'collection_group_id' => $group->id,
+            'type' => 'static',
+            'sort' => 'min_price:asc', // Sort by minimum price ascending
+            'attribute_data' => [
+                'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                    'en' => new \Lunar\FieldTypes\Text('Electronics'),
+                ])),
+            ],
+        ]);
 
-        $collections['clothing'] = Collection::firstOrCreate(
-            ['handle' => 'clothing'],
-            [
-                'collection_group_id' => $group->id,
-                'type' => 'static',
-                'sort' => 'custom', // Custom sorting (manual positions)
-                'attribute_data' => [
-                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
-                        'en' => new \Lunar\FieldTypes\Text('Clothing'),
-                    ])),
-                ],
-            ]
-        );
+        $collections['clothing'] = $findOrCreateCollection('Clothing', [
+            'collection_group_id' => $group->id,
+            'type' => 'static',
+            'sort' => 'custom', // Custom sorting (manual positions)
+            'attribute_data' => [
+                'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                    'en' => new \Lunar\FieldTypes\Text('Clothing'),
+                ])),
+            ],
+        ]);
 
-        $collections['home'] = Collection::firstOrCreate(
-            ['handle' => 'home'],
-            [
-                'collection_group_id' => $group->id,
-                'type' => 'static',
-                'sort' => 'sku:asc', // Sort by SKU ascending
-                'attribute_data' => [
-                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
-                        'en' => new \Lunar\FieldTypes\Text('Home & Garden'),
-                    ])),
-                ],
-            ]
-        );
+        $collections['home'] = $findOrCreateCollection('Home & Garden', [
+            'collection_group_id' => $group->id,
+            'type' => 'static',
+            'sort' => 'sku:asc', // Sort by SKU ascending
+            'attribute_data' => [
+                'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                    'en' => new \Lunar\FieldTypes\Text('Home & Garden'),
+                ])),
+            ],
+        ]);
 
         // Create a child collection to demonstrate nested collections
         // Using appendNode from Laravel Nested Set package
-        $collections['home-electronics'] = Collection::firstOrCreate(
-            ['handle' => 'home-electronics'],
-            [
-                'collection_group_id' => $group->id,
-                'type' => 'static',
-                'sort' => 'min_price:desc', // Sort by minimum price descending
-                'attribute_data' => [
-                    'name' => new \Lunar\FieldTypes\TranslatedText(collect([
-                        'en' => new \Lunar\FieldTypes\Text('Home Electronics'),
-                    ])),
-                ],
-            ]
-        );
+        $collections['home-electronics'] = $findOrCreateCollection('Home Electronics', [
+            'collection_group_id' => $group->id,
+            'type' => 'static',
+            'sort' => 'min_price:desc', // Sort by minimum price descending
+            'attribute_data' => [
+                'name' => new \Lunar\FieldTypes\TranslatedText(collect([
+                    'en' => new \Lunar\FieldTypes\Text('Home Electronics'),
+                ])),
+            ],
+        ]);
 
         // Make home-electronics a child of home collection
         // This demonstrates the nested set hierarchy feature using appendNode
@@ -557,7 +613,7 @@ class LunarDemoSeeder extends Seeder
             $variant = ProductVariant::create([
                 'product_id' => $product->id,
                 'sku' => $variantData['sku'],
-                'tax_class_id' => null, // Can be set if tax classes exist
+                'tax_class_id' => $this->taxClass->id,
                 'attribute_data' => $variantAttributeData->count() > 0 ? $variantAttributeData : null,
                 'stock' => $variantData['stock'] ?? 0,
                 'backorder' => 0,
@@ -573,7 +629,7 @@ class LunarDemoSeeder extends Seeder
                 'price' => $variantData['price'], // Price in smallest currency unit (cents for USD)
                 'currency_id' => $currency->id,
                 'compare_price' => $variantData['compare_price'] ?? null,
-                'tier' => 1,
+                'min_quantity' => 1,
             ]);
         }
 

@@ -18,6 +18,12 @@ class MergeCartOnLogin
      */
     public function handle(Login $event): void
     {
+        // Only handle User logins, not Staff logins
+        // Staff users don't have carts - they're admin users
+        if (!($event->user instanceof \App\Models\User)) {
+            return;
+        }
+
         // Merge guest cart with user cart based on configuration
         $authPolicy = config('lunar.cart.auth_policy', 'merge');
         

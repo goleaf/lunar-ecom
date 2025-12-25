@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Lunar\Facades\StorefrontSession;
+use Lunar\Models\CustomerGroup;
 use Symfony\Component\HttpFoundation\Response;
 
 class StorefrontSessionMiddleware
@@ -18,6 +19,9 @@ class StorefrontSessionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Ensure a default customer group exists before initializing
+        $this->ensureDefaultCustomerGroup();
+
         // Initialize channel (sets based on session or uses default)
         StorefrontSession::initChannel();
 
@@ -31,6 +35,33 @@ class StorefrontSessionMiddleware
         StorefrontSession::initCustomer();
 
         return $next($request);
+    }
+
+    /**
+     * Ensure a default customer group exists.
+     * 
+     * This prevents errors when CustomerGroup::getDefault() returns null.
+     */
+    protected function ensureDefaultCustomerGroup(): void
+    {
+        $defaultGroup = CustomerGroup::where('default', true)->first();
+
+        if (!$defaultGroup) {
+            // Check if any customer group exists
+            $anyGroup = CustomerGroup::first();
+
+            if ($anyGroup) {
+                // Set the first existing group as default
+                $anyGroup->update(['default' => true]);
+            } else {
+                // Create a default customer group if none exists
+                CustomerGroup::create([
+                    'name' => 'Retail',
+                    'handle' => 'retail',
+                    'default' => true,
+                ]);
+            }
+        }
     }
 }
 

@@ -283,8 +283,13 @@ class ReferralProgramResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        ReferralProgram::STATUS_DRAFT => 'Draft',
+                        ReferralProgram::STATUS_ACTIVE => 'Active',
+                        ReferralProgram::STATUS_PAUSED => 'Paused',
+                        ReferralProgram::STATUS_ARCHIVED => 'Archived',
+                    ]),
 
                 Tables\Filters\Filter::make('starts_at')
                     ->form([
@@ -307,9 +312,9 @@ class ReferralProgramResource extends Resource
 
                 Tables\Filters\Filter::make('expiring_soon')
                     ->label('Expiring Soon')
-                    ->query(fn (Builder $query): Builder => $query->where('ends_at', '>=', now())
-                        ->where('ends_at', '<=', now()->addDays(30))
-                        ->where('is_active', true)),
+                    ->query(fn (Builder $query): Builder => $query->where('end_at', '>=', now())
+                        ->where('end_at', '<=', now()->addDays(30))
+                        ->where('status', ReferralProgram::STATUS_ACTIVE)),
             ])
             ->actions([
                 Tables\Actions\Action::make('view_analytics')

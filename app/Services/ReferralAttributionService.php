@@ -132,12 +132,13 @@ class ReferralAttributionService
             
             if ($referrer && $this->isValidAttribution($referee, $referrer, $program, $attributionTtlDays)) {
                 // Check if click is within TTL
+                // Get the most recent click for this code (either from current session or any recent click)
                 $click = ReferralClick::where('referral_code', strtoupper($cookieCode))
-                    ->where('session_id', session()->getId())
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-                if ($click && $click->created_at->addDays($attributionTtlDays)->isFuture()) {
+                // If no click found or click is within TTL, create attribution
+                if (!$click || $click->created_at->addDays($attributionTtlDays)->isFuture()) {
                     return $this->createAttributionRecord(
                         $referee,
                         $referrer,

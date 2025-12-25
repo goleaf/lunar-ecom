@@ -78,7 +78,7 @@ class ProductBadgeAssignment extends Model
      */
     public function assignedBy(): BelongsTo
     {
-        return $this->belongsTo(\Lunar\Models\User::class, 'assigned_by');
+        return $this->belongsTo(\App\Models\User::class, 'assigned_by');
     }
 
     /**

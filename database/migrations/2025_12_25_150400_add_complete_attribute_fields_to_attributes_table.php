@@ -15,13 +15,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table($this->prefix.'attributes', function (Blueprint $table) {
-            // Sortable flag (for attributes that can be used to sort products)
-            $table->boolean('sortable')->default(false)->index()->after('filterable');
-            
-            // Validation rules as JSON (e.g., {"min": 0, "max": 100, "pattern": "...", "required": true})
-            $table->json('validation_rules')->nullable()->after('configuration');
-        });
+        // Add sortable column if it doesn't exist
+        if (!Schema::hasColumn($this->prefix.'attributes', 'sortable')) {
+            Schema::table($this->prefix.'attributes', function (Blueprint $table) {
+                $table->boolean('sortable')->default(false)->index()->after('filterable');
+            });
+        }
+        
+        // Validation rules already exists from earlier migration, skip adding it
+        // (It was added as string in 2022_01_12_100000_add_columns_to_attributes_table)
     }
 
     /**

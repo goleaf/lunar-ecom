@@ -3,7 +3,7 @@
 namespace App\Lunar\Channels;
 
 use Illuminate\Support\Collection;
-use Lunar\Models\Channel;
+use App\Models\Channel;
 
 /**
  * Helper class for working with Lunar Channels.

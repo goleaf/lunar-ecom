@@ -1,0 +1,153 @@
+/* Product Badges Styles */
+
+.product-badges {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.product-badge-wrapper {
+    position: absolute;
+    pointer-events: auto;
+}
+
+.product-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge Styles */
+.badge-style-rounded {
+    border-radius: 4px;
+}
+
+.badge-style-square {
+    border-radius: 0;
+}
+
+.badge-style-pill {
+    border-radius: 9999px;
+}
+
+/* Badge Positions */
+.badge-position-top-left {
+    top: 8px;
+    left: 8px;
+}
+
+.badge-position-top-right {
+    top: 8px;
+    right: 8px;
+}
+
+.badge-position-bottom-left {
+    bottom: 8px;
+    left: 8px;
+}
+
+.badge-position-bottom-right {
+    bottom: 8px;
+    right: 8px;
+}
+
+.badge-position-center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes flash {
+    0%, 50%, 100% {
+        opacity: 1;
+    }
+    25%, 75% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-3px);
+    }
+    75% {
+        transform: translateX(3px);
+    }
+}
+
+.product-badge.animated.animate-pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.product-badge.animated.animate-bounce {
+    animation: bounce 1s ease-in-out infinite;
+}
+
+.product-badge.animated.animate-flash {
+    animation: flash 1.5s ease-in-out infinite;
+}
+
+.product-badge.animated.animate-shake {
+    animation: shake 0.5s ease-in-out infinite;
+}
+
+/* Badge Type Colors (Default) */
+.badge-type-new {
+    /* Green theme */
+}
+
+.badge-type-sale {
+    /* Red theme */
+}
+
+.badge-type-hot {
+    /* Orange theme */
+}
+
+.badge-type-limited {
+    /* Purple theme */
+}
+
+.badge-type-exclusive {
+    /* Gold theme */
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .product-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+

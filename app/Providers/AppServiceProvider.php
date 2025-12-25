@@ -3,11 +3,15 @@
 namespace App\Providers;
 
 use App\Models\InventoryLevel;
+use App\Observers\CartObserver;
+use App\Observers\CartLineObserver;
 use App\Observers\InventoryLevelObserver;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\Discounts;
+use Lunar\Models\Cart;
+use Lunar\Models\CartLine;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -150,6 +154,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Models\ProductVariant::class,
         );
         
+        // Register extended Channel model (if Lunar supports Channel contracts)
+        // Note: Channel may not have a contract, so this might not be needed
+        // The extended Channel model will be used automatically when imported
+        
         // Or register all models in a directory:
         // \Lunar\Facades\ModelManifest::addDirectory(__DIR__.'/../Models');
         
@@ -164,5 +172,16 @@ class AppServiceProvider extends ServiceProvider
 
         // Register observers
         InventoryLevel::observe(InventoryLevelObserver::class);
+        Cart::observe(CartObserver::class);
+        CartLine::observe(CartLineObserver::class);
+        \Lunar\Models\Order::observe(\App\Observers\OrderObserver::class);
+
+        // Schedule product schedule processing (runs every hour)
+        if (app()->runningInConsole()) {
+            $this->app->booted(function () {
+                $schedule = $this->app->make(\Illuminate\Console\Scheduling\Schedule::class);
+                $schedule->job(\App\Jobs\ProcessProductSchedules::class)->hourly();
+            });
+        }
     }
 }

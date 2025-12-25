@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Contracts\CartManagerInterface;
 use App\Http\Controllers\Controller;
+use App\Services\CartPricing\CartPricingOutputFormatter;
+use App\Traits\ChecksCheckoutLock;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Lunar\Facades\CartSession;
@@ -11,8 +13,11 @@ use Lunar\Models\ProductVariant;
 
 class CartController extends Controller
 {
+    use ChecksCheckoutLock;
+
     public function __construct(
-        protected CartManagerInterface $cartManager
+        protected CartManagerInterface $cartManager,
+        protected CartPricingOutputFormatter $pricingFormatter
     ) {}
 
     /**
@@ -30,7 +35,11 @@ class CartController extends Controller
             $cart->calculate();
         }
 
-        return view('storefront.cart.index', compact('cart'));
+        // Get complete cart breakdown with transparency fields
+        $transparencyService = app(\App\Services\CartTransparencyService::class);
+        $cartBreakdown = $transparencyService->getCartBreakdown($cart);
+
+        return view('storefront.cart.index', compact('cart', 'cartBreakdown'));
     }
 
     /**
@@ -40,6 +49,9 @@ class CartController extends Controller
      */
     public function add(Request $request)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         $request->validate([
             'variant_id' => 'required|exists:lunar_product_variants,id',
             'quantity' => 'required|integer|min:1|max:999',
@@ -59,12 +71,21 @@ class CartController extends Controller
                 $cart = CartSession::current();
                 $cart?->calculate();
                 
+                $transparencyService = app(\App\Services\CartTransparencyService::class);
+                $breakdown = $transparencyService->getCartBreakdown($cart);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Item added to cart',
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
-                        'total' => $cart?->total?->formatted,
+                        'grand_total' => $breakdown['grand_total'],
+                        'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                        'total_discounts' => $breakdown['total_discounts'],
+                        'tax_total' => $breakdown['tax_total'],
+                        'shipping_total' => $breakdown['shipping_total'],
+                        // Legacy
+                        'total' => $breakdown['grand_total']['formatted'],
                     ],
                 ]);
             }
@@ -89,6 +110,9 @@ class CartController extends Controller
      */
     public function update(Request $request, int $lineId)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         $request->validate([
             'quantity' => 'required|integer|min:0|max:999',
         ]);
@@ -104,12 +128,21 @@ class CartController extends Controller
                 $cart = CartSession::current();
                 $cart?->calculate();
                 
+                $transparencyService = app(\App\Services\CartTransparencyService::class);
+                $breakdown = $transparencyService->getCartBreakdown($cart);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Cart updated',
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
-                        'total' => $cart?->total?->formatted,
+                        'grand_total' => $breakdown['grand_total'],
+                        'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                        'total_discounts' => $breakdown['total_discounts'],
+                        'tax_total' => $breakdown['tax_total'],
+                        'shipping_total' => $breakdown['shipping_total'],
+                        // Legacy
+                        'total' => $breakdown['grand_total']['formatted'],
                     ],
                 ]);
             }
@@ -134,6 +167,9 @@ class CartController extends Controller
      */
     public function remove(Request $request, int $lineId)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         try {
             CartSession::remove($lineId);
 
@@ -141,12 +177,21 @@ class CartController extends Controller
                 $cart = CartSession::current();
                 $cart?->calculate();
                 
+                $transparencyService = app(\App\Services\CartTransparencyService::class);
+                $breakdown = $transparencyService->getCartBreakdown($cart);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Item removed from cart',
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
-                        'total' => $cart?->total?->formatted,
+                        'grand_total' => $breakdown['grand_total'],
+                        'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                        'total_discounts' => $breakdown['total_discounts'],
+                        'tax_total' => $breakdown['tax_total'],
+                        'shipping_total' => $breakdown['shipping_total'],
+                        // Legacy
+                        'total' => $breakdown['grand_total']['formatted'],
                     ],
                 ]);
             }
@@ -171,6 +216,9 @@ class CartController extends Controller
      */
     public function clear(Request $request)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         CartSession::clear();
 
         if ($request->expectsJson()) {
@@ -193,6 +241,9 @@ class CartController extends Controller
      */
     public function applyDiscount(Request $request)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         $request->validate([
             'coupon_code' => 'required|string|max:255',
         ]);
@@ -204,13 +255,24 @@ class CartController extends Controller
             $cart?->calculate();
 
             if ($request->expectsJson()) {
+                $transparencyService = app(\App\Services\CartTransparencyService::class);
+                $breakdown = $transparencyService->getCartBreakdown($cart);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Discount applied successfully',
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
-                        'total' => $cart?->total?->formatted,
-                        'discount_total' => $cart->discountTotal?->formatted,
+                        'grand_total' => $breakdown['grand_total'],
+                        'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                        'total_discounts' => $breakdown['total_discounts'],
+                        'discount_breakdown' => $breakdown['discount_breakdown'],
+                        'applied_rules' => $breakdown['applied_rules'],
+                        'tax_total' => $breakdown['tax_total'],
+                        'shipping_total' => $breakdown['shipping_total'],
+                        // Legacy
+                        'total' => $breakdown['grand_total']['formatted'],
+                        'discount_total' => $breakdown['total_discounts']['formatted'],
                     ],
                 ]);
             }
@@ -235,6 +297,9 @@ class CartController extends Controller
      */
     public function removeDiscount(Request $request)
     {
+        // Prevent modifications during checkout
+        $this->ensureCartNotLocked();
+
         try {
             $this->cartManager->removeDiscount();
 
@@ -242,12 +307,22 @@ class CartController extends Controller
             $cart?->calculate();
 
             if ($request->expectsJson()) {
+                $transparencyService = app(\App\Services\CartTransparencyService::class);
+                $breakdown = $transparencyService->getCartBreakdown($cart);
+                
                 return response()->json([
                     'success' => true,
                     'message' => 'Discount removed',
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
-                        'total' => $cart?->total?->formatted,
+                        'grand_total' => $breakdown['grand_total'],
+                        'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                        'total_discounts' => $breakdown['total_discounts'],
+                        'applied_rules' => $breakdown['applied_rules'],
+                        'tax_total' => $breakdown['tax_total'],
+                        'shipping_total' => $breakdown['shipping_total'],
+                        // Legacy
+                        'total' => $breakdown['grand_total']['formatted'],
                     ],
                 ]);
             }
@@ -269,6 +344,14 @@ class CartController extends Controller
 
     /**
      * Get cart summary (for AJAX requests).
+     * 
+     * Always exposes all transparency fields:
+     * - Subtotal (pre-discount)
+     * - Total discounts
+     * - Tax breakdown
+     * - Shipping cost
+     * - Grand total
+     * - Audit trail of applied rules
      */
     public function summary(): JsonResponse
     {
@@ -278,17 +361,74 @@ class CartController extends Controller
             $cart->calculate();
         }
 
+        $transparencyService = app(\App\Services\CartTransparencyService::class);
+        $breakdown = $transparencyService->getCartBreakdown($cart);
+
         return response()->json([
             'cart' => [
                 'item_count' => $this->cartManager->getItemCount(),
                 'has_items' => $this->cartManager->hasItems(),
-                'total' => $cart?->total?->formatted,
-                'subtotal' => $cart?->subTotal?->formatted,
-                'tax_total' => $cart?->taxTotal?->formatted,
-                'shipping_total' => $cart?->shippingTotal?->formatted,
-                'discount_total' => $cart?->discountTotal?->formatted,
+                
+                // Core totals (always exposed)
+                'subtotal_pre_discount' => $breakdown['subtotal_pre_discount'],
+                'subtotal_discounted' => $breakdown['subtotal_discounted'],
+                'total_discounts' => $breakdown['total_discounts'],
+                'shipping_total' => $breakdown['shipping_total'],
+                'tax_total' => $breakdown['tax_total'],
+                'grand_total' => $breakdown['grand_total'],
+                
+                // Breakdowns (always exposed)
+                'discount_breakdown' => $breakdown['discount_breakdown'],
+                'tax_breakdown' => $breakdown['tax_breakdown'],
+                'shipping_breakdown' => $breakdown['shipping_breakdown'],
+                
+                // Audit trail (always exposed)
+                'applied_rules' => $breakdown['applied_rules'],
+                
+                // Legacy fields for backward compatibility
+                'total' => $breakdown['grand_total']['formatted'],
+                'subtotal' => $breakdown['subtotal_pre_discount']['formatted'],
+                'tax_total_formatted' => $breakdown['tax_total']['formatted'],
+                'shipping_total_formatted' => $breakdown['shipping_total']['formatted'],
+                'discount_total_formatted' => $breakdown['total_discounts']['formatted'],
                 'coupon_code' => $cart?->coupon_code,
+                
+                // Metadata
+                'currency' => $breakdown['currency'],
+                'currency_symbol' => $breakdown['currency_symbol'],
             ],
+        ]);
+    }
+
+    /**
+     * Get detailed pricing information with audit trail.
+     * 
+     * Returns complete pricing breakdown including:
+     * - Subtotal (pre-discount)
+     * - Total discounts
+     * - Tax breakdown
+     * - Shipping cost
+     * - Grand total
+     * - Audit trail of applied rules
+     */
+    public function pricing(): JsonResponse
+    {
+        $cart = CartSession::current();
+        
+        if (!$cart) {
+            return response()->json([
+                'error' => 'No active cart found',
+            ], 404);
+        }
+
+        // Force repricing before returning detailed pricing
+        $this->cartManager->forceReprice();
+        
+        // Get detailed pricing information
+        $pricing = $this->pricingFormatter->formatCartPricing($cart);
+
+        return response()->json([
+            'pricing' => $pricing,
         ]);
     }
 }

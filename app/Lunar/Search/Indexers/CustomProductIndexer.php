@@ -110,13 +110,18 @@ class CustomProductIndexer extends ScoutIndexer
             'updated_at',
             'price_min', // Sort by minimum price
             'price_max', // Sort by maximum price
+            'popularity_score', // Sort by popularity
+            'view_count', // Sort by views
+            'order_count', // Sort by orders
+            'average_rating', // Sort by rating
+            'total_reviews', // Sort by review count
         ];
     }
 
     /**
      * Return an array of filterable fields.
      * 
-     * These fields can be used for filtering search results.
+     * These fields can be used for filtering search results (faceted search).
      * 
      * @return array
      */
@@ -126,11 +131,12 @@ class CustomProductIndexer extends ScoutIndexer
             '__soft_deleted', // Lunar's soft delete filter
             'status', // Filter by product status
             'product_type_id', // Filter by product type
-            'brand_id', // Filter by brand
-            'category_ids', // Filter by categories
-            'price_min', // Filter by minimum price
-            'price_max', // Filter by maximum price
-            'in_stock', // Filter by stock availability
+            'brand_id', // Filter by brand (facet)
+            'category_ids', // Filter by categories (facet)
+            'price_min', // Filter by minimum price (range facet)
+            'price_max', // Filter by maximum price (range facet)
+            'in_stock', // Filter by stock availability (facet)
+            'average_rating', // Filter by rating (range facet)
         ];
     }
 
@@ -226,6 +232,11 @@ class CustomProductIndexer extends ScoutIndexer
             $imageUrl = $model->getFirstMediaUrl('images', 'thumb');
         }
 
+        // Get popularity score (from database or calculate)
+        $popularityScore = $model->popularity_score ?? 0;
+        $viewCount = $model->view_count ?? 0;
+        $orderCount = $model->order_count ?? 0;
+        
         // Build searchable array
         $array = array_merge($array, [
             'id' => $model->id,
@@ -242,7 +253,7 @@ class CustomProductIndexer extends ScoutIndexer
             'category_names' => $categoryNames,
             'attribute_values' => $attributeValues,
             
-            // Filterable fields
+            // Filterable fields (for faceted search)
             'brand_id' => $model->brand_id,
             'category_ids' => $model->relationLoaded('categories') 
                 ? $model->categories->pluck('id')->toArray()
@@ -252,6 +263,13 @@ class CustomProductIndexer extends ScoutIndexer
             'price_min' => $priceMin,
             'price_max' => $priceMax,
             'in_stock' => $inStock,
+            
+            // Ranking fields (for sorting)
+            'popularity_score' => $popularityScore,
+            'view_count' => $viewCount,
+            'order_count' => $orderCount,
+            'average_rating' => $model->average_rating ?? 0,
+            'total_reviews' => $model->total_reviews ?? 0,
             
             // Additional searchable data
             'skus' => $model->relationLoaded('variants') 

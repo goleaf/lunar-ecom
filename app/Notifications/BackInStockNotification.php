@@ -18,14 +18,16 @@ class BackInStockNotification extends Notification implements ShouldQueue
 
     public StockNotification $stockNotification;
     public ProductVariant $variant;
+    public ?\App\Models\StockNotificationMetric $metrics;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(StockNotification $stockNotification, ProductVariant $variant)
+    public function __construct(StockNotification $stockNotification, ProductVariant $variant, ?\App\Models\StockNotificationMetric $metrics = null)
     {
         $this->stockNotification = $stockNotification;
         $this->variant = $variant;
+        $this->metrics = $metrics;
     }
 
     /**
@@ -61,6 +63,9 @@ class BackInStockNotification extends Notification implements ShouldQueue
         // Unsubscribe URL
         $unsubscribeUrl = url('/stock-notifications/unsubscribe/' . $this->stockNotification->token);
 
+        // Get metrics ID for tracking
+        $metricId = $this->metrics?->id;
+
         // Build tracking URLs
         $buyNowUrl = $metricId 
             ? url('/stock-notifications/track/click/' . $metricId . '/buy_now')
@@ -90,13 +95,27 @@ class BackInStockNotification extends Notification implements ShouldQueue
             $message->line('![Product Image](' . $product->thumbnail->getUrl() . ')');
         }
 
-        // Add tracking pixel for email opens
+        // Use custom view for better email design with tracking
         if ($metricId) {
             $trackingPixelUrl = url('/stock-notifications/track/open/' . $metricId);
-            $message->line('<img src="' . $trackingPixelUrl . '" width="1" height="1" style="display:none;">', false);
+            $mailMessage = new MailMessage();
+            $mailMessage->subject($isLimited 
+                ? "{$productName} is Back in Stock - Limited Quantity Available!" 
+                : "{$productName} is Back in Stock!");
+            $mailMessage->view('emails.back-in-stock', [
+                'productName' => $productName,
+                'productUrl' => $productPageUrl,
+                'buyNowUrl' => $buyNowUrl,
+                'formattedPrice' => $formattedPrice,
+                'isLimited' => $isLimited,
+                'unsubscribeUrl' => $unsubscribeUrlWithTracking,
+                'productImage' => $product->thumbnail?->getUrl(),
+                'trackingPixelUrl' => $trackingPixelUrl,
+            ]);
+            return $mailMessage;
         }
 
-        // Add unsubscribe link
+        // Fallback to simple message if no metrics
         $message->line('---')
             ->line("[Unsubscribe from back-in-stock notifications]({$unsubscribeUrlWithTracking})");
 

@@ -32,16 +32,18 @@ class CartFactory extends Factory
             'user_id' => null, // Guest cart by default
             'customer_id' => null,
             'currency_id' => function () {
-                return Currency::firstOrCreate(
-                    ['code' => 'USD'],
-                    [
+                $currency = Currency::where('code', 'USD')->first();
+                if (!$currency) {
+                    $currency = Currency::create([
+                        'code' => 'USD',
                         'name' => 'US Dollar',
                         'exchange_rate' => 1.00,
                         'decimal_places' => 2,
                         'default' => true,
                         'enabled' => true,
-                    ]
-                )->id;
+                    ]);
+                }
+                return $currency->id;
             },
             'channel_id' => function () {
                 return Channel::firstOrCreate(

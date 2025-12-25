@@ -98,12 +98,72 @@ class CollectionController extends Controller
             'canonical' => $canonicalUrl,
         ];
 
+        // Get filter options for the new filtering system
+        $filterController = new \App\Http\Controllers\Storefront\CollectionFilterController();
+        $filterOptions = $filterController->getFilterOptions($collection, $request);
+
+        // Get filter options for the new filtering system
+        $filterController = new \App\Http\Controllers\Storefront\CollectionFilterController();
+        $filterOptions = $filterController->getFilterOptions($collection, $request);
+
         return view('storefront.collections.show', compact(
             'collection', 
             'products', 
             'breadcrumb',
-            'metaTags'
+            'metaTags',
+            'filterOptions'
         ));
+    }
+
+    /**
+     * Get filter options for collection (helper method).
+     *
+     * @param  Collection  $collection
+     * @param  Request  $request
+     * @return array
+     */
+    protected function getFilterOptionsForCollection(Collection $collection, Request $request)
+    {
+        $baseQuery = $collection->products()->where('status', 'published');
+        
+        // Get price range
+        $productIds = $baseQuery->pluck('id');
+        $priceRange = ['min' => 0, 'max' => 0];
+        
+        if ($productIds->isNotEmpty()) {
+            $minPrice = \DB::table('lunar_product_variants')
+                ->join('lunar_prices', function($join) {
+                    $join->on('lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
+                         ->where('lunar_prices.priceable_type', '=', \Lunar\Models\ProductVariant::class);
+                })
+                ->whereIn('lunar_product_variants.product_id', $productIds)
+                ->min('lunar_prices.price');
+            
+            $maxPrice = \DB::table('lunar_product_variants')
+                ->join('lunar_prices', function($join) {
+                    $join->on('lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
+                         ->where('lunar_prices.priceable_type', '=', \Lunar\Models\ProductVariant::class);
+                })
+                ->whereIn('lunar_product_variants.product_id', $productIds)
+                ->max('lunar_prices.price');
+            
+            $priceRange = [
+                'min' => $minPrice ? ($minPrice / 100) : 0,
+                'max' => $maxPrice ? ($maxPrice / 100) : 0,
+            ];
+        }
+
+        return [
+            'price_range' => $priceRange,
+            'brands' => [],
+            'categories' => [],
+            'attributes' => [],
+            'availability' => [
+                'in_stock' => 0,
+                'out_of_stock' => 0,
+                'low_stock' => 0,
+            ],
+        ];
     }
 }
 

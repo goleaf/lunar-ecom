@@ -16,10 +16,10 @@ class StockNotificationTrackingController extends Controller
      * Track email open (via tracking pixel).
      *
      * @param  Request  $request
-     * @param  string  $metricId
+     * @param  int  $metricId
      * @return Response
      */
-    public function trackOpen(Request $request, string $metricId): Response
+    public function trackOpen(Request $request, int $metricId): Response
     {
         $metric = StockNotificationMetric::find($metricId);
         
@@ -39,11 +39,11 @@ class StockNotificationTrackingController extends Controller
      * Track link click.
      *
      * @param  Request  $request
-     * @param  string  $metricId
+     * @param  int  $metricId
      * @param  string  $linkType
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function trackClick(Request $request, string $metricId, string $linkType)
+    public function trackClick(Request $request, int $metricId, string $linkType)
     {
         $metric = StockNotificationMetric::find($metricId);
         
@@ -53,18 +53,19 @@ class StockNotificationTrackingController extends Controller
 
         // Get redirect URL based on link type
         $variant = $metric->productVariant ?? null;
-        $product = $variant->product ?? null;
+        $product = $variant?->product ?? null;
 
         switch ($linkType) {
             case 'buy_now':
                 // Redirect to cart with variant
-                $url = url('/cart/add?variant_id=' . $variant->id);
+                $url = $variant ? url('/cart/add?variant_id=' . $variant->id) : url('/');
                 break;
             case 'product_page':
-                $url = $product->urls->first()?->url ?? url('/products/' . $product->id);
+                $url = $product ? ($product->urls->first()?->url ?? url('/products/' . $product->id)) : url('/');
                 break;
             case 'unsubscribe':
-                $url = url('/stock-notifications/unsubscribe/' . $metric->stockNotification->token);
+                $notification = \App\Models\StockNotification::find($metric->stock_notification_id);
+                $url = $notification ? url('/stock-notifications/unsubscribe/' . $notification->token) : url('/');
                 break;
             default:
                 $url = url('/');

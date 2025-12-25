@@ -50,19 +50,22 @@
                 @endphp
 
                 @if($images->count() > 0)
-                    <div class="space-y-4">
+                    <div class="space-y-4 relative">
                         @if($firstMedia)
-                            @include('storefront.components.responsive-image', [
-                                'media' => $firstMedia,
-                                'model' => $product,
-                                'collectionName' => 'images',
-                                'conversion' => 'large',
-                                'sizeType' => 'product_detail',
-                                'alt' => $product->translateAttribute('name'),
-                                'class' => 'w-full rounded main-product-image',
-                                'id' => 'main-product-image',
-                                'loading' => 'eager'
-                            ])
+                            <div class="relative">
+                                @include('storefront.components.responsive-image', [
+                                    'media' => $firstMedia,
+                                    'model' => $product,
+                                    'collectionName' => 'images',
+                                    'conversion' => 'large',
+                                    'sizeType' => 'product_detail',
+                                    'alt' => $product->translateAttribute('name'),
+                                    'class' => 'w-full rounded main-product-image',
+                                    'id' => 'main-product-image',
+                                    'loading' => 'eager'
+                                ])
+                                <x-storefront.product-badges :product="$product" />
+                            </div>
                         @endif
 
                         @if($images->count() > 1)
@@ -84,7 +87,42 @@
                 @endif
             </div>
             <div>
-                <h1 class="text-3xl font-bold mb-4">{{ $product->translateAttribute('name') }}</h1>
+                <div class="flex items-center gap-2 mb-4">
+                    <h1 class="text-3xl font-bold">{{ $product->translateAttribute('name') }}</h1>
+                    @if($product->is_digital)
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            Digital Product
+                        </span>
+                    @endif
+                </div>
+
+                @if($product->is_digital && $product->digitalProduct)
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-indigo-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-indigo-900 mb-1">Instant Download</p>
+                                <p class="text-sm text-indigo-700">
+                                    This is a digital product. After purchase, you'll receive an email with download instructions.
+                                    @if($product->digitalProduct->file_size)
+                                        File size: {{ $product->digitalProduct->getFormattedFileSize() }}
+                                    @endif
+                                    @if($product->digitalProduct->download_limit)
+                                        • Download limit: {{ $product->digitalProduct->download_limit }} times
+                                    @endif
+                                    @if($product->digitalProduct->download_expiry_days)
+                                        • Valid for {{ $product->digitalProduct->download_expiry_days }} days
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 
                 @if($description)
                     <div class="prose mb-6">

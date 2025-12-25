@@ -113,6 +113,7 @@ class ProductController extends Controller
             'tags',
             'urls', // Eager load URLs for link generation
             'reviews.customer', // Eager load reviews for rating display
+            'digitalProduct', // Eager load digital product info
         ])->findOrFail($url->element_id);
 
         // Check if user can view this product

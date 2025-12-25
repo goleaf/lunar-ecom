@@ -18,32 +18,41 @@ class ProductSEO
      * Get SEO meta tags for product.
      * 
      * @param Product $product
+     * @param string|null $locale Optional locale for per-locale SEO fields
      * @return array
      */
-    public static function getMetaTags(Product $product): array
+    public static function getMetaTags(Product $product, ?string $locale = null): array
     {
+        // Use provided locale or current locale
+        $locale = $locale ?? app()->getLocale();
+        
         $defaultUrl = $product->urls->where('default', true)->first();
         $canonicalUrl = $defaultUrl 
             ? route('storefront.products.show', $defaultUrl->slug)
             : url('/products/' . $product->id);
 
-        $metaTitle = $product->translateAttribute('meta_title') 
-            ?? $product->translateAttribute('name');
+        // Get locale-specific meta fields
+        $metaTitle = static::getLocaleMetaTitle($product, $locale) 
+            ?? $product->translateAttribute('name', $locale);
 
-        $metaDescription = $product->translateAttribute('meta_description') 
-            ?? static::generateDescription($product);
+        $metaDescription = static::getLocaleMetaDescription($product, $locale) 
+            ?? static::generateDescription($product, $locale);
+
+        $metaKeywords = static::getLocaleMetaKeywords($product, $locale) 
+            ?? static::generateKeywords($product, $locale);
 
         $image = static::getProductImage($product);
 
         return [
             'title' => $metaTitle,
             'description' => $metaDescription,
-            'keywords' => static::generateKeywords($product),
+            'keywords' => $metaKeywords,
             'og:title' => $metaTitle,
             'og:description' => $metaDescription,
             'og:image' => $image,
             'og:type' => 'product',
             'og:url' => $canonicalUrl,
+            'og:locale' => str_replace('_', '-', $locale),
             'twitter:card' => 'summary_large_image',
             'twitter:title' => $metaTitle,
             'twitter:description' => $metaDescription,
@@ -53,14 +62,83 @@ class ProductSEO
     }
 
     /**
+     * Get locale-specific meta title.
+     * 
+     * @param Product $product
+     * @param string $locale
+     * @return string|null
+     */
+    protected static function getLocaleMetaTitle(Product $product, string $locale): ?string
+    {
+        // Check if meta_title is stored as translatable attribute
+        $metaTitle = $product->translateAttribute('meta_title', $locale);
+        
+        if ($metaTitle) {
+            return $metaTitle;
+        }
+        
+        // Fallback to database field if exists
+        if (isset($product->meta_title)) {
+            return $product->meta_title;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get locale-specific meta description.
+     * 
+     * @param Product $product
+     * @param string $locale
+     * @return string|null
+     */
+    protected static function getLocaleMetaDescription(Product $product, string $locale): ?string
+    {
+        $metaDescription = $product->translateAttribute('meta_description', $locale);
+        
+        if ($metaDescription) {
+            return $metaDescription;
+        }
+        
+        if (isset($product->meta_description)) {
+            return $product->meta_description;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get locale-specific meta keywords.
+     * 
+     * @param Product $product
+     * @param string $locale
+     * @return string|null
+     */
+    protected static function getLocaleMetaKeywords(Product $product, string $locale): ?string
+    {
+        $metaKeywords = $product->translateAttribute('meta_keywords', $locale);
+        
+        if ($metaKeywords) {
+            return $metaKeywords;
+        }
+        
+        if (isset($product->meta_keywords)) {
+            return $product->meta_keywords;
+        }
+        
+        return null;
+    }
+
+    /**
      * Generate meta description from product.
      * 
      * @param Product $product
+     * @param string|null $locale
      * @return string
      */
-    protected static function generateDescription(Product $product): string
+    protected static function generateDescription(Product $product, ?string $locale = null): string
     {
-        $description = $product->translateAttribute('description');
+        $description = $product->translateAttribute('description', $locale);
         
         if ($description) {
             // Strip HTML and limit length
@@ -69,7 +147,7 @@ class ProductSEO
         }
 
         // Fallback description
-        $name = $product->translateAttribute('name');
+        $name = $product->translateAttribute('name', $locale);
         $brand = $product->brand ? $product->brand->name : '';
         $brandText = $brand ? " by {$brand}" : '';
         
@@ -80,11 +158,12 @@ class ProductSEO
      * Generate keywords from product.
      * 
      * @param Product $product
+     * @param string|null $locale
      * @return string
      */
-    protected static function generateKeywords(Product $product): string
+    protected static function generateKeywords(Product $product, ?string $locale = null): string
     {
-        $keywords = [$product->translateAttribute('name')];
+        $keywords = [$product->translateAttribute('name', $locale)];
         
         // Add brand
         if ($product->brand) {
@@ -93,7 +172,10 @@ class ProductSEO
 
         // Add categories
         foreach ($product->categories as $category) {
-            $keywords[] = $category->getName();
+            $categoryName = $category->getName();
+            if ($categoryName) {
+                $keywords[] = $categoryName;
+            }
         }
 
         // Add tags
@@ -125,10 +207,13 @@ class ProductSEO
      * Get structured data (JSON-LD) for product with rich snippets.
      * 
      * @param Product $product
+     * @param string|null $locale Optional locale for localized structured data
      * @return array
      */
-    public static function getStructuredData(Product $product): array
+    public static function getStructuredData(Product $product, ?string $locale = null): array
     {
+        $locale = $locale ?? app()->getLocale();
+        
         $defaultUrl = $product->urls->where('default', true)->first();
         $productUrl = $defaultUrl 
             ? route('storefront.products.show', $defaultUrl->slug)
@@ -159,9 +244,10 @@ class ProductSEO
         $structuredData = [
             '@context' => 'https://schema.org',
             '@type' => 'Product',
-            'name' => $product->translateAttribute('name'),
-            'description' => static::generateDescription($product),
+            'name' => $product->translateAttribute('name', $locale),
+            'description' => static::generateDescription($product, $locale),
             'url' => $productUrl,
+            'inLanguage' => str_replace('_', '-', $locale),
             'sku' => $variant?->sku ?? $product->sku ?? null,
             'mpn' => $product->sku ?? null,
             'brand' => $product->brand ? [

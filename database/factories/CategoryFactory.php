@@ -60,12 +60,14 @@ class CategoryFactory extends Factory
     {
         return $this->afterCreating(function (Category $category) use ($parent) {
             if ($parent) {
-                $category->parent_id = $parent->id;
-                $category->save();
+                // Refresh parent to ensure it has lft/rgt values
+                $parent->refresh();
+                // Use nested set appendNode method to properly set lft/rgt values
+                $parent->appendNode($category);
             } elseif (!$category->parent_id) {
                 $parentCategory = Category::factory()->create();
-                $category->parent_id = $parentCategory->id;
-                $category->save();
+                $parentCategory->refresh();
+                $parentCategory->appendNode($category);
             }
         });
     }

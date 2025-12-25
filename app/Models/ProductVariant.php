@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Lunar\Models\ProductVariant as LunarProductVariant;
 use Lunar\Models\ProductOptionValue;
@@ -72,6 +74,7 @@ class ProductVariant extends LunarProductVariant
 {
     /** @use HasFactory<\Database\Factories\ProductVariantFactory> */
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -79,13 +82,25 @@ class ProductVariant extends LunarProductVariant
      * @var array<int, string>
      */
     protected $fillable = [
+        'uuid',
+        'sku',
+        'gtin',
+        'ean',
+        'upc',
+        'isbn',
+        'barcode',
+        'internal_reference',
+        'variant_name',
+        'title',
+        'status',
+        'visibility',
+        'channel_visibility',
+        'sku_format',
         'price_override',
         'cost_price',
         'compare_at_price',
         'weight',
-        'barcode',
         'enabled',
-        'variant_name',
         'low_stock_threshold',
         'position',
         'meta_title',
@@ -102,6 +117,9 @@ class ProductVariant extends LunarProductVariant
      * @var array<string, string>
      */
     protected $casts = [
+        'uuid' => 'string',
+        'sku_format' => 'array',
+        'channel_visibility' => 'array',
         'price_override' => 'integer',
         'cost_price' => 'integer',
         'compare_at_price' => 'integer',
@@ -111,6 +129,7 @@ class ProductVariant extends LunarProductVariant
         'position' => 'integer',
         'preorder_enabled' => 'boolean',
         'preorder_release_date' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -120,12 +139,51 @@ class ProductVariant extends LunarProductVariant
     {
         parent::boot();
 
+        // Generate UUID on creation
+        static::creating(function ($variant) {
+            if (empty($variant->uuid)) {
+                $variant->uuid = (string) Str::uuid();
+            }
+        });
+
         // Validate barcode on saving
         static::saving(function ($variant) {
+            // Validate EAN-13 barcode
             if ($variant->barcode && !$variant->validateEan13($variant->barcode)) {
                 throw ValidationException::withMessages([
                     'barcode' => ['The barcode must be a valid EAN-13 format.']
                 ]);
+            }
+
+            // Validate EAN
+            if ($variant->ean && !$variant->validateEan13($variant->ean)) {
+                throw ValidationException::withMessages([
+                    'ean' => ['The EAN must be a valid EAN-13 format.']
+                ]);
+            }
+
+            // Validate UPC (12 digits)
+            if ($variant->upc && !$variant->validateUPC($variant->upc)) {
+                throw ValidationException::withMessages([
+                    'upc' => ['The UPC must be a valid 12-digit format.']
+                ]);
+            }
+
+            // Validate ISBN (13 digits)
+            if ($variant->isbn && !$variant->validateISBN($variant->isbn)) {
+                throw ValidationException::withMessages([
+                    'isbn' => ['The ISBN must be a valid 13-digit format.']
+                ]);
+            }
+
+            // Auto-generate SKU if not set
+            if (empty($variant->sku) && $variant->product_id) {
+                $variant->sku = $variant->generateSKU();
+            }
+
+            // Auto-generate variant title if not set
+            if (empty($variant->title) && empty($variant->variant_name)) {
+                $variant->title = $variant->generateTitle();
             }
 
             // Validate variant option combinations for duplicates
@@ -335,6 +393,11 @@ class ProductVariant extends LunarProductVariant
      */
     public function isAvailable(): bool
     {
+        // Check status
+        if ($this->status !== 'active') {
+            return false;
+        }
+
         if (!$this->enabled) {
             return false;
         }
@@ -353,6 +416,102 @@ class ProductVariant extends LunarProductVariant
         }
 
         return true;
+    }
+
+    /**
+     * Check if variant is visible in a specific channel.
+     *
+     * @param  int|null  $channelId
+     * @return bool
+     */
+    public function isVisibleInChannel(?int $channelId = null): bool
+    {
+        // Check status
+        if ($this->status === 'archived') {
+            return false;
+        }
+
+        // Public visibility
+        if ($this->visibility === 'public') {
+            return true;
+        }
+
+        // Hidden visibility
+        if ($this->visibility === 'hidden') {
+            return false;
+        }
+
+        // Channel-specific visibility
+        if ($this->visibility === 'channel_specific') {
+            if (!$channelId) {
+                return false;
+            }
+
+            $channelVisibility = $this->channel_visibility ?? [];
+            return in_array($channelId, $channelVisibility);
+        }
+
+        return true;
+    }
+
+    /**
+     * Get status label.
+     *
+     * @return string
+     */
+    public function getStatusLabel(): string
+    {
+        return match($this->status ?? 'active') {
+            'active' => 'Active',
+            'inactive' => 'Inactive',
+            'archived' => 'Archived',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Get visibility label.
+     *
+     * @return string
+     */
+    public function getVisibilityLabel(): string
+    {
+        return match($this->visibility ?? 'public') {
+            'public' => 'Public',
+            'hidden' => 'Hidden',
+            'channel_specific' => 'Channel Specific',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Archive variant.
+     *
+     * @return bool
+     */
+    public function archive(): bool
+    {
+        return $this->update(['status' => 'archived']);
+    }
+
+    /**
+     * Activate variant.
+     *
+     * @return bool
+     */
+    public function activate(): bool
+    {
+        return $this->update(['status' => 'active']);
+    }
+
+    /**
+     * Deactivate variant.
+     *
+     * @return bool
+     */
+    public function deactivate(): bool
+    {
+        return $this->update(['status' => 'inactive']);
     }
 
     /**
@@ -487,6 +646,70 @@ class ProductVariant extends LunarProductVariant
     public function scopeEnabled($query)
     {
         return $query->where('enabled', true);
+    }
+
+    /**
+     * Scope a query to filter by status.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $status
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeStatus($query, string $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Scope a query to only include active variants.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope a query to filter by visibility.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $visibility
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisibility($query, string $visibility)
+    {
+        return $query->where('visibility', $visibility);
+    }
+
+    /**
+     * Scope a query to only include public variants.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePublic($query)
+    {
+        return $query->where('visibility', 'public');
+    }
+
+    /**
+     * Scope a query to filter by channel visibility.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $channelId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisibleInChannel($query, int $channelId)
+    {
+        return $query->where(function ($q) use ($channelId) {
+            $q->where('visibility', 'public')
+              ->orWhere(function ($subQ) use ($channelId) {
+                  $subQ->where('visibility', 'channel_specific')
+                       ->whereJsonContains('channel_visibility', $channelId);
+              });
+        });
     }
 
     /**
@@ -642,27 +865,40 @@ class ProductVariant extends LunarProductVariant
 
     /**
      * Get variant display name.
-     * Uses explicit variant_name if set, otherwise generates from option values.
+     * Priority: title > variant_name > generated title > SKU
      *
      * @return string
      */
     public function getDisplayName(): string
     {
-        // Use explicit variant name if set
+        // Priority 1: Explicit title
+        if ($this->title) {
+            return $this->title;
+        }
+
+        // Priority 2: Explicit variant name
         if ($this->variant_name) {
             return $this->variant_name;
         }
 
-        // Fallback to generated name from option values
-        $values = $this->variantOptions()
-            ->with('option')
-            ->get()
-            ->map(function ($value) {
-                return $value->translateAttribute('name');
-            })
-            ->join(' / ');
+        // Priority 3: Generated title from option values
+        $generated = $this->generateTitle();
+        if ($generated && $generated !== 'Variant New') {
+            return $generated;
+        }
 
-        return $values ?: $this->sku;
+        // Fallback: SKU
+        return $this->sku ?? 'Variant';
+    }
+
+    /**
+     * Get variant title (alias for getDisplayName for consistency).
+     *
+     * @return string
+     */
+    public function getTitle(): string
+    {
+        return $this->getDisplayName();
     }
 
     /**
@@ -809,6 +1045,26 @@ class ProductVariant extends LunarProductVariant
     public function stockMovements()
     {
         return $this->hasMany(\App\Models\StockMovement::class, 'product_variant_id');
+    }
+
+    /**
+     * Digital product relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function digitalProduct()
+    {
+        return $this->hasOne(\App\Models\DigitalProduct::class, 'product_variant_id');
+    }
+
+    /**
+     * Download links relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function downloadLinks()
+    {
+        return $this->hasMany(\App\Models\DownloadLink::class, 'product_variant_id');
     }
 
     /**

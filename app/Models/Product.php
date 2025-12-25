@@ -68,6 +68,8 @@ class Product extends LunarProduct
         'rating_2_count',
         'rating_1_count',
         'is_bundle',
+        'is_digital',
+        'digital_product_settings',
         // Product Core Model fields
         'visibility',
         'short_description',
@@ -79,6 +81,11 @@ class Product extends LunarProduct
         'published_at',
         'scheduled_publish_at',
         'scheduled_unpublish_at',
+        'publish_at',
+        'unpublish_at',
+        'is_coming_soon',
+        'coming_soon_message',
+        'expected_available_at',
         'is_locked',
         'locked_by',
         'locked_at',
@@ -107,12 +114,18 @@ class Product extends LunarProduct
         'rating_2_count' => 'integer',
         'rating_1_count' => 'integer',
         'is_bundle' => 'boolean',
+        'is_digital' => 'boolean',
+        'digital_product_settings' => 'array',
         // Product Core Model casts
         'is_locked' => 'boolean',
         'version' => 'integer',
         'published_at' => 'datetime',
         'scheduled_publish_at' => 'datetime',
         'scheduled_unpublish_at' => 'datetime',
+        'publish_at' => 'datetime',
+        'unpublish_at' => 'datetime',
+        'is_coming_soon' => 'boolean',
+        'expected_available_at' => 'datetime',
         'locked_at' => 'datetime',
     ];
 
@@ -699,6 +712,135 @@ class Product extends LunarProduct
     public function stockNotifications()
     {
         return $this->hasMany(\App\Models\StockNotification::class, 'product_id');
+    }
+
+    /**
+     * Product schedules relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function schedules()
+    {
+        return $this->hasMany(\App\Models\ProductSchedule::class, 'product_id');
+    }
+
+    /**
+     * Product workflow relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function workflow()
+    {
+        return $this->hasOne(\App\Models\ProductWorkflow::class, 'product_id');
+    }
+
+    /**
+     * Product workflow history relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function workflowHistory()
+    {
+        return $this->hasMany(\App\Models\ProductWorkflowHistory::class, 'product_id');
+    }
+
+    /**
+     * Product analytics relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function analytics()
+    {
+        return $this->hasMany(\App\Models\ProductAnalytics::class, 'product_id');
+    }
+
+    /**
+     * Abandoned carts relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function abandonedCarts()
+    {
+        return $this->hasMany(\App\Models\AbandonedCart::class, 'product_id');
+    }
+
+    /**
+     * Price elasticity data relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function priceElasticity()
+    {
+        return $this->hasMany(\App\Models\PriceElasticity::class, 'product_id');
+    }
+
+    /**
+     * A/B tests relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function abTests()
+    {
+        return $this->hasMany(\App\Models\ProductABTest::class, 'product_id');
+    }
+
+    /**
+     * Get analytics summary for product.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getAnalyticsSummary(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\ProductAnalyticsService::class);
+        
+        return [
+            'views' => \App\Models\ProductView::where('product_id', $this->id)
+                ->when($startDate, fn($q) => $q->where('viewed_at', '>=', $startDate))
+                ->when($endDate, fn($q) => $q->where('viewed_at', '<=', $endDate))
+                ->count(),
+            'unique_views' => \App\Models\ProductView::where('product_id', $this->id)
+                ->when($startDate, fn($q) => $q->where('viewed_at', '>=', $startDate))
+                ->when($endDate, fn($q) => $q->where('viewed_at', '<=', $endDate))
+                ->distinct('session_id')
+                ->count('session_id'),
+            'conversion_rate' => $service->getConversionRate($this, $startDate, $endDate),
+            'revenue' => $service->getRevenue($this, $startDate, $endDate),
+            'abandoned_cart_rate' => app(\App\Services\AbandonedCartService::class)
+                ->getAbandonedCartRate($this, $startDate, $endDate),
+        ];
+    }
+
+    /**
+     * Active schedules relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function activeSchedules()
+    {
+        return $this->hasMany(\App\Models\ProductSchedule::class, 'product_id')
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            });
+    }
+
+    /**
+     * Product badges relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function badges()
+    {
+        return $this->belongsToMany(
+            \App\Models\ProductBadge::class,
+            config('lunar.database.table_prefix') . 'product_badge_product',
+            'product_id',
+            'product_badge_id'
+        )->withPivot('is_auto_assigned', 'assigned_at', 'expires_at', 'position', 'priority')
+          ->withTimestamps();
     }
 
     /**

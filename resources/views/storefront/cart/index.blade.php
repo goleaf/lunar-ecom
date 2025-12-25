@@ -109,35 +109,113 @@
                 @endif
             </div>
 
-            <!-- Cart Totals -->
+            <!-- Cart Totals - Always show all transparency fields -->
             <div class="space-y-3 mb-4" id="cart-totals">
+                <!-- Subtotal (pre-discount) - Always shown -->
                 <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold">{{ __('storefront.cart.subtotal') }}:</span>
-                    <span class="text-lg font-bold" id="cart-subtotal">{{ $cart->subTotal->formatted }}</span>
+                    <span class="text-lg font-semibold">Subtotal (pre-discount):</span>
+                    <span class="text-lg font-bold" id="cart-subtotal-pre-discount">
+                        {{ $cartBreakdown['subtotal_pre_discount']['formatted'] }}
+                    </span>
                 </div>
-                @if($cart->discountTotal && $cart->discountTotal->value > 0)
-                    <div class="flex justify-between items-center text-green-600" id="discount-row">
-                        <span class="text-lg font-semibold">{{ __('storefront.cart.discount') ?? 'Discount' }}:</span>
-                        <span class="text-lg font-bold" id="cart-discount">-{{ $cart->discountTotal->formatted }}</span>
+                
+                <!-- Total Discounts - Always shown -->
+                <div class="flex justify-between items-center {{ $cartBreakdown['total_discounts']['value'] > 0 ? 'text-green-600' : '' }}" id="discount-row">
+                    <span class="text-lg font-semibold">Total Discounts:</span>
+                    <span class="text-lg font-bold" id="cart-discount">
+                        @if($cartBreakdown['total_discounts']['value'] > 0)
+                            -{{ $cartBreakdown['total_discounts']['formatted'] }}
+                        @else
+                            {{ $cartBreakdown['total_discounts']['formatted'] }}
+                        @endif
+                    </span>
+                </div>
+                
+                <!-- Discount Breakdown (if discounts applied) -->
+                @if(!empty($cartBreakdown['discount_breakdown']))
+                    <div class="ml-4 space-y-1 text-sm text-gray-600">
+                        @foreach($cartBreakdown['discount_breakdown'] as $discount)
+                            <div class="flex justify-between">
+                                <span>{{ $discount['name'] }}</span>
+                                <span class="text-green-600">-{{ $discount['amount']['formatted'] }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
-                @if($cart->shippingTotal && $cart->shippingTotal->value > 0)
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-semibold">{{ __('storefront.cart.shipping') }}:</span>
-                        <span class="text-lg font-bold" id="cart-shipping">{{ $cart->shippingTotal->formatted }}</span>
+                
+                <!-- Subtotal (after discount) -->
+                <div class="flex justify-between items-center pt-2 border-t">
+                    <span class="text-md font-medium">Subtotal (after discount):</span>
+                    <span class="text-md font-semibold" id="cart-subtotal-discounted">
+                        {{ $cartBreakdown['subtotal_discounted']['formatted'] }}
+                    </span>
+                </div>
+                
+                <!-- Shipping Cost - Always shown -->
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold">{{ __('storefront.cart.shipping') ?? 'Shipping' }}:</span>
+                    <span class="text-lg font-bold" id="cart-shipping">
+                        {{ $cartBreakdown['shipping_total']['formatted'] }}
+                    </span>
+                </div>
+                
+                <!-- Shipping Breakdown (if shipping applied) -->
+                @if(!empty($cartBreakdown['shipping_breakdown']))
+                    <div class="ml-4 space-y-1 text-sm text-gray-600">
+                        @foreach($cartBreakdown['shipping_breakdown'] as $shipping)
+                            <div class="flex justify-between">
+                                <span>{{ $shipping['name'] }}</span>
+                                <span>{{ $shipping['amount']['formatted'] }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
-                @if($cart->taxTotal && $cart->taxTotal->value > 0)
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-semibold">{{ __('storefront.cart.tax') }}:</span>
-                        <span class="text-lg font-bold" id="cart-tax">{{ $cart->taxTotal->formatted }}</span>
+                
+                <!-- Tax Breakdown - Always shown -->
+                <div class="flex justify-between items-center">
+                    <span class="text-lg font-semibold">{{ __('storefront.cart.tax') ?? 'Tax' }}:</span>
+                    <span class="text-lg font-bold" id="cart-tax">
+                        {{ $cartBreakdown['tax_total']['formatted'] }}
+                    </span>
+                </div>
+                
+                <!-- Tax Breakdown Details -->
+                @if(!empty($cartBreakdown['tax_breakdown']))
+                    <div class="ml-4 space-y-1 text-sm text-gray-600">
+                        @foreach($cartBreakdown['tax_breakdown'] as $tax)
+                            <div class="flex justify-between">
+                                <span>{{ $tax['name'] }} ({{ number_format($tax['rate'], 2) }}%)</span>
+                                <span>{{ $tax['amount']['formatted'] }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
             </div>
+            
+            <!-- Grand Total - Always shown -->
             <div class="flex justify-between items-center pt-4 border-t">
-                <span class="text-xl font-bold">{{ __('storefront.cart.total_label') }}:</span>
-                <span class="text-xl font-bold" id="cart-total">{{ $cart->total->formatted }}</span>
+                <span class="text-xl font-bold">{{ __('storefront.cart.total_label') ?? 'Grand Total' }}:</span>
+                <span class="text-xl font-bold" id="cart-total">
+                    {{ $cartBreakdown['grand_total']['formatted'] }}
+                </span>
             </div>
+            
+            <!-- Audit Trail of Applied Rules -->
+            @if(!empty($cartBreakdown['applied_rules']))
+                <div class="mt-4 p-3 bg-gray-50 rounded text-sm">
+                    <div class="font-semibold mb-2">Applied Discount Rules:</div>
+                    <div class="space-y-1">
+                        @foreach($cartBreakdown['applied_rules'] as $rule)
+                            <div class="flex justify-between">
+                                <span>{{ $rule['rule_name'] }}</span>
+                                @if($rule['coupon_code'])
+                                    <span class="text-gray-500">({{ $rule['coupon_code'] }})</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             <div class="mt-6 space-y-3">
                 <a href="{{ route('storefront.checkout.index') }}" class="block w-full text-center bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition-colors">
                     {{ __('storefront.cart.proceed_to_checkout') }}

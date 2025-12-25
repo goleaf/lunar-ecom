@@ -145,7 +145,8 @@ class StockNotificationService
      */
     protected function sendNotification(StockNotification $notification): void
     {
-        $notification->notify(new ProductBackInStock($notification));
+        // Dispatch job to send notification (job will handle metrics and actual sending)
+        \App\Jobs\SendBackInStockNotification::dispatch($notification);
     }
 
     /**
@@ -203,5 +204,92 @@ class StockNotificationService
             ->where('status', 'pending')
             ->with(['product', 'productVariant'])
             ->get();
+    }
+
+    /**
+     * Process queue: check for products back in stock and send notifications.
+     *
+     * @param  ProductVariant|null  $variant  If provided, only check this variant
+     * @return int  Number of notifications sent
+     */
+    public function processQueue(?ProductVariant $variant = null): int
+    {
+        if ($variant) {
+            return $this->checkAndNotifyVariant($variant);
+        }
+
+        // Process all products
+        $stats = $this->checkAllProducts();
+        return $stats['notifications_sent'];
+    }
+
+    /**
+     * Get notification metrics for a product variant.
+     *
+     * @param  ProductVariant  $variant
+     * @return array
+     */
+    public function getMetrics(ProductVariant $variant): array
+    {
+        $metrics = \App\Models\StockNotificationMetric::where('product_variant_id', $variant->id)->get();
+
+        $totalSent = $metrics->where('email_sent', true)->count();
+        $totalDelivered = $metrics->where('email_delivered', true)->count();
+        $totalOpened = $metrics->where('email_opened', true)->count();
+        $totalClicked = $metrics->where('link_clicked', true)->count();
+        $totalConverted = $metrics->where('converted', true)->count();
+
+        return [
+            'total_subscriptions' => StockNotification::forVariant($variant->id)->pending()->count(),
+            'total_sent' => $totalSent,
+            'delivery_rate' => $totalSent > 0 ? round(($totalDelivered / $totalSent) * 100, 2) : 0,
+            'open_rate' => $totalDelivered > 0 ? round(($totalOpened / $totalDelivered) * 100, 2) : 0,
+            'click_through_rate' => $totalOpened > 0 ? round(($totalClicked / $totalOpened) * 100, 2) : 0,
+            'conversion_rate' => $totalSent > 0 ? round(($totalConverted / $totalSent) * 100, 2) : 0,
+            'total_conversions' => $totalConverted,
+        ];
+    }
+
+    /**
+     * Get active subscriptions for a variant.
+     *
+     * @param  ProductVariant  $variant
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getSubscriptions(ProductVariant $variant)
+    {
+        return StockNotification::forVariant($variant->id)
+            ->pending()
+            ->with('customer')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Remove subscription after purchase.
+     *
+     * @param  int  $variantId
+     * @param  string  $email
+     * @return int  Number of subscriptions removed
+     */
+    public function removeAfterPurchase(int $variantId, string $email): int
+    {
+        return StockNotification::where('product_variant_id', $variantId)
+            ->where('email', $email)
+            ->where('status', 'pending')
+            ->update(['status' => 'cancelled']);
+    }
+
+    /**
+     * Clean up expired subscriptions (older than 90 days).
+     *
+     * @return int  Number of subscriptions removed
+     */
+    public function cleanupExpired(): int
+    {
+        // Remove subscriptions older than 90 days
+        return StockNotification::where('created_at', '<', now()->subDays(90))
+            ->where('status', 'pending')
+            ->delete();
     }
 }

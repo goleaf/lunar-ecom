@@ -1,0 +1,177 @@
+/* Collection Filters Styles */
+
+.collection-page {
+    min-height: 100vh;
+}
+
+.filter-section {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.filter-section h3 {
+    color: #1f2937;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Active Filters */
+.active-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.active-filter button {
+    color: #1e40af;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.25rem;
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.active-filter button:hover {
+    color: #1e3a8a;
+}
+
+/* Loading States */
+#loading-indicator {
+    min-height: 200px;
+}
+
+/* Filter Checkboxes and Radio Buttons */
+.filter-section input[type="checkbox"],
+.filter-section input[type="radio"] {
+    accent-color: #2563eb;
+}
+
+.filter-section label {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.filter-section label:hover {
+    color: #2563eb;
+}
+
+/* Price Range Slider (if using range input) */
+input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #e5e7eb;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #2563eb;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #2563eb;
+    cursor: pointer;
+    border: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .collection-page .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-section {
+        max-height: none;
+    }
+}
+
+/* Smooth Transitions */
+#products-container {
+    transition: opacity 0.3s ease;
+}
+
+#products-container.loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Attribute Filter Styles */
+.attribute-filter {
+    margin-bottom: 1.5rem;
+}
+
+.attribute-filter h4 {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+    color: #374151;
+}
+
+.attribute-values {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.attribute-value-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    cursor: pointer;
+}
+
+.attribute-value-item:hover {
+    color: #2563eb;
+}
+
+.attribute-value-item input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+/* Scrollbar Styling */
+.attribute-values::-webkit-scrollbar,
+.filter-section div::-webkit-scrollbar {
+    width: 6px;
+}
+
+.attribute-values::-webkit-scrollbar-track,
+.filter-section div::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.attribute-values::-webkit-scrollbar-thumb,
+.filter-section div::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.attribute-values::-webkit-scrollbar-thumb:hover,
+.filter-section div::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+

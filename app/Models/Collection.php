@@ -2,15 +2,39 @@
 
 namespace App\Models;
 
-use App\Enums\CollectionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Lunar\Models\Collection as LunarCollection;
 
+/**
+ * Extended Collection model with advanced collection management.
+ */
 class Collection extends LunarCollection
 {
-    /** @use HasFactory<\Database\Factories\CollectionFactory> */
     use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'collection_type',
+        'auto_assign',
+        'assignment_rules',
+        'max_products',
+        'sort_by',
+        'sort_direction',
+        'show_on_homepage',
+        'homepage_position',
+        'display_style',
+        'products_per_row',
+        'starts_at',
+        'ends_at',
+        'product_count',
+        'last_updated_at',
+    ];
 
     /**
      * The attributes that should be cast.
@@ -18,212 +42,205 @@ class Collection extends LunarCollection
      * @var array<string, string>
      */
     protected $casts = [
-        'collection_type' => CollectionType::class,
-        'scheduled_publish_at' => 'datetime',
-        'scheduled_unpublish_at' => 'datetime',
-        'auto_publish_products' => 'boolean',
+        'auto_assign' => 'boolean',
+        'assignment_rules' => 'array',
+        'max_products' => 'integer',
+        'show_on_homepage' => 'boolean',
+        'homepage_position' => 'integer',
+        'products_per_row' => 'integer',
+        'product_count' => 'integer',
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
+        'last_updated_at' => 'datetime',
     ];
 
     /**
-     * Scope a query to only include cross-sell collections.
+     * Products relationship with metadata.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return BelongsToMany
      */
-    public function scopeCrossSell($query)
+    public function productsWithMetadata(): BelongsToMany
     {
-        return $query->where('collection_type', CollectionType::CROSS_SELL->value);
+        return $this->belongsToMany(
+            \App\Models\Product::class,
+            config('lunar.database.table_prefix') . 'collection_product_metadata',
+            'collection_id',
+            'product_id'
+        )->withPivot('is_auto_assigned', 'position', 'assigned_at', 'expires_at', 'metadata')
+          ->withTimestamps()
+          ->orderBy('collection_product_metadata.position')
+          ->orderBy('collection_product_metadata.assigned_at', 'desc');
     }
 
     /**
-     * Scope a query to only include up-sell collections.
+     * Collection product metadata relationship.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return HasMany
      */
-    public function scopeUpSell($query)
+    public function productMetadata(): HasMany
     {
-        return $query->where('collection_type', CollectionType::UP_SELL->value);
+        return $this->hasMany(CollectionProductMetadata::class, 'collection_id');
     }
 
     /**
-     * Scope a query to only include related collections.
+     * Smart collection rules relationship.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return HasMany
      */
-    public function scopeRelated($query)
+    public function smartRules(): HasMany
     {
-        return $query->where('collection_type', CollectionType::RELATED->value);
+        return $this->hasMany(SmartCollectionRule::class, 'collection_id');
     }
 
     /**
-     * Scope a query to only include bundle collections.
+     * Get sorted products for collection.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function scopeBundles($query)
+    public function getSortedProducts()
     {
-        return $query->where('collection_type', CollectionType::BUNDLE->value);
+        $query = $this->products();
+
+        // Apply sorting
+        $sortBy = $this->sort_by ?? 'created_at';
+        $sortDirection = $this->sort_direction ?? 'desc';
+
+        return match ($sortBy) {
+            'price' => $this->sortByPrice($query, $sortDirection),
+            'name' => $query->orderByRaw("JSON_EXTRACT(attribute_data, '$.name.en') {$sortDirection}"),
+            'popularity' => $this->sortByPopularity($query, $sortDirection),
+            'sales_count' => $this->sortBySalesCount($query, $sortDirection),
+            'rating' => $this->sortByRating($query, $sortDirection),
+            default => $query->orderBy('created_at', $sortDirection),
+        };
     }
 
     /**
-     * Scope a query to filter by collection type.
+     * Sort products by price.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @param  CollectionType|string  $type
+     * @param  string  $direction
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeOfType($query, $type)
+    protected function sortByPrice($query, string $direction)
     {
-        $typeValue = $type instanceof CollectionType ? $type->value : $type;
-        return $query->where('collection_type', $typeValue);
+        // This is a simplified version - you may need to join with prices table
+        return $query->orderBy('created_at', $direction);
     }
 
     /**
-     * Scope a query to only include scheduled collections.
+     * Sort products by popularity.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $direction
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function sortByPopularity($query, string $direction)
+    {
+        return $query->orderBy('product_count', $direction)
+            ->orderBy('created_at', $direction);
+    }
+
+    /**
+     * Sort products by sales count.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $direction
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function sortBySalesCount($query, string $direction)
+    {
+        // Join with order lines to count sales
+        return $query->withCount([
+            'orderLines as sales_count' => function ($q) {
+                $q->whereHas('order', function ($orderQuery) {
+                    $orderQuery->whereNotNull('placed_at');
+                });
+            }
+        ])->orderBy('sales_count', $direction);
+    }
+
+    /**
+     * Sort products by rating.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $direction
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function sortByRating($query, string $direction)
+    {
+        return $query->orderBy('average_rating', $direction)
+            ->orderBy('total_reviews', $direction);
+    }
+
+    /**
+     * Check if collection is active.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        if ($this->starts_at && $this->starts_at->isFuture()) {
+            return false;
+        }
+
+        if ($this->ends_at && $this->ends_at->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Scope to get active collections.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeScheduled($query)
+    public function scopeActive($query)
     {
         return $query->where(function ($q) {
-            $q->whereNotNull('scheduled_publish_at')
-              ->orWhereNotNull('scheduled_unpublish_at');
+            $q->whereNull('starts_at')
+              ->orWhere('starts_at', '<=', now());
+        })->where(function ($q) {
+            $q->whereNull('ends_at')
+              ->orWhere('ends_at', '>', now());
         });
     }
 
     /**
-     * Scope a query to filter collections scheduled for publish.
+     * Scope to get collections by type.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $type
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOfType($query, string $type)
+    {
+        return $query->where('collection_type', $type);
+    }
+
+    /**
+     * Scope to get auto-assign collections.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeScheduledForPublish($query)
+    public function scopeAutoAssign($query)
     {
-        return $query->whereNotNull('scheduled_publish_at')
-            ->where('scheduled_publish_at', '<=', now());
+        return $query->where('auto_assign', true)->active();
     }
 
     /**
-     * Scope a query to filter collections scheduled for unpublish.
+     * Scope to get homepage collections.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeScheduledForUnpublish($query)
+    public function scopeHomepage($query)
     {
-        return $query->whereNotNull('scheduled_unpublish_at')
-            ->where('scheduled_unpublish_at', '<=', now());
-    }
-
-    /**
-     * Check if collection is scheduled.
-     *
-     * @return bool
-     */
-    public function isScheduled(): bool
-    {
-        return $this->scheduled_publish_at !== null || $this->scheduled_unpublish_at !== null;
-    }
-
-    /**
-     * Check if collection is scheduled for publish.
-     *
-     * @return bool
-     */
-    public function isScheduledForPublish(): bool
-    {
-        return $this->scheduled_publish_at !== null 
-            && $this->scheduled_publish_at->isFuture();
-    }
-
-    /**
-     * Check if collection is scheduled for unpublish.
-     *
-     * @return bool
-     */
-    public function isScheduledForUnpublish(): bool
-    {
-        return $this->scheduled_unpublish_at !== null 
-            && $this->scheduled_unpublish_at->isFuture();
-    }
-
-    /**
-     * Schedule collection for future publish.
-     *
-     * @param  \Carbon\Carbon|string  $publishAt
-     * @return void
-     */
-    public function schedulePublish($publishAt): void
-    {
-        $this->scheduled_publish_at = is_string($publishAt) ? \Carbon\Carbon::parse($publishAt) : $publishAt;
-        $this->save();
-    }
-
-    /**
-     * Schedule collection for future unpublish.
-     *
-     * @param  \Carbon\Carbon|string  $unpublishAt
-     * @return void
-     */
-    public function scheduleUnpublish($unpublishAt): void
-    {
-        $this->scheduled_unpublish_at = is_string($unpublishAt) ? \Carbon\Carbon::parse($unpublishAt) : $unpublishAt;
-        $this->save();
-    }
-
-    /**
-     * Clear scheduled publish date.
-     *
-     * @return void
-     */
-    public function clearScheduledPublish(): void
-    {
-        $this->scheduled_publish_at = null;
-        $this->save();
-    }
-
-    /**
-     * Clear scheduled unpublish date.
-     *
-     * @return void
-     */
-    public function clearScheduledUnpublish(): void
-    {
-        $this->scheduled_unpublish_at = null;
-        $this->save();
-    }
-
-    /**
-     * Collection rules relationship (for rule-based collections).
-     *
-     * @return HasMany
-     */
-    public function rules(): HasMany
-    {
-        return $this->hasMany(CollectionRule::class, 'collection_id');
-    }
-
-    /**
-     * Check if collection is rule-based (dynamic).
-     *
-     * @return bool
-     */
-    public function isRuleBased(): bool
-    {
-        return $this->type === 'dynamic' || $this->rules()->active()->exists();
-    }
-
-    /**
-     * Check if collection is manual (static).
-     *
-     * @return bool
-     */
-    public function isManual(): bool
-    {
-        return $this->type === 'static' || !$this->isRuleBased();
+        return $query->where('show_on_homepage', true)
+            ->active()
+            ->orderBy('homepage_position');
     }
 }

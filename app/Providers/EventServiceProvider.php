@@ -2,11 +2,32 @@
 
 namespace App\Providers;
 
+use App\Events\CartAddressChanged;
+use App\Events\CartCurrencyChanged;
+use App\Events\CartCustomerChanged;
+use App\Events\CartQuantityChanged;
+use App\Events\CartRepricingEvent;
+use App\Events\CartVariantChanged;
+use App\Events\CheckoutCompleted;
+use App\Events\CheckoutFailed;
+use App\Events\CheckoutStarted;
+use App\Events\ContractValidityChanged;
+use App\Events\PromotionActivated;
+use App\Events\PromotionExpired;
+use App\Events\StockChanged;
+use App\Listeners\CartRepricingListener;
+use App\Listeners\ClearCartOnLogin;
+use App\Listeners\CreateDigitalProductDownloads;
+use App\Listeners\DeliverDigitalProducts;
 use App\Listeners\MergeCartOnLogin;
-use App\Listeners\ClearCartOnLogout;
+use App\Listeners\NotifyCheckoutFailure;
+use App\Listeners\RemoveStockNotificationOnPurchase;
+use App\Listeners\SendOrderConfirmation;
+use App\Listeners\TrackStockNotificationConversion;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Lunar\Events\OrderStatusChanged;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -21,6 +42,52 @@ class EventServiceProvider extends ServiceProvider
         ],
         Logout::class => [
             ClearCartOnLogout::class,
+        ],
+        OrderStatusChanged::class => [
+            DeliverDigitalProducts::class,
+            RemoveStockNotificationOnPurchase::class,
+            TrackStockNotificationConversion::class,
+        ],
+        // Cart repricing events
+        CartQuantityChanged::class => [
+            CartRepricingListener::class,
+        ],
+        CartVariantChanged::class => [
+            CartRepricingListener::class,
+        ],
+        CartCustomerChanged::class => [
+            CartRepricingListener::class,
+        ],
+        CartAddressChanged::class => [
+            CartRepricingListener::class,
+        ],
+        CartCurrencyChanged::class => [
+            CartRepricingListener::class,
+        ],
+        PromotionActivated::class => [
+            CartRepricingListener::class,
+        ],
+        PromotionExpired::class => [
+            CartRepricingListener::class,
+        ],
+        StockChanged::class => [
+            CartRepricingListener::class,
+        ],
+        ContractValidityChanged::class => [
+            CartRepricingListener::class,
+        ],
+        // Checkout events
+        CheckoutStarted::class => [
+            // Add listeners here for checkout started events
+            // Example: TrackCheckoutStart::class,
+        ],
+        CheckoutCompleted::class => [
+            SendOrderConfirmation::class,
+            // Add additional listeners here
+        ],
+        CheckoutFailed::class => [
+            NotifyCheckoutFailure::class,
+            // Add additional listeners here
         ],
     ];
 

@@ -21,21 +21,23 @@ class StockNotificationController extends Controller
      * Subscribe to back-in-stock notifications.
      *
      * @param  Request  $request
-     * @param  ProductVariant  $variant
+     * @param  int  $variant
      * @return JsonResponse
      */
-    public function subscribe(Request $request, ProductVariant $variant): JsonResponse
+    public function subscribe(Request $request, int $variant): JsonResponse
     {
         $validated = $request->validate([
             'email' => 'required|email',
         ]);
 
         try {
-            $notification = $this->notificationService->subscribe(
-                $variant,
-                $validated['email'],
-                auth()->id()
-            );
+            $variantModel = ProductVariant::findOrFail($variant);
+            $notification = $this->notificationService->subscribe([
+                'product_id' => $variantModel->product_id,
+                'product_variant_id' => $variantModel->id,
+                'email' => $validated['email'],
+                'customer_id' => auth()->id(),
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -76,18 +78,18 @@ class StockNotificationController extends Controller
      * Check if email is already subscribed.
      *
      * @param  Request  $request
-     * @param  ProductVariant  $variant
+     * @param  int  $variant
      * @return JsonResponse
      */
-    public function check(Request $request, ProductVariant $variant): JsonResponse
+    public function check(Request $request, int $variant): JsonResponse
     {
         $validated = $request->validate([
             'email' => 'required|email',
         ]);
 
-        $subscription = \App\Models\StockNotification::where('product_variant_id', $variant->id)
-            ->where('customer_email', $validated['email'])
-            ->where('is_active', true)
+        $subscription = \App\Models\StockNotification::where('product_variant_id', $variant)
+            ->where('email', $validated['email'])
+            ->where('status', 'pending')
             ->first();
 
         return response()->json([

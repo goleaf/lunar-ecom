@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\CartSessionService;
 use App\Services\CartManager;
+use App\Services\CartPricingEngine;
 use App\Contracts\CartManagerInterface;
 use App\Contracts\CartSessionInterface;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +23,9 @@ class CartServiceProvider extends ServiceProvider
         // Bind cart manager service
         $this->app->singleton(CartManager::class);
         $this->app->bind(CartManagerInterface::class, CartManager::class);
+        
+        // Bind cart pricing engine as singleton (stateless service, can be reused)
+        $this->app->singleton(CartPricingEngine::class);
     }
 
     /**

@@ -183,4 +183,32 @@ return [
         'prune_interval' => 90, // days
 
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart Pricing Engine Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for the deterministic, auditable, real-time cart pricing engine.
+    |
+    */
+    'pricing' => [
+        // Automatically reprice cart on changes
+        'auto_reprice' => true,
+
+        // Enforce MAP (Minimum Advertised Price)
+        'enforce_map' => true,
+
+        // Enforce minimum price (prevent negative/zero prices)
+        'enforce_minimum_price' => true,
+
+        // Price expiration in hours (quote validity period)
+        'price_expiration_hours' => 24,
+
+        // Enable price hash for tamper detection
+        'enable_price_hash' => true,
+
+        // Store pricing snapshots in database (false = calculate on-the-fly)
+        'store_snapshots' => false,
+    ],
 ];

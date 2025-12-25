@@ -34,7 +34,7 @@ use Lunar\Models\Tag;
 use Lunar\Models\TaxClass;
 use Lunar\Models\Transaction;
 use Lunar\Models\Url;
-use Lunar\Models\User;
+use App\Models\User;
 
 /**
  * Complete seeder that creates a full e-commerce catalog with:
@@ -131,9 +131,9 @@ class CompleteSeeder extends Seeder
             $addressCount = fake()->numberBetween(1, 3);
             $addresses = Address::factory()
                 ->count($addressCount)
-                ->forCountry($country)
                 ->create([
                     'customer_id' => $customer->id,
+                    'country_id' => $country->id,
                 ]);
 
             // Set first address as default shipping, second as default billing
@@ -157,9 +157,13 @@ class CompleteSeeder extends Seeder
 
         // Step 7: Create carts with cart lines
         $this->command->info('🛒 Creating carts with items...');
+        // Ensure currency exists before creating carts to avoid race conditions
+        $currency->refresh();
         $carts = Cart::factory()
             ->count(30)
-            ->create();
+            ->create([
+                'currency_id' => $currency->id,
+            ]);
 
         foreach ($carts as $cart) {
             // Add 1-5 items to each cart
@@ -293,9 +297,19 @@ class CompleteSeeder extends Seeder
 
         // Step 13: Create categories
         $this->command->info('📂 Creating categories...');
-        $rootCategories = Category::factory()->count(5)->create();
+        $rootCategories = collect();
+        for ($i = 0; $i < 5; $i++) {
+            $category = Category::factory()->make();
+            $category->makeRoot()->save();
+            $category->refresh();
+            $rootCategories->push($category);
+        }
         foreach ($rootCategories as $rootCategory) {
-            Category::factory()->count(fake()->numberBetween(2, 4))->withParent($rootCategory)->create();
+            $childCount = fake()->numberBetween(2, 4);
+            for ($j = 0; $j < $childCount; $j++) {
+                $child = Category::factory()->make();
+                $rootCategory->appendNode($child);
+            }
         }
 
         // Step 14: Create reviews with media and helpful votes
@@ -452,8 +466,8 @@ class CompleteSeeder extends Seeder
                 'capital' => 'Washington',
                 'currency' => 'USD',
                 'native' => 'United States',
-                'region' => 'Americas',
-                'subregion' => 'Northern America',
+                'emoji' => '🇺🇸',
+                'emoji_u' => 'U+1F1FA U+1F1F8',
             ]
         );
     }
@@ -466,6 +480,7 @@ class CompleteSeeder extends Seeder
                 'name' => [
                     'en' => 'Product',
                 ],
+                'attributable_type' => \App\Models\Product::class,
                 'position' => 0,
             ]
         );
@@ -476,9 +491,7 @@ class CompleteSeeder extends Seeder
         return CollectionGroup::firstOrCreate(
             ['handle' => 'default'],
             [
-                'name' => [
-                    'en' => 'Default',
-                ],
+                'name' => 'Default',
             ]
         );
     }

@@ -14,6 +14,7 @@ use App\Policies\CollectionPolicy;
 use App\Policies\AddressPolicy;
 use App\Policies\UserPolicy;
 use App\Policies\OrderPolicy;
+use App\Policies\ProductWorkflowPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Lunar\Models\Address;
 use Lunar\Models\Order;

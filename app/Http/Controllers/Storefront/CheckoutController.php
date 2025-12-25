@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers\Storefront;
 
+use App\Events\CartAddressChanged;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CheckoutRequest;
+use App\Services\CheckoutService;
 use Illuminate\Http\Request;
 use Lunar\Facades\CartSession;
 use Lunar\Models\Order;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        protected CheckoutService $checkoutService
+    ) {}
+
     /**
      * Display the checkout page.
      * 
@@ -23,34 +30,27 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty');
         }
 
+        // Check if cart is locked
+        if ($this->checkoutService->isCartLocked($cart)) {
+            return redirect()->route('storefront.cart.index')
+                ->with('error', 'Your cart is currently being checked out. Please wait or try again.');
+        }
+
+        // Start checkout lock
+        $lock = $this->checkoutService->startCheckout($cart);
+
         // Calculate cart totals to show accurate pricing
         // See: https://docs.lunarphp.com/1.x/reference/carts#hydrating-the-cart-totals
         $cart->calculate();
 
-        return view('storefront.checkout.index', compact('cart'));
+        return view('storefront.checkout.index', compact('cart', 'lock'));
     }
 
     /**
      * Store the order (process checkout).
      */
-    public function store(Request $request)
+    public function store(CheckoutRequest $request)
     {
-        $request->validate([
-            'shipping_address.first_name' => 'required|string|max:255',
-            'shipping_address.last_name' => 'required|string|max:255',
-            'shipping_address.line_one' => 'required|string|max:255',
-            'shipping_address.city' => 'required|string|max:255',
-            'shipping_address.state' => 'nullable|string|max:255',
-            'shipping_address.postcode' => 'required|string|max:255',
-            'shipping_address.country_id' => 'required|exists:lunar_countries,id',
-            'billing_address.first_name' => 'required|string|max:255',
-            'billing_address.last_name' => 'required|string|max:255',
-            'billing_address.line_one' => 'required|string|max:255',
-            'billing_address.city' => 'required|string|max:255',
-            'billing_address.state' => 'nullable|string|max:255',
-            'billing_address.postcode' => 'required|string|max:255',
-            'billing_address.country_id' => 'required|exists:lunar_countries,id',
-        ]);
 
         $cart = CartSession::current();
 
@@ -59,28 +59,63 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty');
         }
 
+        // Get active checkout lock
+        $lock = $this->checkoutService->getActiveLock($cart);
+
+        if (!$lock) {
+            // Start checkout if no lock exists
+            $lock = $this->checkoutService->startCheckout($cart);
+        }
+
         // Set shipping and billing addresses on cart
         // See: https://docs.lunarphp.com/1.x/reference/carts#adding-shippingbilling-address
         $cart->setShippingAddress($request->shipping_address);
         $cart->setBillingAddress($request->billing_address);
+        
+        // Trigger address change event for repricing
+        event(new CartAddressChanged($cart));
+
+        // Force repricing before checkout (ensures prices are up-to-date)
+        $cartManager = app(\App\Contracts\CartManagerInterface::class);
+        $cartManager->forceReprice();
+
+        // Store checkout snapshot if enabled
+        if (config('lunar.cart.pricing.store_snapshots', false)) {
+            $pricingEngine = app(\App\Services\CartPricingEngine::class);
+            $pricingResult = $pricingEngine->calculateCartPrices($cart);
+            \App\Models\CartPricingSnapshot::create([
+                'cart_id' => $cart->id,
+                'snapshot_type' => 'checkout',
+                'pricing_data' => $pricingResult->toArray(),
+                'trigger' => 'checkout',
+                'pricing_version' => (string) ($cart->pricing_version ?? 0),
+            ]);
+        }
 
         // Recalculate cart with addresses for accurate tax calculation
         // See: https://docs.lunarphp.com/1.x/reference/carts#calculating-tax
         $cart->calculate();
 
-        // Validate cart before creating order
-        // See: https://docs.lunarphp.com/1.x/reference/orders#validating-a-cart-before-creation
-        if (!$cart->canCreateOrder()) {
-            return redirect()->route('storefront.cart.index')
-                ->with('error', 'Cart is not ready to create an order. Please review your cart.');
+        try {
+            // Process checkout with state machine
+            $paymentData = [
+                'method' => $request->input('payment_method', 'card'),
+                'token' => $request->input('payment_token'),
+            ];
+
+            $order = $this->checkoutService->processCheckout($lock, $paymentData);
+
+            return redirect()->route('storefront.checkout.confirmation', $order)
+                ->with('success', 'Order placed successfully');
+
+        } catch (\Exception $e) {
+            // Release checkout lock on failure
+            $this->checkoutService->releaseCheckout($lock);
+
+            return redirect()->route('storefront.checkout.index')
+                ->with('error', 'Checkout failed: ' . $e->getMessage())
+                ->withInput();
         }
-
-        // Create order from cart (recommended method)
-        // See: https://docs.lunarphp.com/1.x/reference/orders#create-an-order
-        $order = CartSession::createOrder();
-
-        return redirect()->route('storefront.checkout.confirmation', $order)
-            ->with('success', 'Order placed successfully');
     }
 
     /**

@@ -102,7 +102,7 @@ class StockNotification extends Model
      */
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(\Lunar\Models\Customer::class);
     }
 
     /**

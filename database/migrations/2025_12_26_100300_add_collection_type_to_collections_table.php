@@ -11,12 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table($this->prefix.'collections', function (Blueprint $table) {
-            $table->string('collection_type', 50)
-                  ->default('standard')
-                  ->after('sort')
-                  ->index();
-        });
+        // Column already exists from 2025_12_25_170000_add_collection_management_fields migration
+        if (!Schema::hasColumn($this->prefix.'collections', 'collection_type')) {
+            Schema::table($this->prefix.'collections', function (Blueprint $table) {
+                $table->string('collection_type', 50)
+                      ->default('standard')
+                      ->after('sort')
+                      ->index();
+            });
+        }
     }
 
     /**

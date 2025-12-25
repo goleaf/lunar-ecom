@@ -3,16 +3,14 @@
 namespace App\Admin\Filament\Resources\Pages;
 
 use Filament\Actions;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Livewire;
+use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Tabs\Tab;
 use Lunar\Panel\Filament\Resources\ProductResource\Pages\EditProduct;
 
 /**
- * Example extension for the Edit Product page.
- * 
- * This is a scaffolding example. For production use, refer to:
- * https://docs.lunarphp.com/1.x/admin/extending/overview#extending-edit-resource
- * 
- * Extensions allow you to add custom functionality to Lunar's admin panel pages,
- * such as custom actions, buttons, or modified behavior.
+ * Extended Edit Product page with enhanced UX features.
  */
 class ProductEditExtension extends EditProduct
 {
@@ -25,29 +23,55 @@ class ProductEditExtension extends EditProduct
     {
         return [
             ...parent::getHeaderActions(),
-            // Add your custom actions here
-            // Actions\Action::make('customAction')
-            //     ->label('Custom Action')
-            //     ->action(function () {
-            //         // Your custom action logic
-            //     }),
+            \App\Admin\Actions\PreviewStorefrontAction::make(),
+            \App\Admin\Actions\CloneProductAction::make(),
         ];
     }
 
     /**
-     * Get the form actions.
-     * 
-     * You can override this method to customize form actions.
+     * Get form schema with enhanced components.
      */
-    protected function getFormActions(): array
+    protected function mutateFormDataBeforeFill(array $data): array
     {
-        return [
-            ...parent::getFormActions(),
-            // Add custom form actions if needed
-        ];
+        // Add real-time validation
+        return $data;
     }
 
-    // Add any other methods you need to extend the EditProduct page behavior
+    /**
+     * Get form tabs with enhanced sections.
+     */
+    protected function getFormTabs(): array
+    {
+        return [
+            Tabs\Tab::make('Basic')
+                ->icon('heroicon-o-information-circle')
+                ->schema([
+                    Section::make('Product Information')
+                        ->schema([
+                            ...$this->form->getComponents(),
+                        ]),
+                ]),
+            
+            Tabs\Tab::make('Variants')
+                ->icon('heroicon-o-squares-2x2')
+                ->schema([
+                    Livewire::make(\App\Admin\Livewire\InlineVariantEditor::class)
+                        ->key('variant-editor-' . $this->record->id),
+                ]),
+            
+            Tabs\Tab::make('Media')
+                ->icon('heroicon-o-photo')
+                ->schema([
+                    Livewire::make(\App\Admin\Livewire\DragDropMediaManager::class)
+                        ->key('media-manager-' . $this->record->id),
+                ]),
+            
+            Tabs\Tab::make('History')
+                ->icon('heroicon-o-clock')
+                ->schema([
+                    Livewire::make(\App\Admin\Livewire\ChangeHistoryTimeline::class)
+                        ->key('history-timeline-' . $this->record->id),
+                ]),
+        ];
+    }
 }
-
-

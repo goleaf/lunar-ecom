@@ -22,29 +22,30 @@ class StockNotificationController extends Controller
      * Get subscriptions for a product variant.
      *
      * @param  Request  $request
-     * @param  ProductVariant  $variant
+     * @param  int  $variant
      * @return JsonResponse
      */
-    public function subscriptions(Request $request, ProductVariant $variant): JsonResponse
+    public function subscriptions(Request $request, int $variant): JsonResponse
     {
         // Admin-only: require staff authentication
         if (!auth('staff')->check()) {
             abort(403, 'Unauthorized');
         }
 
-        $subscriptions = $this->notificationService->getSubscriptions($variant);
+        $variantModel = ProductVariant::findOrFail($variant);
+        $subscriptions = $this->notificationService->getSubscriptions($variantModel);
 
         return response()->json([
-            'variant_id' => $variant->id,
-            'product_name' => $variant->product->translateAttribute('name'),
+            'variant_id' => $variantModel->id,
+            'product_name' => $variantModel->product->translateAttribute('name'),
             'subscriptions' => $subscriptions->map(function ($subscription) {
                 return [
                     'id' => $subscription->id,
-                    'email' => $subscription->customer_email,
-                    'customer_name' => $subscription->customer?->fullName,
-                    'subscribed_at' => $subscription->subscribed_at,
-                    'notification_sent_at' => $subscription->notification_sent_at,
-                    'expires_at' => $subscription->expires_at,
+                    'email' => $subscription->email,
+                    'customer_name' => $subscription->customer?->fullName ?? $subscription->name,
+                    'subscribed_at' => $subscription->created_at,
+                    'notification_sent_at' => $subscription->notified_at,
+                    'status' => $subscription->status,
                 ];
             }),
             'total_count' => $subscriptions->count(),
@@ -55,17 +56,18 @@ class StockNotificationController extends Controller
      * Get notification metrics for a product variant.
      *
      * @param  Request  $request
-     * @param  ProductVariant  $variant
+     * @param  int  $variant
      * @return JsonResponse
      */
-    public function metrics(Request $request, ProductVariant $variant): JsonResponse
+    public function metrics(Request $request, int $variant): JsonResponse
     {
         // Admin-only: require staff authentication
         if (!auth('staff')->check()) {
             abort(403, 'Unauthorized');
         }
 
-        $metrics = $this->notificationService->getMetrics($variant);
+        $variantModel = ProductVariant::findOrFail($variant);
+        $metrics = $this->notificationService->getMetrics($variantModel);
 
         return response()->json($metrics);
     }
@@ -90,16 +92,16 @@ class StockNotificationController extends Controller
         }
 
         if ($request->has('status')) {
-            if ($request->input('status') === 'active') {
-                $query->active();
-            } elseif ($request->input('status') === 'sent') {
-                $query->whereNotNull('notification_sent_at');
+            if ($request->input('status') === 'sent') {
+                $query->sent();
             } elseif ($request->input('status') === 'pending') {
                 $query->pending();
+            } elseif ($request->input('status') === 'cancelled') {
+                $query->where('status', 'cancelled');
             }
         }
 
-        $subscriptions = $query->orderBy('subscribed_at', 'desc')
+        $subscriptions = $query->orderBy('created_at', 'desc')
             ->paginate($request->input('per_page', 25));
 
         return response()->json($subscriptions);

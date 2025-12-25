@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\CartManagerInterface;
+use App\Services\CartPricingEngine;
 use Lunar\Models\Cart;
 use Lunar\Models\CartLine;
 use Lunar\Base\Purchasable;
@@ -12,7 +13,8 @@ use Lunar\Models\Discount;
 class CartManager implements CartManagerInterface
 {
     public function __construct(
-        protected CartSessionService $cartSession
+        protected CartSessionService $cartSession,
+        protected CartPricingEngine $pricingEngine
     ) {}
 
     /**
@@ -49,8 +51,9 @@ class CartManager implements CartManagerInterface
                 'quantity' => $newQuantity
             ]);
             
-            // Recalculate cart totals
+            // Recalculate cart totals and repricing
             $this->calculateTotals();
+            $this->pricingEngine->repriceCart($cart, 'quantity_changed');
             
             return $existingLine;
         }
@@ -65,8 +68,9 @@ class CartManager implements CartManagerInterface
             'quantity' => $quantity,
         ]);
 
-        // Recalculate cart totals
+        // Recalculate cart totals and repricing
         $this->calculateTotals();
+        $this->pricingEngine->repriceCart($cart, 'quantity_changed');
 
         return $cartLine;
     }
@@ -90,8 +94,9 @@ class CartManager implements CartManagerInterface
 
         $cartLine->delete();
         
-        // Recalculate cart totals
+        // Recalculate cart totals and repricing
         $this->calculateTotals();
+        $this->pricingEngine->repriceCart($cart, 'quantity_changed');
     }
 
     /**
@@ -144,8 +149,9 @@ class CartManager implements CartManagerInterface
         // Apply discount to cart
         $cart->update(['coupon_code' => $couponCode]);
         
-        // Recalculate totals with discount applied
+        // Recalculate totals with discount applied and repricing
         $this->calculateTotals();
+        $this->pricingEngine->repriceCart($cart, 'promotion_changed');
     }
 
     /**
@@ -173,6 +179,7 @@ class CartManager implements CartManagerInterface
             
             $cartLine->update(['quantity' => $quantity]);
             $this->calculateTotals();
+            $this->pricingEngine->repriceCart($cart, 'quantity_changed');
         }
     }
 
@@ -191,6 +198,7 @@ class CartManager implements CartManagerInterface
             
             $cart->update(['coupon_code' => null]);
             $this->calculateTotals();
+            $this->pricingEngine->repriceCart($cart, 'promotion_changed');
         }
     }
 
@@ -254,6 +262,21 @@ class CartManager implements CartManagerInterface
 
         $cart->update(['coupon_code' => null]);
         $this->calculateTotals();
+        $this->pricingEngine->repriceCart($cart, 'promotion_changed');
+    }
+
+    /**
+     * Force repricing of cart (e.g., before checkout).
+     */
+    public function forceReprice(): Cart
+    {
+        $cart = $this->cartSession->current();
+        
+        if (!$cart) {
+            throw new \RuntimeException('No active cart found');
+        }
+
+        return $this->pricingEngine->repriceCart($cart, 'forced');
     }
 
     /**

@@ -559,4 +559,92 @@ class FactoryTest extends TestCase
 
         $this->assertFalse($synonym->is_active);
     }
+
+    public function test_product_view_factory_creates_valid_view(): void
+    {
+        $view = \App\Models\ProductView::factory()->create();
+
+        $this->assertInstanceOf(\App\Models\ProductView::class, $view);
+        $this->assertNotNull($view->id);
+        $this->assertNotNull($view->product_id);
+    }
+
+    public function test_product_view_factory_for_user_works(): void
+    {
+        $user = User::factory()->create();
+        $view = \App\Models\ProductView::factory()->forUser($user)->create();
+
+        $this->assertEquals($user->id, $view->user_id);
+        $this->assertNull($view->session_id);
+    }
+
+    public function test_product_purchase_association_factory_creates_valid_association(): void
+    {
+        $association = \App\Models\ProductPurchaseAssociation::factory()->create();
+
+        $this->assertInstanceOf(\App\Models\ProductPurchaseAssociation::class, $association);
+        $this->assertNotNull($association->id);
+        $this->assertNotNull($association->product_id);
+        $this->assertNotNull($association->associated_product_id);
+    }
+
+    public function test_product_purchase_association_factory_high_confidence_works(): void
+    {
+        $association = \App\Models\ProductPurchaseAssociation::factory()->highConfidence()->create();
+
+        $this->assertGreaterThanOrEqual(0.5, $association->confidence);
+    }
+
+    public function test_recommendation_rule_factory_creates_valid_rule(): void
+    {
+        $rule = \App\Models\RecommendationRule::factory()->create();
+
+        $this->assertInstanceOf(\App\Models\RecommendationRule::class, $rule);
+        $this->assertNotNull($rule->id);
+        $this->assertNotNull($rule->source_product_id);
+        $this->assertNotNull($rule->recommended_product_id);
+    }
+
+    public function test_recommendation_rule_factory_active_works(): void
+    {
+        $rule = \App\Models\RecommendationRule::factory()->active()->create();
+
+        $this->assertTrue($rule->is_active);
+    }
+
+    public function test_recommendation_click_factory_creates_valid_click(): void
+    {
+        $click = \App\Models\RecommendationClick::factory()->create();
+
+        $this->assertInstanceOf(\App\Models\RecommendationClick::class, $click);
+        $this->assertNotNull($click->id);
+        $this->assertNotNull($click->source_product_id);
+        $this->assertNotNull($click->recommended_product_id);
+    }
+
+    public function test_recommendation_click_factory_converted_works(): void
+    {
+        $click = \App\Models\RecommendationClick::factory()->converted()->create();
+
+        $this->assertTrue($click->converted);
+        $this->assertNotNull($click->order_id);
+    }
+
+    public function test_order_status_history_factory_creates_valid_history(): void
+    {
+        $history = \App\Models\OrderStatusHistory::factory()->create();
+
+        $this->assertInstanceOf(\App\Models\OrderStatusHistory::class, $history);
+        $this->assertNotNull($history->id);
+        $this->assertNotNull($history->order_id);
+        $this->assertNotNull($history->status);
+    }
+
+    public function test_order_status_history_factory_with_status_works(): void
+    {
+        $history = \App\Models\OrderStatusHistory::factory()->withStatus('shipped', 'processing')->create();
+
+        $this->assertEquals('shipped', $history->status);
+        $this->assertEquals('processing', $history->previous_status);
+    }
 }

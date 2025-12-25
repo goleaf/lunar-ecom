@@ -334,6 +334,42 @@ class CompleteSeeder extends Seeder
         \App\Models\SearchAnalytic::factory()->count(50)->create();
         \App\Models\SearchSynonym::factory()->count(10)->create();
 
+        // Step 16: Create product views
+        $this->command->info('👁️ Creating product views...');
+        \App\Models\ProductView::factory()->count(200)->create();
+        \App\Models\ProductView::factory()->count(50)->recent()->create();
+
+        // Step 17: Create product purchase associations
+        $this->command->info('🛒 Creating product purchase associations...');
+        foreach ($products->random(20) as $product) {
+            \App\Models\ProductPurchaseAssociation::factory()
+                ->count(fake()->numberBetween(3, 8))
+                ->withProducts($product, $products->random())
+                ->create();
+        }
+
+        // Step 18: Create recommendation rules and clicks
+        $this->command->info('💡 Creating recommendation rules...');
+        foreach ($products->random(30) as $product) {
+            \App\Models\RecommendationRule::factory()
+                ->count(fake()->numberBetween(2, 5))
+                ->withProducts($product, $products->random())
+                ->create();
+        }
+
+        $this->command->info('🖱️ Creating recommendation clicks...');
+        \App\Models\RecommendationClick::factory()->count(150)->create();
+        \App\Models\RecommendationClick::factory()->count(30)->converted()->create();
+
+        // Step 19: Create order status history
+        $this->command->info('📋 Creating order status history...');
+        foreach ($orders->random(20) as $order) {
+            \App\Models\OrderStatusHistory::factory()
+                ->count(fake()->numberBetween(2, 5))
+                ->forOrder($order)
+                ->create();
+        }
+
         $this->command->info('✅ Complete seeding finished!');
         $this->command->info("📊 Created:");
         $this->command->info("   - {$products->count()} products");

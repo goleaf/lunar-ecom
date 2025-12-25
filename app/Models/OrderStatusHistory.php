@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Lunar\Models\Order;
@@ -14,6 +15,8 @@ use App\Models\User;
  */
 class OrderStatusHistory extends Model
 {
+    use HasFactory;
+
     protected $table = 'lunar_order_status_history';
 
     protected $fillable = [

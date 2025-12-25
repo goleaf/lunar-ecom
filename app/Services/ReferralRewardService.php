@@ -2,213 +2,496 @@
 
 namespace App\Services;
 
-use App\Models\ReferralEvent;
-use App\Models\ReferralReward;
+use App\Models\ReferralAttribution;
+use App\Models\ReferralRule;
 use App\Models\ReferralProgram;
-use App\Services\DiscountService;
+use App\Models\User;
+use App\Models\Coupon;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
+use App\Models\ReferralRewardIssuance;
+use Lunar\Models\Order;
 use Lunar\Models\Discount;
-use Lunar\Models\Currency;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Referral Reward Service
  * 
- * Handles issuing and managing referral rewards.
+ * Handles issuance of rewards to both referees and referrers
+ * based on configured rules and fraud prevention checks.
  */
 class ReferralRewardService
 {
-    protected DiscountService $discountService;
+    protected ReferralAttributionService $attributionService;
+    protected ReferralFraudService $fraudService;
 
-    public function __construct(DiscountService $discountService)
-    {
-        $this->discountService = $discountService;
+    public function __construct(
+        ReferralAttributionService $attributionService,
+        ReferralFraudService $fraudService
+    ) {
+        $this->attributionService = $attributionService;
+        $this->fraudService = $fraudService;
     }
 
     /**
-     * Issue a reward based on event and configuration.
+     * Process reward for a trigger event.
+     * 
+     * @param User $referee The user who triggered the event
+     * @param string $triggerEvent The event type (signup, first_order_paid, etc.)
+     * @param Order|null $order The order if applicable
      */
-    public function issueReward(ReferralEvent $event, array $rewardConfig): ReferralReward
+    public function processReward(User $referee, string $triggerEvent, ?Order $order = null): void
     {
-        $program = $event->program;
-        $rewardType = $rewardConfig['type'] ?? 'discount';
-        $rewardValue = $rewardConfig['value'] ?? 0;
-        $currencyId = $rewardConfig['currency_id'] ?? null;
+        // Get confirmed attribution for this user
+        $attribution = ReferralAttribution::where('referee_user_id', $referee->id)
+            ->where('status', ReferralAttribution::STATUS_CONFIRMED)
+            ->first();
 
-        // Determine recipient
-        $userId = $event->referrer_id;
-        $customerId = $event->referrer_customer_id;
-
-        // Create reward record
-        $reward = ReferralReward::create([
-            'referral_program_id' => $program->id,
-            'referral_event_id' => $event->id,
-            'user_id' => $userId,
-            'customer_id' => $customerId,
-            'reward_type' => $this->mapRewardType($rewardType),
-            'reward_value' => $rewardValue,
-            'currency_id' => $currencyId,
-            'status' => ReferralReward::STATUS_PENDING,
-            'delivery_method' => $rewardConfig['delivery_method'] ?? ReferralReward::DELIVERY_AUTOMATIC,
-        ]);
-
-        // Process based on reward type
-        switch ($rewardType) {
-            case 'discount':
-            case 'discount_code':
-                $this->issueDiscountReward($reward, $rewardConfig, $program);
-                break;
-            
-            case 'credit':
-                $this->issueCreditReward($reward, $rewardConfig);
-                break;
-            
-            case 'percentage':
-            case 'fixed_amount':
-                // These are typically discount codes
-                $this->issueDiscountReward($reward, $rewardConfig, $program);
-                break;
+        if (!$attribution) {
+            return; // No attribution, no reward
         }
 
-        // Set expiration
-        if ($program->reward_validity_days) {
-            $reward->expires_at = now()->addDays($program->reward_validity_days);
-            $reward->save();
+        $referrer = $attribution->referrer;
+        $program = $attribution->program;
+
+        if (!$referrer || !$program) {
+            return;
         }
 
-        // Mark as issued
-        $reward->markAsIssued();
-        $event->markAsProcessed();
+        // Get applicable rules for this trigger
+        $rules = ReferralRule::where('referral_program_id', $program->id)
+            ->where('trigger_event', $triggerEvent)
+            ->where('is_active', true)
+            ->orderBy('priority', 'desc')
+            ->get();
 
-        // Update program stats
-        $program->increment('total_rewards_issued');
-        $program->increment('total_reward_value', $rewardValue);
+        foreach ($rules as $rule) {
+            // Check if rule is applicable
+            if (!$this->isRuleApplicable($rule, $referee, $referrer, $order)) {
+                continue;
+            }
 
-        return $reward;
+            // Check fraud/abuse prevention
+            if (!$this->fraudService->canIssueReward($rule, $referee, $referrer, $order)) {
+                continue;
+            }
+
+            // Issue rewards
+            $this->issueRewards($rule, $referee, $referrer, $order, $attribution);
+        }
     }
 
     /**
-     * Issue a discount code reward.
+     * Check if a rule is applicable.
      */
-    protected function issueDiscountReward(
-        ReferralReward $reward,
-        array $rewardConfig,
-        ReferralProgram $program
+    protected function isRuleApplicable(ReferralRule $rule, User $referee, User $referrer, ?Order $order): bool
+    {
+        // Check minimum order total
+        if ($rule->min_order_total && $order) {
+            $orderTotal = $order->total->value;
+            if ($orderTotal < $rule->min_order_total) {
+                return false;
+            }
+        }
+
+        // Check eligible products/categories/collections
+        if ($order && ($rule->eligible_product_ids || $rule->eligible_category_ids || $rule->eligible_collection_ids)) {
+            if (!$this->orderMatchesEligibility($order, $rule)) {
+                return false;
+            }
+        }
+
+        // Check redemption limits
+        if (!$this->checkRedemptionLimits($rule, $referee, $referrer)) {
+            return false;
+        }
+
+        // Check cooldown
+        if ($rule->cooldown_days && !$this->checkCooldown($rule, $referrer)) {
+            return false;
+        }
+
+        // Check validation window
+        if ($rule->validation_window_days) {
+            $attribution = ReferralAttribution::where('referee_user_id', $referee->id)
+                ->where('referrer_user_id', $referrer->id)
+                ->where('program_id', $rule->referral_program_id)
+                ->first();
+
+            if ($attribution && $attribution->attributed_at->addDays($rule->validation_window_days)->isPast()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if order matches eligibility criteria.
+     */
+    protected function orderMatchesEligibility(Order $order, ReferralRule $rule): bool
+    {
+        $orderProductIds = $order->lines->pluck('purchasable.product_id')->filter();
+        $orderCategoryIds = $order->lines->pluck('purchasable.product.default_relation_id')->filter();
+
+        // Check products
+        if ($rule->eligible_product_ids) {
+            $eligibleIds = is_array($rule->eligible_product_ids) 
+                ? $rule->eligible_product_ids 
+                : json_decode($rule->eligible_product_ids, true);
+            
+            if (!empty($eligibleIds) && !$orderProductIds->intersect($eligibleIds)->isNotEmpty()) {
+                return false;
+            }
+        }
+
+        // Check categories
+        if ($rule->eligible_category_ids) {
+            $eligibleIds = is_array($rule->eligible_category_ids) 
+                ? $rule->eligible_category_ids 
+                : json_decode($rule->eligible_category_ids, true);
+            
+            if (!empty($eligibleIds) && !$orderCategoryIds->intersect($eligibleIds)->isNotEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check redemption limits.
+     */
+    protected function checkRedemptionLimits(ReferralRule $rule, User $referee, User $referrer): bool
+    {
+        // Check total redemptions
+        if ($rule->max_redemptions_total) {
+            $totalRedemptions = ReferralRewardIssuance::where('referral_rule_id', $rule->id)
+                ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+                ->count();
+
+            if ($totalRedemptions >= $rule->max_redemptions_total) {
+                return false;
+            }
+        }
+
+        // Check per referrer limit
+        if ($rule->max_redemptions_per_referrer) {
+            $referrerRedemptions = ReferralRewardIssuance::where('referral_rule_id', $rule->id)
+                ->where('referrer_user_id', $referrer->id)
+                ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+                ->count();
+
+            if ($referrerRedemptions >= $rule->max_redemptions_per_referrer) {
+                return false;
+            }
+        }
+
+        // Check per referee limit
+        if ($rule->max_redemptions_per_referee) {
+            $refereeRedemptions = ReferralRewardIssuance::where('referral_rule_id', $rule->id)
+                ->where('referee_user_id', $referee->id)
+                ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+                ->count();
+
+            if ($refereeRedemptions >= $rule->max_redemptions_per_referee) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check cooldown period.
+     */
+    protected function checkCooldown(ReferralRule $rule, User $referrer): bool
+    {
+        $lastReward = ReferralRewardIssuance::where('referral_rule_id', $rule->id)
+            ->where('referrer_user_id', $referrer->id)
+            ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+            ->orderBy('issued_at', 'desc')
+            ->first();
+
+        if ($lastReward && $lastReward->issued_at->addDays($rule->cooldown_days)->isFuture()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Issue rewards to both referee and referrer.
+     */
+    protected function issueRewards(
+        ReferralRule $rule,
+        User $referee,
+        User $referrer,
+        ?Order $order,
+        ReferralAttribution $attribution
     ): void {
-        $discountValue = $rewardConfig['value'] ?? 0;
-        $discountType = $rewardConfig['discount_type'] ?? 'percentage'; // percentage or fixed
-        $currencyId = $rewardConfig['currency_id'] ?? null;
-        $couponCode = $rewardConfig['coupon_code'] ?? $this->generateCouponCode($program);
-        $maxUses = $rewardConfig['max_uses'] ?? 1;
-        $validDays = $rewardConfig['valid_days'] ?? $program->reward_validity_days ?? 30;
+        DB::transaction(function () use ($rule, $referee, $referrer, $order, $attribution) {
+            // Issue referee reward
+            if ($rule->referee_reward_type && $rule->referee_reward_value) {
+                $this->issueRefereeReward($rule, $referee, $order);
+            }
 
-        // Create discount using DiscountService
-        $discount = $this->discountService->percentageDiscount(
-            "Referral Reward - {$program->name}",
-            "referral_reward_{$reward->id}"
-        )
-            ->percentage($discountType === 'percentage' ? $discountValue : null)
-            ->fixedAmount($discountType === 'fixed' ? ($discountValue * 100) : null) // Convert to cents
-            ->couponCode($couponCode)
-            ->startsAt(now())
-            ->endsAt(now()->addDays($validDays))
-            ->maxUses($maxUses)
-            ->create();
+            // Issue referrer reward
+            if ($rule->referrer_reward_type && $rule->referrer_reward_value) {
+                $this->issueReferrerReward($rule, $referrer, $referee, $order);
+            }
 
-        // Update reward with discount info
-        $reward->update([
-            'discount_id' => $discount->id,
-            'discount_code' => $couponCode,
-            'max_uses' => $maxUses,
-        ]);
+            // Record issuance
+            ReferralRewardIssuance::create([
+                'referral_rule_id' => $rule->id,
+                'referral_attribution_id' => $attribution->id,
+                'referee_user_id' => $referee->id,
+                'referrer_user_id' => $referrer->id,
+                'order_id' => $order?->id,
+                'referee_reward_type' => $rule->referee_reward_type,
+                'referee_reward_value' => $rule->referee_reward_value,
+                'referrer_reward_type' => $rule->referrer_reward_type,
+                'referrer_reward_value' => $rule->referrer_reward_value,
+                'status' => ReferralRewardIssuance::STATUS_ISSUED,
+                'issued_at' => now(),
+            ]);
+        });
     }
 
     /**
-     * Issue a credit reward.
+     * Issue reward to referee.
      */
-    protected function issueCreditReward(ReferralReward $reward, array $rewardConfig): void
+    protected function issueRefereeReward(ReferralRule $rule, User $referee, ?Order $order): void
     {
-        // Credit rewards can be stored in customer meta or a separate credits table
-        // For now, we'll store it in the reward record and it can be applied during checkout
-        
-        $reward->update([
-            'reward_type' => ReferralReward::TYPE_CREDIT,
-            'reward_value' => $rewardConfig['value'] ?? 0,
-        ]);
-    }
+        switch ($rule->referee_reward_type) {
+            case ReferralRule::REWARD_COUPON:
+                $this->createRefereeCoupon($rule, $referee);
+                break;
 
-    /**
-     * Generate a unique coupon code.
-     */
-    protected function generateCouponCode(ReferralProgram $program): string
-    {
-        $prefix = strtoupper(substr($program->handle, 0, 3));
-        $code = $prefix . 'REF' . strtoupper(Str::random(6));
+            case ReferralRule::REWARD_PERCENTAGE_DISCOUNT:
+                $this->createRefereeDiscount($rule, $referee, 'percentage');
+                break;
 
-        while (Discount::where('coupon', $code)->exists()) {
-            $code = $prefix . 'REF' . strtoupper(Str::random(6));
+            case ReferralRule::REWARD_FIXED_DISCOUNT:
+                $this->createRefereeDiscount($rule, $referee, 'fixed');
+                break;
+
+            case ReferralRule::REWARD_FREE_SHIPPING:
+                $this->createRefereeFreeShipping($rule, $referee);
+                break;
+
+            case ReferralRule::REWARD_STORE_CREDIT:
+                $this->addStoreCredit($referee, $rule->referee_reward_value, 'referee_reward');
+                break;
         }
-
-        return $code;
     }
 
     /**
-     * Map reward type to internal type constant.
+     * Issue reward to referrer.
      */
-    protected function mapRewardType(string $type): string
+    protected function issueReferrerReward(ReferralRule $rule, User $referrer, User $referee, ?Order $order): void
     {
-        return match($type) {
-            'discount', 'discount_code' => ReferralReward::TYPE_DISCOUNT_CODE,
-            'credit' => ReferralReward::TYPE_CREDIT,
-            'percentage' => ReferralReward::TYPE_PERCENTAGE,
-            'fixed_amount', 'fixed' => ReferralReward::TYPE_FIXED_AMOUNT,
-            default => ReferralReward::TYPE_DISCOUNT_CODE,
-        };
+        // Check for tiered rewards
+        $tieredValue = $this->getTieredRewardValue($rule, $referrer);
+        $rewardValue = $tieredValue ?? $rule->referrer_reward_value;
+
+        switch ($rule->referrer_reward_type) {
+            case ReferralRule::REWARD_COUPON:
+                $this->createReferrerCoupon($rule, $referrer, $rewardValue);
+                break;
+
+            case ReferralRule::REWARD_STORE_CREDIT:
+                $this->addStoreCredit($referrer, $rewardValue, 'referrer_reward', $order);
+                break;
+
+            case ReferralRule::REWARD_PERCENTAGE_DISCOUNT_NEXT_ORDER:
+                $this->createReferrerDiscount($rule, $referrer, 'percentage', $rewardValue);
+                break;
+
+            case ReferralRule::REWARD_FIXED_AMOUNT:
+                $this->addStoreCredit($referrer, $rewardValue, 'referrer_reward', $order);
+                break;
+        }
     }
 
     /**
-     * Issue welcome discount for referee.
+     * Get tiered reward value based on referral count.
      */
-    public function issueRefereeWelcomeDiscount(
-        ReferralProgram $program,
-        int $refereeUserId,
-        ?int $refereeCustomerId = null
-    ): ?ReferralReward {
-        $refereeRewards = $program->referee_rewards ?? [];
-
-        if (empty($refereeRewards)) {
+    protected function getTieredRewardValue(ReferralRule $rule, User $referrer): ?float
+    {
+        // Check if rule has tiered rewards configured
+        $tieredRewards = $rule->tiered_rewards ?? null;
+        if (!$tieredRewards) {
             return null;
         }
 
-        $rewardConfig = $refereeRewards[0]; // Use first referee reward config
+        $tieredRewards = is_array($tieredRewards) ? $tieredRewards : json_decode($tieredRewards, true);
 
-        // Create a temporary event for processing
-        $event = new ReferralEvent([
-            'referral_program_id' => $program->id,
-            'event_type' => 'referee_welcome',
-            'status' => ReferralEvent::STATUS_PENDING,
-            'referee_id' => $refereeUserId,
-            'referee_customer_id' => $refereeCustomerId,
+        if (empty($tieredRewards)) {
+            return null;
+        }
+
+        // Count successful referrals for this referrer
+        $referralCount = ReferralRewardIssuance::where('referrer_user_id', $referrer->id)
+            ->where('referral_rule_id', $rule->id)
+            ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+            ->count();
+
+        // Find matching tier (sorted by threshold descending)
+        krsort($tieredRewards);
+        foreach ($tieredRewards as $threshold => $value) {
+            if ($referralCount >= (int)$threshold) {
+                return (float)$value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Create coupon for referee.
+     */
+    protected function createRefereeCoupon(ReferralRule $rule, User $referee): Coupon
+    {
+        $code = $this->generateCouponCode($referee);
+        
+        return Coupon::create([
+            'code' => $code,
+            'type' => Coupon::TYPE_FIXED,
+            'value' => $rule->referee_reward_value,
+            'start' => now(),
+            'end' => now()->addDays($rule->coupon_validity_days ?? 30),
+            'usage_limit' => 1,
+            'per_user_limit' => 1,
+            'eligible_product_ids' => $rule->eligible_product_ids,
+            'eligible_category_ids' => $rule->eligible_category_ids,
+            'stack_policy' => $rule->stacking_mode === ReferralRule::STACKING_STACKABLE ? 'stackable' : 'exclusive',
+            'created_by_rule_id' => $rule->id,
+            'assigned_to_user_id' => $referee->id,
         ]);
-        $event->save();
+    }
 
-        // Create reward
-        $reward = ReferralReward::create([
-            'referral_program_id' => $program->id,
-            'referral_event_id' => $event->id,
-            'user_id' => $refereeUserId,
-            'customer_id' => $refereeCustomerId,
-            'reward_type' => ReferralReward::TYPE_DISCOUNT_CODE,
-            'reward_value' => $rewardConfig['value'] ?? 0,
-            'status' => ReferralReward::STATUS_PENDING,
+    /**
+     * Create discount for referee.
+     */
+    protected function createRefereeDiscount(ReferralRule $rule, User $referee, string $type): Discount
+    {
+        $discount = Discount::create([
+            'name' => "Referral Reward - {$referee->email}",
+            'handle' => 'referee-reward-' . $referee->id . '-' . Str::random(8),
+            'type' => $type === 'percentage' ? 'percentage' : 'fixed',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays($rule->coupon_validity_days ?? 30),
         ]);
 
-        // Issue discount
-        $this->issueDiscountReward($reward, $rewardConfig, $program);
-        $reward->markAsIssued();
-        $event->markAsProcessed();
+        // Set discount value
+        $discount->data = [
+            'value' => $rule->referee_reward_value,
+            'min_basket' => $rule->min_order_total ?? 0,
+        ];
 
-        return $reward;
+        $discount->save();
+
+        // Assign to user (if Lunar supports user-specific discounts)
+        // Otherwise, create a coupon code
+
+        return $discount;
+    }
+
+    /**
+     * Create free shipping discount for referee.
+     */
+    protected function createRefereeFreeShipping(ReferralRule $rule, User $referee): Discount
+    {
+        $discount = Discount::create([
+            'name' => "Free Shipping - {$referee->email}",
+            'handle' => 'referee-freeshipping-' . $referee->id . '-' . Str::random(8),
+            'type' => 'shipping',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays($rule->coupon_validity_days ?? 30),
+        ]);
+
+        $discount->save();
+
+        return $discount;
+    }
+
+    /**
+     * Create coupon for referrer.
+     */
+    protected function createReferrerCoupon(ReferralRule $rule, User $referrer, float $value): Coupon
+    {
+        $code = $this->generateCouponCode($referrer, 'REF');
+        
+        return Coupon::create([
+            'code' => $code,
+            'type' => Coupon::TYPE_FIXED,
+            'value' => $value,
+            'start' => now(),
+            'end' => now()->addDays($rule->coupon_validity_days ?? 60),
+            'usage_limit' => 1,
+            'per_user_limit' => 1,
+            'stack_policy' => 'exclusive',
+            'created_by_rule_id' => $rule->id,
+            'assigned_to_user_id' => $referrer->id,
+        ]);
+    }
+
+    /**
+     * Create discount for referrer next order.
+     */
+    protected function createReferrerDiscount(ReferralRule $rule, User $referrer, string $type, float $value): Discount
+    {
+        $discount = Discount::create([
+            'name' => "Referrer Reward - {$referrer->email}",
+            'handle' => 'referrer-reward-' . $referrer->id . '-' . Str::random(8),
+            'type' => $type === 'percentage' ? 'percentage' : 'fixed',
+            'starts_at' => now(),
+            'ends_at' => now()->addDays($rule->coupon_validity_days ?? 60),
+        ]);
+
+        $discount->data = [
+            'value' => $value,
+        ];
+
+        $discount->save();
+
+        return $discount;
+    }
+
+    /**
+     * Add store credit to user wallet.
+     */
+    protected function addStoreCredit(User $user, float $amount, string $reason, ?Order $order = null): void
+    {
+        $wallet = Wallet::firstOrCreate(
+            ['user_id' => $user->id],
+            ['balance' => 0]
+        );
+
+        $wallet->increment('balance', $amount);
+
+        WalletTransaction::create([
+            'wallet_id' => $wallet->id,
+            'type' => WalletTransaction::TYPE_CREDIT,
+            'amount' => $amount,
+            'reason' => $reason,
+            'related_order_id' => $order?->id,
+            'created_at' => now(),
+        ]);
+    }
+
+    /**
+     * Generate unique coupon code.
+     */
+    protected function generateCouponCode(User $user, string $prefix = 'REF'): string
+    {
+        do {
+            $code = strtoupper($prefix . substr($user->referral_code, 0, 3) . Str::random(6));
+        } while (Coupon::where('code', $code)->exists());
+
+        return $code;
     }
 }
-

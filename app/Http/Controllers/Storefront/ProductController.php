@@ -118,25 +118,14 @@ class ProductController extends Controller
         // Check if user can view this product
         $this->authorize('view', $product);
 
-        // Get cross-sell, up-sell, and alternate products using relationship scopes
-        // See: https://docs.lunarphp.com/1.x/reference/associations
-        $crossSell = $product->associations()
-            ->crossSell()
-            ->with('target.variants.prices', 'target.images')
-            ->get()
-            ->pluck('target');
-
-        $upSell = $product->associations()
-            ->upSell()
-            ->with('target.variants.prices', 'target.images')
-            ->get()
-            ->pluck('target');
-
-        $alternate = $product->associations()
-            ->alternate()
-            ->with('target.variants.prices', 'target.images')
-            ->get()
-            ->pluck('target');
+        // Get product relations using ProductRelationService
+        $relationService = app(\App\Services\ProductRelationService::class);
+        $crossSell = $relationService->getCrossSell($product, 10);
+        $upSell = $relationService->getUpSell($product, 10);
+        $alternate = $relationService->getReplacements($product, 10);
+        $accessories = $relationService->getAccessories($product, 10);
+        $related = $relationService->getRelated($product, 10);
+        $customersAlsoBought = $relationService->getCustomersAlsoBought($product, 10);
 
         // Get attribute values for display
         // See: https://docs.lunarphp.com/1.x/reference/attributes
@@ -156,6 +145,9 @@ class ProductController extends Controller
             'crossSell',
             'upSell',
             'alternate',
+            'accessories',
+            'related',
+            'customersAlsoBought',
             'description',
             'material',
             'weight',

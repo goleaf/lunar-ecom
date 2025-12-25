@@ -702,6 +702,42 @@ class Product extends LunarProduct
     }
 
     /**
+     * Get accessories for this product (uses cross-sell type).
+     *
+     * @param  int  $limit
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAccessories(int $limit = 10): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\ProductRelationService::class);
+        return $service->getAccessories($this, $limit);
+    }
+
+    /**
+     * Get replacement/alternative products (uses alternate type).
+     *
+     * @param  int  $limit
+     * @return \Illuminate\Support\Collection
+     */
+    public function getReplacements(int $limit = 10): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\ProductRelationService::class);
+        return $service->getReplacements($this, $limit);
+    }
+
+    /**
+     * Get all relations for this product grouped by type.
+     *
+     * @param  int  $limitPerType
+     * @return array
+     */
+    public function getAllRelations(int $limitPerType = 10): array
+    {
+        $service = app(\App\Services\ProductRelationService::class);
+        return $service->getAllRelations($this, $limitPerType);
+    }
+
+    /**
      * Get a custom meta field value.
      *
      * @param  string  $key

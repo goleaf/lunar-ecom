@@ -257,6 +257,82 @@ class CurrencyHelper
     {
         return $currency->default;
     }
+
+    /**
+     * Round a price according to currency rounding rules.
+     * 
+     * @param float|int $amount Amount to round
+     * @param Currency $currency Currency instance
+     * @return float Rounded amount
+     */
+    public static function roundPrice(float|int $amount, Currency $currency): float
+    {
+        $precision = (float) ($currency->rounding_precision ?? 0.01);
+
+        if ($precision <= 0) {
+            return (float) $amount; // No rounding
+        }
+
+        $mode = $currency->rounding_mode ?? 'nearest';
+
+        return match ($mode) {
+            'none' => (float) $amount,
+            'up' => ceil($amount / $precision) * $precision,
+            'down' => floor($amount / $precision) * $precision,
+            'nearest' => round($amount / $precision) * $precision,
+            'nearest_up' => $amount % $precision == 0 
+                ? (float) $amount 
+                : ceil($amount / $precision) * $precision,
+            'nearest_down' => $amount % $precision == 0 
+                ? (float) $amount 
+                : floor($amount / $precision) * $precision,
+            default => round($amount / $precision) * $precision,
+        };
+    }
+
+    /**
+     * Round a price in integer format (smallest currency unit).
+     * 
+     * @param int $price Price in smallest currency unit (cents)
+     * @param Currency $currency Currency instance
+     * @return int Rounded price in smallest currency unit
+     */
+    public static function roundPriceInteger(int $price, Currency $currency): int
+    {
+        $priceDecimal = $price / 100;
+        $rounded = static::roundPrice($priceDecimal, $currency);
+        return (int) round($rounded * 100);
+    }
+
+    /**
+     * Convert and round a price from one currency to another.
+     * 
+     * @param float|int $amount Amount to convert
+     * @param Currency|string $fromCurrency Source currency
+     * @param Currency|string $toCurrency Target currency
+     * @param bool $round Whether to apply rounding rules (default: true)
+     * @return float Converted and rounded amount
+     */
+    public static function convertAndRound(
+        float|int $amount,
+        Currency|string $fromCurrency,
+        Currency|string $toCurrency,
+        bool $round = true
+    ): float {
+        $converted = static::convert($amount, $fromCurrency, $toCurrency);
+        
+        if ($round) {
+            $toCurrencyInstance = is_string($toCurrency) 
+                ? static::findByCode($toCurrency) 
+                : $toCurrency;
+            
+            if ($toCurrencyInstance) {
+                return static::roundPrice($converted, $toCurrencyInstance);
+            }
+        }
+        
+        return $converted;
+    }
 }
 
 

@@ -39,9 +39,12 @@
                 {{ $price->formatted }}
             </p>
         @endif
-        <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-            {{ __('storefront.product.view_details') }}
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                {{ __('storefront.product.view_details') }}
+            </a>
+            <x-storefront.compare-button :product="$product" />
+        </div>
     </div>
 </div>
 

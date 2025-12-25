@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Lunar\Models\ProductVariant as LunarProductVariant;
 use Lunar\Models\ProductOptionValue;
@@ -90,6 +91,9 @@ class ProductVariant extends LunarProductVariant
         'meta_title',
         'meta_description',
         'meta_keywords',
+        'out_of_stock_visibility',
+        'preorder_enabled',
+        'preorder_release_date',
     ];
 
     /**
@@ -105,6 +109,8 @@ class ProductVariant extends LunarProductVariant
         'enabled' => 'boolean',
         'low_stock_threshold' => 'integer',
         'position' => 'integer',
+        'preorder_enabled' => 'boolean',
+        'preorder_release_date' => 'datetime',
     ];
 
     /**
@@ -187,6 +193,9 @@ class ProductVariant extends LunarProductVariant
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
             'meta_keywords' => ['nullable', 'string', 'max:500'],
+            'out_of_stock_visibility' => ['nullable', 'in:hide,show_unavailable,show_available'],
+            'preorder_enabled' => ['nullable', 'boolean'],
+            'preorder_release_date' => ['nullable', 'date'],
             'option_values' => ['required', 'array', 'min:1'],
             'option_values.*' => ['required', 'exists:' . config('lunar.database.table_prefix') . 'product_option_values,id'],
         ];
@@ -218,6 +227,9 @@ class ProductVariant extends LunarProductVariant
             'meta_title.max' => 'The meta title must not exceed 255 characters.',
             'meta_description.max' => 'The meta description must not exceed 500 characters.',
             'meta_keywords.max' => 'The meta keywords must not exceed 500 characters.',
+            'out_of_stock_visibility.in' => 'The out of stock visibility must be one of: hide, show_unavailable, show_available.',
+            'preorder_enabled.boolean' => 'The preorder enabled field must be true or false.',
+            'preorder_release_date.date' => 'The preorder release date must be a valid date.',
             'option_values.required' => 'At least one option value must be selected.',
             'option_values.array' => 'Option values must be an array.',
             'option_values.min' => 'At least one option value must be selected.',
@@ -331,11 +343,127 @@ class ProductVariant extends LunarProductVariant
             return false;
         }
 
+        // Check pre-order availability
+        if ($this->preorder_enabled) {
+            return true; // Pre-orders are always available
+        }
+
         if ($this->purchasable === 'in_stock' && $this->stock <= 0) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Check if variant should be visible based on stock status and visibility rules.
+     *
+     * @return bool
+     */
+    public function isVisible(): bool
+    {
+        if (!$this->enabled) {
+            return false;
+        }
+
+        // Get total available stock across all warehouses
+        $totalStock = $this->getTotalAvailableStock();
+
+        // If in stock, always visible
+        if ($totalStock > 0) {
+            return true;
+        }
+
+        // Check out-of-stock visibility rules
+        return match ($this->out_of_stock_visibility ?? 'show_unavailable') {
+            'hide' => false,
+            'show_unavailable' => true,
+            'show_available' => true,
+            default => true,
+        };
+    }
+
+    /**
+     * Check if variant is available for pre-order.
+     *
+     * @return bool
+     */
+    public function isPreorderAvailable(): bool
+    {
+        if (!$this->preorder_enabled) {
+            return false;
+        }
+
+        if (!$this->enabled) {
+            return false;
+        }
+
+        if ($this->purchasable === 'never') {
+            return false;
+        }
+
+        // Check if release date is in the future
+        if ($this->preorder_release_date && $this->preorder_release_date->isPast()) {
+            return false; // Already released
+        }
+
+        return true;
+    }
+
+    /**
+     * Get total available stock across all warehouses.
+     *
+     * @return int
+     */
+    public function getTotalAvailableStock(): int
+    {
+        return \App\Models\InventoryLevel::where('product_variant_id', $this->id)
+            ->sum(DB::raw('quantity - reserved_quantity'));
+    }
+
+    /**
+     * Get total stock across all warehouses (including reserved).
+     *
+     * @return int
+     */
+    public function getTotalStock(): int
+    {
+        return \App\Models\InventoryLevel::where('product_variant_id', $this->id)
+            ->sum('quantity');
+    }
+
+    /**
+     * Get total reserved stock across all warehouses.
+     *
+     * @return int
+     */
+    public function getTotalReservedStock(): int
+    {
+        return \App\Models\InventoryLevel::where('product_variant_id', $this->id)
+            ->sum('reserved_quantity');
+    }
+
+    /**
+     * Get stock breakdown by warehouse.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getStockByWarehouse(): \Illuminate\Support\Collection
+    {
+        return \App\Models\InventoryLevel::where('product_variant_id', $this->id)
+            ->with('warehouse')
+            ->get()
+            ->map(function ($level) {
+                return [
+                    'warehouse_id' => $level->warehouse_id,
+                    'warehouse_name' => $level->warehouse->name,
+                    'quantity' => $level->quantity,
+                    'reserved_quantity' => $level->reserved_quantity,
+                    'available_quantity' => $level->available_quantity,
+                    'incoming_quantity' => $level->incoming_quantity,
+                    'status' => $level->status,
+                ];
+            });
     }
 
     /**

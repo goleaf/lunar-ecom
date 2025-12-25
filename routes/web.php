@@ -88,6 +88,16 @@ Route::prefix('bundles')->name('storefront.bundles.')->group(function () {
 // Product Comparison
 Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Storefront\ComparisonController::class, 'index'])->name('index');
+    Route::get('/count', [\App\Http\Controllers\Storefront\ComparisonController::class, 'count'])->name('count');
+    Route::post('/clear', [\App\Http\Controllers\Storefront\ComparisonController::class, 'clear'])->name('clear');
+    Route::post('/products/{product}/add', [\App\Http\Controllers\Storefront\ComparisonController::class, 'add'])->name('add');
+    Route::post('/products/{product}/remove', [\App\Http\Controllers\Storefront\ComparisonController::class, 'remove'])->name('remove');
+    Route::get('/products/{product}/check', [\App\Http\Controllers\Storefront\ComparisonController::class, 'check'])->name('check');
+});
+
+// Product Comparison
+Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\ComparisonController::class, 'index'])->name('index');
     Route::post('/add', [\App\Http\Controllers\Storefront\ComparisonController::class, 'add'])->name('add');
     Route::post('/remove', [\App\Http\Controllers\Storefront\ComparisonController::class, 'remove'])->name('remove');
     Route::post('/clear', [\App\Http\Controllers\Storefront\ComparisonController::class, 'clear'])->name('clear');

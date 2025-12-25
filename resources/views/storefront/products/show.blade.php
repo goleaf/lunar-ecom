@@ -136,6 +136,11 @@
                         </button>
                     </form>
                     <div id="add-to-cart-message" class="hidden mb-4 p-3 rounded"></div>
+                    
+                    {{-- Comparison Button --}}
+                    <div class="mt-4">
+                        <x-storefront.compare-button :product="$product" />
+                    </div>
                 @endif
 
                 @if($product->tags->count() > 0)

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Lunar\Models\Product as LunarProduct;
 
 /**
@@ -28,6 +29,8 @@ use Lunar\Models\Product as LunarProduct;
  */
 class Product extends LunarProduct
 {
+    /** @use HasFactory<\Database\Factories\ProductFactory> */
+    use HasFactory;
     /**
      * Example custom relationship.
      * 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Lunar\Models\ProductVariant as LunarProductVariant;
 
 /**
@@ -28,6 +29,8 @@ use Lunar\Models\ProductVariant as LunarProductVariant;
  */
 class ProductVariant extends LunarProductVariant
 {
+    /** @use HasFactory<\Database\Factories\ProductVariantFactory> */
+    use HasFactory;
     /**
      * Example custom method.
      * 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Collection;
 use App\Models\Product;
+use App\Enums\CollectionType;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class CollectionService
@@ -16,6 +17,7 @@ class CollectionService
         $collection = Collection::create([
             'collection_group_id' => $data['collection_group_id'],
             'sort' => $data['sort'] ?? 0,
+            'collection_type' => $data['collection_type'] ?? CollectionType::STANDARD->value,
         ]);
 
         // Set collection attributes if provided
@@ -66,6 +68,11 @@ class CollectionService
             $query->where('collection_group_id', $filters['collection_group_id']);
         }
 
+        // Filter by collection type
+        if (isset($filters['collection_type'])) {
+            $query->ofType($filters['collection_type']);
+        }
+
         // Filter by attributes
         if (isset($filters['attributes'])) {
             foreach ($filters['attributes'] as $attributeHandle => $value) {
@@ -77,6 +84,49 @@ class CollectionService
         }
 
         return $query->orderBy('sort')->get();
+    }
+
+    /**
+     * Get collections by type
+     */
+    public function getCollectionsByType(CollectionType $type): EloquentCollection
+    {
+        return Collection::ofType($type)
+            ->with(['products', 'group'])
+            ->orderBy('sort')
+            ->get();
+    }
+
+    /**
+     * Get cross-sell collections
+     */
+    public function getCrossSellCollections(): EloquentCollection
+    {
+        return $this->getCollectionsByType(CollectionType::CROSS_SELL);
+    }
+
+    /**
+     * Get up-sell collections
+     */
+    public function getUpSellCollections(): EloquentCollection
+    {
+        return $this->getCollectionsByType(CollectionType::UP_SELL);
+    }
+
+    /**
+     * Get related collections
+     */
+    public function getRelatedCollections(): EloquentCollection
+    {
+        return $this->getCollectionsByType(CollectionType::RELATED);
+    }
+
+    /**
+     * Get bundle collections
+     */
+    public function getBundleCollections(): EloquentCollection
+    {
+        return $this->getCollectionsByType(CollectionType::BUNDLE);
     }
 
     /**
@@ -103,6 +153,7 @@ class CollectionService
             'collection_group_id' => $parent->collection_group_id,
             'parent_id' => $parent->id,
             'sort' => $data['sort'] ?? 0,
+            'collection_type' => $data['collection_type'] ?? $parent->collection_type?->value ?? CollectionType::STANDARD->value,
         ]);
 
         // Set collection attributes if provided

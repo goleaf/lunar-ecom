@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Services\ComparisonService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 
 /**
  * Controller for product comparison functionality.
@@ -20,82 +20,78 @@ class ComparisonController extends Controller
     /**
      * Display comparison page.
      *
-     * @param  Request  $request
-     * @return \Illuminate\View\View|JsonResponse
+     * @return \Illuminate\View\View
      */
-    public function index(Request $request)
+    public function index()
     {
-        $selectedAttributes = $request->get('attributes');
-        $comparisonTable = $this->comparisonService->getComparisonTable($selectedAttributes);
+        $data = $this->comparisonService->getComparisonData();
 
-        if ($request->wantsJson()) {
-            return response()->json($comparisonTable);
-        }
-
-        $attributes = $this->comparisonService->getComparisonAttributes($selectedAttributes);
-        $allAttributes = $this->comparisonService->getComparisonAttributes(); // All available attributes
-
-        return view('storefront.comparison.index', compact(
-            'comparisonTable',
-            'attributes',
-            'allAttributes',
-            'selectedAttributes'
-        ));
+        return view('storefront.comparison.index', $data);
     }
 
     /**
      * Add product to comparison.
      *
      * @param  Request  $request
+     * @param  Product  $product
      * @return JsonResponse
      */
-    public function add(Request $request): JsonResponse
+    public function add(Request $request, Product $product): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
-        ]);
-
-        try {
-            $result = $this->comparisonService->addToComparison($validated['product_id']);
-
-            return response()->json($result);
-        } catch (\Exception $e) {
+        if ($this->comparisonService->isFull()) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Maximum ' . ComparisonService::MAX_COMPARISON_ITEMS . ' products can be compared at once.',
             ], 422);
         }
+
+        $added = $this->comparisonService->addProduct($product);
+
+        if (!$added) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product is already in comparison.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product added to comparison.',
+            'count' => $this->comparisonService->getComparisonCount(),
+        ]);
     }
 
     /**
      * Remove product from comparison.
      *
      * @param  Request  $request
+     * @param  Product  $product
      * @return JsonResponse
      */
-    public function remove(Request $request): JsonResponse
+    public function remove(Request $request, Product $product): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+        $this->comparisonService->removeProduct($product);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product removed from comparison.',
+            'count' => $this->comparisonService->getComparisonCount(),
         ]);
-
-        $result = $this->comparisonService->removeFromComparison($validated['product_id']);
-
-        return response()->json($result);
     }
 
     /**
      * Clear comparison.
      *
+     * @param  Request  $request
      * @return JsonResponse
      */
-    public function clear(): JsonResponse
+    public function clear(Request $request): JsonResponse
     {
         $this->comparisonService->clearComparison();
 
         return response()->json([
             'success' => true,
-            'message' => 'Comparison cleared',
+            'message' => 'Comparison cleared.',
         ]);
     }
 
@@ -108,66 +104,20 @@ class ComparisonController extends Controller
     {
         return response()->json([
             'count' => $this->comparisonService->getComparisonCount(),
+            'max' => ComparisonService::MAX_COMPARISON_ITEMS,
         ]);
     }
 
     /**
      * Check if product is in comparison.
      *
-     * @param  Request  $request
+     * @param  Product  $product
      * @return JsonResponse
      */
-    public function check(Request $request): JsonResponse
+    public function check(Product $product): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
-        ]);
-
         return response()->json([
-            'in_comparison' => $this->comparisonService->isInComparison($validated['product_id']),
+            'in_comparison' => $this->comparisonService->isInComparison($product),
         ]);
-    }
-
-    /**
-     * Get comparison products.
-     *
-     * @param  Request  $request
-     * @return JsonResponse
-     */
-    public function products(Request $request): JsonResponse
-    {
-        $selectedAttributes = $request->get('attributes');
-        $products = $this->comparisonService->getComparisonProducts($selectedAttributes);
-
-        return response()->json([
-            'products' => $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->translateAttribute('name'),
-                    'slug' => $product->urls->first()?->slug,
-                    'image' => $product->thumbnail?->getUrl(),
-                    'price' => $this->comparisonService->getProductPrice($product),
-                ];
-            }),
-        ]);
-    }
-
-    /**
-     * Export comparison as PDF.
-     *
-     * @param  Request  $request
-     * @return Response
-     */
-    public function exportPdf(Request $request): Response
-    {
-        $selectedAttributes = $request->get('attributes');
-        $comparisonTable = $this->comparisonService->getComparisonTable($selectedAttributes);
-
-        // Use dompdf to generate PDF
-        $html = view('storefront.comparison.pdf', compact('comparisonTable'))->render();
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
-        
-        return $pdf->download('product-comparison-' . date('Y-m-d') . '.pdf');
     }
 }

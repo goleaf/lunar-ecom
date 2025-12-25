@@ -142,6 +142,72 @@ class AttributeHelper
         // Last resort: use translateAttribute without locale (uses first available)
         return $product->translateAttribute($handle);
     }
+
+    /**
+     * Create a Boolean attribute value.
+     * 
+     * @param bool $value
+     * @return bool
+     */
+    public static function boolean(bool $value): bool
+    {
+        return $value;
+    }
+
+    /**
+     * Create a Color attribute value.
+     * 
+     * @param string $hex Hex color code (e.g., "#FF0000")
+     * @param string|null $name Optional color name
+     * @return array
+     */
+    public static function color(string $hex, ?string $name = null): array
+    {
+        return [
+            'hex' => $hex,
+            'name' => $name,
+        ];
+    }
+
+    /**
+     * Create a Date attribute value.
+     * 
+     * @param string|\DateTime $date Date string or DateTime object
+     * @return string
+     */
+    public static function date(string|\DateTime $date): string
+    {
+        if ($date instanceof \DateTime) {
+            return $date->format('Y-m-d');
+        }
+        return $date;
+    }
+
+    /**
+     * Create a Measurement attribute value with unit.
+     * 
+     * @param float $value The numeric value
+     * @param string $unit The unit (e.g., "kg", "cm", "inches")
+     * @return array
+     */
+    public static function measurement(float $value, string $unit): array
+    {
+        return [
+            'value' => $value,
+            'unit' => $unit,
+        ];
+    }
+
+    /**
+     * Create a JSON attribute value.
+     * 
+     * @param array $data Any array data
+     * @return array
+     */
+    public static function json(array $data): array
+    {
+        return $data;
+    }
 }
 
 

@@ -16,14 +16,34 @@ class CategoryRepository
      * Find category by slug.
      *
      * @param  string  $slug
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\Language|null  $language
      * @return Category|null
      */
-    public function findBySlug(string $slug): ?Category
+    public function findBySlug(string $slug, $channel = null, $language = null): ?Category
     {
-        return Cache::remember("category.slug.{$slug}", 3600, function () use ($slug) {
-            return Category::where('slug', $slug)
-                ->where('is_active', true)
-                ->first();
+        $cacheKey = "category.slug.{$slug}";
+        if ($channel) {
+            $cacheKey .= ".channel.{$channel->id}";
+        }
+        if ($language) {
+            $cacheKey .= ".lang.{$language->id}";
+        }
+        
+        return Cache::remember($cacheKey, 3600, function () use ($slug, $channel, $language) {
+            $query = Category::where('slug', $slug);
+            
+            if ($channel) {
+                $query->visibleInChannel($channel);
+            } else {
+                $query->where('is_active', true);
+            }
+            
+            if ($language) {
+                $query->visibleInLanguage($language);
+            }
+            
+            return $query->first();
         });
     }
 
@@ -31,9 +51,11 @@ class CategoryRepository
      * Find category by full path slug.
      *
      * @param  string  $path  Full path like "parent/child/grandchild"
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\Language|null  $language
      * @return Category|null
      */
-    public function findByPath(string $path): ?Category
+    public function findByPath(string $path, $channel = null, $language = null): ?Category
     {
         $segments = array_filter(explode('/', trim($path, '/')));
         
@@ -42,10 +64,19 @@ class CategoryRepository
         }
 
         // Start from root and traverse down
-        $current = Category::whereIsRoot()
-            ->where('slug', $segments[0])
-            ->active()
-            ->first();
+        $query = Category::whereIsRoot()->where('slug', $segments[0]);
+        
+        if ($channel) {
+            $query->visibleInChannel($channel);
+        } else {
+            $query->active();
+        }
+        
+        if ($language) {
+            $query->visibleInLanguage($language);
+        }
+        
+        $current = $query->first();
 
         if (!$current) {
             return null;
@@ -53,10 +84,19 @@ class CategoryRepository
 
         // Traverse through path segments
         for ($i = 1; $i < count($segments); $i++) {
-            $current = $current->children()
-                ->where('slug', $segments[$i])
-                ->active()
-                ->first();
+            $childQuery = $current->children()->where('slug', $segments[$i]);
+            
+            if ($channel) {
+                $childQuery->visibleInChannel($channel);
+            } else {
+                $childQuery->active();
+            }
+            
+            if ($language) {
+                $childQuery->visibleInLanguage($language);
+            }
+            
+            $current = $childQuery->first();
 
             if (!$current) {
                 return null;
@@ -69,15 +109,34 @@ class CategoryRepository
     /**
      * Get root categories (categories without parent).
      *
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\Language|null  $language
      * @return Collection
      */
-    public function getRootCategories(): Collection
+    public function getRootCategories($channel = null, $language = null): Collection
     {
-        return Cache::remember('categories.roots', 3600, function () {
-            return Category::whereIsRoot()
-                ->active()
-                ->ordered()
-                ->get();
+        $cacheKey = 'categories.roots';
+        if ($channel) {
+            $cacheKey .= ".channel.{$channel->id}";
+        }
+        if ($language) {
+            $cacheKey .= ".lang.{$language->id}";
+        }
+        
+        return Cache::remember($cacheKey, 3600, function () use ($channel, $language) {
+            $query = Category::whereIsRoot();
+            
+            if ($channel) {
+                $query->visibleInChannel($channel);
+            } else {
+                $query->active();
+            }
+            
+            if ($language) {
+                $query->visibleInLanguage($language);
+            }
+            
+            return $query->ordered()->get();
         });
     }
 
@@ -185,20 +244,46 @@ class CategoryRepository
      * Get categories for navigation menu.
      *
      * @param  int  $maxDepth
+     * @param  \Lunar\Models\Channel|null  $channel
+     * @param  \Lunar\Models\Language|null  $language
      * @return Collection
      */
-    public function getNavigationCategories(int $maxDepth = 3): Collection
+    public function getNavigationCategories(int $maxDepth = 3, $channel = null, $language = null): Collection
     {
-        return Cache::remember("categories.navigation.{$maxDepth}", 3600, function () use ($maxDepth) {
-            return Category::whereIsRoot()
-                ->active()
-                ->inNavigation()
-                ->ordered()
-                ->with(['children' => function ($query) use ($maxDepth) {
-                    $query->active()
-                          ->inNavigation()
-                          ->ordered()
-                          ->where('depth', '<=', $maxDepth);
+        $cacheKey = "categories.navigation.{$maxDepth}";
+        if ($channel) {
+            $cacheKey .= ".channel.{$channel->id}";
+        }
+        if ($language) {
+            $cacheKey .= ".lang.{$language->id}";
+        }
+        
+        return Cache::remember($cacheKey, 3600, function () use ($maxDepth, $channel, $language) {
+            $query = Category::whereIsRoot();
+            
+            if ($channel) {
+                $query->visibleInChannel($channel)->inNavigationForChannel($channel);
+            } else {
+                $query->active()->inNavigation();
+            }
+            
+            if ($language) {
+                $query->visibleInLanguage($language)->inNavigationForLanguage($language);
+            }
+            
+            return $query->ordered()
+                ->with(['children' => function ($childQuery) use ($maxDepth, $channel, $language) {
+                    if ($channel) {
+                        $childQuery->visibleInChannel($channel)->inNavigationForChannel($channel);
+                    } else {
+                        $childQuery->active()->inNavigation();
+                    }
+                    
+                    if ($language) {
+                        $childQuery->visibleInLanguage($language)->inNavigationForLanguage($language);
+                    }
+                    
+                    $childQuery->ordered()->where('depth', '<=', $maxDepth);
                 }])
                 ->get();
         });

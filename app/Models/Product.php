@@ -528,6 +528,16 @@ class Product extends LunarProduct
     }
 
     /**
+     * Channel attribute values relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function channelAttributeValues()
+    {
+        return $this->hasMany(ChannelAttributeValue::class, 'product_id');
+    }
+
+    /**
      * Attributes relationship through attribute values.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany

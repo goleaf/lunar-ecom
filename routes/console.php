@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Process scheduled product publish/unpublish actions every minute
 Schedule::command('products:process-scheduled-publishes')->everyMinute();
+
+// Process scheduled collections and auto-publish/unpublish products every minute
+Schedule::command('collections:process-scheduled')->everyMinute();

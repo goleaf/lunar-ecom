@@ -30,6 +30,8 @@ class Attribute extends LunarAttribute
     protected $fillable = [
         'unit',
         'display_order',
+        'sortable',
+        'validation_rules',
     ];
 
     /**
@@ -39,6 +41,8 @@ class Attribute extends LunarAttribute
      */
     protected $casts = [
         'display_order' => 'integer',
+        'sortable' => 'boolean',
+        'validation_rules' => 'array',
     ];
 
     /**
@@ -190,5 +194,189 @@ class Attribute extends LunarAttribute
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order')->orderBy('position');
+    }
+
+    /**
+     * Scope a query to only include sortable attributes.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSortable($query)
+    {
+        return $query->where('sortable', true);
+    }
+
+    /**
+     * Check if attribute is text type.
+     *
+     * @return bool
+     */
+    public function isText(): bool
+    {
+        return in_array($this->getTypeName(), ['Text']);
+    }
+
+    /**
+     * Check if attribute is long text type.
+     *
+     * @return bool
+     */
+    public function isLongText(): bool
+    {
+        return in_array($this->getTypeName(), ['Text']) && 
+               ($this->configuration['richtext'] ?? false);
+    }
+
+    /**
+     * Check if attribute is date type.
+     *
+     * @return bool
+     */
+    public function isDate(): bool
+    {
+        return in_array($this->getTypeName(), ['Date']);
+    }
+
+    /**
+     * Check if attribute is file/media type.
+     *
+     * @return bool
+     */
+    public function isFile(): bool
+    {
+        return in_array($this->getTypeName(), ['File', 'Media']);
+    }
+
+    /**
+     * Check if attribute is measurement type (has unit).
+     *
+     * @return bool
+     */
+    public function isMeasurement(): bool
+    {
+        return !empty($this->unit) && $this->isNumeric();
+    }
+
+    /**
+     * Check if attribute is JSON type.
+     *
+     * @return bool
+     */
+    public function isJson(): bool
+    {
+        return in_array($this->getTypeName(), ['JSON', 'Json']);
+    }
+
+    /**
+     * Get validation rules for this attribute.
+     *
+     * @return array
+     */
+    public function getValidationRules(): array
+    {
+        $rules = $this->validation_rules ?? [];
+
+        // Add required rule if attribute is required
+        if ($this->required) {
+            $rules['required'] = true;
+        }
+
+        // Add type-specific validation
+        if ($this->isNumeric()) {
+            $rules['numeric'] = true;
+            if (isset($rules['min'])) {
+                $rules['min'] = (float) $rules['min'];
+            }
+            if (isset($rules['max'])) {
+                $rules['max'] = (float) $rules['max'];
+            }
+        }
+
+        if ($this->isText() || $this->isLongText()) {
+            if (isset($rules['max_length'])) {
+                $rules['max'] = $rules['max_length'];
+            }
+            if (isset($rules['min_length'])) {
+                $rules['min'] = $rules['min_length'];
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Validate a value against this attribute's validation rules.
+     *
+     * @param  mixed  $value
+     * @return bool
+     */
+    public function validateValue($value): bool
+    {
+        $rules = $this->getValidationRules();
+
+        // Check required
+        if (($rules['required'] ?? false) && ($value === null || $value === '')) {
+            return false;
+        }
+
+        // Type-specific validation
+        if ($this->isNumeric()) {
+            if (!is_numeric($value)) {
+                return false;
+            }
+            $numValue = (float) $value;
+            if (isset($rules['min']) && $numValue < $rules['min']) {
+                return false;
+            }
+            if (isset($rules['max']) && $numValue > $rules['max']) {
+                return false;
+            }
+        }
+
+        if ($this->isText() || $this->isLongText()) {
+            if (!is_string($value)) {
+                return false;
+            }
+            if (isset($rules['max']) && strlen($value) > $rules['max']) {
+                return false;
+            }
+            if (isset($rules['min']) && strlen($value) < $rules['min']) {
+                return false;
+            }
+            if (isset($rules['pattern']) && !preg_match($rules['pattern'], $value)) {
+                return false;
+            }
+        }
+
+        if ($this->isDate()) {
+            try {
+                new \DateTime($value);
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Variant attribute values relationship.
+     *
+     * @return HasMany
+     */
+    public function variantAttributeValues(): HasMany
+    {
+        return $this->hasMany(VariantAttributeValue::class, 'attribute_id');
+    }
+
+    /**
+     * Channel attribute values relationship.
+     *
+     * @return HasMany
+     */
+    public function channelAttributeValues(): HasMany
+    {
+        return $this->hasMany(ChannelAttributeValue::class, 'attribute_id');
     }
 }

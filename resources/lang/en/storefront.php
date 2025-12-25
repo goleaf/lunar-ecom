@@ -111,5 +111,30 @@ return [
         'customize_items' => 'Customize Your Bundle',
         'add_to_cart' => 'Add Bundle to Cart',
     ],
+    
+    // Comparison
+    'comparison' => [
+        'title' => 'Product Comparison',
+        'add_to_comparison' => 'Add to Comparison',
+        'remove_from_comparison' => 'Remove from Comparison',
+        'view_comparison' => 'View Comparison',
+        'clear_all' => 'Clear All',
+        'confirm_clear' => 'Are you sure you want to clear all items from comparison?',
+        'items_in_comparison' => ':count item(s) in comparison',
+        'max_items_reached' => 'Maximum 4 products can be compared at once.',
+        'empty' => 'No products in comparison. Add products to compare them side by side.',
+        'browse_products' => 'Browse Products',
+        'specification' => 'Specification',
+        'rating' => 'Rating',
+        'availability' => 'Availability',
+        'description' => 'Description',
+        'in_stock' => 'In Stock',
+        'out_of_stock' => 'Out of Stock',
+        'not_available' => 'N/A',
+        'no_ratings' => 'No ratings yet',
+        'actions' => 'Actions',
+        'remove' => 'Remove',
+        'add_more' => 'Add More Products',
+    ],
 ];
 

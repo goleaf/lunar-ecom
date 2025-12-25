@@ -75,17 +75,18 @@ class ProductComparison extends Model
     /**
      * Get products relationship.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function products()
+    public function getProductsAttribute()
     {
-        return $this->belongsToMany(
-            \Lunar\Models\Product::class,
-            null,
-            null,
-            'product_id',
-            'product_id'
-        )->whereIn('id', $this->product_ids ?? []);
+        $productIds = $this->product_ids ?? [];
+        if (empty($productIds)) {
+            return collect();
+        }
+
+        return \Lunar\Models\Product::whereIn('id', $productIds)
+            ->orderByRaw('FIELD(id, ' . implode(',', $productIds) . ')')
+            ->get();
     }
 
     /**

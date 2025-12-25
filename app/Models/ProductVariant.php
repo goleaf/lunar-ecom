@@ -18,16 +18,41 @@ if (!defined('MEDIA_CLASS_LOADED')) {
 /**
  * Extended ProductVariant model with advanced variant management.
  * 
- * Additional fields:
- * - price_override: Variant-specific price override
- * - cost_price: Cost price for the variant
- * - compare_at_price: Compare-at price
+ * Complete variant fields implementation:
+ * 
+ * Variant Fields:
+ * - sku: Unique SKU (from base Lunar model)
+ * - barcode: EAN/UPC/custom barcode (EAN-13 validated)
+ * - variant_name: Explicit variant name (e.g., "Red / XL"), falls back to generated name
+ * - Attribute combination: Via variantOptions relationship (size, color, material, etc.)
+ * - price_override: Variant-specific price override (per currency via Lunar pricing)
+ * - compare_at_price: Compare-at price (strike-through price)
+ * - cost_price: Internal cost price
  * - weight: Weight in grams
- * - barcode: EAN-13 barcode
- * - enabled: Enable/disable variant
+ * - dimensions: Length, width, height (from base Lunar model)
+ * - stock: Stock quantity
+ * - backorder: Backorder quantity
+ * - low_stock_threshold: Low-stock threshold for alerts
+ * - purchasable: Availability status (always/in_stock/never)
+ * - enabled: Enable/disable individual variant
+ * - position: Variant ordering/priority within product
+ * 
+ * Variant-Specific SEO:
+ * - meta_title: Variant-specific SEO title
+ * - meta_description: Variant-specific SEO description
+ * - meta_keywords: Variant-specific SEO keywords
+ * 
+ * Variant Logic:
+ * - Infinite variants per product: Supported
+ * - Variant inheritance: inheritFromProduct() method for field inheritance
+ * - Variant-specific images: Via images() relationship with primary flag
+ * - Variant-specific SEO: getMetaTitle(), getMetaDescription(), getMetaKeywords()
+ * - Disable individual variants: enabled field
+ * - Variant ordering: position field with scopeOrdered() scope
  * 
  * Relationships:
  * - belongsToMany ProductOptionValue (via existing pivot table)
+ * - belongsToMany Media (variant-specific images)
  * 
  * To use this custom model, register it in AppServiceProvider::boot():
  * 
@@ -59,6 +84,12 @@ class ProductVariant extends LunarProductVariant
         'weight',
         'barcode',
         'enabled',
+        'variant_name',
+        'low_stock_threshold',
+        'position',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
     ];
 
     /**
@@ -72,6 +103,8 @@ class ProductVariant extends LunarProductVariant
         'compare_at_price' => 'integer',
         'weight' => 'integer',
         'enabled' => 'boolean',
+        'low_stock_threshold' => 'integer',
+        'position' => 'integer',
     ];
 
     /**
@@ -148,6 +181,12 @@ class ProductVariant extends LunarProductVariant
             'weight' => ['nullable', 'integer', 'min:0'],
             'barcode' => $barcodeRule,
             'enabled' => ['nullable', 'boolean'],
+            'variant_name' => ['nullable', 'string', 'max:255'],
+            'low_stock_threshold' => ['nullable', 'integer', 'min:0'],
+            'position' => ['nullable', 'integer', 'min:0'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            'meta_keywords' => ['nullable', 'string', 'max:500'],
             'option_values' => ['required', 'array', 'min:1'],
             'option_values.*' => ['required', 'exists:' . config('lunar.database.table_prefix') . 'product_option_values,id'],
         ];
@@ -171,6 +210,14 @@ class ProductVariant extends LunarProductVariant
             'weight.min' => 'The weight must be at least 0.',
             'barcode.size' => 'The barcode must be exactly 13 characters.',
             'enabled.boolean' => 'The enabled field must be true or false.',
+            'variant_name.max' => 'The variant name must not exceed 255 characters.',
+            'low_stock_threshold.integer' => 'The low stock threshold must be an integer.',
+            'low_stock_threshold.min' => 'The low stock threshold must be at least 0.',
+            'position.integer' => 'The position must be an integer.',
+            'position.min' => 'The position must be at least 0.',
+            'meta_title.max' => 'The meta title must not exceed 255 characters.',
+            'meta_description.max' => 'The meta description must not exceed 500 characters.',
+            'meta_keywords.max' => 'The meta keywords must not exceed 500 characters.',
             'option_values.required' => 'At least one option value must be selected.',
             'option_values.array' => 'Option values must be an array.',
             'option_values.min' => 'At least one option value must be selected.',
@@ -346,6 +393,35 @@ class ProductVariant extends LunarProductVariant
         });
     }
 
+    /**
+     * Scope a query to order variants by position (priority).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $direction
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOrdered($query, string $direction = 'asc')
+    {
+        return $query->orderBy('position', $direction)->orderBy('id', $direction);
+    }
+
+    /**
+     * Scope a query to filter low stock variants.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeLowStock($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereColumn('stock', '<=', 'low_stock_threshold')
+              ->orWhere(function ($subQ) {
+                  $subQ->whereNull('low_stock_threshold')
+                       ->where('stock', '<=', 10);
+              });
+        })->where('stock', '>', 0);
+    }
+
 
     /**
      * Get thumbnail image URL.
@@ -437,12 +513,19 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
-     * Get variant display name (option values combined).
+     * Get variant display name.
+     * Uses explicit variant_name if set, otherwise generates from option values.
      *
      * @return string
      */
     public function getDisplayName(): string
     {
+        // Use explicit variant name if set
+        if ($this->variant_name) {
+            return $this->variant_name;
+        }
+
+        // Fallback to generated name from option values
         $values = $this->variantOptions()
             ->with('option')
             ->get()
@@ -472,12 +555,15 @@ class ProductVariant extends LunarProductVariant
 
     /**
      * Get stock status.
+     * Uses low_stock_threshold if set, otherwise defaults to 10.
      *
      * @return string
      */
     public function getStockStatus(): string
     {
-        if ($this->stock > 10) {
+        $threshold = $this->low_stock_threshold ?? 10;
+
+        if ($this->stock > $threshold) {
             return 'in_stock';
         } elseif ($this->stock > 0) {
             return 'low_stock';
@@ -485,6 +571,21 @@ class ProductVariant extends LunarProductVariant
             return 'backorder';
         }
         return 'out_of_stock';
+    }
+
+    /**
+     * Check if variant is low stock based on threshold.
+     *
+     * @return bool
+     */
+    public function isLowStock(): bool
+    {
+        if ($this->stock <= 0) {
+            return false; // Out of stock, not low stock
+        }
+
+        $threshold = $this->low_stock_threshold ?? 10;
+        return $this->stock <= $threshold;
     }
 
     /**
@@ -631,5 +732,163 @@ class ProductVariant extends LunarProductVariant
     ): array {
         $service = app(\App\Services\MatrixPricingService::class);
         return $service->getVolumeDiscounts($this, $currency, $customerGroup);
+    }
+
+    /**
+     * Variant attribute values relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variantAttributeValues()
+    {
+        return $this->hasMany(VariantAttributeValue::class, 'product_variant_id');
+    }
+
+    /**
+     * Attributes relationship through variant attribute values.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function variantAttributes()
+    {
+        return $this->belongsToMany(
+            Attribute::class,
+            config('lunar.database.table_prefix') . 'variant_attribute_values',
+            'product_variant_id',
+            'attribute_id'
+        )->using(VariantAttributeValue::class)
+          ->withPivot('value', 'numeric_value', 'text_value')
+          ->withTimestamps();
+    }
+
+    /**
+     * Get variant-specific SEO meta title.
+     * Falls back to product meta title or product name if not set.
+     *
+     * @return string
+     */
+    public function getMetaTitle(): string
+    {
+        if ($this->meta_title) {
+            return $this->meta_title;
+        }
+
+        // Fallback to product meta title or name
+        if ($this->product) {
+            $productMetaTitle = $this->product->translateAttribute('meta_title');
+            if ($productMetaTitle) {
+                return $productMetaTitle . ' - ' . $this->getDisplayName();
+            }
+
+            $productName = $this->product->translateAttribute('name');
+            if ($productName) {
+                return $productName . ' - ' . $this->getDisplayName();
+            }
+        }
+
+        return $this->getDisplayName();
+    }
+
+    /**
+     * Get variant-specific SEO meta description.
+     * Falls back to product meta description or generated description if not set.
+     *
+     * @return string
+     */
+    public function getMetaDescription(): string
+    {
+        if ($this->meta_description) {
+            return $this->meta_description;
+        }
+
+        // Fallback to product meta description
+        if ($this->product) {
+            $productMetaDescription = $this->product->translateAttribute('meta_description');
+            if ($productMetaDescription) {
+                return $productMetaDescription;
+            }
+
+            // Generate description from product and variant
+            $productName = $this->product->translateAttribute('name');
+            $variantName = $this->getDisplayName();
+            return "Buy {$productName} - {$variantName}. High quality products with fast shipping.";
+        }
+
+        return $this->getDisplayName();
+    }
+
+    /**
+     * Get variant-specific SEO meta keywords.
+     * Falls back to product keywords with variant attributes if not set.
+     *
+     * @return string
+     */
+    public function getMetaKeywords(): string
+    {
+        if ($this->meta_keywords) {
+            return $this->meta_keywords;
+        }
+
+        // Generate keywords from product and variant attributes
+        $keywords = [];
+
+        if ($this->product) {
+            $productName = $this->product->translateAttribute('name');
+            if ($productName) {
+                $keywords[] = $productName;
+            }
+
+            // Add variant display name
+            $keywords[] = $this->getDisplayName();
+
+            // Add option values as keywords
+            $optionValues = $this->variantOptions()
+                ->with('option')
+                ->get()
+                ->map(function ($value) {
+                    return $value->translateAttribute('name');
+                })
+                ->toArray();
+
+            $keywords = array_merge($keywords, $optionValues);
+        }
+
+        return implode(', ', array_unique($keywords));
+    }
+
+    /**
+     * Get variant SEO meta tags array.
+     *
+     * @return array
+     */
+    public function getSEOMetaTags(): array
+    {
+        return [
+            'title' => $this->getMetaTitle(),
+            'description' => $this->getMetaDescription(),
+            'keywords' => $this->getMetaKeywords(),
+        ];
+    }
+
+    /**
+     * Inherit values from parent product if variant values are not set.
+     * This implements variant inheritance logic.
+     *
+     * @param  string  $field
+     * @return mixed
+     */
+    public function inheritFromProduct(string $field)
+    {
+        // Check if variant has the field set
+        if ($this->$field !== null && $this->$field !== '') {
+            return $this->$field;
+        }
+
+        // Fallback to product value
+        if ($this->product) {
+            return $this->product->$field ?? null;
+        }
+
+        return null;
     }
 }

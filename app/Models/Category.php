@@ -311,6 +311,38 @@ class Category extends Model implements HasMedia
     }
 
     /**
+     * Channels relationship for per-channel visibility.
+     *
+     * @return BelongsToMany
+     */
+    public function channels(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \Lunar\Models\Channel::class,
+            config('lunar.database.table_prefix') . 'category_channels',
+            'category_id',
+            'channel_id'
+        )->withPivot('is_visible', 'is_in_navigation')
+          ->withTimestamps();
+    }
+
+    /**
+     * Languages relationship for per-locale visibility.
+     *
+     * @return BelongsToMany
+     */
+    public function languages(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \Lunar\Models\Language::class,
+            config('lunar.database.table_prefix') . 'category_languages',
+            'category_id',
+            'language_id'
+        )->withPivot('is_visible', 'is_in_navigation')
+          ->withTimestamps();
+    }
+
+    /**
      * Products relationship.
      *
      * @return BelongsToMany
@@ -462,6 +494,220 @@ class Category extends Model implements HasMedia
     public function scopeOrdered($query)
     {
         return $query->orderBy('display_order')->orderBy('id');
+    }
+
+    /**
+     * Scope a query to filter categories visible in a specific channel.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Lunar\Models\Channel|int  $channel
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisibleInChannel($query, $channel)
+    {
+        $channelId = $channel instanceof \Lunar\Models\Channel ? $channel->id : $channel;
+        
+        return $query->where(function ($q) use ($channelId) {
+            // Categories without channel-specific visibility (use global is_active)
+            $q->whereDoesntHave('channels', function ($channelQuery) use ($channelId) {
+                $channelQuery->where('channel_id', $channelId);
+            })->where('is_active', true)
+            // OR categories with channel-specific visibility enabled
+            ->orWhereHas('channels', function ($channelQuery) use ($channelId) {
+                $channelQuery->where('channel_id', $channelId)
+                            ->where('is_visible', true);
+            });
+        });
+    }
+
+    /**
+     * Scope a query to filter categories visible in navigation for a specific channel.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Lunar\Models\Channel|int  $channel
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInNavigationForChannel($query, $channel)
+    {
+        $channelId = $channel instanceof \Lunar\Models\Channel ? $channel->id : $channel;
+        
+        return $query->where(function ($q) use ($channelId) {
+            // Categories without channel-specific navigation (use global show_in_navigation)
+            $q->whereDoesntHave('channels', function ($channelQuery) use ($channelId) {
+                $channelQuery->where('channel_id', $channelId);
+            })->where('show_in_navigation', true)
+            // OR categories with channel-specific navigation enabled
+            ->orWhereHas('channels', function ($channelQuery) use ($channelId) {
+                $channelQuery->where('channel_id', $channelId)
+                            ->where('is_in_navigation', true);
+            });
+        });
+    }
+
+    /**
+     * Scope a query to filter categories visible in a specific language/locale.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Lunar\Models\Language|int|string  $language  Language model, ID, or code
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisibleInLanguage($query, $language)
+    {
+        $languageId = $this->resolveLanguageId($language);
+        
+        if (!$languageId) {
+            return $query;
+        }
+        
+        return $query->where(function ($q) use ($languageId) {
+            // Categories without language-specific visibility (use global is_active)
+            $q->whereDoesntHave('languages', function ($languageQuery) use ($languageId) {
+                $languageQuery->where('language_id', $languageId);
+            })->where('is_active', true)
+            // OR categories with language-specific visibility enabled
+            ->orWhereHas('languages', function ($languageQuery) use ($languageId) {
+                $languageQuery->where('language_id', $languageId)
+                            ->where('is_visible', true);
+            });
+        });
+    }
+
+    /**
+     * Scope a query to filter categories visible in navigation for a specific language/locale.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \Lunar\Models\Language|int|string  $language  Language model, ID, or code
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInNavigationForLanguage($query, $language)
+    {
+        $languageId = $this->resolveLanguageId($language);
+        
+        if (!$languageId) {
+            return $query;
+        }
+        
+        return $query->where(function ($q) use ($languageId) {
+            // Categories without language-specific navigation (use global show_in_navigation)
+            $q->whereDoesntHave('languages', function ($languageQuery) use ($languageId) {
+                $languageQuery->where('language_id', $languageId);
+            })->where('show_in_navigation', true)
+            // OR categories with language-specific navigation enabled
+            ->orWhereHas('languages', function ($languageQuery) use ($languageId) {
+                $languageQuery->where('language_id', $languageId)
+                            ->where('is_in_navigation', true);
+            });
+        });
+    }
+
+    /**
+     * Resolve language ID from various input types.
+     *
+     * @param  \Lunar\Models\Language|int|string  $language
+     * @return int|null
+     */
+    protected function resolveLanguageId($language): ?int
+    {
+        if ($language instanceof \Lunar\Models\Language) {
+            return $language->id;
+        }
+        
+        if (is_int($language)) {
+            return $language;
+        }
+        
+        if (is_string($language)) {
+            $lang = \Lunar\Models\Language::where('code', $language)->first();
+            return $lang ? $lang->id : null;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check if category is visible in a specific channel.
+     *
+     * @param  \Lunar\Models\Channel|int  $channel
+     * @return bool
+     */
+    public function isVisibleInChannel($channel): bool
+    {
+        $channelId = $channel instanceof \Lunar\Models\Channel ? $channel->id : $channel;
+        $pivot = $this->channels()->where('channel_id', $channelId)->first();
+        
+        if (!$pivot) {
+            // No channel-specific setting, use global is_active
+            return $this->is_active;
+        }
+        
+        return (bool) $pivot->pivot->is_visible;
+    }
+
+    /**
+     * Check if category is in navigation for a specific channel.
+     *
+     * @param  \Lunar\Models\Channel|int  $channel
+     * @return bool
+     */
+    public function isInNavigationForChannel($channel): bool
+    {
+        $channelId = $channel instanceof \Lunar\Models\Channel ? $channel->id : $channel;
+        $pivot = $this->channels()->where('channel_id', $channelId)->first();
+        
+        if (!$pivot) {
+            // No channel-specific setting, use global show_in_navigation
+            return $this->show_in_navigation;
+        }
+        
+        return (bool) $pivot->pivot->is_in_navigation;
+    }
+
+    /**
+     * Check if category is visible in a specific language/locale.
+     *
+     * @param  \Lunar\Models\Language|int|string  $language
+     * @return bool
+     */
+    public function isVisibleInLanguage($language): bool
+    {
+        $languageId = $this->resolveLanguageId($language);
+        
+        if (!$languageId) {
+            return $this->is_active;
+        }
+        
+        $pivot = $this->languages()->where('language_id', $languageId)->first();
+        
+        if (!$pivot) {
+            // No language-specific setting, use global is_active
+            return $this->is_active;
+        }
+        
+        return (bool) $pivot->pivot->is_visible;
+    }
+
+    /**
+     * Check if category is in navigation for a specific language/locale.
+     *
+     * @param  \Lunar\Models\Language|int|string  $language
+     * @return bool
+     */
+    public function isInNavigationForLanguage($language): bool
+    {
+        $languageId = $this->resolveLanguageId($language);
+        
+        if (!$languageId) {
+            return $this->show_in_navigation;
+        }
+        
+        $pivot = $this->languages()->where('language_id', $languageId)->first();
+        
+        if (!$pivot) {
+            // No language-specific setting, use global show_in_navigation
+            return $this->show_in_navigation;
+        }
+        
+        return (bool) $pivot->pivot->is_in_navigation;
     }
 }
 

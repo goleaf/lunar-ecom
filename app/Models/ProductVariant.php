@@ -924,20 +924,41 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Variant media relationship (enhanced with metadata).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function variantMedia()
+    {
+        return $this->hasMany(VariantMedia::class, 'product_variant_id');
+    }
+
+    /**
+     * Media relationship via pivot table (legacy support).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function images()
+    {
+        return $this->belongsToMany(
+            \Spatie\MediaLibrary\MediaCollections\Models\Media::class,
+            config('lunar.database.table_prefix') . 'media_product_variant',
+            'product_variant_id',
+            'media_id'
+        )->withPivot('primary', 'position', 'media_type', 'channel_id', 'locale', 'alt_text', 'caption', 'accessibility_metadata', 'media_metadata')
+          ->withTimestamps()
+          ->orderBy('position');
+    }
+
+    /**
      * Get all variant images with primary flag.
      *
      * @return \Illuminate\Support\Collection
      */
     public function getVariantImages(): \Illuminate\Support\Collection
     {
-        return $this->images()->get()->map(function ($media) {
-            return [
-                'id' => $media->id,
-                'url' => $media->getUrl(),
-                'thumb_url' => $media->getUrl('thumb'),
-                'primary' => (bool) $media->pivot?->primary,
-            ];
-        });
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getImages($this);
     }
 
     /**
@@ -947,7 +968,92 @@ class ProductVariant extends LunarProductVariant
      */
     public function hasImages(): bool
     {
-        return $this->images()->count() > 0;
+        return $this->variantMedia()->where('media_type', 'image')->count() > 0;
+    }
+
+    /**
+     * Get media gallery with all types.
+     *
+     * @param  array  $options
+     * @return array
+     */
+    public function getMediaGallery(array $options = []): array
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getMediaGallery($this, $options);
+    }
+
+    /**
+     * Get primary image.
+     *
+     * @param  int|null  $channelId
+     * @param  string|null  $locale
+     * @return VariantMedia|null
+     */
+    public function getPrimaryImage(?int $channelId = null, ?string $locale = null): ?VariantMedia
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getPrimaryImage($this, $channelId, $locale);
+    }
+
+    /**
+     * Get images.
+     *
+     * @param  array  $options
+     * @return \Illuminate\Support\Collection
+     */
+    public function getImages(array $options = []): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getImages($this, $options);
+    }
+
+    /**
+     * Get videos.
+     *
+     * @param  array  $options
+     * @return \Illuminate\Support\Collection
+     */
+    public function getVideos(array $options = []): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getVideos($this, $options);
+    }
+
+    /**
+     * Get 360° images.
+     *
+     * @param  array  $options
+     * @return \Illuminate\Support\Collection
+     */
+    public function get360Images(array $options = []): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->get360Images($this, $options);
+    }
+
+    /**
+     * Get 3D models.
+     *
+     * @param  array  $options
+     * @return \Illuminate\Support\Collection
+     */
+    public function get3DModels(array $options = []): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->get3DModels($this, $options);
+    }
+
+    /**
+     * Get AR files.
+     *
+     * @param  array  $options
+     * @return \Illuminate\Support\Collection
+     */
+    public function getARFiles(array $options = []): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantMediaService::class);
+        return $service->getARFiles($this, $options);
     }
 
     /**

@@ -233,6 +233,25 @@ class ReferralFraudService
     }
 
     /**
+     * Check if order was refunded within X days.
+     */
+    protected function isOrderRefundedWithinDays(Order $order, int $days): bool
+    {
+        if (!$this->isOrderRefunded($order)) {
+            return false;
+        }
+
+        // Check if refund happened within the window
+        // Note: You may need to track refund date separately
+        // For now, check if order was placed within the window
+        if ($order->placed_at && $order->placed_at->addDays($days)->isFuture()) {
+            return true; // Order was placed recently, assume refund is within window
+        }
+
+        return false;
+    }
+
+    /**
      * Check one referee can only reward one referrer.
      */
     protected function isOneRefereeOneReferrer(User $referee, User $referrer): bool

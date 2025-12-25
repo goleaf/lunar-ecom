@@ -72,8 +72,8 @@ class ApplyCartDiscountsStep
                 
                 // Log audit trail if required
                 $discount = $application->discount;
-                $data = $discount->data ?? [];
-                if ($data['require_audit_trail'] ?? $discount->require_audit_trail ?? false) {
+                $discountData = $discount->data ?? [];
+                if ($discountData['require_audit_trail'] ?? $discount->require_audit_trail ?? false) {
                     $this->auditService->logApplication(
                         application: $application,
                         cart: $cart,

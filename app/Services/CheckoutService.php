@@ -215,6 +215,9 @@ class CheckoutService
                 $lock->update(['state' => CheckoutLock::STATE_FAILED]);
             }
 
+            // Clear cache
+            $this->cache->clearStatus($lock->cart_id);
+
             Log::info('Checkout released', ['lock_id' => $lock->id]);
         });
     }
@@ -299,24 +302,35 @@ class CheckoutService
      */
     public function getCheckoutStatus(Cart $cart): array
     {
+        // Try cache first
+        $cached = $this->cache->getCachedStatus($cart->id);
+        if ($cached !== null) {
+            return $cached;
+        }
+
         $lock = $this->getActiveLock($cart);
         
         if (!$lock) {
-            return [
+            $status = [
                 'locked' => false,
                 'can_checkout' => true,
             ];
+        } else {
+            $status = [
+                'locked' => true,
+                'can_checkout' => false,
+                'lock_id' => $lock->id,
+                'state' => $lock->state,
+                'phase' => $lock->phase,
+                'expires_at' => $lock->expires_at->toIso8601String(),
+                'can_resume' => $lock->canResume(),
+            ];
         }
 
-        return [
-            'locked' => true,
-            'can_checkout' => false,
-            'lock_id' => $lock->id,
-            'state' => $lock->state,
-            'phase' => $lock->phase,
-            'expires_at' => $lock->expires_at->toIso8601String(),
-            'can_resume' => $lock->canResume(),
-        ];
+        // Cache the status
+        $this->cache->cacheStatus($cart->id, $status);
+
+        return $status;
     }
 }
 

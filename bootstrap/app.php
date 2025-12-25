@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register checkout cart protection middleware
         $middleware->alias([
             'protect.checkout.cart' => \App\Http\Middleware\ProtectCheckoutCart::class,
+            'throttle.checkout' => \App\Http\Middleware\ThrottleCheckout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

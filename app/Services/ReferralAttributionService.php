@@ -191,12 +191,16 @@ class ReferralAttributionService
         // Check if attribution already exists
         $existing = ReferralAttribution::where('referee_user_id', $referee->id)
             ->where('program_id', $program->id)
-            ->where('status', ReferralAttribution::STATUS_CONFIRMED)
             ->first();
 
         if ($existing) {
-            // If existing has higher priority, don't overwrite
+            // If existing has higher priority (lower number = higher priority), don't overwrite
             if ($existing->priority < $priority) {
+                return $existing;
+            }
+            
+            // If same priority but confirmed, don't overwrite
+            if ($existing->priority === $priority && $existing->status === ReferralAttribution::STATUS_CONFIRMED) {
                 return $existing;
             }
         }

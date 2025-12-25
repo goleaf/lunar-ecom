@@ -3,8 +3,8 @@
 namespace App\Listeners;
 
 use Illuminate\Auth\Events\Registered;
-use App\Services\ReferralService;
-use App\Models\ReferralCode;
+use App\Services\ReferralAttributionService;
+use App\Models\ReferralProgram;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -13,32 +13,48 @@ class ProcessUserRegistration implements ShouldQueue
     use InteractsWithQueue;
 
     public function __construct(
-        protected ReferralService $referralService
+        protected ReferralAttributionService $attributionService
     ) {}
 
     public function handle(Registered $event): void
     {
-        // Check if user came from a referral link
-        $referralCodeId = session()->get('referral_code_id');
+        $user = $event->user;
 
-        if ($referralCodeId) {
-            $code = ReferralCode::find($referralCodeId);
+        // Generate referral code for new user if not exists
+        if (!$user->referral_code) {
+            $user->generateReferralCode();
+        }
 
-            if ($code && $code->isValid()) {
-                $customer = $event->user->customers()->first();
+        // Get active referral programs
+        $programs = ReferralProgram::active()->get();
 
-                // Process referral signup
-                event(new \App\Events\ReferralSignup(
-                    $code,
-                    $event->user,
-                    $customer
-                ));
+        foreach ($programs as $program) {
+            if (!$program->isEligibleForUser($user)) {
+                continue;
             }
 
-            // Clear session
-            session()->forget('referral_code_id');
-            session()->forget('referral_code_slug');
+            // Get explicit code from request (if user entered one)
+            $explicitCode = request()->input('referral_code');
+
+            // Create attribution with priority system
+            $attribution = $this->attributionService->createAttribution(
+                $user,
+                $program,
+                $explicitCode,
+                $program->last_click_wins ?? true,
+                $program->attribution_ttl_days ?? 7
+            );
+
+            if ($attribution) {
+                // Process signup event for rules
+                // This will be handled by another listener/service
+                break; // Only attribute to first eligible program
+            }
         }
+
+        // Clear session
+        session()->forget('referral_code');
+        session()->forget('referral_code_id');
     }
 }
 

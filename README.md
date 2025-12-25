@@ -4824,15 +4824,342 @@ try {
 
 ## Customers
 
-This project implements customers following the [Lunar Customers documentation](https://docs.lunarphp.com/1.x/reference/customers):
+This project implements customers following the [Lunar Customers documentation](https://docs.lunarphp.com/1.x/reference/customers). We use Customers in Lunar to store the customer details, rather than Users. We do this for a few reasons: one, so that we leave your User models well alone, and two, because it provides flexibility.
 
-- **Customer Model**: Stores customer details separately from Users
-- **Customer Groups**: Group customers for pricing and product availability
-- **User Association**: Multiple users can be associated with one customer (useful for B2B)
-- **Customer Group Scheduling**: Schedule product availability per customer group
-- **Impersonation**: Admin can impersonate customers for support
+**Overview**:
 
-**Usage**:
+Customers in Lunar:
+- Store customer details separately from Users
+- Can have multiple users associated (useful for B2B where multiple buyers can access the same customer account)
+- Belong to Customer Groups for pricing and product availability
+- Support customer group scheduling for products
+- Can be impersonated by admins for support
+
+**Customers**:
+
+The `Customer` model has the following fields:
+
+| Field           | Description        |
+|-----------------|--------------------|
+| `id`            | Primary key        |
+| `title`         | Mr, Mrs, Miss, etc |
+| `first_name`    | First name         |
+| `last_name`     | Last name          |
+| `company_name`  | Company name (nullable) |
+| `vat_no`        | VAT number (nullable) |
+| `account_ref`   | Account reference (nullable) |
+| `attribute_data`| JSON attribute data |
+| `meta`          | JSON metadata      |
+| `created_at`    | Creation timestamp |
+| `updated_at`    | Last update timestamp |
+
+**Creating a Customer**:
+
+```php
+use Lunar\Models\Customer;
+
+$customer = Customer::create([
+    'title' => 'Mr.',
+    'first_name' => 'Tony',
+    'last_name' => 'Stark',
+    'company_name' => 'Stark Enterprises',
+    'vat_no' => null,
+    'meta' => [
+        'account_no' => 'TNYSTRK1234'
+    ],
+]);
+```
+
+**Relationships**:
+
+Customers have the following relationships:
+- **Customer Groups**: `customer_customer_group` pivot table
+- **Users**: `customer_user` pivot table (many-to-many)
+
+**Users**:
+
+Customers will typically be associated with a user, so they can place orders. But it is also possible to have multiple users associated with a customer. This can be useful on B2B e-commerce where a customer may have multiple buyers.
+
+**Attaching Users to a Customer**:
+
+```php
+use Lunar\Models\Customer;
+use App\Models\User;
+
+$customer = Customer::create([/* ... */]);
+$user = User::find(1);
+
+// Attach a single user
+$customer->users()->attach($user);
+// Or by ID
+$customer->users()->attach($user->id);
+
+// Sync multiple users (replaces all existing associations)
+$customer->users()->sync([1, 2, 3]);
+
+// Detach a user
+$customer->users()->detach($user);
+```
+
+**Attaching a Customer to a Customer Group**:
+
+```php
+use Lunar\Models\Customer;
+use Lunar\Models\CustomerGroup;
+
+$customer = Customer::create([/* ... */]);
+$customerGroup = CustomerGroup::find(1);
+
+// Attach to a customer group
+$customer->customerGroups()->attach($customerGroup);
+// Or by ID
+$customer->customerGroups()->attach($customerGroup->id);
+
+// Sync customer groups (replaces all existing associations)
+$customer->customerGroups()->sync([4, 5, 6]);
+
+// Detach from a customer group
+$customer->customerGroups()->detach($customerGroup);
+```
+
+**Impersonating Users**:
+
+When a customer needs help with their account, it's useful to be able to log in as that user so you can help diagnose the issue they're having. Lunar allows you to specify your own method of how you want to impersonate users, usually this is in the form of a signed URL an admin can go to in order to log in as the user.
+
+**Creating the Impersonate Class**:
+
+This project includes a custom impersonation class at `app/Auth/Impersonate.php`:
+
+```php
+<?php
+
+namespace App\Auth;
+
+use Lunar\Hub\Auth\Impersonate as LunarImpersonate;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\URL;
+
+class Impersonate extends LunarImpersonate
+{
+    /**
+     * Return the URL for impersonation.
+     *
+     * @return string
+     */
+    public function getUrl(Authenticatable $authenticatable): string
+    {
+        return URL::temporarySignedRoute('impersonate.link', now()->addMinutes(5), [
+            'user' => $authenticatable->getAuthIdentifier(),
+        ]);
+    }
+}
+```
+
+**Registering the Impersonate Class**:
+
+If you're using Lunar Hub, register this in `config/lunar-hub/customers.php`:
+
+```php
+return [
+    'impersonate' => App\Auth\Impersonate::class,
+    // ...
+];
+```
+
+Once added, you will see an option to impersonate the user when viewing a customer in the admin panel. This will then go to the URL specified in your class where you will be able to handle the impersonation logic.
+
+**Customer Groups**:
+
+Customer groups allow you to group your customers into logical segments which enables you to define different criteria on models based on what customer belongs to that group. These criteria include things like:
+
+**Pricing**:
+
+Specify different pricing per customer group. For example, you may have certain prices for customers that are in the `trade` customer group. See the [Products documentation](#products) for more details on customer group pricing.
+
+**Product Availability**:
+
+You can turn product visibility off depending on the customer group. This would mean only certain products would show depending on the group they belong to. This will also include scheduling availability so you can release products earlier or later to different groups.
+
+**Important**: You must have at least one customer group in your store. When you install Lunar, you will be given a default one to get you started named `retail`.
+
+**Creating a Customer Group**:
+
+```php
+use Lunar\Models\CustomerGroup;
+
+$customerGroup = CustomerGroup::create([
+    'name' => 'Retail',
+    'handle' => 'retail', // Must be unique
+    'default' => false,
+]);
+```
+
+You can only have one default at a time. If you create a customer group and pass `default` to `true`, then the existing default will be set to `false`.
+
+**Scheduling Availability**:
+
+If you would like to add customer group availability to your own models, you can use the `HasCustomerGroups` trait:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Lunar\Base\Traits\HasCustomerGroups;
+
+class MyModel extends Model
+{
+    use HasCustomerGroups;
+    
+    // Define the relationship for customer groups
+    public function customerGroups()
+    {
+        return $this->belongsToMany(
+            \Lunar\Models\CustomerGroup::class,
+            'my_model_customer_group' // Your pivot table name
+        )->withTimestamps()->withPivot([
+            'enabled',
+            'starts_at',
+            'ends_at',
+        ]);
+    }
+}
+```
+
+You will then have access to the following methods:
+
+**Scheduling Customer Groups**:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\CustomerGroup;
+use Carbon\Carbon;
+
+$product = Product::find(1);
+$customerGroup = CustomerGroup::find(1);
+
+// Schedule the product to be enabled straight away
+$product->scheduleCustomerGroup($customerGroup);
+
+// Will schedule for this product to be enabled in 14 days for this customer group
+$product->scheduleCustomerGroup(
+    $customerGroup,
+    Carbon::now()->addDays(14)
+);
+
+// Schedule with start and end dates
+$product->scheduleCustomerGroup(
+    $customerGroup,
+    Carbon::now()->addDays(7),  // Start date
+    Carbon::now()->addDays(30)  // End date
+);
+
+// Schedule with pivot data
+$product->scheduleCustomerGroup(
+    $customerGroup,
+    null, // Start date (null = now)
+    null, // End date (null = no end)
+    ['enabled' => true, 'priority' => 1] // Pivot data
+);
+
+// The schedule method will accept an array or collection of customer groups
+$product->scheduleCustomerGroup(CustomerGroup::all());
+```
+
+**Unscheduling Customer Groups**:
+
+If you do not want a model to be enabled for a customer group, you can unschedule it. This will keep any previous `start` and `end` dates but will toggle the `enabled` column:
+
+```php
+$product->unscheduleCustomerGroup($customerGroup);
+
+// With pivot data
+$product->unscheduleCustomerGroup($customerGroup, ['reason' => 'Out of stock']);
+```
+
+**Parameters**:
+
+| Field         | Description                                                                                    | Type     | Default |
+|---------------|------------------------------------------------------------------------------------------------|----------|---------|
+| `customerGroup`| A collection of CustomerGroup models or id's                                                   | mixed    |         |
+| `startDate`   | The date the customer group will be active from                                               | DateTime |         |
+| `endDate`     | The date the customer group will be active until                                              | DateTime |         |
+| `pivotData`   | Any additional pivot data you may have on your link table (not including scheduling defaults)  | array    |         |
+
+**Pivot Data**: By default the following values are used for `$pivotData`:
+- `enabled` - Whether the customer group is enabled, defaults to `true` when scheduling and `false` when unscheduling.
+
+You can override any of these yourself as they are merged behind the scenes.
+
+**Retrieving the Relationship**:
+
+The `HasCustomerGroups` trait adds a `customerGroup` scope to the model. This lets you query based on availability for a specific or multiple customer groups. The scope will accept either a single ID or instance of `CustomerGroup` and will accept an array:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\CustomerGroup;
+use Carbon\Carbon;
+
+// Query for products available to a single customer group
+$results = Product::customerGroup(1)->paginate();
+
+// Query for products available to multiple customer groups
+$results = Product::customerGroup([
+    $groupA,
+    $groupB,
+])->paginate(50);
+
+// Query with start date (products available after this date)
+$results = Product::customerGroup(1, Carbon::now()->addDay())->get();
+
+// Query with start and end dates (products available within this date range)
+$results = Product::customerGroup(
+    1,
+    Carbon::now()->addDay(),
+    Carbon::now()->addDays(7)
+)->get();
+```
+
+The start and end dates should be `DateTime` objects which will query for the existence of a customer group association with the start and end dates between those given. These are optional and the following happens in certain situations:
+
+- **Pass neither `startDate` or `endDate`**: Will query for customer groups which are enabled and the `startDate` is after `now()`
+- **Pass only `startDate`**: Will query for customer groups which are enabled, the start date is after the given date and the end date is either null or before `now()`
+- **Pass both `startDate` and `endDate`**: Will query for customer groups which are enabled, the start date is after the given date and the end date is before the given date
+- **Pass `endDate` without `startDate`**: Will query for customer groups which are enabled, the start date is after `now()` and the end date is before the given date
+
+If you omit the second parameter, the scope will take the current date and time.
+
+A model will only be returned if the `enabled` column is positive, regardless of whether the start and end dates match.
+
+**Limit by Customer Group**:
+
+Eloquent models which use the `HasCustomerGroups` trait have a useful scope available:
+
+```php
+use Lunar\Models\Product;
+use Lunar\Models\CustomerGroup;
+
+// Limit products available to a single customer group
+Product::customerGroup($customerGroup)->get();
+
+// Limit products available to multiple customer groups
+Product::customerGroup([$groupA, $groupB])->get();
+
+// Limit to products which are available the next day
+Product::customerGroup($customerGroup, now()->addDay())->get();
+
+// Limit to products which are available within a date range
+Product::customerGroup(
+    $customerGroup,
+    now()->addDay(),
+    now()->addDays(2)
+)->get();
+```
+
+**Using CustomerHelper**:
+
+The `CustomerHelper` class provides convenience methods:
 
 ```php
 use App\Lunar\Customers\CustomerHelper;
@@ -4852,11 +5179,24 @@ $customer = CustomerHelper::create([
     ],
 ]);
 
+// Find a customer
+$customer = CustomerHelper::find(1);
+
+// Get all customers
+$allCustomers = CustomerHelper::all();
+
 // Attach user to customer
 CustomerHelper::attachUser($customer, $user);
+CustomerHelper::attachUser($customer, $user->id);
 
 // Sync multiple users (useful for B2B where multiple buyers can access the same customer account)
 CustomerHelper::syncUsers($customer, [1, 2, 3]);
+
+// Detach user from customer
+CustomerHelper::detachUser($customer, $user);
+
+// Get users for a customer
+$users = CustomerHelper::getUsers($customer);
 
 // Attach customer to customer group
 $retailGroup = CustomerHelper::findCustomerGroupByHandle('retail');
@@ -4864,6 +5204,12 @@ CustomerHelper::attachCustomerGroup($customer, $retailGroup);
 
 // Sync customer groups
 CustomerHelper::syncCustomerGroups($customer, [1, 2]);
+
+// Detach customer group from customer
+CustomerHelper::detachCustomerGroup($customer, $retailGroup);
+
+// Get customer groups for a customer
+$groups = CustomerHelper::getCustomerGroups($customer);
 
 // Create a customer group
 $customerGroup = CustomerHelper::createCustomerGroup(
@@ -4878,6 +5224,9 @@ $allGroups = CustomerHelper::getAllCustomerGroups();
 // Get default customer group
 $defaultGroup = CustomerHelper::getDefaultCustomerGroup();
 
+// Find customer group by handle
+$retailGroup = CustomerHelper::findCustomerGroupByHandle('retail');
+
 // Get customer for user
 $customer = CustomerHelper::getCustomerForUser($user);
 
@@ -4888,71 +5237,101 @@ $customer = CustomerHelper::getOrCreateCustomerForUser($user, [
 ]);
 
 // Schedule customer group availability for a product (using HasCustomerGroups trait)
-$product->scheduleCustomerGroup($customerGroup);
-$product->scheduleCustomerGroup($customerGroup, now()->addDays(14)); // Schedule for future
-$product->scheduleCustomerGroup([$group1, $group2], $startDate, $endDate);
+CustomerHelper::scheduleCustomerGroup($product, $customerGroup);
+CustomerHelper::scheduleCustomerGroup($product, $customerGroup, now()->addDays(14));
+CustomerHelper::scheduleCustomerGroup($product, [$group1, $group2], $startDate, $endDate);
 
 // Unschedule customer group
-$product->unscheduleCustomerGroup($customerGroup);
-
-// Query products by customer group
-$products = Product::customerGroup($customerGroup)->get();
-$products = Product::customerGroup([$group1, $group2])->get();
-$products = Product::customerGroup($customerGroup, now()->addDay())->get(); // Available tomorrow
-$products = Product::customerGroup($customerGroup, $startDate, $endDate)->get(); // Date range
+CustomerHelper::unscheduleCustomerGroup($product, $customerGroup);
 ```
 
-**Customer Fields**:
-
-- `id` - Unique customer ID
-- `title` - Title (Mr, Mrs, Miss, etc.)
-- `first_name` - First name
-- `last_name` - Last name
-- `company_name` - Company name (nullable)
-- `vat_no` - VAT number (nullable)
-- `account_ref` - Account reference (nullable)
-- `attribute_data` - JSON attribute data
-- `meta` - JSON metadata
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Customer Group Fields**:
-
-- `id` - Unique customer group ID
-- `name` - Group name (e.g., "Retail", "Trade")
-- `handle` - Unique handle (e.g., "retail", "trade")
-- `default` - Whether this is the default group (boolean)
-- `created_at` - Creation timestamp
-- `updated_at` - Last update timestamp
-
-**Relationships**:
-
-- **Users**: `$customer->users()` - Multiple users can be associated with one customer
-- **Customer Groups**: `$customer->customerGroups()` - Customer can belong to multiple groups
-- **Customer**: `$user->latestCustomer()` - Get the latest customer for a user
-
-**Customer Group Scheduling**:
-
-Models using the `HasCustomerGroups` trait (like Products) can schedule availability:
-
-- `scheduleCustomerGroup($customerGroup, $startDate, $endDate, $pivotData)` - Schedule availability
-- `unscheduleCustomerGroup($customerGroup, $pivotData)` - Disable availability
-- `customerGroup($customerGroup, $startDate, $endDate)` - Query scope to filter by customer group
-
-**Impersonation**:
-
-Admin can impersonate customers for support. Configure in `config/lunar-hub/customers.php`:
+**Example: Complete Customer Workflow**:
 
 ```php
-return [
-    'impersonate' => App\Auth\Impersonate::class,
-    // ...
-];
+use Lunar\Models\Customer;
+use Lunar\Models\CustomerGroup;
+use Lunar\Models\Product;
+use App\Models\User;
+use Carbon\Carbon;
+
+// 1. Create a customer group (if not exists)
+$retailGroup = CustomerGroup::firstOrCreate(
+    ['handle' => 'retail'],
+    [
+        'name' => 'Retail',
+        'default' => true,
+    ]
+);
+
+$tradeGroup = CustomerGroup::firstOrCreate(
+    ['handle' => 'trade'],
+    [
+        'name' => 'Trade',
+        'default' => false,
+    ]
+);
+
+// 2. Create a customer
+$customer = Customer::create([
+    'title' => 'Mr.',
+    'first_name' => 'John',
+    'last_name' => 'Doe',
+    'company_name' => 'Acme Inc',
+    'vat_no' => 'GB123456789',
+    'meta' => [
+        'account_no' => 'ACME1234',
+    ],
+]);
+
+// 3. Attach user to customer
+$user = User::find(1);
+$customer->users()->attach($user->id);
+
+// 4. Attach customer to customer groups
+$customer->customerGroups()->attach([$retailGroup->id, $tradeGroup->id]);
+
+// 5. Schedule product availability for customer groups
+$product = Product::find(1);
+
+// Available immediately for retail group
+$product->scheduleCustomerGroup($retailGroup);
+
+// Available in 7 days for trade group
+$product->scheduleCustomerGroup(
+    $tradeGroup,
+    Carbon::now()->addDays(7)
+);
+
+// 6. Query products by customer group
+$retailProducts = Product::customerGroup($retailGroup)->get();
+$tradeProducts = Product::customerGroup($tradeGroup)->get();
+
+// 7. Get customer's groups
+$customerGroups = $customer->customerGroups;
+
+// 8. Get customer's users
+$users = $customer->users;
+
+// 9. Get user's customer
+$userCustomer = $user->latestCustomer();
 ```
 
-The impersonation class generates a signed URL that allows temporary login as the customer.
+**Best Practices**:
 
-**Note**: You must have at least one customer group in your store. Lunar provides a default `retail` customer group on installation.
+- **Separate Customers from Users**: Keep customer details separate from user authentication data
+- **Multiple Users per Customer**: Use this for B2B scenarios where multiple buyers can access the same account
+- **Customer Groups**: Use customer groups for pricing and product availability segmentation
+- **Default Group**: Always have at least one default customer group (Lunar provides `retail` by default)
+- **Scheduling**: Use customer group scheduling to control when products become available to different groups
+- **Eager Load**: When loading customers, eager load relationships:
+  ```php
+  Customer::with(['users', 'customerGroups'])->get();
+  ```
+- **Impersonation**: Use impersonation for customer support, but ensure proper security (signed URLs with expiration)
+- **Meta Field**: Use the `meta` JSON field for custom customer data if needed
+- **Attribute Data**: Use `attribute_data` for structured customer attributes
+
+**Documentation**: See [Lunar Customers documentation](https://docs.lunarphp.com/1.x/reference/customers)
 
 ## Discounts
 

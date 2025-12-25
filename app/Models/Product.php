@@ -848,6 +848,40 @@ class Product extends LunarProduct
     }
 
     /**
+     * Product questions relationship.
+     */
+    public function questions()
+    {
+        return $this->hasMany(\App\Models\ProductQuestion::class, 'product_id');
+    }
+
+    /**
+     * Approved questions relationship.
+     */
+    public function approvedQuestions()
+    {
+        return $this->hasMany(\App\Models\ProductQuestion::class, 'product_id')
+            ->where('status', 'approved')
+            ->where('is_public', true);
+    }
+
+    /**
+     * Get Q&A count for product cards.
+     */
+    public function getQaCountAttribute(): int
+    {
+        return $this->approvedQuestions()->count();
+    }
+
+    /**
+     * Get answered Q&A count.
+     */
+    public function getAnsweredQaCountAttribute(): int
+    {
+        return $this->approvedQuestions()->where('is_answered', true)->count();
+    }
+
+    /**
      * Product badge assignments relationship.
      */
     public function badgeAssignments()

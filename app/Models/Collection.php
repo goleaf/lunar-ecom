@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CollectionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Lunar\Models\Collection as LunarCollection;
 
 class Collection extends LunarCollection
@@ -194,5 +195,35 @@ class Collection extends LunarCollection
     {
         $this->scheduled_unpublish_at = null;
         $this->save();
+    }
+
+    /**
+     * Collection rules relationship (for rule-based collections).
+     *
+     * @return HasMany
+     */
+    public function rules(): HasMany
+    {
+        return $this->hasMany(CollectionRule::class, 'collection_id');
+    }
+
+    /**
+     * Check if collection is rule-based (dynamic).
+     *
+     * @return bool
+     */
+    public function isRuleBased(): bool
+    {
+        return $this->type === 'dynamic' || $this->rules()->active()->exists();
+    }
+
+    /**
+     * Check if collection is manual (static).
+     *
+     * @return bool
+     */
+    public function isManual(): bool
+    {
+        return $this->type === 'static' || !$this->isRuleBased();
     }
 }

@@ -692,6 +692,16 @@ class Product extends LunarProduct
     }
 
     /**
+     * Stock notifications for this product.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function stockNotifications()
+    {
+        return $this->hasMany(\App\Models\StockNotification::class, 'product_id');
+    }
+
+    /**
      * Check if product is a bundle.
      *
      * @return bool

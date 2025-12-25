@@ -13,3 +13,9 @@ Schedule::command('products:process-scheduled-publishes')->everyMinute();
 
 // Process scheduled collections and auto-publish/unpublish products every minute
 Schedule::command('collections:process-scheduled')->everyMinute();
+
+// Check stock notifications every hour
+Schedule::command('stock:check-notifications')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();

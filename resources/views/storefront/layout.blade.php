@@ -64,6 +64,20 @@
                         <a href="{{ route('storefront.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                             {{ __('storefront.nav.bundles') }}
                         </a>
+                        <a href="{{ route('storefront.comparison.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 relative">
+                            {{ __('storefront.nav.comparison') }}
+                            @php
+                                $comparisonService = app(\App\Services\ComparisonService::class);
+                                $comparisonCount = $comparisonService->getComparisonCount();
+                            @endphp
+                            @if($comparisonCount > 0)
+                                <span id="comparison-count" class="ml-1 bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">
+                                    {{ $comparisonCount }}
+                                </span>
+                            @else
+                                <span id="comparison-count" class="hidden ml-1 bg-blue-600 text-white text-xs rounded-full px-2 py-0.5"></span>
+                            @endif
+                        </a>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -82,6 +96,9 @@
             </div>
         </div>
     </nav>
+
+    {{-- Comparison Bar --}}
+    @include('storefront.components.comparison-bar')
 
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         @if(session('success'))

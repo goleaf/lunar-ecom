@@ -95,6 +95,22 @@ Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
     Route::get('/products/{product}/check', [\App\Http\Controllers\Storefront\ComparisonController::class, 'check'])->name('check');
 });
 
+// Stock Notifications
+Route::prefix('stock-notifications')->name('storefront.stock-notifications.')->group(function () {
+    Route::post('/variants/{variant}/subscribe', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'subscribe'])->name('subscribe');
+    Route::get('/variants/{variant}/check', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'check'])->name('check');
+    Route::get('/unsubscribe/{token}', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'unsubscribe'])->name('unsubscribe');
+    Route::get('/track/open/{metricId}', [\App\Http\Controllers\Storefront\StockNotificationTrackingController::class, 'trackOpen'])->name('track-open');
+    Route::get('/track/click/{metricId}/{linkType}', [\App\Http\Controllers\Storefront\StockNotificationTrackingController::class, 'trackClick'])->name('track-click');
+});
+
+// Stock Notifications
+Route::prefix('stock-notifications')->name('storefront.stock-notifications.')->group(function () {
+    Route::post('/products/{product}/subscribe', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'subscribe'])->name('subscribe');
+    Route::get('/unsubscribe/{token}', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'unsubscribe'])->name('unsubscribe');
+    Route::get('/products/{product}/check', [\App\Http\Controllers\Storefront\StockNotificationController::class, 'check'])->name('check');
+});
+
 // Product Comparison
 Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Storefront\ComparisonController::class, 'index'])->name('index');
@@ -193,6 +209,13 @@ Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth'])->gr
 // Admin Comparison Analytics
 Route::prefix('admin/comparison-analytics')->name('admin.comparison-analytics.')->middleware(['auth'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ComparisonAnalyticsController::class, 'index'])->name('index');
+});
+
+// Admin Stock Notifications
+Route::prefix('admin/stock-notifications')->name('admin.stock-notifications.')->middleware(['auth'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\StockNotificationController::class, 'index'])->name('index');
+    Route::get('/variants/{variant}/subscriptions', [\App\Http\Controllers\Admin\StockNotificationController::class, 'subscriptions'])->name('subscriptions');
+    Route::get('/variants/{variant}/metrics', [\App\Http\Controllers\Admin\StockNotificationController::class, 'metrics'])->name('metrics');
 });
 
 // Search Analytics (admin/analytics endpoints)

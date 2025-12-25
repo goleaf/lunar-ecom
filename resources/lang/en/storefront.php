@@ -5,6 +5,7 @@ return [
         'products' => 'Products',
         'collections' => 'Collections',
         'bundles' => 'Bundles',
+        'comparison' => 'Compare',
         'cart' => 'Cart',
         'search' => 'Search',
         'search_placeholder' => 'Search...',
@@ -54,6 +55,8 @@ return [
     'common' => [
         'loading' => 'Loading...',
         'error' => 'An error occurred',
+        'optional' => 'Optional',
+        'cancel' => 'Cancel',
     ],
     'products' => 'Products',
     'no_products' => 'No products found.',
@@ -110,6 +113,31 @@ return [
         'optional' => 'Optional',
         'customize_items' => 'Customize Your Bundle',
         'add_to_cart' => 'Add Bundle to Cart',
+    ],
+    
+    // Stock Notifications
+    'stock_notifications' => [
+        'notify_me' => 'Notify Me When Available',
+        'subscribe_title' => 'Get Notified When Back in Stock',
+        'email' => 'Email',
+        'email_placeholder' => 'your@email.com',
+        'email_required' => 'Email is required',
+        'name' => 'Name',
+        'name_placeholder' => 'Your name (optional)',
+        'subscribe' => 'Subscribe',
+        'subscribed' => 'You have been subscribed to stock notifications.',
+        'subscribed_success' => 'Successfully Subscribed!',
+        'subscribed_message' => 'We will notify you when this product is back in stock.',
+        'already_subscribed' => 'You are already subscribed to notifications for this product.',
+        'already_in_stock' => 'This product is already in stock.',
+        'subscribe_error' => 'Failed to subscribe. Please try again.',
+        'unsubscribed' => 'Successfully unsubscribed from stock notifications.',
+        'unsubscribed_title' => 'Unsubscribed',
+        'unsubscribed_message' => 'You have been unsubscribed from stock notifications for this product.',
+        'invalid_token' => 'Invalid unsubscribe token.',
+        'invalid_token_title' => 'Invalid Link',
+        'invalid_token_message' => 'This unsubscribe link is invalid or has expired.',
+        'back_to_products' => 'Back to Products',
     ],
     
     // Comparison

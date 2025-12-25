@@ -255,5 +255,73 @@ class ProductRelationService
         ->with('bundle')
         ->get();
     }
+
+    /**
+     * Add related products.
+     *
+     * @param  Product  $product
+     * @param  array|Collection  $relatedIds
+     * @return void
+     */
+    public function addRelated(Product $product, $relatedIds): void
+    {
+        $ids = is_array($relatedIds) ? $relatedIds : $relatedIds->toArray();
+        
+        foreach ($ids as $relatedId) {
+            $product->associate(
+                Product::find($relatedId),
+                'related'
+            );
+        }
+    }
+
+    /**
+     * Add cross-sell products.
+     *
+     * @param  Product  $product
+     * @param  array|Collection  $productIds
+     * @return void
+     */
+    public function addCrossSell(Product $product, $productIds): void
+    {
+        $ids = is_array($productIds) ? $productIds : $productIds->toArray();
+        
+        foreach ($ids as $productId) {
+            $product->associate(
+                Product::find($productId),
+                ProductAssociationEnum::CROSS_SELL
+            );
+        }
+    }
+
+    /**
+     * Add up-sell products.
+     *
+     * @param  Product  $product
+     * @param  array|Collection  $productIds
+     * @return void
+     */
+    public function addUpSell(Product $product, $productIds): void
+    {
+        $ids = is_array($productIds) ? $productIds : $productIds->toArray();
+        
+        foreach ($ids as $productId) {
+            $product->associate(
+                Product::find($productId),
+                ProductAssociationEnum::UP_SELL
+            );
+        }
+    }
+
+    /**
+     * Get bundled products (products included in a bundle).
+     *
+     * @param  Product  $product  The bundle product
+     * @return Collection
+     */
+    public function getBundledProducts(Product $product): Collection
+    {
+        return $this->getBundles($product);
+    }
 }
 

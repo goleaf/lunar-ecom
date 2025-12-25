@@ -407,7 +407,7 @@ class ComprehensiveInventoryService
      */
     public function syncVariantStock(ProductVariant $variant): void
     {
-        $totalStock = $this->getTotalAvailableStock($variant);
+        $totalStock = $this->calculateTotalAvailableStock($variant);
         $variant->stock = $totalStock;
         $variant->save();
     }
@@ -418,7 +418,7 @@ class ComprehensiveInventoryService
      * @param ProductVariant $variant
      * @return int
      */
-    protected function getTotalAvailableStock(ProductVariant $variant): int
+    protected function calculateTotalAvailableStock(ProductVariant $variant): int
     {
         return InventoryLevel::where('product_variant_id', $variant->id)
             ->sum(DB::raw('quantity - reserved_quantity'));

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\InventoryLevel;
+use App\Observers\InventoryLevelObserver;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Facades\LunarPanel;
@@ -159,5 +161,8 @@ class AppServiceProvider extends ServiceProvider
         Discounts::addType(\App\Lunar\Discounts\DiscountTypes\BOGODiscount::class);
         Discounts::addType(\App\Lunar\Discounts\DiscountTypes\CategoryDiscount::class);
         Discounts::addType(\App\Lunar\Discounts\DiscountTypes\ProductDiscount::class);
+
+        // Register observers
+        InventoryLevel::observe(InventoryLevelObserver::class);
     }
 }

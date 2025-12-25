@@ -137,6 +137,17 @@
                     </form>
                     <div id="add-to-cart-message" class="hidden mb-4 p-3 rounded"></div>
                     
+                    {{-- Notify Me Button (if out of stock) --}}
+                    @php
+                        $variant = $product->variants->first();
+                        $isOutOfStock = !$variant || $variant->stock <= 0;
+                    @endphp
+                    @if($isOutOfStock)
+                        <div class="mt-4">
+                            <x-storefront.notify-me-button :product="$product" :variant="$variant" />
+                        </div>
+                    @endif
+                    
                     {{-- Comparison Button --}}
                     <div class="mt-4">
                         <x-storefront.compare-button :product="$product" />

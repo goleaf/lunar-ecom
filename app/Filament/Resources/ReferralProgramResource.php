@@ -189,9 +189,14 @@ class ReferralProgramResource extends Resource
                     ->sortable()
                     ->default(0),
 
-                Tables\Columns\TextColumn::make('referral_codes_count')
-                    ->counts('referralCodes')
-                    ->label('Codes')
+                Tables\Columns\TextColumn::make('rules_count')
+                    ->counts('rules')
+                    ->label('Rules')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('attributions_count')
+                    ->counts('attributions')
+                    ->label('Attributions')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -208,22 +213,22 @@ class ReferralProgramResource extends Resource
                         ReferralProgram::STATUS_ARCHIVED => 'Archived',
                     ]),
 
-                Tables\Filters\Filter::make('starts_at')
+                Tables\Filters\Filter::make('start_at')
                     ->form([
-                        DatePicker::make('starts_from')
-                            ->label('Starts From'),
-                        DatePicker::make('starts_until')
-                            ->label('Starts Until'),
+                        Forms\Components\DatePicker::make('start_from')
+                            ->label('Start From'),
+                        Forms\Components\DatePicker::make('start_until')
+                            ->label('Start Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['starts_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('starts_at', '>=', $date),
+                                $data['start_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('start_at', '>=', $date),
                             )
                             ->when(
-                                $data['starts_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('starts_at', '<=', $date),
+                                $data['start_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('start_at', '<=', $date),
                             );
                     }),
 
@@ -253,9 +258,8 @@ class ReferralProgramResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\ReferralCodesRelationManager::class,
-            RelationManagers\EventsRelationManager::class,
-            RelationManagers\RewardsRelationManager::class,
+            RelationManagers\ReferralRulesRelationManager::class,
+            RelationManagers\AttributionsRelationManager::class,
         ];
     }
 

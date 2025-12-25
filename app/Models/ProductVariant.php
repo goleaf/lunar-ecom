@@ -1125,22 +1125,6 @@ class ProductVariant extends LunarProductVariant
         return $service->calculatePrice($this, $quantity, $currency, $customerGroup, $region);
     }
 
-    /**
-     * Get tiered pricing.
-     *
-     * @param  \Lunar\Models\Currency|null  $currency
-     * @param  \Lunar\Models\CustomerGroup|string|null  $customerGroup
-     * @param  string|null  $region
-     * @return \Illuminate\Support\Collection
-     */
-    public function getTieredPricing(
-        ?\Lunar\Models\Currency $currency = null,
-        $customerGroup = null,
-        ?string $region = null
-    ): \Illuminate\Support\Collection {
-        $service = app(\App\Services\MatrixPricingService::class);
-        return $service->getTieredPricing($this, $currency, $customerGroup, $region);
-    }
 
     /**
      * Get volume discounts.

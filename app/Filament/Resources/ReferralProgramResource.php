@@ -27,38 +27,38 @@ class ReferralProgramResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Program Information')
+                Forms\Components\Section::make('Program Information')
                     ->schema([
-                        TextInput::make('name')
+                        Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
 
-                        TextInput::make('handle')
+                        Forms\Components\TextInput::make('handle')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->helperText('Unique identifier for this program'),
 
-                        Textarea::make('description')
+                        Forms\Components\Textarea::make('description')
                             ->rows(3)
                             ->columnSpanFull(),
 
-                        Toggle::make('is_active')
+                        Forms\Components\Toggle::make('is_active')
                             ->default(true)
                             ->label('Active'),
 
-                        DatePicker::make('starts_at')
+                        Forms\Components\DatePicker::make('starts_at')
                             ->label('Start Date')
                             ->nullable(),
 
-                        DatePicker::make('ends_at')
+                        Forms\Components\DatePicker::make('ends_at')
                             ->label('End Date')
                             ->nullable()
                             ->helperText('Leave empty for programs without expiry'),
                     ])
                     ->columns(2),
 
-                Section::make('Eligibility Rules')
+                Forms\Components\Section::make('Eligibility Rules')
                     ->schema([
                         Forms\Components\Select::make('eligible_customer_groups')
                             ->label('Eligible Customer Groups')
@@ -72,18 +72,18 @@ class ReferralProgramResource extends Resource
                             ->label('Eligible User IDs')
                             ->helperText('Specific user IDs (comma-separated). Leave empty for all users.'),
 
-                        KeyValue::make('eligible_conditions')
+                        Forms\Components\KeyValue::make('eligible_conditions')
                             ->label('Custom Eligibility Conditions')
                             ->helperText('Custom conditions (e.g., min_orders, min_spend)'),
                     ])
                     ->collapsible()
                     ->collapsed(),
 
-                Section::make('Referrer Rewards')
+                Forms\Components\Section::make('Referrer Rewards')
                     ->schema([
-                        Repeater::make('referrer_rewards')
+                        Forms\Components\Repeater::make('referrer_rewards')
                             ->schema([
-                                Select::make('action')
+                                Forms\Components\Select::make('action')
                                     ->options([
                                         'signup' => 'Signup',
                                         'first_purchase' => 'First Purchase',
@@ -91,7 +91,7 @@ class ReferralProgramResource extends Resource
                                     ])
                                     ->required(),
 
-                                Select::make('type')
+                                Forms\Components\Select::make('type')
                                     ->options([
                                         'discount' => 'Discount Code',
                                         'credit' => 'Account Credit',
@@ -100,27 +100,27 @@ class ReferralProgramResource extends Resource
                                     ])
                                     ->required(),
 
-                                TextInput::make('value')
+                                Forms\Components\TextInput::make('value')
                                     ->numeric()
                                     ->required()
                                     ->helperText('Percentage or amount'),
 
-                                Select::make('currency_id')
+                                Forms\Components\Select::make('currency_id')
                                     ->relationship('currency', 'code', fn ($query) => $query->where('enabled', true))
                                     ->searchable()
                                     ->preload(),
 
-                                TextInput::make('max_per_order')
+                                Forms\Components\TextInput::make('max_per_order')
                                     ->numeric()
                                     ->label('Max Per Order')
                                     ->helperText('Maximum discount per order (for percentage)'),
 
-                                TextInput::make('coupon_code')
+                                Forms\Components\TextInput::make('coupon_code')
                                     ->label('Custom Coupon Code')
                                     ->maxLength(255)
                                     ->helperText('Leave empty to auto-generate'),
 
-                                TextInput::make('valid_days')
+                                Forms\Components\TextInput::make('valid_days')
                                     ->numeric()
                                     ->default(30)
                                     ->label('Valid Days')
@@ -132,11 +132,11 @@ class ReferralProgramResource extends Resource
                     ])
                     ->collapsible(),
 
-                Section::make('Referee (Invited User) Rewards')
+                Forms\Components\Section::make('Referee (Invited User) Rewards')
                     ->schema([
-                        Repeater::make('referee_rewards')
+                        Forms\Components\Repeater::make('referee_rewards')
                             ->schema([
-                                Select::make('type')
+                                Forms\Components\Select::make('type')
                                     ->options([
                                         'discount' => 'Discount Code',
                                         'percentage' => 'Percentage Discount',
@@ -144,16 +144,16 @@ class ReferralProgramResource extends Resource
                                     ])
                                     ->required(),
 
-                                TextInput::make('value')
+                                Forms\Components\TextInput::make('value')
                                     ->numeric()
                                     ->required(),
 
-                                TextInput::make('coupon_code')
+                                Forms\Components\TextInput::make('coupon_code')
                                     ->label('Coupon Code')
                                     ->maxLength(255)
                                     ->helperText('Leave empty to auto-generate'),
 
-                                TextInput::make('valid_days')
+                                Forms\Components\TextInput::make('valid_days')
                                     ->numeric()
                                     ->default(30)
                                     ->label('Valid Days'),
@@ -164,28 +164,28 @@ class ReferralProgramResource extends Resource
                     ])
                     ->collapsible(),
 
-                Section::make('Limits & Restrictions')
+                Forms\Components\Section::make('Limits & Restrictions')
                     ->schema([
-                        TextInput::make('max_referrals_per_referrer')
+                        Forms\Components\TextInput::make('max_referrals_per_referrer')
                             ->numeric()
                             ->label('Max Referrals Per Referrer')
                             ->helperText('Leave empty for unlimited'),
 
-                        TextInput::make('max_referrals_total')
+                        Forms\Components\TextInput::make('max_referrals_total')
                             ->numeric()
                             ->label('Max Total Referrals')
                             ->helperText('Leave empty for unlimited'),
 
-                        TextInput::make('max_rewards_per_referrer')
+                        Forms\Components\TextInput::make('max_rewards_per_referrer')
                             ->numeric()
                             ->label('Max Rewards Per Referrer')
                             ->helperText('Leave empty for unlimited'),
 
-                        Toggle::make('allow_self_referral')
+                        Forms\Components\Toggle::make('allow_self_referral')
                             ->label('Allow Self-Referral')
                             ->default(false),
 
-                        Toggle::make('require_referee_purchase')
+                        Forms\Components\Toggle::make('require_referee_purchase')
                             ->label('Require Referee Purchase')
                             ->default(false)
                             ->helperText('Require purchase before issuing reward'),
@@ -193,9 +193,9 @@ class ReferralProgramResource extends Resource
                     ->columns(2)
                     ->collapsible(),
 
-                Section::make('Stacking & Validity')
+                Forms\Components\Section::make('Stacking & Validity')
                     ->schema([
-                        Select::make('stacking_mode')
+                        Forms\Components\Select::make('stacking_mode')
                             ->options([
                                 'non_stackable' => 'Non-Stackable',
                                 'stackable' => 'Stackable',
@@ -204,17 +204,17 @@ class ReferralProgramResource extends Resource
                             ->default('non_stackable')
                             ->required(),
 
-                        KeyValue::make('stacking_rules')
+                        Forms\Components\KeyValue::make('stacking_rules')
                             ->label('Custom Stacking Rules')
                             ->helperText('Additional stacking configuration'),
 
-                        TextInput::make('referral_code_validity_days')
+                        Forms\Components\TextInput::make('referral_code_validity_days')
                             ->numeric()
                             ->default(365)
                             ->label('Code Validity (Days)')
                             ->required(),
 
-                        TextInput::make('reward_validity_days')
+                        Forms\Components\TextInput::make('reward_validity_days')
                             ->numeric()
                             ->label('Reward Validity (Days)')
                             ->helperText('Leave empty to use program default'),
@@ -222,9 +222,9 @@ class ReferralProgramResource extends Resource
                     ->columns(2)
                     ->collapsible(),
 
-                Section::make('Metadata')
+                Forms\Components\Section::make('Metadata')
                     ->schema([
-                        KeyValue::make('meta')
+                        Forms\Components\KeyValue::make('meta')
                             ->columnSpanFull(),
                     ])
                     ->collapsible()

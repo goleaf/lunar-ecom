@@ -101,7 +101,7 @@ class ProductFactory extends Factory
     /**
      * Indicate that the product has a brand.
      */
-    public function withBrand(string $brand = null): static
+    public function withBrand(?string $brand = null): static
     {
         return $this->state(fn (array $attributes) => [
             'brand' => $brand ?? fake()->company(),
@@ -111,7 +111,7 @@ class ProductFactory extends Factory
     /**
      * Indicate that the product is scheduled.
      */
-    public function scheduled(\DateTime $date = null): static
+    public function scheduled(?\DateTime $date = null): static
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'scheduled',

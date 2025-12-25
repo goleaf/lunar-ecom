@@ -46,8 +46,8 @@ class ProcessUserRegistration implements ShouldQueue
             );
 
             if ($attribution) {
-                // Process signup event for rules
-                // This will be handled by another listener/service
+                // Confirm attribution if fraud checks pass
+                // Signup reward will be processed by ProcessReferralSignup listener
                 break; // Only attribute to first eligible program
             }
         }

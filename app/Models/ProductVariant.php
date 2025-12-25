@@ -217,16 +217,23 @@ class ProductVariant extends LunarProductVariant
                 $variant->sku = $variant->generateSKU();
             }
 
-            // Auto-generate variant title if not set
-            if (empty($variant->title) && empty($variant->variant_name)) {
-                $variant->title = $variant->generateTitle();
-            }
+        // Auto-generate variant title if not set
+        if (empty($variant->title) && empty($variant->variant_name)) {
+            $variant->title = $variant->generateTitle();
+        }
 
-            // Validate variant option combinations for duplicates
-            if ($variant->exists && $variant->isDirty()) {
-                $variant->validateUniqueOptionCombination();
-            }
-        });
+        // Calculate volumetric weight if dimensions changed
+        if ($variant->isDirty(['dimensions', 'volumetric_divisor']) || 
+            ($variant->exists && !$variant->volumetric_weight && $variant->dimensions)) {
+            $service = app(\App\Services\VariantShippingService::class);
+            $service->updateVolumetricWeight($variant);
+        }
+
+        // Validate variant option combinations for duplicates
+        if ($variant->exists && $variant->isDirty()) {
+            $variant->validateUniqueOptionCombination();
+        }
+    });
     }
 
     /**

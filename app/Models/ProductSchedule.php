@@ -64,6 +64,14 @@ class ProductSchedule extends Model
         'coming_soon_message',
         'bulk_schedule_id',
         'applied_to',
+        'priority',
+        'is_hidden_from_frontend',
+        'countdown_message',
+        'expected_available_at',
+        'auto_archive_on_expiry',
+        'auto_unpublish_on_expiry',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -93,6 +101,11 @@ class ProductSchedule extends Model
         'auto_unpublish_after_season' => 'boolean',
         'is_coming_soon' => 'boolean',
         'applied_to' => 'array',
+        'priority' => 'integer',
+        'is_hidden_from_frontend' => 'boolean',
+        'expected_available_at' => 'datetime',
+        'auto_archive_on_expiry' => 'boolean',
+        'auto_unpublish_on_expiry' => 'boolean',
     ];
 
     /**

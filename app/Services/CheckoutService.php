@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CheckoutLock;
 use App\Services\CheckoutCache;
 use App\Services\CheckoutLogger;
+use App\Services\CheckoutValidator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Lunar\Facades\CartSession;
@@ -21,7 +22,8 @@ class CheckoutService
         protected CheckoutStateMachine $stateMachine,
         protected StockService $stockService,
         protected CheckoutLogger $logger,
-        protected CheckoutCache $cache
+        protected CheckoutCache $cache,
+        protected CheckoutValidator $validator
     ) {}
 
     /**
@@ -29,6 +31,12 @@ class CheckoutService
      */
     public function startCheckout(Cart $cart, ?int $ttlMinutes = null): CheckoutLock
     {
+        // Validate cart can start checkout
+        $validation = $this->validator->canStartCheckout($cart);
+        if (!$validation['valid']) {
+            throw new \Exception(implode(', ', $validation['errors']));
+        }
+
         return DB::transaction(function () use ($cart, $ttlMinutes) {
             // Check if cart is already locked
             $existingLock = CheckoutLock::where('cart_id', $cart->id)

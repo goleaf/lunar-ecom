@@ -16,6 +16,11 @@ use App\Events\PromotionActivated;
 use App\Events\PromotionExpired;
 use App\Events\StockChanged;
 use App\Listeners\CartRepricingListener;
+use App\Listeners\Cache\InvalidateContractCache;
+use App\Listeners\Cache\InvalidateCurrencyCache;
+use App\Listeners\Cache\InvalidatePriceCache;
+use App\Listeners\Cache\InvalidatePromotionCache;
+use App\Listeners\Cache\InvalidateStockCache;
 use App\Listeners\ClearCartOnLogin;
 use App\Listeners\CreateDigitalProductDownloads;
 use App\Listeners\DeliverDigitalProducts;
@@ -28,6 +33,10 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Lunar\Events\OrderStatusChanged;
+use Lunar\Models\Discount;
+use Lunar\Models\Price;
+use Lunar\Models\Currency;
+use Lunar\Models\ProductVariant;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -66,15 +75,19 @@ class EventServiceProvider extends ServiceProvider
         ],
         PromotionActivated::class => [
             CartRepricingListener::class,
+            InvalidatePromotionCache::class . '@handlePromotionActivated',
         ],
         PromotionExpired::class => [
             CartRepricingListener::class,
+            InvalidatePromotionCache::class . '@handlePromotionExpired',
         ],
         StockChanged::class => [
             CartRepricingListener::class,
+            InvalidateStockCache::class,
         ],
         ContractValidityChanged::class => [
             CartRepricingListener::class,
+            InvalidateContractCache::class,
         ],
         // Checkout events
         CheckoutStarted::class => [

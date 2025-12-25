@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\InventoryLevel;
+use App\Models\User;
 use App\Observers\CartObserver;
 use App\Observers\CartLineObserver;
 use App\Observers\InventoryLevelObserver;
+use App\Observers\UserObserver;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Facades\LunarPanel;

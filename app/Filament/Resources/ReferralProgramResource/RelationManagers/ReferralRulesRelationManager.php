@@ -137,6 +137,18 @@ class ReferralRulesRelationManager extends RelationManager
                             ->relationship('fraudPolicy', 'name')
                             ->searchable()
                             ->preload(),
+
+                        Forms\Components\KeyValue::make('tiered_rewards')
+                            ->label('Tiered Rewards')
+                            ->helperText('Format: {"1": 5.00, "5": 10.00, "10": 25.00} - Threshold: Amount')
+                            ->visible(fn ($get) => $get('referrer_reward_type') === ReferralRule::REWARD_STORE_CREDIT || 
+                                                   $get('referrer_reward_type') === ReferralRule::REWARD_FIXED_AMOUNT),
+
+                        Forms\Components\TextInput::make('coupon_validity_days')
+                            ->numeric()
+                            ->default(30)
+                            ->label('Coupon Validity (Days)')
+                            ->required(),
                     ])
                     ->columns(2),
 

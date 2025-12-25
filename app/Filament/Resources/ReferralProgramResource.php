@@ -12,14 +12,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Lunar\Models\CustomerGroup;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\KeyValue;
 
 class ReferralProgramResource extends Resource
 {
@@ -68,7 +60,7 @@ class ReferralProgramResource extends Resource
 
                 Section::make('Eligibility Rules')
                     ->schema([
-                        Select::make('eligible_customer_groups')
+                        Forms\Components\Select::make('eligible_customer_groups')
                             ->label('Eligible Customer Groups')
                             ->multiple()
                             ->options(CustomerGroup::pluck('name', 'id'))

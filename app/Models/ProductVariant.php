@@ -994,25 +994,6 @@ class ProductVariant extends LunarProductVariant
             ->toArray();
     }
 
-    /**
-     * Get stock status.
-     * Uses low_stock_threshold if set, otherwise defaults to 10.
-     *
-     * @return string
-     */
-    public function getStockStatus(): string
-    {
-        $threshold = $this->low_stock_threshold ?? 10;
-
-        if ($this->stock > $threshold) {
-            return 'in_stock';
-        } elseif ($this->stock > 0) {
-            return 'low_stock';
-        } elseif ($this->backorder > 0) {
-            return 'backorder';
-        }
-        return 'out_of_stock';
-    }
 
     /**
      * Check if variant is low stock based on threshold.

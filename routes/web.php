@@ -158,6 +158,26 @@ Route::prefix('coming-soon')->name('storefront.coming-soon.')->group(function ()
 });
 
 // Admin Product Badges
+Route::prefix('admin/badges')->name('admin.badges.')->middleware(['auth', 'admin'])->group(function () {
+    Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeController::class)->parameters(['' => 'badge']);
+    Route::post('/{badge}/preview', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'preview'])->name('preview');
+    Route::get('/{badge}/performance', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'performance'])->name('performance');
+    
+    // Badge Rules
+    Route::prefix('rules')->name('rules.')->group(function () {
+        Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeRuleController::class)->parameters(['' => 'rule']);
+        Route::post('/{rule}/test', [\App\Http\Controllers\Admin\ProductBadgeRuleController::class, 'test'])->name('test');
+    });
+    
+    // Product Badge Assignments
+    Route::prefix('products/{product}')->name('products.')->group(function () {
+        Route::post('/assign', [\App\Http\Controllers\Admin\ProductBadgeAssignmentController::class, 'assign'])->name('assign');
+        Route::delete('/{badge}/remove', [\App\Http\Controllers\Admin\ProductBadgeAssignmentController::class, 'remove'])->name('remove');
+        Route::get('/', [\App\Http\Controllers\Admin\ProductBadgeAssignmentController::class, 'index'])->name('index');
+    });
+});
+
+// Admin Product Badges
 Route::prefix('admin/products/badges')->name('admin.products.badges.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'index'])->name('index');
     Route::get('/create', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'create'])->name('create');

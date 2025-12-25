@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Models\User;
 use App\Services\CartSessionService;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,9 +19,14 @@ class MergeCartOnLogin
      */
     public function handle(Login $event): void
     {
-        // Only handle User logins, not Staff logins
+        // Only handle User logins from the 'web' guard, not Staff logins from 'staff' guard
         // Staff users don't have carts - they're admin users
-        if (!($event->user instanceof \App\Models\User)) {
+        if ($event->guard !== 'web') {
+            return;
+        }
+
+        // Additional type check to ensure it's a User model
+        if (!($event->user instanceof User)) {
             return;
         }
 

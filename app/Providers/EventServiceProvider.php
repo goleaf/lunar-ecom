@@ -68,6 +68,7 @@ class EventServiceProvider extends ServiceProvider
             DeliverDigitalProducts::class,
             RemoveStockNotificationOnPurchase::class,
             TrackStockNotificationConversion::class,
+            \App\Listeners\ProcessReferralOrderPayment::class,
         ],
         // Cart repricing events
         CartQuantityChanged::class => [

@@ -1429,6 +1429,121 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Get shipping weight (actual or volumetric, whichever is greater).
+     *
+     * @return int Weight in grams
+     */
+    public function getShippingWeight(): int
+    {
+        $service = app(\App\Services\VariantShippingService::class);
+        return $service->getShippingWeight($this);
+    }
+
+    /**
+     * Get volumetric weight.
+     *
+     * @return int|null Weight in grams
+     */
+    public function getVolumetricWeight(): ?int
+    {
+        $service = app(\App\Services\VariantShippingService::class);
+        return $service->calculateVolumetricWeight($this);
+    }
+
+    /**
+     * Get shipping requirements.
+     *
+     * @return array
+     */
+    public function getShippingRequirements(): array
+    {
+        $service = app(\App\Services\VariantShippingService::class);
+        return $service->getShippingRequirements($this);
+    }
+
+    /**
+     * Get customs information.
+     *
+     * @return array
+     */
+    public function getCustomsInfo(): array
+    {
+        $service = app(\App\Services\VariantShippingService::class);
+        return $service->getCustomsInfo($this);
+    }
+
+    /**
+     * Get lead time information.
+     *
+     * @return array
+     */
+    public function getLeadTimeInfo(): array
+    {
+        $service = app(\App\Services\VariantShippingService::class);
+        return $service->getLeadTimeInfo($this);
+    }
+
+    /**
+     * Check if variant requires special handling.
+     *
+     * @return bool
+     */
+    public function requiresSpecialHandling(): bool
+    {
+        return ($this->is_fragile ?? false) || ($this->is_hazardous ?? false);
+    }
+
+    /**
+     * Check if variant is fragile.
+     *
+     * @return bool
+     */
+    public function isFragile(): bool
+    {
+        return $this->is_fragile ?? false;
+    }
+
+    /**
+     * Check if variant is hazardous.
+     *
+     * @return bool
+     */
+    public function isHazardous(): bool
+    {
+        return $this->is_hazardous ?? false;
+    }
+
+    /**
+     * Get origin country (variant-level or product-level).
+     *
+     * @return string|null ISO 2-character country code
+     */
+    public function getOriginCountry(): ?string
+    {
+        return $this->origin_country ?? $this->product->origin_country ?? null;
+    }
+
+    /**
+     * Get HS code (variant-level or product-level).
+     *
+     * @return string|null
+     */
+    public function getHSCode(): ?string
+    {
+        return $this->hs_code ?? $this->product->hs_code ?? null;
+    }
+
+    /**
+     * Get lead time in days.
+     *
+     * @return int
+     */
+    public function getLeadTimeDays(): int
+    {
+        return $this->lead_time_days ?? $this->product->lead_time_days ?? 0;
+    }
+
+    /**
      * Get variant-specific SEO meta title.
      * Falls back to product meta title or product name if not set.
      *

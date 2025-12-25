@@ -5,9 +5,6 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Lunar\Facades\StorefrontSession;
-use Lunar\Models\Channel;
-use Lunar\Models\Currency;
-use Lunar\Models\Language;
 use Symfony\Component\HttpFoundation\Response;
 
 class StorefrontSessionMiddleware
@@ -15,26 +12,22 @@ class StorefrontSessionMiddleware
     /**
      * Handle an incoming request.
      *
-     * Initialize the storefront session with channel, currency, and language.
+     * Initialize the storefront session with channel, currency, customer groups, and customer.
+     * 
+     * See: https://docs.lunarphp.com/1.x/storefront-utils/storefront-session
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Initialize channel (default to webstore)
-        $channel = Channel::where('handle', 'webstore')->first();
-        if ($channel) {
-            StorefrontSession::setChannel($channel);
-        }
+        // Initialize channel (sets based on session or uses default)
+        StorefrontSession::initChannel();
 
-        // Initialize currency (default to USD)
-        $currency = Currency::where('code', 'USD')->first();
-        if ($currency) {
-            StorefrontSession::setCurrency($currency);
-        }
+        // Initialize currency (sets based on session or uses default)
+        StorefrontSession::initCurrency();
 
-        // Initialize customer groups
+        // Initialize customer groups (sets based on session or uses default)
         StorefrontSession::initCustomerGroups();
 
-        // Initialize customer (if logged in)
+        // Initialize customer (sets based on session or retrieves from logged-in user)
         StorefrontSession::initCustomer();
 
         return $next($request);

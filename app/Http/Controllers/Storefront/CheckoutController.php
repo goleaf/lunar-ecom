@@ -11,6 +11,8 @@ class CheckoutController extends Controller
 {
     /**
      * Display the checkout page.
+     * 
+     * See: https://docs.lunarphp.com/1.x/reference/carts
      */
     public function index()
     {
@@ -20,6 +22,10 @@ class CheckoutController extends Controller
             return redirect()->route('storefront.cart.index')
                 ->with('error', 'Your cart is empty');
         }
+
+        // Calculate cart totals to show accurate pricing
+        // See: https://docs.lunarphp.com/1.x/reference/carts#hydrating-the-cart-totals
+        $cart->calculate();
 
         return view('storefront.checkout.index', compact('cart'));
     }
@@ -53,13 +59,24 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty');
         }
 
-        // Set shipping address
-        $cart->shippingAddress()->create($request->shipping_address);
+        // Set shipping and billing addresses on cart
+        // See: https://docs.lunarphp.com/1.x/reference/carts#adding-shippingbilling-address
+        $cart->setShippingAddress($request->shipping_address);
+        $cart->setBillingAddress($request->billing_address);
 
-        // Set billing address
-        $cart->billingAddress()->create($request->billing_address);
+        // Recalculate cart with addresses for accurate tax calculation
+        // See: https://docs.lunarphp.com/1.x/reference/carts#calculating-tax
+        $cart->calculate();
 
-        // Create order
+        // Validate cart before creating order
+        // See: https://docs.lunarphp.com/1.x/reference/orders#validating-a-cart-before-creation
+        if (!$cart->canCreateOrder()) {
+            return redirect()->route('storefront.cart.index')
+                ->with('error', 'Cart is not ready to create an order. Please review your cart.');
+        }
+
+        // Create order from cart (recommended method)
+        // See: https://docs.lunarphp.com/1.x/reference/orders#create-an-order
         $order = CartSession::createOrder();
 
         return redirect()->route('storefront.checkout.confirmation', $order)

@@ -36,16 +36,21 @@ return [
     |
     | Each pipeline class will be run from top to bottom.
     |
+    | See: https://docs.lunarphp.com/1.x/extending/carts#pipelines
+    |
     */
     'pipelines' => [
         /*
          * Run these pipelines when the cart is calculating.
+         * Pipelines run from top to bottom.
         */
         'cart' => [
             Lunar\Pipelines\Cart\CalculateLines::class,
             Lunar\Pipelines\Cart\ApplyShipping::class,
             Lunar\Pipelines\Cart\ApplyDiscounts::class,
             Lunar\Pipelines\Cart\CalculateTax::class,
+            // Add your custom cart pipelines here:
+            // App\Lunar\Cart\Pipelines\Cart\CustomCartPipeline::class,
             Lunar\Pipelines\Cart\Calculate::class,
         ],
 
@@ -54,7 +59,33 @@ return [
         */
         'cart_lines' => [
             Lunar\Pipelines\CartLine\GetUnitPrice::class,
+            // Add your custom cart line pipelines here:
+            // App\Lunar\Cart\Pipelines\CartLine\CustomCartLinePipeline::class,
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cart Validators
+    |--------------------------------------------------------------------------
+    |
+    | Define validators for cart actions. Validators allow you to add custom
+    | validation logic before cart actions are executed (e.g., adding items,
+    | updating quantities, setting shipping options).
+    |
+    | If validation fails, a Lunar\Exceptions\CartException will be thrown.
+    |
+    | See: https://docs.lunarphp.com/1.x/extending/carts#action-validation
+    |
+    */
+    'validators' => [
+        'add_to_cart' => [
+            // Add your custom validators here:
+            // App\Lunar\Cart\Validation\CartLine\CartLineQuantityValidator::class,
+        ],
+        // Other action validators can be added here:
+        // 'update_line' => [...],
+        // 'set_shipping_option' => [...],
     ],
 
     /*

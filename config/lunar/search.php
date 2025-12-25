@@ -54,13 +54,28 @@ return [
         // \Lunar\Models\Collection::class => 'meilisearch',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Search Indexers
+    |--------------------------------------------------------------------------
+    |
+    | Map model classes to their indexer classes. Indexers control how models
+    | are indexed for search, including searchable, sortable, and filterable fields.
+    |
+    | If a model isn't mapped here, it will use the default EloquentIndexer.
+    |
+    | See: https://docs.lunarphp.com/1.x/extending/search#mapping-custom-indexers
+    |
+    */
     'indexers' => [
-        Lunar\Models\Brand::class => Lunar\Search\BrandIndexer::class,
-        Lunar\Models\Collection::class => Lunar\Search\CollectionIndexer::class,
-        Lunar\Models\Customer::class => Lunar\Search\CustomerIndexer::class,
-        Lunar\Models\Order::class => Lunar\Search\OrderIndexer::class,
-        Lunar\Models\Product::class => Lunar\Search\ProductIndexer::class,
-        Lunar\Models\ProductOption::class => Lunar\Search\ProductOptionIndexer::class,
+        \Lunar\Models\Brand::class => \Lunar\Search\BrandIndexer::class,
+        \Lunar\Models\Collection::class => \Lunar\Search\CollectionIndexer::class,
+        \Lunar\Models\Customer::class => \Lunar\Search\CustomerIndexer::class,
+        \Lunar\Models\Order::class => \Lunar\Search\OrderIndexer::class,
+        // Example: Use custom indexer for products
+        // \Lunar\Models\Product::class => \App\Lunar\Search\Indexers\CustomProductIndexer::class,
+        \Lunar\Models\Product::class => \Lunar\Search\ProductIndexer::class,
+        \Lunar\Models\ProductOption::class => \Lunar\Search\ProductOptionIndexer::class,
     ],
 
 ];

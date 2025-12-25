@@ -30,3 +30,4 @@ class FlatRateShippingCalculator implements ShippingCalculatorInterface
     }
 }
 
+

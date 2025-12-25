@@ -11,16 +11,26 @@ class CartController extends Controller
 {
     /**
      * Display the cart.
+     * 
+     * See: https://docs.lunarphp.com/1.x/reference/carts
      */
     public function index()
     {
         $cart = CartSession::current();
+
+        // Calculate cart totals to hydrate all price values
+        // See: https://docs.lunarphp.com/1.x/reference/carts#hydrating-the-cart-totals
+        if ($cart) {
+            $cart->calculate();
+        }
 
         return view('storefront.cart.index', compact('cart'));
     }
 
     /**
      * Add an item to the cart.
+     * 
+     * See: https://docs.lunarphp.com/1.x/reference/carts#add-a-cart-line
      */
     public function add(Request $request)
     {
@@ -31,10 +41,17 @@ class CartController extends Controller
 
         $variant = ProductVariant::findOrFail($request->variant_id);
 
-        CartSession::add($variant, $request->quantity);
+        try {
+            // Add item to cart (validates automatically)
+            // See: https://docs.lunarphp.com/1.x/reference/carts#validation
+            CartSession::add($variant, $request->quantity);
 
-        return redirect()->route('storefront.cart.index')
-            ->with('success', 'Item added to cart');
+            return redirect()->route('storefront.cart.index')
+                ->with('success', 'Item added to cart');
+        } catch (\Lunar\Exceptions\Carts\CartException $e) {
+            return redirect()->back()
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**

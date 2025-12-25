@@ -15,9 +15,10 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        // Load products with media eager loaded
+        // Load products with media and URLs eager loaded
         // See: https://docs.lunarphp.com/1.x/reference/media
-        $products = Product::with(['variants.prices', 'media'])
+        // See: https://docs.lunarphp.com/1.x/reference/urls
+        $products = Product::with(['variants.prices', 'media', 'urls'])
             ->where('status', 'published')
             ->latest()
             ->paginate(12);
@@ -27,9 +28,14 @@ class ProductController extends Controller
 
     /**
      * Display the specified product.
+     * 
+     * Uses URL slug to find products instead of IDs.
+     * See: https://docs.lunarphp.com/1.x/reference/urls
      */
     public function show(string $slug)
     {
+        // Find product by URL slug
+        // See: https://docs.lunarphp.com/1.x/reference/urls
         $url = Url::where('slug', $slug)
             ->where('element_type', Product::class)
             ->firstOrFail();
@@ -42,6 +48,7 @@ class ProductController extends Controller
             'collections',
             'associations.target',
             'tags',
+            'urls', // Eager load URLs for link generation
         ])->findOrFail($url->element_id);
 
         // Get cross-sell, up-sell, and alternate products using relationship scopes

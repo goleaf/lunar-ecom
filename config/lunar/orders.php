@@ -106,6 +106,8 @@ return [
     |
     | Each pipeline class will be run from top to bottom.
     |
+    | See: https://docs.lunarphp.com/1.x/extending/orders#pipelines
+    |
     */
     'pipelines' => [
         'creation' => [
@@ -115,6 +117,8 @@ return [
             Lunar\Pipelines\Order\Creation\CreateShippingLine::class,
             Lunar\Pipelines\Order\Creation\CleanUpOrderLines::class,
             Lunar\Pipelines\Order\Creation\MapDiscountBreakdown::class,
+            // Add your custom order pipelines here:
+            // App\Lunar\Orders\Pipelines\OrderCreation\CustomOrderPipeline::class,
         ],
     ],
 

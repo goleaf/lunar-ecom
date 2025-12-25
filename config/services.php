@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_SECRET'),
+        'public_key' => env('STRIPE_PK'),
+        'webhooks' => [
+            'lunar' => env('LUNAR_STRIPE_WEBHOOK_SECRET'),
+        ],
+    ],
+
+    'paypal' => [
+        'env' => env('PAYPAL_ENV', 'sandbox'),
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'secret' => env('PAYPAL_SECRET'),
+    ],
+
 ];

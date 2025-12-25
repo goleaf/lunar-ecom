@@ -20,11 +20,13 @@ class ReferralAttribution extends Model
         'attribution_method',
         'status',
         'rejection_reason',
+        'priority',
         'metadata',
     ];
 
     protected $casts = [
         'attributed_at' => 'datetime',
+        'priority' => 'integer',
         'metadata' => 'array',
     ];
 

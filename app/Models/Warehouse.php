@@ -42,6 +42,13 @@ class Warehouse extends Model
         'is_active',
         'priority',
         'notes',
+        'latitude',
+        'longitude',
+        'service_areas',
+        'is_dropship',
+        'dropship_provider',
+        'fulfillment_rules',
+        'auto_fulfill',
     ];
 
     /**
@@ -52,6 +59,12 @@ class Warehouse extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'priority' => 'integer',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'service_areas' => 'array',
+        'is_dropship' => 'boolean',
+        'fulfillment_rules' => 'array',
+        'auto_fulfill' => 'boolean',
     ];
 
     /**

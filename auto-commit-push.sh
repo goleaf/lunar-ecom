@@ -194,32 +194,22 @@ EOF
   result="$(printf '%s' "$result" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
   
   # Normalize spacing: ensure one blank line between file entries (lines starting with *)
-  # Remove multiple consecutive blank lines, then add one blank line between file entries
-  result="$(printf '%s' "$result" | sed -E '
-    # Collapse multiple blank lines into single blank lines
-    :a
-    /^\n{3,}$/ {
-      s/\n\n\n+/\n\n/
-      ba
-    }
-  ' | awk '
-    BEGIN { prev_was_file = 0 }
+  result="$(printf '%s' "$result" | awk '
+    BEGIN { prev_was_file = 0; output = "" }
     /^[*]/ {
-      if (prev_was_file) print ""
-      print $0
+      if (prev_was_file) output = output "\n"
+      output = output $0 "\n"
       prev_was_file = 1
       next
     }
     {
-      print $0
+      output = output $0 "\n"
       if ($0 != "") prev_was_file = 0
     }
-  ' | sed -E '
-    # Remove trailing blank lines
-    :a
-    ${
-      /^\n*$/d
-      s/\n+$//
+    END {
+      # Remove trailing newlines
+      sub(/\n+$/, "", output)
+      printf "%s", output
     }
   ')"
   

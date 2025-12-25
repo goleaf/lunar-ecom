@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\ReservedReferralCode;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 

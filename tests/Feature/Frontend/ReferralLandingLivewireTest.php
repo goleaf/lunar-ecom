@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Storefront;
+namespace Tests\Feature\Frontend;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;

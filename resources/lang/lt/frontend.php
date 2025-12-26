@@ -22,7 +22,7 @@ return [
         'all_rights_reserved' => 'Visos teisės saugomos.',
         'privacy_policy' => 'Privatumo politika',
         'privacy_settings' => 'Privatumo nustatymai',
-        'view_storefront' => 'Peržiūrėti parduotuvę',
+        'view_frontend' => 'Peržiūrėti svetainę',
     ],
 
     'homepage' => [
@@ -168,6 +168,7 @@ return [
     'stock_notifications' => [
         'notify_me' => 'Pranešti, kai bus sandėlyje',
         'subscribe_title' => 'Gaukite pranešimą, kai prekė vėl bus sandėlyje',
+        'unsubscribe_page_title' => 'Atsisakyti sandėlio pranešimų',
         'email' => 'El. paštas',
         'email_placeholder' => 'jusu@pastas.lt',
         'email_required' => 'El. paštas privalomas',
@@ -183,6 +184,7 @@ return [
         'unsubscribed' => 'Sėkmingai atsisakyta sandėlio pranešimų.',
         'unsubscribed_title' => 'Atsisakyta',
         'unsubscribed_message' => 'Jūs atsisakėte sandėlio pranešimų šiai prekei.',
+        'unsubscribe_note' => 'Daugiau negausite el. laiškų, kai ši prekė vėl bus sandėlyje.',
         'invalid_token' => 'Neteisingas atsisakymo raktas.',
         'invalid_token_title' => 'Neteisinga nuoroda',
         'invalid_token_message' => 'Ši atsisakymo nuoroda neteisinga arba nebegalioja.',
@@ -196,7 +198,9 @@ return [
         'title' => 'Mano atsisiuntimai',
         'product' => 'Produktas',
         'order' => 'Užsakymas',
+        'file_size' => 'Failo dydis',
         'downloads' => 'Atsisiuntimai',
+        'status' => 'Būsena',
         'expires' => 'Galioja iki',
         'actions' => 'Veiksmai',
         'download' => 'Atsisiųsti',

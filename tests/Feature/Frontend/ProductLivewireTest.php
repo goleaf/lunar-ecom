@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Feature\Storefront;
+namespace Tests\Feature\Frontend;
 
-use App\Livewire\Storefront\ProductIndex;
-use App\Livewire\Storefront\ProductShow;
+use App\Livewire\Frontend\ProductIndex;
+use App\Livewire\Frontend\ProductShow;
 use App\Models\Product;
 use Laravel\Scout\ModelObserver;
 use Livewire\Livewire;

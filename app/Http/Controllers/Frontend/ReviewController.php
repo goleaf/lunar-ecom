@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Lunar\Facades\StorefrontSession;
 
 /**
- * Controller for storefront review functionality.
+ * Controller for frontend review functionality.
  */
 class ReviewController extends Controller
 {

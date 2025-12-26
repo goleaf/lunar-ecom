@@ -1,17 +1,17 @@
 @extends('frontend.layout')
 
-@section('title', 'My Downloads')
+@section('title', __('frontend.downloads.title'))
 
 @section('content')
 <div class="container mx-auto px-4 py-8">
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6">My Digital Downloads</h1>
+        <h1 class="text-3xl font-bold mb-6">{{ __('frontend.downloads.title') }}</h1>
 
         @if($downloads->isEmpty())
             <div class="bg-gray-100 rounded-lg p-8 text-center">
-                <p class="text-gray-600 mb-4">You don't have any digital downloads yet.</p>
+                <p class="text-gray-600 mb-4">{{ __('frontend.downloads.empty') }}</p>
                 <a href="{{ route('frontend.products.index') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
-                    Browse Products
+                    {{ __('frontend.downloads.browse_products') }}
                 </a>
             </div>
         @else
@@ -19,12 +19,12 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Size</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Downloads</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.product') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.order') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.file_size') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.downloads') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.status') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('frontend.downloads.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">

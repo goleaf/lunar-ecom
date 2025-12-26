@@ -217,7 +217,7 @@ Route::prefix('admin/products/questions')->name('admin.products.questions.')->mi
     Route::get('/products/{product}/metrics', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'metrics'])->name('metrics');
 });
 
-// Storefront Size Guide & Fit Finder
+// Frontend Size Guide & Fit Finder
 Route::prefix('products/{product}/size-guide')->name('frontend.products.size-guide.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Frontend\SizeGuideController::class, 'show'])->name('show');
     Route::post('/recommend', [\App\Http\Controllers\Frontend\SizeGuideController::class, 'recommend'])->name('recommend');
@@ -233,7 +233,7 @@ Route::prefix('admin/size-guides')->name('admin.size-guides.')->middleware(['aut
     Route::delete('/{sizeGuide}/size-charts/{sizeChart}', [\App\Http\Controllers\Admin\SizeGuideController::class, 'deleteSizeChart'])->name('size-charts.destroy');
 });
 
-// Storefront Pricing
+// Frontend Pricing
 Route::prefix('pricing')->name('frontend.pricing.')->group(function () {
     Route::get('/variants/{variant}', [\App\Http\Controllers\Frontend\PricingController::class, 'getPrice'])->name('variant');
     Route::get('/variants/{variant}/tiers', [\App\Http\Controllers\Frontend\PricingController::class, 'getTieredPricing'])->name('tiers');
@@ -256,7 +256,7 @@ Route::prefix('admin/products/{product}/pricing')->name('admin.products.pricing.
     Route::get('/history', [\App\Http\Controllers\Admin\PricingHistoryController::class, 'index'])->name('history');
 });
 
-// Storefront Product Availability
+// Frontend Product Availability
 Route::prefix('products/{product}/availability')->name('frontend.products.availability.')->group(function () {
     Route::post('/check', [\App\Http\Controllers\Frontend\AvailabilityController::class, 'checkAvailability'])->name('check');
     Route::get('/dates', [\App\Http\Controllers\Frontend\AvailabilityController::class, 'getAvailableDates'])->name('dates');
@@ -273,7 +273,7 @@ Route::prefix('admin/products/{product}/availability')->name('admin.products.ava
     Route::get('/bookings', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'bookings'])->name('bookings');
 });
 
-// Storefront Product Customization
+// Frontend Product Customization
 Route::prefix('products/{product}/customizations')->name('frontend.products.customizations.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Frontend\ProductCustomizationController::class, 'index'])->name('index');
     Route::post('/validate', [\App\Http\Controllers\Frontend\ProductCustomizationController::class, 'validate'])->name('validate');

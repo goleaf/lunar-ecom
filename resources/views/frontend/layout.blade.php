@@ -16,7 +16,7 @@
             @php
                 $defaultMeta = \App\Services\SEOService::getDefaultMetaTags(
                     config('app.name', 'E-commerce Store'),
-                    'Shop the best products at ' . config('app.name', 'our store'),
+                    __('frontend.seo.default_description', ['store' => config('app.name', 'our store')]),
                     null,
                     request()->url()
                 );
@@ -69,10 +69,7 @@
                                 {{ __('frontend.categories') }}
                             </a>
                             <a href="{{ route('frontend.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                Brands
-                            </a>
-                            <a href="{{ route('frontend.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.nav.bundles') }}
+                                {{ __('frontend.nav.brands') }}
                             </a>
                             <a href="{{ route('frontend.comparison.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 relative">
                                 {{ __('frontend.nav.comparison') }}
@@ -98,7 +95,7 @@
                         <livewire:frontend.currency-selector />
                         @auth
                             <a href="{{ route('frontend.addresses.index') }}" class="text-gray-700 hover:text-gray-900">
-                                Addresses
+                                {{ __('frontend.nav.addresses') }}
                             </a>
                             <a href="{{ route('frontend.downloads.index') }}" class="text-gray-700 hover:text-gray-900">
                                 {{ __('frontend.nav.downloads') }}
@@ -136,11 +133,11 @@
         <footer class="bg-white border-t mt-12">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p class="text-center text-gray-600">&copy; {{ date('Y') }} {{ config('app.name', 'Store') }}. All rights reserved.</p>
+                    <p class="text-center text-gray-600">&copy; {{ date('Y') }} {{ config('app.name', 'Store') }}. {{ __('frontend.footer.all_rights_reserved') }}</p>
                     <div class="flex gap-4 text-sm">
-                        <a href="{{ route('gdpr.privacy-policy.show') }}" class="text-gray-600 hover:text-gray-900">Privacy Policy</a>
+                        <a href="{{ route('gdpr.privacy-policy.show') }}" class="text-gray-600 hover:text-gray-900">{{ __('frontend.footer.privacy_policy') }}</a>
                         @auth
-                            <a href="{{ route('gdpr.privacy-settings.index') }}" class="text-gray-600 hover:text-gray-900">Privacy Settings</a>
+                            <a href="{{ route('gdpr.privacy-settings.index') }}" class="text-gray-600 hover:text-gray-900">{{ __('frontend.footer.privacy_settings') }}</a>
                         @endauth
                     </div>
                 </div>

@@ -1,9 +1,9 @@
 @extends('frontend.layout')
 
-@section('title', config('app.name') . ' - Home')
+@section('title', config('app.name') . ' - ' . __('frontend.home'))
 
 @section('meta')
-    <meta name="description" content="{{ config('app.name') }} - Discover our featured collections, bestsellers, and new arrivals.">
+    <meta name="description" content="{{ __('frontend.homepage.meta_description', ['store' => config('app.name')]) }}">
 @endsection
 
 @section('content')
@@ -45,7 +45,7 @@
                                 @endif
                                 <a href="{{ route('frontend.collections.show', $collection->urls->first()->slug ?? $collection->id) }}" 
                                    class="inline-block bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors animate-fade-in-delay-2">
-                                    Explore Collection
+                                    {{ __('frontend.homepage.explore_collection') }}
                                 </a>
                             </div>
                         </div>
@@ -103,7 +103,7 @@
                                                     <p class="text-lg mb-4">{{ $banner['description'] }}</p>
                                                 @endif
                                                 <span class="inline-block bg-white text-gray-900 px-6 py-2 rounded font-semibold hover:bg-gray-100 transition-colors">
-                                                    {{ $banner['link_text'] ?? 'Shop Now' }}
+                                                    {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
                                                 </span>
                                             </div>
                                         </div>
@@ -121,7 +121,7 @@
     @if($featuredCollections->count() > 0)
         <section class="featured-collections py-12 px-4 bg-gray-50">
             <div class="container mx-auto">
-                <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">Featured Collections</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">{{ __('frontend.homepage.featured_collections') }}</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($featuredCollections as $collection)
                         <x-frontend.collection-card :collection="$collection" />
@@ -136,11 +136,11 @@
         <section class="bestsellers py-12 px-4">
             <div class="container mx-auto">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl md:text-4xl font-bold">Bestsellers</h2>
+                    <h2 class="text-3xl md:text-4xl font-bold">{{ __('frontend.homepage.bestsellers') }}</h2>
                     @if($bestsellers->urls->first())
                         <a href="{{ route('frontend.collections.show', $bestsellers->urls->first()->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
-                            View All →
+                            {{ __('frontend.common.view_all') }} →
                         </a>
                     @endif
                 </div>
@@ -175,7 +175,7 @@
                                                 <p class="text-xl mb-6">{{ $banner['description'] }}</p>
                                             @endif
                                             <span class="inline-block bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors">
-                                                {{ $banner['link_text'] ?? 'Shop Now' }}
+                                                {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
                                             </span>
                                         </div>
                                     </div>
@@ -193,11 +193,11 @@
         <section class="new-arrivals py-12 px-4 bg-gray-50">
             <div class="container mx-auto">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl md:text-4xl font-bold">New Arrivals</h2>
+                    <h2 class="text-3xl md:text-4xl font-bold">{{ __('frontend.homepage.new_arrivals') }}</h2>
                     @if($newArrivals->urls->first())
                         <a href="{{ route('frontend.collections.show', $newArrivals->urls->first()->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
-                            View All →
+                            {{ __('frontend.common.view_all') }} →
                         </a>
                     @endif
                 </div>

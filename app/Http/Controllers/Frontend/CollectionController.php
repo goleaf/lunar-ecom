@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Frontend\CollectionFilterController;
 use Illuminate\Http\Request;
 use Lunar\Models\Collection;
 use Lunar\Models\Url;
@@ -98,13 +99,8 @@ class CollectionController extends Controller
             'canonical' => $canonicalUrl,
         ];
 
-        // Get filter options for the new filtering system
-        $filterController = new \App\Http\Controllers\Storefront\CollectionFilterController();
-        $filterOptions = $filterController->getFilterOptions($collection, $request);
-
-        // Get filter options for the new filtering system
-        $filterController = new \App\Http\Controllers\Storefront\CollectionFilterController();
-        $filterOptions = $filterController->getFilterOptions($collection, $request);
+        // Get filter options for the collection filtering system.
+        $filterOptions = app(CollectionFilterController::class)->getFilterOptions($collection, $request);
 
         return view('frontend.collections.show', compact(
             'collection', 

@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Storefront category controller.
+ * Frontend category controller.
  */
 class CategoryController extends Controller
 {

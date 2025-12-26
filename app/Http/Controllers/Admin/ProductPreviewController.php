@@ -7,12 +7,12 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 
 /**
- * Controller for previewing products in storefront view.
+ * Controller for previewing products in the frontend.
  */
 class ProductPreviewController extends Controller
 {
     /**
-     * Preview product in storefront view.
+     * Preview product in the frontend.
      *
      * @param  Request  $request
      * @param  Product  $product

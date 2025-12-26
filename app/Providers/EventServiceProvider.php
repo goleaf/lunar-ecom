@@ -69,6 +69,7 @@ class EventServiceProvider extends ServiceProvider
             RemoveStockNotificationOnPurchase::class,
             TrackStockNotificationConversion::class,
             \App\Listeners\ProcessReferralOrderPayment::class,
+            \App\Listeners\ApplyReferralDiscountsAtCheckout::class . '@handleOrderPaid',
         ],
         // Cart repricing events
         CartQuantityChanged::class => [
@@ -85,6 +86,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         CartCurrencyChanged::class => [
             CartRepricingListener::class,
+        ],
+        CartRepricingEvent::class => [
+            \App\Listeners\ApplyReferralDiscountsAtCheckout::class . '@handleCartRepricing',
         ],
         PromotionActivated::class => [
             CartRepricingListener::class,
@@ -117,6 +121,22 @@ class EventServiceProvider extends ServiceProvider
             // Add additional listeners here
         ],
         // Referral events
+        \App\Events\ReferralClicked::class => [
+            \App\Listeners\HandleReferralClicked::class,
+        ],
+        \App\Events\UserSignedUp::class => [
+            \App\Listeners\HandleUserSignedUp::class,
+        ],
+        \App\Events\OrderPaid::class => [
+            \App\Listeners\HandleOrderPaid::class,
+        ],
+        \App\Events\OrderRefunded::class => [
+            \App\Listeners\HandleOrderRefunded::class,
+        ],
+        \App\Events\ChargebackReceived::class => [
+            \App\Listeners\HandleChargebackReceived::class,
+        ],
+        // Legacy referral events (for backward compatibility)
         ReferralCodeClicked::class => [
             ProcessReferralClick::class,
         ],

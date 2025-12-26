@@ -45,8 +45,12 @@ class Warehouse extends Model
         'latitude',
         'longitude',
         'service_areas',
+        'geo_distance_rules',
+        'max_fulfillment_distance',
         'is_dropship',
         'dropship_provider',
+        'is_virtual',
+        'virtual_config',
         'fulfillment_rules',
         'auto_fulfill',
     ];
@@ -62,7 +66,11 @@ class Warehouse extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'service_areas' => 'array',
+        'geo_distance_rules' => 'array',
+        'max_fulfillment_distance' => 'decimal:2',
         'is_dropship' => 'boolean',
+        'is_virtual' => 'boolean',
+        'virtual_config' => 'array',
         'fulfillment_rules' => 'array',
         'auto_fulfill' => 'boolean',
     ];
@@ -105,6 +113,33 @@ class Warehouse extends Model
     public function fulfillmentRules(): HasMany
     {
         return $this->hasMany(WarehouseFulfillmentRule::class, 'warehouse_id');
+    }
+
+    /**
+     * Channel mappings relationship.
+     *
+     * @return HasMany
+     */
+    public function channelMappings(): HasMany
+    {
+        return $this->hasMany(ChannelWarehouse::class, 'warehouse_id');
+    }
+
+    /**
+     * Channels relationship (many-to-many through channel_warehouse).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function channels(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(
+            \Lunar\Models\Channel::class,
+            config('lunar.database.table_prefix') . 'channel_warehouse',
+            'warehouse_id',
+            'channel_id'
+        )
+        ->withPivot(['priority', 'is_default', 'is_active', 'fulfillment_rules'])
+        ->withTimestamps();
     }
 
     /**

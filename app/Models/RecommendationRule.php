@@ -145,3 +145,4 @@ class RecommendationRule extends Model
     }
 }
 
+

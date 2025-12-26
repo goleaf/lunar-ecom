@@ -31,7 +31,7 @@ class ReferralDiscountStackingService
     public function applyReferralDiscount($cartOrOrder, ReferralRule $rule, User $user): array
     {
         $program = $rule->program;
-        $stackingMode = $rule->stacking_mode ?? $program->default_stacking_mode ?? ReferralRule::STACKING_EXCLUSIVE;
+        $stackingMode = $rule->stacking_mode ?? ($program ? $program->default_stacking_mode : null) ?? ReferralRule::STACKING_EXCLUSIVE;
 
         // Get all applicable discounts
         $applicableDiscounts = $this->getApplicableDiscounts($cartOrOrder, $user);
@@ -126,7 +126,8 @@ class ReferralDiscountStackingService
         $referralPercent = $this->getDiscountPercent($referralDiscount);
 
         // Check max total discount cap
-        $maxTotalPercent = $rule->max_total_discount_percent ?? $rule->program->max_total_discount_percent ?? null;
+        $program = $rule->program;
+        $maxTotalPercent = $rule->max_total_discount_percent ?? ($program ? $program->max_total_discount_percent : null) ?? null;
         
         if ($maxTotalPercent) {
             $newTotalPercent = $currentTotalPercent + $referralPercent;
@@ -152,7 +153,7 @@ class ReferralDiscountStackingService
         }
 
         // Check max total discount amount
-        $maxTotalAmount = $rule->max_total_discount_amount ?? $rule->program->max_total_discount_amount ?? null;
+        $maxTotalAmount = $rule->max_total_discount_amount ?? ($program ? $program->max_total_discount_amount : null) ?? null;
         
         if ($maxTotalAmount) {
             $currentTotalAmount = $this->calculateTotalDiscountAmount($cartOrOrder, $otherDiscounts);

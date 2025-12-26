@@ -148,3 +148,4 @@ class ContractRule extends Model
     }
 }
 
+

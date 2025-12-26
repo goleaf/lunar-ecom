@@ -34,6 +34,8 @@ class VariantPricingService
 {
     /**
      * Calculate price for variant.
+     * 
+     * This method now uses UnifiedPricingEngine for standardized output.
      *
      * @param  ProductVariant  $variant
      * @param  int  $quantity
@@ -49,54 +51,32 @@ class VariantPricingService
         ?Currency $currency = null,
         ?Channel $channel = null,
         ?CustomerGroup $customerGroup = null,
+        ?\Lunar\Models\Customer $customer = null,
         bool $includeTax = false
     ): array {
-        // Get currency
-        if (!$currency) {
-            $currency = Currency::where('default', true)->first();
-        }
-
-        if (!$currency) {
-            throw new \RuntimeException('No currency available for price calculation.');
-        }
-
-        // Check price lock
-        if ($variant->price_locked) {
-            return $this->getLockedPrice($variant, $currency, $quantity, $includeTax);
-        }
-
-        // Try dynamic pricing hooks first
-        $hookPrice = $this->getHookPrice($variant, $currency, $quantity, $channel, $customerGroup);
-        if ($hookPrice !== null) {
-            return $this->formatPriceResponse($hookPrice, $variant, $currency, $quantity, $includeTax);
-        }
-
-        // Get best matching price
-        $price = $this->findBestPrice($variant, $currency, $quantity, $channel, $customerGroup);
-
-        // Apply discount override if applicable
-        $price = $this->applyDiscountOverride($variant, $price, $quantity, $channel, $customerGroup);
-
-        // Apply MAP pricing enforcement
-        $price = $this->enforceMAP($variant, $price, $currency);
-
-        // Apply price rounding
-        $price = $this->applyRounding($variant, $price, $currency);
-
-        // Get compare-at price
-        $compareAtPrice = $this->getCompareAtPrice($variant, $currency, $quantity, $channel, $customerGroup);
-
-        return $this->formatPriceResponse($price, $variant, $currency, $quantity, $includeTax, $compareAtPrice);
+        // Use UnifiedPricingEngine for standardized output
+        $engine = app(UnifiedPricingEngine::class);
+        
+        return $engine->calculatePrice(
+            $variant,
+            $quantity,
+            $currency,
+            $channel,
+            $customerGroup,
+            $customer,
+            ['include_tax' => $includeTax]
+        );
     }
 
     /**
-     * Find best matching price.
+     * Find best matching price using priority-based resolution.
      *
      * @param  ProductVariant  $variant
      * @param  Currency  $currency
      * @param  int  $quantity
      * @param  Channel|null  $channel
      * @param  CustomerGroup|null  $customerGroup
+     * @param  \Lunar\Models\Customer|null  $customer
      * @return int
      */
     protected function findBestPrice(
@@ -104,45 +84,21 @@ class VariantPricingService
         Currency $currency,
         int $quantity,
         ?Channel $channel,
-        ?CustomerGroup $customerGroup
+        ?CustomerGroup $customerGroup,
+        ?\Lunar\Models\Customer $customer = null
     ): int {
-        // Query for matching prices
-        $query = VariantPrice::where('variant_id', $variant->id)
-            ->where('currency_id', $currency->id)
-            ->active()
-            ->forQuantity($quantity)
-            ->orderByDesc('priority');
-
-        // Apply filters
-        if ($channel) {
-            $query->forChannel($channel->id);
-        }
-
-        if ($customerGroup) {
-            $query->forCustomerGroup($customerGroup->id);
-        }
-
-        // Get best match
-        $bestPrice = $query->first();
-
-        if ($bestPrice) {
-            return $bestPrice->price;
-        }
-
-        // Fallback to variant's price_override or Lunar pricing
-        if ($variant->price_override !== null) {
-            return $variant->price_override;
-        }
-
-        // Use Lunar's pricing system
-        $pricing = \Lunar\Facades\Pricing::qty($quantity)->for($variant);
+        $resolver = app(PriorityPricingResolver::class);
         
-        if ($customerGroup) {
-            $pricing = $pricing->customerGroup($customerGroup);
-        }
+        $priceData = $resolver->resolvePrice(
+            $variant,
+            $quantity,
+            $currency,
+            $channel,
+            $customerGroup,
+            $customer
+        );
 
-        $response = $pricing->get();
-        return $response->matched?->price?->value ?? 0;
+        return $priceData['price'] ?? 0;
     }
 
     /**

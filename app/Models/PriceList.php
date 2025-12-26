@@ -155,3 +155,4 @@ class PriceList extends Model
     }
 }
 
+

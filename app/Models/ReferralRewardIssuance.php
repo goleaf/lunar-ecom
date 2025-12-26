@@ -49,6 +49,38 @@ class ReferralRewardIssuance extends Model
     }
 
     /**
+     * Get the referral attribution.
+     */
+    public function attribution(): BelongsTo
+    {
+        return $this->belongsTo(ReferralAttribution::class, 'referral_attribution_id');
+    }
+
+    /**
+     * Get the referee user.
+     */
+    public function referee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referee_user_id');
+    }
+
+    /**
+     * Get the referrer user.
+     */
+    public function referrer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referrer_user_id');
+    }
+
+    /**
+     * Get the order.
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
+
+    /**
      * Get the attribution.
      */
     public function attribution(): BelongsTo

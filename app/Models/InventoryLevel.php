@@ -32,11 +32,15 @@ class InventoryLevel extends Model
     protected $fillable = [
         'product_variant_id',
         'warehouse_id',
-        'quantity',
-        'reserved_quantity',
-        'incoming_quantity',
-        'reorder_point',
-        'reorder_quantity',
+        'quantity',              // On-hand quantity
+        'reserved_quantity',     // Reserved for orders
+        'incoming_quantity',     // Expected incoming stock
+        'damaged_quantity',      // Damaged/unusable stock
+        'preorder_quantity',     // Preorder reservations
+        'backorder_limit',       // Warehouse-specific backorder limit
+        'reorder_point',         // Alert when quantity < this
+        'safety_stock_level',    // Minimum stock to maintain
+        'reorder_quantity',      // Suggested order quantity
         'status',
     ];
 
@@ -46,11 +50,15 @@ class InventoryLevel extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'quantity' => 'integer',
-        'reserved_quantity' => 'integer',
-        'incoming_quantity' => 'integer',
-        'reorder_point' => 'integer',
-        'reorder_quantity' => 'integer',
+        'quantity' => 'integer',           // On-hand quantity
+        'reserved_quantity' => 'integer',   // Reserved quantity
+        'incoming_quantity' => 'integer',   // Incoming quantity
+        'damaged_quantity' => 'integer',    // Damaged quantity
+        'preorder_quantity' => 'integer',   // Preorder quantity
+        'backorder_limit' => 'integer',    // Backorder limit
+        'reorder_point' => 'integer',       // Reorder point
+        'safety_stock_level' => 'integer',  // Safety stock level
+        'reorder_quantity' => 'integer',    // Reorder quantity
     ];
 
     /**
@@ -128,17 +136,33 @@ class InventoryLevel extends Model
     }
 
     /**
-     * Get available quantity (quantity - reserved).
+     * Get available quantity (on-hand - reserved - damaged).
+     * 
+     * Available = On-hand quantity - Reserved quantity - Damaged quantity
      *
      * @return int
      */
     public function getAvailableQuantityAttribute(): int
     {
-        return max(0, $this->quantity - $this->reserved_quantity);
+        return max(0, $this->quantity - $this->reserved_quantity - $this->damaged_quantity);
+    }
+    
+    /**
+     * Get on-hand quantity (usable stock).
+     * 
+     * On-hand = Total quantity - Damaged quantity
+     *
+     * @return int
+     */
+    public function getOnHandQuantityAttribute(): int
+    {
+        return max(0, $this->quantity - $this->damaged_quantity);
     }
 
     /**
-     * Get total quantity (quantity + incoming).
+     * Get total quantity (on-hand + incoming).
+     * 
+     * Total = On-hand quantity + Incoming quantity
      *
      * @return int
      */
@@ -146,15 +170,59 @@ class InventoryLevel extends Model
     {
         return $this->quantity + $this->incoming_quantity;
     }
+    
+    /**
+     * Get sellable quantity (available + preorder capacity).
+     * 
+     * Sellable = Available quantity + Preorder capacity
+     *
+     * @return int
+     */
+    public function getSellableQuantityAttribute(): int
+    {
+        return $this->available_quantity + $this->preorder_quantity;
+    }
+    
+    /**
+     * Get net quantity (on-hand - reserved).
+     * 
+     * Net = On-hand quantity - Reserved quantity
+     *
+     * @return int
+     */
+    public function getNetQuantityAttribute(): int
+    {
+        return max(0, $this->quantity - $this->reserved_quantity);
+    }
 
     /**
-     * Check if stock is low.
+     * Check if stock is low (below reorder point).
      *
      * @return bool
      */
     public function isLowStock(): bool
     {
-        return $this->quantity < $this->reorder_point;
+        return $this->available_quantity < $this->reorder_point;
+    }
+    
+    /**
+     * Check if stock is below safety stock level.
+     *
+     * @return bool
+     */
+    public function isBelowSafetyStock(): bool
+    {
+        return $this->available_quantity < $this->safety_stock_level;
+    }
+    
+    /**
+     * Check if stock is at or above safety stock level.
+     *
+     * @return bool
+     */
+    public function isAtOrAboveSafetyStock(): bool
+    {
+        return $this->available_quantity >= $this->safety_stock_level;
     }
 
     /**
@@ -168,16 +236,26 @@ class InventoryLevel extends Model
     }
 
     /**
-     * Update status based on quantity.
+     * Update status based on quantity and availability.
      *
      * @return void
      */
     public function updateStatus(): void
     {
-        if ($this->isOutOfStock()) {
-            $this->status = 'out_of_stock';
+        $available = $this->available_quantity;
+        
+        if ($available <= 0) {
+            // Check if backorder is allowed
+            $variant = $this->productVariant;
+            if ($variant && $variant->backorder_allowed) {
+                $this->status = 'backorder';
+            } else {
+                $this->status = 'out_of_stock';
+            }
         } elseif ($this->isLowStock()) {
             $this->status = 'low_stock';
+        } elseif ($this->preorder_quantity > 0 && $available <= $this->preorder_quantity) {
+            $this->status = 'preorder';
         } else {
             $this->status = 'in_stock';
         }

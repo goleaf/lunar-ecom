@@ -3,398 +3,528 @@
 namespace App\Services;
 
 use App\Models\ProductVariant;
-use App\Models\PriceMatrix;
-use App\Services\Cache\PricingCacheService;
-use App\Services\Observability\PricingMetricsService;
-use Lunar\Models\Price;
+use App\Models\VariantPrice;
+use App\Models\PriceSimulation;
+use App\Models\MarginAlert;
+use App\Models\PriceHistory;
+use App\Services\PriorityPricingResolver;
+use App\Services\PricingRuleEngine;
 use Lunar\Models\Currency;
-use Lunar\Models\CustomerGroup;
 use Lunar\Models\Channel;
-use Lunar\Models\TaxClass;
-use Illuminate\Support\Collection;
+use Lunar\Models\CustomerGroup;
+use Lunar\Models\Customer;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 /**
- * Advanced Pricing Service - Comprehensive pricing engine.
+ * Advanced Pricing Service.
  * 
- * Handles all pricing scenarios:
- * - Multi-currency pricing
- * - Per-variant pricing
- * - Customer-group pricing
- * - Tiered pricing (bulk discounts)
- * - Time-based pricing (sales)
- * - Channel-specific pricing
- * - Tax-inclusive / tax-exclusive prices
- * - Automatic currency conversion
- * - Rounding rules per currency
+ * Handles:
+ * - Time windows (sales, flash deals)
+ * - Price locks (cannot be discounted)
+ * - Scheduled price changes
+ * - Dynamic pricing hooks (ERP, AI, scripts)
+ * - Price simulation (preview final price)
+ * - Margin alerts
+ * - Historical price tracking (legal compliance)
  */
 class AdvancedPricingService
 {
-    protected MatrixPricingService $matrixPricingService;
-    protected PricingCacheService $cacheService;
-    protected PricingMetricsService $metricsService;
+    protected PriorityPricingResolver $resolver;
+    protected PricingRuleEngine $ruleEngine;
 
-    public function __construct(
-        MatrixPricingService $matrixPricingService,
-        PricingCacheService $cacheService,
-        PricingMetricsService $metricsService
-    ) {
-        $this->matrixPricingService = $matrixPricingService;
-        $this->cacheService = $cacheService;
-        $this->metricsService = $metricsService;
+    public function __construct(PriorityPricingResolver $resolver, PricingRuleEngine $ruleEngine)
+    {
+        $this->resolver = $resolver;
+        $this->ruleEngine = $ruleEngine;
     }
 
     /**
-     * Calculate price for a variant with full context.
+     * Create a time-windowed price (sale, flash deal).
      *
-     * @param ProductVariant $variant
-     * @param int $quantity
-     * @param Currency|null $currency
-     * @param CustomerGroup|null $customerGroup
-     * @param Channel|null $channel
-     * @param bool $includeTax
-     * @return array
+     * @param  ProductVariant  $variant
+     * @param  array  $data
+     * @return VariantPrice
      */
-    public function calculatePrice(
-        ProductVariant $variant,
-        int $quantity = 1,
-        ?Currency $currency = null,
-        ?CustomerGroup $customerGroup = null,
-        ?Channel $channel = null,
-        bool $includeTax = false
-    ): array {
-        // Get currency
-        if (!$currency) {
-            $currency = Currency::where('default', true)->first();
-        }
-
-        if (!$currency) {
-            throw new \RuntimeException('No currency available for price calculation.');
-        }
-
-        // Get base price from Lunar pricing system or variant override
-        $basePrice = $this->getBasePrice($variant, $quantity, $currency, $customerGroup, $channel);
-
-        // Apply matrix pricing (tiered, customer group, regional)
-        $matrixPrice = $this->matrixPricingService->calculatePrice(
-            $variant,
-            $quantity,
-            $currency,
-            $customerGroup
-        );
-
-        // Use matrix price if available and better, otherwise use base price
-        $finalPrice = $matrixPrice['price'] ?? $basePrice;
-
-        // Apply currency conversion if needed
-        if ($currency->auto_convert && !$currency->default) {
-            $finalPrice = $this->convertPrice($finalPrice, Currency::where('default', true)->first(), $currency);
-        }
-
-        // Apply rounding rules
-        $finalPrice = $this->roundPrice($finalPrice, $currency);
-
-        // Calculate tax
-        $taxAmount = 0;
-        $priceExTax = $finalPrice;
-        $priceIncTax = $finalPrice;
-
-        if ($includeTax) {
-            $taxAmount = $this->calculateTax($variant, $finalPrice, $currency);
-            $priceIncTax = $finalPrice;
-            $priceExTax = $finalPrice - $taxAmount;
-        } else {
-            $taxAmount = $this->calculateTax($variant, $finalPrice, $currency);
-            $priceExTax = $finalPrice;
-            $priceIncTax = $finalPrice + $taxAmount;
-        }
-
-        // Get compare-at price
-        $comparePrice = $variant->compare_at_price ?? null;
-        if ($comparePrice && $currency->auto_convert && !$currency->default) {
-            $comparePrice = $this->convertPrice($comparePrice, Currency::where('default', true)->first(), $currency);
-            $comparePrice = $this->roundPrice($comparePrice, $currency);
-        }
-
-        return [
-            'price' => $finalPrice,
-            'price_decimal' => $finalPrice / 100,
-            'price_ex_tax' => $priceExTax,
-            'price_ex_tax_decimal' => $priceExTax / 100,
-            'price_inc_tax' => $priceIncTax,
-            'price_inc_tax_decimal' => $priceIncTax / 100,
-            'tax_amount' => $taxAmount,
-            'tax_amount_decimal' => $taxAmount / 100,
-            'compare_price' => $comparePrice,
-            'compare_price_decimal' => $comparePrice ? $comparePrice / 100 : null,
-            'formatted_price' => $this->formatPrice($finalPrice, $currency),
-            'formatted_price_ex_tax' => $this->formatPrice($priceExTax, $currency),
-            'formatted_price_inc_tax' => $this->formatPrice($priceIncTax, $currency),
-            'formatted_compare_price' => $comparePrice ? $this->formatPrice($comparePrice, $currency) : null,
-            'currency' => $currency->code,
-            'currency_id' => $currency->id,
-            'quantity' => $quantity,
-            'channel_id' => $channel?->id,
-            'customer_group_id' => $customerGroup?->id,
-            'savings' => $comparePrice && $comparePrice > $finalPrice 
-                ? ($comparePrice - $finalPrice) / 100 
-                : null,
-            'savings_percentage' => $comparePrice && $comparePrice > $finalPrice
-                ? round((($comparePrice - $finalPrice) / $comparePrice) * 100, 2)
-                : null,
-        ];
+    public function createTimeWindowPrice(ProductVariant $variant, array $data): VariantPrice
+    {
+        return VariantPrice::create([
+            'variant_id' => $variant->id,
+            'currency_id' => $data['currency_id'],
+            'price' => $data['price'],
+            'compare_at_price' => $data['compare_at_price'] ?? null,
+            'channel_id' => $data['channel_id'] ?? null,
+            'customer_group_id' => $data['customer_group_id'] ?? null,
+            'pricing_layer' => 'promotional',
+            'starts_at' => $data['starts_at'] ?? now(),
+            'ends_at' => $data['ends_at'] ?? null,
+            'is_flash_deal' => $data['is_flash_deal'] ?? false,
+            'priority' => $data['priority'] ?? 600,
+            'is_active' => true,
+        ]);
     }
 
     /**
-     * Get base price from Lunar pricing system or variant override.
-     * Uses cache for performance.
+     * Create a flash deal (short-term sale).
+     *
+     * @param  ProductVariant  $variant
+     * @param  array  $data
+     * @return VariantPrice
      */
-    protected function getBasePrice(
+    public function createFlashDeal(ProductVariant $variant, array $data): VariantPrice
+    {
+        $data['is_flash_deal'] = true;
+        $data['pricing_layer'] = 'promotional';
+        $data['priority'] = $data['priority'] ?? 700; // Higher priority for flash deals
+        
+        return $this->createTimeWindowPrice($variant, $data);
+    }
+
+    /**
+     * Schedule a price change.
+     *
+     * @param  ProductVariant  $variant
+     * @param  array  $data
+     * @return VariantPrice
+     */
+    public function schedulePriceChange(ProductVariant $variant, array $data): VariantPrice
+    {
+        $price = VariantPrice::create([
+            'variant_id' => $variant->id,
+            'currency_id' => $data['currency_id'],
+            'price' => $data['current_price'] ?? $variant->prices()->first()?->price ?? 0,
+            'scheduled_price' => $data['scheduled_price'],
+            'scheduled_change_at' => $data['scheduled_change_at'],
+            'channel_id' => $data['channel_id'] ?? null,
+            'customer_group_id' => $data['customer_group_id'] ?? null,
+            'pricing_layer' => $data['pricing_layer'] ?? 'base',
+            'is_active' => false, // Inactive until scheduled time
+        ]);
+
+        // Track in history
+        $this->trackPriceChange($variant, [
+            'price' => $data['current_price'] ?? $variant->prices()->first()?->price ?? 0,
+            'scheduled_price' => $data['scheduled_price'],
+            'scheduled_change_at' => $data['scheduled_change_at'],
+            'change_reason' => 'scheduled',
+        ]);
+
+        return $price;
+    }
+
+    /**
+     * Process scheduled price changes.
+     *
+     * @return int Number of prices updated
+     */
+    public function processScheduledPriceChanges(): int
+    {
+        $scheduledPrices = VariantPrice::whereNotNull('scheduled_change_at')
+            ->where('scheduled_change_at', '<=', now())
+            ->where('is_active', false)
+            ->get();
+
+        $updated = 0;
+
+        foreach ($scheduledPrices as $price) {
+            DB::transaction(function () use ($price, &$updated) {
+                // Record old price in history
+                $oldPrice = $price->price;
+                
+                // Update to scheduled price
+                $price->update([
+                    'price' => $price->scheduled_price,
+                    'scheduled_price' => null,
+                    'scheduled_change_at' => null,
+                    'is_active' => true,
+                ]);
+
+                // Track in history
+                $this->trackPriceChange($price->variant, [
+                    'price' => $price->scheduled_price,
+                    'previous_price' => $oldPrice,
+                    'change_reason' => 'scheduled_executed',
+                    'changed_by' => null,
+                ]);
+
+                $updated++;
+            });
+        }
+
+        return $updated;
+    }
+
+    /**
+     * Lock price (prevent discounts).
+     *
+     * @param  ProductVariant  $variant
+     * @param  string|null  $reason
+     * @return bool
+     */
+    public function lockPrice(ProductVariant $variant, ?string $reason = null): bool
+    {
+        return $variant->update([
+            'price_locked' => true,
+        ]);
+    }
+
+    /**
+     * Unlock price.
+     *
+     * @param  ProductVariant  $variant
+     * @return bool
+     */
+    public function unlockPrice(ProductVariant $variant): bool
+    {
+        return $variant->update([
+            'price_locked' => false,
+        ]);
+    }
+
+    /**
+     * Execute dynamic pricing hook.
+     *
+     * @param  ProductVariant  $variant
+     * @param  int  $quantity
+     * @param  Currency  $currency
+     * @param  Channel|null  $channel
+     * @param  CustomerGroup|null  $customerGroup
+     * @return int|null
+     */
+    public function executeDynamicPricingHook(
         ProductVariant $variant,
         int $quantity,
         Currency $currency,
-        ?CustomerGroup $customerGroup,
-        ?Channel $channel
-    ): int {
-        $startTime = microtime(true);
-        $fromCache = false;
-
-        // Check for variant price override (not cached)
-        if ($variant->price_override !== null) {
-            return $variant->price_override;
-        }
-
-        // Try cache first
-        $cachedPrice = $this->cacheService->getBasePrice(
-            $variant->id,
-            $currency->id,
-            $customerGroup?->id,
-            $channel?->id,
-            $quantity
-        );
-
-        if ($cachedPrice !== null) {
-            $fromCache = true;
-            $this->metricsService->recordCacheHit('base_price');
-        } else {
-            $this->metricsService->recordCacheMiss('base_price');
-
-            // Check for channel-specific price
-            if ($channel) {
-                $channelPrice = Price::where('priceable_type', ProductVariant::class)
-                    ->where('priceable_id', $variant->id)
-                    ->where('currency_id', $currency->id)
-                    ->where('channel_id', $channel->id)
-                    ->when($customerGroup, function ($q) use ($customerGroup) {
-                        $q->where('customer_group_id', $customerGroup->id);
-                    })
-                    ->whereNull('customer_group_id') // Fallback to non-group price
-                    ->orderBy('tier')
-                    ->first();
-
-                if ($channelPrice) {
-                    $cachedPrice = $channelPrice->price;
-                }
-            }
-
-            // Use Lunar's pricing facade if no cached price
-            if ($cachedPrice === null) {
-                $pricing = \Lunar\Facades\Pricing::qty($quantity)->for($variant);
-                
-                if ($currency) {
-                    $pricing = $pricing->currency($currency);
-                }
-                
-                if ($customerGroup) {
-                    $pricing = $pricing->customerGroup($customerGroup);
-                }
-
-                $response = $pricing->get();
-                $cachedPrice = $response->matched?->price?->value ?? 0;
-            }
-        }
-
-        $duration = (microtime(true) - $startTime) * 1000;
-        $this->metricsService->recordPriceCalculation('base_price_resolution', $duration, $fromCache);
-
-        return $cachedPrice ?? 0;
-    }
-
-    /**
-     * Convert price from one currency to another.
-     */
-    protected function convertPrice(int $price, Currency $fromCurrency, Currency $toCurrency): int
-    {
-        if ($fromCurrency->id === $toCurrency->id) {
-            return $price;
-        }
-
-        $priceDecimal = $price / 100;
-        $converted = \App\Lunar\Currencies\CurrencyHelper::convert(
-            $priceDecimal,
-            $fromCurrency,
-            $toCurrency
-        );
-
-        return (int) round($converted * 100);
-    }
-
-    /**
-     * Round price according to currency rounding rules.
-     */
-    protected function roundPrice(int $price, Currency $currency): int
-    {
-        $priceDecimal = $price / 100;
-        $precision = (float) $currency->rounding_precision;
-
-        if ($precision <= 0) {
-            return $price; // No rounding
-        }
-
-        $rounded = match ($currency->rounding_mode) {
-            'none' => $priceDecimal,
-            'up' => ceil($priceDecimal / $precision) * $precision,
-            'down' => floor($priceDecimal / $precision) * $precision,
-            'nearest' => round($priceDecimal / $precision) * $precision,
-            'nearest_up' => $priceDecimal % $precision == 0 
-                ? $priceDecimal 
-                : ceil($priceDecimal / $precision) * $precision,
-            'nearest_down' => $priceDecimal % $precision == 0 
-                ? $priceDecimal 
-                : floor($priceDecimal / $precision) * $precision,
-            default => round($priceDecimal / $precision) * $precision,
-        };
-
-        return (int) round($rounded * 100);
-    }
-
-    /**
-     * Calculate tax for a price.
-     */
-    protected function calculateTax(ProductVariant $variant, int $price, Currency $currency): int
-    {
-        $taxClass = $variant->taxClass;
-        
-        if (!$taxClass) {
-            return 0;
-        }
-
-        // Get tax rate (simplified - you may need to get actual tax rate based on location)
-        // This is a placeholder - implement based on your tax calculation logic
-        $taxRate = 0.20; // 20% default - replace with actual tax rate lookup
-
-        $priceDecimal = $price / 100;
-        $taxAmount = $priceDecimal * $taxRate;
-
-        return (int) round($taxAmount * 100);
-    }
-
-    /**
-     * Format price with currency.
-     */
-    protected function formatPrice(int $price, Currency $currency): string
-    {
-        $priceDecimal = $price / 100;
-        
-        $formatter = new \NumberFormatter(
-            app()->getLocale(),
-            \NumberFormatter::CURRENCY
-        );
-
-        return $formatter->formatCurrency($priceDecimal, $currency->code);
-    }
-
-    /**
-     * Get tiered pricing for a variant.
-     */
-    public function getTieredPricing(
-        ProductVariant $variant,
-        ?Currency $currency = null,
-        ?CustomerGroup $customerGroup = null,
-        ?Channel $channel = null
-    ): Collection {
-        return $this->matrixPricingService->getTieredPricing(
-            $variant,
-            $currency,
-            $customerGroup
-        );
-    }
-
-    /**
-     * Get active sales/promotions for a variant.
-     */
-    public function getActiveSales(
-        ProductVariant $variant,
-        ?Currency $currency = null,
-        ?CustomerGroup $customerGroup = null
-    ): Collection {
-        $product = $variant->product;
-        $now = Carbon::now();
-
-        return PriceMatrix::forProduct($product->id)
-            ->where('is_active', true)
-            ->where(function ($q) use ($now) {
-                $q->whereNull('starts_at')
-                  ->orWhere('starts_at', '<=', $now);
-            })
-            ->where(function ($q) use ($now) {
-                $q->whereNull('ends_at')
-                  ->orWhere('ends_at', '>=', $now);
-            })
-            ->orderBy('priority', 'desc')
-            ->get();
-    }
-
-    /**
-     * Get price for multiple variants (for bundle/cart calculations).
-     */
-    public function calculateBulkPrice(
-        array $variants, // ['variant_id' => quantity]
-        ?Currency $currency = null,
-        ?CustomerGroup $customerGroup = null,
         ?Channel $channel = null,
-        bool $includeTax = false
-    ): array {
-        $totalPrice = 0;
-        $totalTax = 0;
-        $variantPrices = [];
+        ?CustomerGroup $customerGroup = null
+    ): ?int {
+        $hook = \App\Models\VariantPriceHook::where('product_variant_id', $variant->id)
+            ->where('is_active', true)
+            ->orderBy('priority')
+            ->first();
 
-        foreach ($variants as $variantId => $quantity) {
-            $variant = ProductVariant::find($variantId);
-            if (!$variant) {
-                continue;
-            }
-
-            $priceData = $this->calculatePrice(
-                $variant,
-                $quantity,
-                $currency,
-                $customerGroup,
-                $channel,
-                $includeTax
-            );
-
-            $variantPrices[$variantId] = $priceData;
-            $totalPrice += $priceData['price'] * $quantity;
-            $totalTax += ($priceData['tax_amount'] ?? 0) * $quantity;
+        if (!$hook) {
+            return null;
         }
 
-        $currency = $currency ?? Currency::where('default', true)->first();
+        // Check cache
+        if ($hook->cached_price && $hook->cached_at) {
+            $cacheAge = now()->diffInMinutes($hook->cached_at);
+            if ($cacheAge < $hook->cache_ttl_minutes) {
+                return $hook->cached_price;
+            }
+        }
+
+        // Execute hook service
+        $hookService = $hook->hook_service;
+        
+        if (!class_exists($hookService)) {
+            \Log::warning("Dynamic pricing hook service not found: {$hookService}");
+            return null;
+        }
+
+        try {
+            $service = app($hookService);
+            
+            if (method_exists($service, 'calculatePrice')) {
+                $price = $service->calculatePrice($variant, $quantity, $currency, $channel, $customerGroup);
+                
+                // Cache result
+                $hook->update([
+                    'cached_price' => $price,
+                    'cached_at' => now(),
+                ]);
+
+                return $price;
+            }
+        } catch (\Exception $e) {
+            \Log::error("Dynamic pricing hook error: {$e->getMessage()}");
+        }
+
+        return null;
+    }
+
+    /**
+     * Simulate price (preview final price).
+     *
+     * @param  ProductVariant  $variant
+     * @param  int  $quantity
+     * @param  Currency|null  $currency
+     * @param  Channel|null  $channel
+     * @param  CustomerGroup|null  $customerGroup
+     * @param  Customer|null  $customer
+     * @param  array  $context
+     * @return array
+     */
+    public function simulatePrice(
+        ProductVariant $variant,
+        int $quantity = 1,
+        ?Currency $currency = null,
+        ?Channel $channel = null,
+        ?CustomerGroup $customerGroup = null,
+        ?Customer $customer = null,
+        array $context = []
+    ): array {
+        // Resolve base price
+        $priceData = $this->resolver->resolvePrice(
+            $variant,
+            $quantity,
+            $currency,
+            $channel,
+            $customerGroup,
+            $customer
+        );
+
+        if (!$priceData) {
+            throw new \RuntimeException('No price found for variant.');
+        }
+
+        $basePrice = $priceData['price'];
+
+        // Apply pricing rules
+        $ruleResult = $this->ruleEngine->applyRules(
+            $variant,
+            $basePrice,
+            $quantity,
+            $currency,
+            $channel,
+            $customerGroup,
+            $customer,
+            $context
+        );
+
+        // Calculate margin
+        $margin = $this->calculateMargin($variant, $ruleResult['final_price']);
+
+        // Store simulation
+        PriceSimulation::create([
+            'product_variant_id' => $variant->id,
+            'currency_id' => $currency?->id ?? Currency::default()->first()?->id,
+            'quantity' => $quantity,
+            'channel_id' => $channel?->id,
+            'customer_group_id' => $customerGroup?->id,
+            'customer_id' => $customer?->id,
+            'base_price' => $basePrice,
+            'final_price' => $ruleResult['final_price'],
+            'applied_rules' => $ruleResult['applied_rules']->toArray(),
+            'pricing_breakdown' => [
+                'base_price' => $basePrice,
+                'layer' => $priceData['layer'] ?? null,
+                'source' => $priceData['source'] ?? null,
+                'rules_applied' => $ruleResult['applied_rules']->count(),
+                'total_discount' => $ruleResult['total_discount'],
+                'final_price' => $ruleResult['final_price'],
+                'margin_percentage' => $margin['percentage'],
+                'margin_amount' => $margin['amount'],
+            ],
+            'simulation_context' => json_encode($context),
+        ]);
 
         return [
-            'total_price' => $totalPrice,
-            'total_price_decimal' => $totalPrice / 100,
-            'total_tax' => $totalTax,
-            'total_tax_decimal' => $totalTax / 100,
-            'total_price_ex_tax' => $totalPrice - $totalTax,
-            'total_price_ex_tax_decimal' => ($totalPrice - $totalTax) / 100,
-            'total_price_inc_tax' => $totalPrice + $totalTax,
-            'total_price_inc_tax_decimal' => ($totalPrice + $totalTax) / 100,
-            'formatted_total_price' => $this->formatPrice($totalPrice, $currency),
-            'formatted_total_tax' => $this->formatPrice($totalTax, $currency),
-            'variant_prices' => $variantPrices,
-            'currency' => $currency->code,
+            'base_price' => $basePrice,
+            'final_price' => $ruleResult['final_price'],
+            'total_discount' => $ruleResult['total_discount'],
+            'applied_rules' => $ruleResult['applied_rules'],
+            'pricing_layer' => $priceData['layer'] ?? null,
+            'margin' => $margin,
+            'breakdown' => [
+                'base_price' => $basePrice,
+                'discounts' => $ruleResult['applied_rules']->sum('adjustment'),
+                'final_price' => $ruleResult['final_price'],
+            ],
         ];
     }
-}
 
+    /**
+     * Check and create margin alerts.
+     *
+     * @param  ProductVariant  $variant
+     * @param  int|null  $price
+     * @param  float|null  $thresholdMargin
+     * @return MarginAlert|null
+     */
+    public function checkMarginAlert(ProductVariant $variant, ?int $price = null, ?float $thresholdMargin = null): ?MarginAlert
+    {
+        $costPrice = $variant->cost_price;
+        
+        if ($costPrice === null || $costPrice <= 0) {
+            return null; // No cost price, can't calculate margin
+        }
+
+        if ($price === null) {
+            $currency = Currency::default()->first();
+            $priceData = $this->resolver->resolvePrice($variant, 1, $currency);
+            $price = $priceData['price'] ?? 0;
+        }
+
+        if ($price <= 0) {
+            return null;
+        }
+
+        $marginAmount = $price - $costPrice;
+        $marginPercentage = ($marginAmount / $price) * 100;
+
+        $thresholdMargin = $thresholdMargin ?? config('lunar.pricing.margin_alert_threshold', 10.0);
+
+        // Check for negative margin
+        if ($marginPercentage < 0) {
+            return MarginAlert::create([
+                'product_variant_id' => $variant->id,
+                'alert_type' => 'negative_margin',
+                'current_margin_percentage' => $marginPercentage,
+                'current_price' => $price,
+                'cost_price' => $costPrice,
+                'message' => "Variant has negative margin: {$marginPercentage}%",
+            ]);
+        }
+
+        // Check for low margin
+        if ($marginPercentage < $thresholdMargin) {
+            return MarginAlert::create([
+                'product_variant_id' => $variant->id,
+                'alert_type' => 'low_margin',
+                'current_margin_percentage' => $marginPercentage,
+                'threshold_margin_percentage' => $thresholdMargin,
+                'current_price' => $price,
+                'cost_price' => $costPrice,
+                'message' => "Variant margin ({$marginPercentage}%) below threshold ({$thresholdMargin}%)",
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Track price change in history.
+     *
+     * @param  ProductVariant  $variant
+     * @param  array  $data
+     * @return PriceHistory
+     */
+    public function trackPriceChange(ProductVariant $variant, array $data): PriceHistory
+    {
+        $currency = $data['currency'] ?? Currency::default()->first();
+        
+        if (!$currency) {
+            throw new \RuntimeException('No currency available for price tracking.');
+        }
+
+        // Get current price
+        $currentPrice = $variant->prices()
+            ->where('currency_id', $currency->id)
+            ->where('is_active', true)
+            ->orderByDesc('priority')
+            ->first();
+
+        // Close previous price history entry
+        PriceHistory::where('product_variant_id', $variant->id)
+            ->where('currency_id', $currency->id)
+            ->whereNull('effective_to')
+            ->update(['effective_to' => now()]);
+
+        // Create new history entry
+        return PriceHistory::create([
+            'product_variant_id' => $variant->id,
+            'currency_id' => $currency->id,
+            'price' => $data['price'] ?? $currentPrice?->price ?? 0,
+            'compare_at_price' => $data['compare_at_price'] ?? $currentPrice?->compare_at_price ?? null,
+            'channel_id' => $data['channel_id'] ?? $currentPrice?->channel_id,
+            'customer_group_id' => $data['customer_group_id'] ?? $currentPrice?->customer_group_id,
+            'pricing_layer' => $data['pricing_layer'] ?? $currentPrice?->pricing_layer ?? 'base',
+            'pricing_rule_id' => $data['pricing_rule_id'] ?? null,
+            'changed_by' => $data['changed_by'] ?? auth()->id(),
+            'change_reason' => $data['change_reason'] ?? 'manual',
+            'change_metadata' => $data['change_metadata'] ?? null,
+            'effective_from' => $data['effective_from'] ?? now(),
+            'effective_to' => $data['effective_to'] ?? null,
+        ]);
+    }
+
+    /**
+     * Get price history for variant.
+     *
+     * @param  ProductVariant  $variant
+     * @param  Currency|null  $currency
+     * @param  \DateTimeInterface|null  $from
+     * @param  \DateTimeInterface|null  $to
+     * @return \Illuminate\Support\Collection
+     */
+    public function getPriceHistory(
+        ProductVariant $variant,
+        ?Currency $currency = null,
+        ?\DateTimeInterface $from = null,
+        ?\DateTimeInterface $to = null
+    ): \Illuminate\Support\Collection {
+        $query = PriceHistory::where('product_variant_id', $variant->id);
+
+        if ($currency) {
+            $query->where('currency_id', $currency->id);
+        }
+
+        if ($from) {
+            $query->where('effective_from', '>=', $from);
+        }
+
+        if ($to) {
+            $query->where(function ($q) use ($to) {
+                $q->whereNull('effective_to')->orWhere('effective_to', '<=', $to);
+            });
+        }
+
+        return $query->orderByDesc('effective_from')->get();
+    }
+
+    /**
+     * Calculate margin.
+     *
+     * @param  ProductVariant  $variant
+     * @param  int  $price
+     * @return array
+     */
+    protected function calculateMargin(ProductVariant $variant, int $price): array
+    {
+        $costPrice = $variant->cost_price ?? 0;
+
+        if ($costPrice <= 0 || $price <= 0) {
+            return [
+                'amount' => 0,
+                'percentage' => 0.0,
+            ];
+        }
+
+        $marginAmount = $price - $costPrice;
+        $marginPercentage = ($marginAmount / $price) * 100;
+
+        return [
+            'amount' => $marginAmount,
+            'percentage' => round($marginPercentage, 2),
+        ];
+    }
+
+    /**
+     * Get active flash deals.
+     *
+     * @param  Currency|null  $currency
+     * @param  Channel|null  $channel
+     * @return \Illuminate\Support\Collection
+     */
+    public function getActiveFlashDeals(?Currency $currency = null, ?Channel $channel = null): \Illuminate\Support\Collection
+    {
+        $query = VariantPrice::where('is_flash_deal', true)
+            ->where('is_active', true)
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now());
+
+        if ($currency) {
+            $query->where('currency_id', $currency->id);
+        }
+
+        if ($channel) {
+            $query->where(function ($q) use ($channel) {
+                $q->whereNull('channel_id')->orWhere('channel_id', $channel->id);
+            });
+        }
+
+        return $query->with('variant')->get();
+    }
+}

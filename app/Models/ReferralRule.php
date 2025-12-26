@@ -29,6 +29,10 @@ class ReferralRule extends Model
         'max_redemptions_per_referee',
         'cooldown_days',
         'stacking_mode',
+        'max_total_discount_percent',
+        'max_total_discount_amount',
+        'apply_before_tax',
+        'shipping_discount_stacks',
         'priority',
         'validation_window_days',
         'fraud_policy_id',
@@ -49,6 +53,11 @@ class ReferralRule extends Model
         'max_redemptions_per_referrer' => 'integer',
         'max_redemptions_per_referee' => 'integer',
         'cooldown_days' => 'integer',
+        'stacking_mode' => 'string',
+        'max_total_discount_percent' => 'decimal:2',
+        'max_total_discount_amount' => 'decimal:2',
+        'apply_before_tax' => 'boolean',
+        'shipping_discount_stacks' => 'boolean',
         'priority' => 'integer',
         'validation_window_days' => 'integer',
         'tiered_rewards' => 'array',
@@ -98,6 +107,14 @@ class ReferralRule extends Model
     public function coupons(): HasMany
     {
         return $this->hasMany(Coupon::class, 'created_by_rule_id');
+    }
+
+    /**
+     * Get reward issuances for this rule.
+     */
+    public function rewardIssuances(): HasMany
+    {
+        return $this->hasMany(ReferralRewardIssuance::class, 'referral_rule_id');
     }
 }
 

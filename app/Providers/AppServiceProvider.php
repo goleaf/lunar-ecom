@@ -8,6 +8,8 @@ use App\Observers\CartObserver;
 use App\Observers\CartLineObserver;
 use App\Observers\InventoryLevelObserver;
 use App\Observers\UserObserver;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Facades\LunarPanel;
@@ -65,43 +67,43 @@ class AppServiceProvider extends ServiceProvider
             // See: https://docs.lunarphp.com/1.x/admin/extending/resources
             // See: https://docs.lunarphp.com/1.x/admin/extending/relation-managers
             // See: https://docs.lunarphp.com/1.x/admin/extending/order-management
-            // ->extensions([
-            //     // Resource extensions
-            //     \Lunar\Panel\Filament\Resources\ProductResource::class => 
-            //         \App\Admin\Extensions\Resources\ExampleProductResourceExtension::class,
-            //
-            //     // Relation manager extensions
-            //     \Lunar\Admin\Filament\Resources\ProductResource\RelationManagers\CustomerGroupPricingRelationManager::class => 
-            //         \App\Admin\Extensions\RelationManagers\ExampleCustomerGroupPricingRelationManagerExtension::class,
-            //
-            //     // Create page extensions
-            //     \Lunar\Admin\Filament\Resources\CustomerGroupResource\Pages\CreateCustomerGroup::class => 
-            //         \App\Admin\Extensions\Pages\ExampleCreatePageExtension::class,
-            //
-            //     // Edit page extensions
-            //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\EditProduct::class => 
-            //         \App\Admin\Extensions\Pages\ExampleEditPageExtension::class,
-            //
-            //     // List page extensions
-            //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ListProducts::class => 
-            //         \App\Admin\Extensions\Pages\ExampleListPageExtension::class,
-            //
-            //     // View page extensions
-            //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
-            //         \App\Admin\Extensions\Pages\ExampleViewPageExtension::class,
-            //
-            //     // Order management extensions
-            //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
-            //         \App\Admin\Extensions\OrderManagement\ExampleManageOrderExtension::class,
-            //
-            //     // Order items table extensions
-            //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\Components\OrderItemsTable::class => 
-            //         \App\Admin\Extensions\OrderManagement\ExampleOrderItemsTableExtension::class,
-            //
-            //     // Relation page extensions
-            //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ManageProductMedia::class => 
-            //         \App\Admin\Extensions\Pages\ExampleRelationPageExtension::class,
-            // ])
+            ->extensions([
+                // Resource extensions
+                \Lunar\Panel\Filament\Resources\ProductResource::class => 
+                    \App\Admin\Extensions\Resources\ProductResourceExtension::class,
+                //
+                //     // Relation manager extensions
+                //     \Lunar\Admin\Filament\Resources\ProductResource\RelationManagers\CustomerGroupPricingRelationManager::class => 
+                //         \App\Admin\Extensions\RelationManagers\ExampleCustomerGroupPricingRelationManagerExtension::class,
+                //
+                //     // Create page extensions
+                //     \Lunar\Admin\Filament\Resources\CustomerGroupResource\Pages\CreateCustomerGroup::class => 
+                //         \App\Admin\Extensions\Pages\ExampleCreatePageExtension::class,
+                //
+                //     // Edit page extensions
+                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\EditProduct::class => 
+                //         \App\Admin\Extensions\Pages\ExampleEditPageExtension::class,
+                //
+                //     // List page extensions
+                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ListProducts::class => 
+                //         \App\Admin\Extensions\Pages\ExampleListPageExtension::class,
+                //
+                //     // View page extensions
+                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
+                //         \App\Admin\Extensions\Pages\ExampleViewPageExtension::class,
+                //
+                //     // Order management extensions
+                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
+                //         \App\Admin\Extensions\OrderManagement\ExampleManageOrderExtension::class,
+                //
+                //     // Order items table extensions
+                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\Components\OrderItemsTable::class => 
+                //         \App\Admin\Extensions\OrderManagement\ExampleOrderItemsTableExtension::class,
+                //
+                //     // Relation page extensions
+                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ManageProductMedia::class => 
+                //         \App\Admin\Extensions\Pages\ExampleRelationPageExtension::class,
+            ])
             ->register();
 
         // Register custom attribute field types
@@ -178,6 +180,45 @@ class AppServiceProvider extends ServiceProvider
         CartLine::observe(CartLineObserver::class);
         \Lunar\Models\Order::observe(\App\Observers\OrderObserver::class);
         User::observe(UserObserver::class);
+
+        // Add ordered() macro to Builder as fallback for models that don't have scopeOrdered
+        // This prevents "Call to undefined method ordered()" errors
+        // Note: In Laravel, macros are checked before scopes, so we need to delegate to scope if it exists
+        Builder::macro('ordered', function ($direction = 'asc') {
+            $model = $this->getModel();
+            
+            // Check if the model has a scopeOrdered method and delegate to it
+            if (method_exists($model, 'scopeOrdered')) {
+                // Get reflection to check method signature
+                $reflection = new \ReflectionMethod($model, 'scopeOrdered');
+                $params = $reflection->getParameters();
+                
+                // If scope accepts direction parameter, pass it; otherwise don't
+                if (count($params) >= 2) {
+                    return $model->scopeOrdered($this, $direction);
+                } else {
+                    return $model->scopeOrdered($this);
+                }
+            }
+            
+            // Fallback: try to order by common ordering fields
+            $orderFields = ['display_order', 'position', 'sort_order', 'order'];
+            
+            foreach ($orderFields as $field) {
+                try {
+                    $schema = $model->getConnection()->getSchemaBuilder();
+                    if ($schema->hasColumn($model->getTable(), $field)) {
+                        return $this->orderBy($field, $direction)->orderBy('id', $direction);
+                    }
+                } catch (\Exception $e) {
+                    // Continue to next field if column check fails
+                    continue;
+                }
+            }
+            
+            // Final fallback: order by id
+            return $this->orderBy('id', $direction);
+        });
 
         // Schedule product schedule processing (runs every hour)
         if (app()->runningInConsole()) {

@@ -90,3 +90,4 @@ class DigitalProductDownloadAvailable extends Notification implements ShouldQueu
     }
 }
 
+

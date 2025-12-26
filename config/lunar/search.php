@@ -47,7 +47,7 @@ return [
     */
     'engine_map' => [
         // Use configured Scout driver for Products (meilisearch or algolia)
-        \Lunar\Models\Product::class => env('SCOUT_DRIVER', 'meilisearch'),
+        \Lunar\Models\Product::class => env('SCOUT_DRIVER', 'database'),
     ],
 
     /*

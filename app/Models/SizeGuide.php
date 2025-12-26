@@ -4,60 +4,105 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Lunar\Models\Product;
+use Lunar\Models\Collection;
+use Lunar\Models\Brand;
 
-/**
- * Size Guide Model
- * 
- * Represents a size guide with measurement charts for products.
- * Can be associated with multiple products and contains size measurements.
- */
 class SizeGuide extends Model
 {
     use HasFactory;
 
+    /**
+     * The table associated with the model.
+     */
+    public function getTable()
+    {
+        return config('lunar.database.table_prefix') . 'size_guides';
+    }
+
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'name',
         'description',
-        'category_type', // e.g., 'clothing', 'shoes', 'accessories'
-        'gender', // 'men', 'women', 'unisex', 'kids'
+        'measurement_unit',
+        'category_id',
+        'brand_id',
+        'region',
+        'supported_regions',
+        'size_system',
+        'size_labels',
         'is_active',
         'display_order',
-        'measurement_unit', // 'cm', 'inches', 'both'
-        'size_chart_data', // JSON field for size measurements
-    ];
-
-    protected $casts = [
-        'is_active' => 'boolean',
-        'display_order' => 'integer',
-        'size_chart_data' => 'array',
+        'image',
+        'conversion_table',
     ];
 
     /**
-     * Products that use this size guide.
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'supported_regions' => 'array',
+        'size_labels' => 'array',
+        'conversion_table' => 'array',
+        'is_active' => 'boolean',
+        'display_order' => 'integer',
+    ];
+
+    /**
+     * Get the category.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Collection::class, 'category_id');
+    }
+
+    /**
+     * Get the brand.
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
+    }
+
+    /**
+     * Get the size charts.
+     */
+    public function sizeCharts(): HasMany
+    {
+        return $this->hasMany(SizeChart::class, 'size_guide_id')
+            ->where('is_active', true)
+            ->orderBy('size_order');
+    }
+
+    /**
+     * Get all size charts (including inactive).
+     */
+    public function allSizeCharts(): HasMany
+    {
+        return $this->hasMany(SizeChart::class, 'size_guide_id')
+            ->orderBy('size_order');
+    }
+
+    /**
+     * Get products using this size guide.
      */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(
-            Product::class,
-            'product_size_guides',
+            \App\Models\Product::class,
+            config('lunar.database.table_prefix') . 'product_size_guide',
             'size_guide_id',
             'product_id'
-        )->withTimestamps();
+        )->withPivot(['region', 'priority'])
+          ->withTimestamps();
     }
 
     /**
-     * Fit feedback entries for this size guide.
-     */
-    public function fitFeedbacks(): HasMany
-    {
-        return $this->hasMany(FitFeedback::class, 'size_guide_id');
-    }
-
-    /**
-     * Scope to get active size guides.
+     * Scope to get active guides.
      */
     public function scopeActive($query)
     {
@@ -65,40 +110,42 @@ class SizeGuide extends Model
     }
 
     /**
-     * Scope to filter by category type.
+     * Scope to get guides for a region.
      */
-    public function scopeByCategoryType($query, string $categoryType)
+    public function scopeForRegion($query, ?string $region = null)
     {
-        return $query->where('category_type', $categoryType);
-    }
-
-    /**
-     * Scope to filter by gender.
-     */
-    public function scopeByGender($query, string $gender)
-    {
-        return $query->where('gender', $gender);
-    }
-
-    /**
-     * Get size chart as formatted array.
-     */
-    public function getSizeChart(): array
-    {
-        return $this->size_chart_data ?? [];
-    }
-
-    /**
-     * Get available sizes from chart data.
-     */
-    public function getAvailableSizes(): array
-    {
-        $chart = $this->getSizeChart();
-        if (empty($chart) || !isset($chart['sizes'])) {
-            return [];
+        if (!$region) {
+            return $query;
         }
 
-        return array_column($chart['sizes'], 'size');
+        return $query->where(function ($q) use ($region) {
+            $q->where('region', $region)
+              ->orWhereJsonContains('supported_regions', $region)
+              ->orWhereNull('region'); // Global guides
+        });
+    }
+
+    /**
+     * Get size chart for a specific size.
+     */
+    public function getSizeChart(string $sizeName): ?SizeChart
+    {
+        return $this->sizeCharts()->where('size_name', $sizeName)->first();
+    }
+
+    /**
+     * Convert size between systems.
+     */
+    public function convertSize(string $size, string $fromSystem, string $toSystem): ?string
+    {
+        $conversionTable = $this->conversion_table ?? [];
+
+        if (!isset($conversionTable[$fromSystem]) || !isset($conversionTable[$fromSystem][$size])) {
+            return null;
+        }
+
+        $conversions = $conversionTable[$fromSystem][$size] ?? [];
+
+        return $conversions[$toSystem] ?? null;
     }
 }
-

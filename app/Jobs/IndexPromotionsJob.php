@@ -75,3 +75,4 @@ class IndexPromotionsJob implements ShouldQueue
     }
 }
 
+

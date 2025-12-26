@@ -55,3 +55,4 @@ class ProductComingSoonAvailable extends Notification implements ShouldQueue
     }
 }
 
+

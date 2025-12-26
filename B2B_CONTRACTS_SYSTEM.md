@@ -318,3 +318,4 @@ $contract = $contractService->createContract([
 - Purchase orders support approval workflows
 - Company hierarchies enable contract inheritance
 
+

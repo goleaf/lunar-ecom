@@ -33,17 +33,25 @@ class StockMovement extends Model
         'product_variant_id',
         'warehouse_id',
         'inventory_level_id',
-        'type',
-        'quantity',
-        'quantity_before',
-        'quantity_after',
-        'reference_type',
-        'reference_id',
-        'reference_number',
-        'reason',
-        'notes',
-        'created_by',
-        'movement_date',
+        'type',                      // Movement type
+        'quantity',                  // Quantity change (positive for in, negative for out)
+        'quantity_before',           // On-hand quantity before
+        'quantity_after',            // On-hand quantity after
+        'reserved_quantity_before',   // Reserved quantity before
+        'reserved_quantity_after',   // Reserved quantity after
+        'available_quantity_before', // Available quantity before
+        'available_quantity_after', // Available quantity after
+        'reference_type',            // Reference model type
+        'reference_id',               // Reference model ID
+        'reference_number',           // Reference number (order #, etc.)
+        'reason',                    // Reason for movement
+        'notes',                     // Additional notes
+        'metadata',                  // JSON metadata
+        'created_by',                // Actor (user ID)
+        'actor_type',                // Actor type (user, system, api, import)
+        'actor_identifier',          // Actor identifier (for system/API)
+        'ip_address',                // IP address for audit trail
+        'movement_date',             // Timestamp of movement
     ];
 
     /**
@@ -55,7 +63,12 @@ class StockMovement extends Model
         'quantity' => 'integer',
         'quantity_before' => 'integer',
         'quantity_after' => 'integer',
+        'reserved_quantity_before' => 'integer',
+        'reserved_quantity_after' => 'integer',
+        'available_quantity_before' => 'integer',
+        'available_quantity_after' => 'integer',
         'movement_date' => 'datetime',
+        'metadata' => 'array',
     ];
 
     /**
@@ -163,7 +176,8 @@ class StockMovement extends Model
      */
     public function isIncrease(): bool
     {
-        return in_array($this->type, ['in', 'return', 'adjustment']) && $this->quantity > 0;
+        return in_array($this->type, ['in', 'return', 'manual_adjustment', 'import', 'correction']) 
+            && $this->quantity > 0;
     }
 
     /**
@@ -173,7 +187,64 @@ class StockMovement extends Model
      */
     public function isDecrease(): bool
     {
-        return in_array($this->type, ['out', 'sale', 'damage', 'loss', 'reservation']) || $this->quantity < 0;
+        return in_array($this->type, ['out', 'sale', 'damage', 'loss', 'reservation', 'transfer']) 
+            || $this->quantity < 0;
+    }
+
+    /**
+     * Get actor name (user name, system, API, etc.).
+     *
+     * @return string
+     */
+    public function getActorNameAttribute(): string
+    {
+        if ($this->actor_type === 'user' && $this->creator) {
+            return $this->creator->name ?? 'Unknown User';
+        }
+
+        return match($this->actor_type) {
+            'system' => 'System',
+            'api' => 'API',
+            'import' => 'Import',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Scope to get movements by actor type.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $actorType
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByActorType($query, string $actorType)
+    {
+        return $query->where('actor_type', $actorType);
+    }
+
+    /**
+     * Scope to get movements by actor (user).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $userId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByActor($query, int $userId)
+    {
+        return $query->where('created_by', $userId);
+    }
+
+    /**
+     * Scope to get movements in date range.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \DateTimeInterface|string  $from
+     * @param  \DateTimeInterface|string  $to
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeDateRange($query, $from, $to)
+    {
+        return $query->whereBetween('movement_date', [$from, $to]);
     }
 }
 

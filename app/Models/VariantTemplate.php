@@ -85,3 +85,4 @@ class VariantTemplate extends Model
     }
 }
 
+

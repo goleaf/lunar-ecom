@@ -18,7 +18,21 @@ return new class extends Migration
             $table->foreignId('inventory_level_id')->nullable()->constrained($this->prefix.'inventory_levels')->onDelete('set null');
             
             // Movement details
-            $table->enum('type', ['in', 'out', 'adjustment', 'transfer', 'reservation', 'release', 'sale', 'return', 'damage', 'loss'])->index();
+            // Types: sale, return, manual_adjustment, import, damage, transfer, correction, reservation, release, loss
+            $table->enum('type', [
+                'sale',              // Sale/order fulfillment
+                'return',             // Customer return
+                'manual_adjustment',  // Manual adjustment
+                'import',             // Import/bulk import
+                'damage',             // Damaged stock
+                'transfer',           // Warehouse transfer
+                'correction',         // Correction/adjustment
+                'reservation',        // Stock reservation
+                'release',            // Reservation release
+                'loss',               // Stock loss/theft
+                'in',                 // Generic incoming
+                'out',                // Generic outgoing
+            ])->index();
             $table->integer('quantity')->index(); // Positive for in, negative for out
             $table->integer('quantity_before')->default(0); // Stock level before movement
             $table->integer('quantity_after')->default(0); // Stock level after movement

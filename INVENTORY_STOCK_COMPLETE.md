@@ -529,3 +529,4 @@ foreach ($alerts as $alert) {
 
 The Inventory & Stock Management system is now complete with all required features.
 
+

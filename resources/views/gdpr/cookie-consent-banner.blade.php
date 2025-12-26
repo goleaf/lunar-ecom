@@ -9,20 +9,30 @@
          init() {
              this.checkConsent();
          },
-         checkConsent() {
-             fetch('{{ route('gdpr.cookie-consent.show') }}')
-                 .then(response => response.json())
-                 .then(data => {
-                     if (!data.has_consented) {
-                         this.show = true;
-                     } else {
-                         this.necessary = data.consent.necessary ?? true;
-                         this.analytics = data.consent.analytics ?? false;
-                         this.marketing = data.consent.marketing ?? false;
-                         this.preferences = data.consent.preferences ?? false;
-                     }
-                 });
-         },
+        checkConsent() {
+            fetch("{{ route('gdpr.cookie-consent.show') }}")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.has_consented) {
+                        this.show = true;
+                    } else {
+                        this.necessary = data.consent.necessary ?? true;
+                        this.analytics = data.consent.analytics ?? false;
+                        this.marketing = data.consent.marketing ?? false;
+                        this.preferences = data.consent.preferences ?? false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking cookie consent:', error);
+                    // Show banner if there's an error checking consent
+                    this.show = true;
+                });
+        },
          acceptAll() {
              this.analytics = true;
              this.marketing = true;
@@ -35,26 +45,36 @@
              this.preferences = false;
              this.save();
          },
-         save() {
-             fetch('{{ route('gdpr.cookie-consent.store') }}', {
-                 method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/json',
-                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                 },
-                 body: JSON.stringify({
-                     necessary: this.necessary,
-                     analytics: this.analytics,
-                     marketing: this.marketing,
-                     preferences: this.preferences
-                 })
-             })
-             .then(response => response.json())
-             .then(data => {
-                 this.show = false;
-                 location.reload();
-             });
-         }
+        save() {
+            fetch("{{ route('gdpr.cookie-consent.store') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    necessary: this.necessary,
+                    analytics: this.analytics,
+                    marketing: this.marketing,
+                    preferences: this.preferences
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                this.show = false;
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error saving cookie consent:', error);
+                // Still hide the banner even if there's an error
+                this.show = false;
+            });
+        }
      }"
      x-show="show"
      x-cloak

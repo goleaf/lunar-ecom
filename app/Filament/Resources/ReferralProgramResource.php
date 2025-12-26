@@ -51,16 +51,20 @@ class ReferralProgramResource extends Resource
                                 ReferralProgram::STATUS_ARCHIVED => 'Archived',
                             ])
                             ->default(ReferralProgram::STATUS_DRAFT)
-                            ->required(),
+                            ->required()
+                            ->helperText('Draft programs are not visible to users. Activate to go live.'),
 
-                        Forms\Components\DatePicker::make('start_at')
-                            ->label('Start Date')
-                            ->nullable(),
-
-                        Forms\Components\DatePicker::make('end_at')
-                            ->label('End Date')
+                        Forms\Components\DateTimePicker::make('start_at')
+                            ->label('Start Date & Time')
+                            ->timezone('UTC')
                             ->nullable()
-                            ->helperText('Leave empty for programs without expiry'),
+                            ->helperText('Program becomes active at this time'),
+
+                        Forms\Components\DateTimePicker::make('end_at')
+                            ->label('End Date & Time')
+                            ->timezone('UTC')
+                            ->nullable()
+                            ->helperText('Program expires at this time. Leave empty for no expiry.'),
                     ])
                     ->columns(2),
 
@@ -137,6 +141,47 @@ class ReferralProgramResource extends Resource
                             ->label('Code Validity (Days)')
                             ->required()
                             ->helperText('How long referral codes remain valid'),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+
+                Forms\Components\Section::make('Discount Stacking & Priority')
+                    ->schema([
+                        Forms\Components\Select::make('default_stacking_mode')
+                            ->label('Default Stacking Mode')
+                            ->options([
+                                ReferralRule::STACKING_EXCLUSIVE => 'Exclusive (No stacking)',
+                                ReferralRule::STACKING_BEST_OF => 'Best Of (Largest discount)',
+                                ReferralRule::STACKING_STACKABLE => 'Stackable (Allow stacking)',
+                            ])
+                            ->default(ReferralRule::STACKING_EXCLUSIVE)
+                            ->required()
+                            ->helperText('Default stacking mode for all rules in this program'),
+
+                        Forms\Components\TextInput::make('max_total_discount_percent')
+                            ->label('Max Total Discount (%)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->helperText('Maximum total discount percentage when stacking (e.g., 20% max)'),
+
+                        Forms\Components\TextInput::make('max_total_discount_amount')
+                            ->label('Max Total Discount Amount')
+                            ->numeric()
+                            ->minValue(0)
+                            ->prefix('€')
+                            ->helperText('Maximum total discount amount when stacking'),
+
+                        Forms\Components\Toggle::make('apply_before_tax')
+                            ->label('Apply Before Tax')
+                            ->default(true)
+                            ->helperText('If enabled, discount applies to subtotal before tax calculation'),
+
+                        Forms\Components\Toggle::make('shipping_discount_stacks')
+                            ->label('Shipping Discount Stacks')
+                            ->default(false)
+                            ->helperText('If enabled, shipping discounts can stack with referral discounts'),
                     ])
                     ->columns(2)
                     ->collapsible(),

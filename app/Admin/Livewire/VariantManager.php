@@ -260,3 +260,4 @@ class VariantManager extends Component implements HasForms
     }
 }
 
+

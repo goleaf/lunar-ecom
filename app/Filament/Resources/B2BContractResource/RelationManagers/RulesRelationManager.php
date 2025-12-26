@@ -107,3 +107,4 @@ class RulesRelationManager extends RelationManager
     }
 }
 
+

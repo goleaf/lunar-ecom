@@ -83,3 +83,4 @@ class DigitalProductUpdated extends Notification implements ShouldQueue
     }
 }
 
+

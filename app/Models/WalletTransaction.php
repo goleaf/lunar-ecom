@@ -64,3 +64,4 @@ class WalletTransaction extends Model
     }
 }
 
+

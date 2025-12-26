@@ -86,3 +86,4 @@ class CollectionRule extends Model
     }
 }
 
+

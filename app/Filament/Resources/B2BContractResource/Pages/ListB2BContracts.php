@@ -18,3 +18,4 @@ class ListB2BContracts extends ListRecords
     }
 }
 
+

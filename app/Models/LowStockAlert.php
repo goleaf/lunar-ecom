@@ -119,3 +119,4 @@ class LowStockAlert extends Model
     }
 }
 
+

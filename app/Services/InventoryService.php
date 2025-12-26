@@ -148,7 +148,8 @@ class InventoryService
                 foreach ($reservations as $reservation) {
                     $this->releaseReservedStock($reservation);
                 }
-                throw new \Exception("Insufficient stock available. Only reserved {$quantity - $remainingQuantity} of {$quantity}");
+                $reservedQuantity = ($quantity - $remainingQuantity);
+                throw new \Exception("Insufficient stock available. Only reserved {$reservedQuantity} of {$quantity}");
             }
 
             return $reservations->first();

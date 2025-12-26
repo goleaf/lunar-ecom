@@ -3,34 +3,71 @@
 namespace App\Observers;
 
 use App\Models\InventoryLevel;
-use App\Services\StockNotificationService;
+use App\Services\InventoryAutomationService;
+use App\Services\StockMovementLedger;
 
 /**
- * Observer for InventoryLevel model to trigger back-in-stock notifications.
+ * Inventory Level Observer.
+ * 
+ * Observes inventory level changes and triggers automation:
+ * - Out of stock triggers
+ * - Restock triggers
+ * - Low stock alerts
  */
 class InventoryLevelObserver
 {
+    protected InventoryAutomationService $automationService;
+    protected StockMovementLedger $ledger;
+
     public function __construct(
-        protected StockNotificationService $notificationService
-    ) {}
+        InventoryAutomationService $automationService,
+        StockMovementLedger $ledger
+    ) {
+        $this->automationService = $automationService;
+        $this->ledger = $ledger;
+    }
 
     /**
-     * Handle the InventoryLevel "updated" event.
+     * Handle the InventoryLevel "saved" event.
      *
-     * @param  InventoryLevel  $level
+     * @param  InventoryLevel  $inventoryLevel
      * @return void
      */
-    public function updated(InventoryLevel $level): void
+    public function saved(InventoryLevel $inventoryLevel): void
     {
-        // Check if stock went from 0 (or below threshold) to available
-        $wasOutOfStock = $level->getOriginal('quantity') <= 0;
-        $isNowInStock = $level->quantity > 0;
-
-        // Only trigger if stock became available
-        if ($wasOutOfStock && $isNowInStock) {
-            // Process notifications for this variant
-            $this->notificationService->processQueue($level->productVariant);
+        $variant = $inventoryLevel->productVariant;
+        if (!$variant) {
+            return;
         }
+
+        // Get previous quantity if available
+        $quantityBefore = $inventoryLevel->getOriginal('quantity') ?? 0;
+        $quantityAfter = $inventoryLevel->quantity;
+        $availableBefore = $inventoryLevel->getOriginal('available_quantity') ?? 0;
+        $availableAfter = $inventoryLevel->available_quantity;
+
+        // Check if went out of stock
+        if ($availableBefore > 0 && $availableAfter <= 0) {
+            $this->automationService->handleOutOfStock(
+                variant: $variant,
+                quantityBefore: $availableBefore,
+                quantityAfter: $availableAfter,
+                reason: 'inventory_change',
+                warehouseId: $inventoryLevel->warehouse_id
+            );
+        }
+
+        // Check if restocked (was out of stock, now has stock)
+        if ($availableBefore <= 0 && $availableAfter > 0) {
+            $this->automationService->handleRestock(
+                variant: $variant,
+                quantity: $availableAfter,
+                reason: 'restock',
+                warehouseId: $inventoryLevel->warehouse_id
+            );
+        }
+
+        // Process automation rules
+        $this->automationService->processAutomation($variant, $inventoryLevel->warehouse_id);
     }
 }
-

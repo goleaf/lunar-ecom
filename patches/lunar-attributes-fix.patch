@@ -1,0 +1,31 @@
+--- a/vendor/lunarphp/lunar/src/Support/Forms/Components/Attributes.php
++++ b/vendor/lunarphp/lunar/src/Support/Forms/Components/Attributes.php
+@@ -107,11 +107,20 @@ class Attributes extends Component
+                 foreach ($groups as $group) {
+                     $sectionFields = [];
+ 
+                     foreach ($group['fields'] as $field) {
+-                        $sectionFields[] = AttributeData::getFilamentComponent($field);
++                        $component = AttributeData::getFilamentComponent($field);
++                        // Ensure we only add valid components (not strings)
++                        if ($component instanceof \Filament\Forms\Components\Component) {
++                            $sectionFields[] = $component;
++                        }
+                     }
+-                    $groupComponents[] = Forms\Components\Section::make($group['model']
+-                        ->translate('name'))
+-                        ->schema($sectionFields);
++                    
++                    // Only add section if we have fields
++                    if (!empty($sectionFields)) {
++                        $groupName = $group['model']->translate('name');
++                        // Ensure group name is a string
++                        if (!is_string($groupName) && !($groupName instanceof \Illuminate\Contracts\Support\Htmlable)) {
++                            $groupName = (string) $groupName;
++                        }
++                        $groupComponents[] = Forms\Components\Section::make($groupName)
++                            ->schema($sectionFields);
++                    }
+                 }
+ 
+                 return $groupComponents;

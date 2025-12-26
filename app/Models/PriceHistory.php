@@ -5,93 +5,112 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Product;
-use App\Models\ProductVariant;
-use App\Models\PriceMatrix;
-use Lunar\Models\Currency;
-use Lunar\Models\CustomerGroup;
 
 /**
- * PriceHistory model for tracking price changes.
+ * Model for historical price tracking (legal compliance).
  */
 class PriceHistory extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_price_histories';
-
-    protected $fillable = [
-        'product_id',
-        'variant_id',
-        'price_matrix_id',
-        'currency_id',
-        'customer_group_id',
-        'region',
-        'old_price',
-        'new_price',
-        'quantity_tier',
-        'change_type',
-        'change_reason',
-        'changed_by',
-    ];
-
-    protected $casts = [
-        'old_price' => 'integer',
-        'new_price' => 'integer',
-        'quantity_tier' => 'integer',
-    ];
-
     /**
-     * Change types
+     * The table associated with the model.
+     *
+     * @var string
      */
-    const TYPE_CREATED = 'created';
-    const TYPE_UPDATED = 'updated';
-    const TYPE_DELETED = 'deleted';
-    const TYPE_APPROVED = 'approved';
-    const TYPE_REJECTED = 'rejected';
-
-    /**
-     * Get the product.
-     */
-    public function product(): BelongsTo
+    public function getTable()
     {
-        return $this->belongsTo(Product::class);
+        return config('lunar.database.table_prefix') . 'price_history';
     }
 
     /**
-     * Get the variant.
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'product_variant_id',
+        'currency_id',
+        'price',
+        'compare_at_price',
+        'channel_id',
+        'customer_group_id',
+        'pricing_layer',
+        'pricing_rule_id',
+        'changed_by',
+        'change_reason',
+        'change_metadata',
+        'effective_from',
+        'effective_to',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'price' => 'integer',
+        'compare_at_price' => 'integer',
+        'change_metadata' => 'array',
+        'effective_from' => 'datetime',
+        'effective_to' => 'datetime',
+    ];
+
+    /**
+     * Variant relationship.
+     *
+     * @return BelongsTo
      */
     public function variant(): BelongsTo
     {
-        return $this->belongsTo(ProductVariant::class, 'variant_id');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     /**
-     * Get the price matrix.
-     */
-    public function priceMatrix(): BelongsTo
-    {
-        return $this->belongsTo(PriceMatrix::class, 'price_matrix_id');
-    }
-
-    /**
-     * Get the currency.
+     * Currency relationship.
+     *
+     * @return BelongsTo
      */
     public function currency(): BelongsTo
     {
-        return $this->belongsTo(Currency::class);
+        return $this->belongsTo(\Lunar\Models\Currency::class);
     }
 
     /**
-     * Get the customer group.
+     * Channel relationship.
+     *
+     * @return BelongsTo
+     */
+    public function channel(): BelongsTo
+    {
+        return $this->belongsTo(\Lunar\Models\Channel::class);
+    }
+
+    /**
+     * Customer group relationship.
+     *
+     * @return BelongsTo
      */
     public function customerGroup(): BelongsTo
     {
-        return $this->belongsTo(CustomerGroup::class);
+        return $this->belongsTo(\Lunar\Models\CustomerGroup::class);
     }
 
     /**
-     * Get the user who made the change.
+     * Pricing rule relationship.
+     *
+     * @return BelongsTo
+     */
+    public function pricingRule(): BelongsTo
+    {
+        return $this->belongsTo(PricingRule::class);
+    }
+
+    /**
+     * Changed by user relationship.
+     *
+     * @return BelongsTo
      */
     public function changedBy(): BelongsTo
     {
@@ -99,39 +118,27 @@ class PriceHistory extends Model
     }
 
     /**
-     * Scope by product.
+     * Scope for date range.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \DateTimeInterface|string  $from
+     * @param  \DateTimeInterface|string  $to
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeForProduct($query, int $productId)
+    public function scopeDateRange($query, $from, $to)
     {
-        return $query->where('product_id', $productId);
+        return $query->whereBetween('effective_from', [$from, $to]);
     }
 
     /**
-     * Scope by variant.
+     * Scope for variant.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int  $variantId
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeForVariant($query, int $variantId)
     {
-        return $query->where('variant_id', $variantId);
-    }
-
-    /**
-     * Scope by change type.
-     */
-    public function scopeByChangeType($query, string $type)
-    {
-        return $query->where('change_type', $type);
-    }
-
-    /**
-     * Get price change percentage.
-     */
-    public function getPriceChangePercent(): ?float
-    {
-        if (!$this->old_price || $this->old_price === 0) {
-            return null;
-        }
-
-        $change = $this->new_price - $this->old_price;
-        return round(($change / $this->old_price) * 100, 2);
+        return $query->where('product_variant_id', $variantId);
     }
 }

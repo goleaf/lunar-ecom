@@ -88,3 +88,4 @@ class ReferralAnalytics extends Model
     }
 }
 
+

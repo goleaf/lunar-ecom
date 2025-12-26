@@ -36,9 +36,13 @@ class ProductAttributeValue extends Model
     protected $fillable = [
         'product_id',
         'attribute_id',
+        'locale',
         'value',
         'numeric_value',
         'text_value',
+        'is_override',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -49,6 +53,7 @@ class ProductAttributeValue extends Model
     protected $casts = [
         'value' => 'array',
         'numeric_value' => 'decimal:4',
+        'is_override' => 'boolean',
     ];
 
     /**

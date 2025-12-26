@@ -68,3 +68,4 @@ return [
     'double_discount_check_strict' => env('DISCOUNT_DOUBLE_CHECK_STRICT', false),
 ];
 
+

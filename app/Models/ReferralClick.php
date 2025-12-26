@@ -28,3 +28,4 @@ class ReferralClick extends Model
     }
 }
 
+

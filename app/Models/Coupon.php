@@ -27,6 +27,7 @@ class Coupon extends Model
         'created_by_rule_id',
         'assigned_to_user_id',
         'is_active',
+        'meta',
     ];
 
     protected $casts = [
@@ -39,6 +40,7 @@ class Coupon extends Model
         'eligible_category_ids' => 'array',
         'eligible_collection_ids' => 'array',
         'is_active' => 'boolean',
+        'meta' => 'array',
     ];
 
     // Types

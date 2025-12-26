@@ -18,3 +18,4 @@ class ViewReferralCode extends ViewRecord
     }
 }
 
+

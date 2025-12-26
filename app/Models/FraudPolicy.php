@@ -49,3 +49,4 @@ class FraudPolicy extends Model
     }
 }
 
+

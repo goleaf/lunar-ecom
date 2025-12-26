@@ -79,3 +79,4 @@ class ProductBadgeAssignmentController extends Controller
     }
 }
 
+

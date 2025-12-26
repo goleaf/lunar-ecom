@@ -33,14 +33,23 @@ class StockReservation extends Model
         'product_variant_id',
         'warehouse_id',
         'inventory_level_id',
-        'quantity',
-        'reference_type',
+        'quantity',              // Requested quantity
+        'reserved_quantity',     // Actually reserved quantity (for partial reservations)
+        'status',                // cart, order_confirmed, manual, expired, released
+        'reference_type',        // Order, Cart, etc.
         'reference_id',
         'session_id',
         'user_id',
+        'lock_token',            // Race-condition safe lock token
+        'locked_at',
+        'lock_expires_at',
         'expires_at',
         'is_released',
         'released_at',
+        'confirmed_at',
+        'confirmed_by',
+        'override_reason',
+        'metadata',
     ];
 
     /**
@@ -50,9 +59,14 @@ class StockReservation extends Model
      */
     protected $casts = [
         'quantity' => 'integer',
+        'reserved_quantity' => 'integer',
         'is_released' => 'boolean',
         'expires_at' => 'datetime',
         'released_at' => 'datetime',
+        'locked_at' => 'datetime',
+        'lock_expires_at' => 'datetime',
+        'confirmed_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     /**
@@ -112,6 +126,16 @@ class StockReservation extends Model
     }
 
     /**
+     * Confirmed by user relationship.
+     *
+     * @return BelongsTo
+     */
+    public function confirmedBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'confirmed_by');
+    }
+
+    /**
      * Reference relationship (polymorphic).
      *
      * @return MorphTo
@@ -132,6 +156,78 @@ class StockReservation extends Model
     }
 
     /**
+     * Check if reservation is partial (reserved_quantity < quantity).
+     *
+     * @return bool
+     */
+    public function isPartial(): bool
+    {
+        return $this->reserved_quantity > 0 && $this->reserved_quantity < $this->quantity;
+    }
+
+    /**
+     * Check if reservation is fully reserved.
+     *
+     * @return bool
+     */
+    public function isFullyReserved(): bool
+    {
+        return $this->reserved_quantity >= $this->quantity;
+    }
+
+    /**
+     * Check if reservation is locked (race-condition safe).
+     *
+     * @return bool
+     */
+    public function isLocked(): bool
+    {
+        return $this->lock_token !== null 
+            && $this->lock_expires_at 
+            && $this->lock_expires_at->isFuture();
+    }
+
+    /**
+     * Check if lock is expired.
+     *
+     * @return bool
+     */
+    public function isLockExpired(): bool
+    {
+        return $this->lock_expires_at && $this->lock_expires_at->isPast();
+    }
+
+    /**
+     * Check if reservation is confirmed (order-confirmed).
+     *
+     * @return bool
+     */
+    public function isConfirmed(): bool
+    {
+        return $this->status === 'order_confirmed' && $this->confirmed_at !== null;
+    }
+
+    /**
+     * Check if reservation is manual override.
+     *
+     * @return bool
+     */
+    public function isManual(): bool
+    {
+        return $this->status === 'manual';
+    }
+
+    /**
+     * Get remaining quantity to reserve.
+     *
+     * @return int
+     */
+    public function getRemainingQuantityAttribute(): int
+    {
+        return max(0, $this->quantity - $this->reserved_quantity);
+    }
+
+    /**
      * Scope to get active (non-released) reservations.
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
@@ -140,7 +236,8 @@ class StockReservation extends Model
     public function scopeActive($query)
     {
         return $query->where('is_released', false)
-            ->where('expires_at', '>', now());
+            ->where('expires_at', '>', now())
+            ->where('status', '!=', 'released');
     }
 
     /**
@@ -153,6 +250,51 @@ class StockReservation extends Model
     {
         return $query->where('is_released', false)
             ->where('expires_at', '<=', now());
+    }
+
+    /**
+     * Scope to get cart-based reservations.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCart($query)
+    {
+        return $query->where('status', 'cart');
+    }
+
+    /**
+     * Scope to get order-confirmed reservations.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOrderConfirmed($query)
+    {
+        return $query->where('status', 'order_confirmed');
+    }
+
+    /**
+     * Scope to get manual reservations.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeManual($query)
+    {
+        return $query->where('status', 'manual');
+    }
+
+    /**
+     * Scope to get partial reservations.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePartial($query)
+    {
+        return $query->whereColumn('reserved_quantity', '<', 'quantity')
+            ->where('reserved_quantity', '>', 0);
     }
 }
 

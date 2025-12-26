@@ -882,6 +882,23 @@ class Product extends LunarProduct
     }
 
     /**
+     * Fit reviews relationship.
+     */
+    public function fitReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\FitReview::class, 'product_id');
+    }
+
+    /**
+     * Approved fit reviews relationship.
+     */
+    public function approvedFitReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\FitReview::class, 'product_id')
+            ->where('is_approved', true);
+    }
+
+    /**
      * Product badge assignments relationship.
      */
     public function badgeAssignments()
@@ -1215,10 +1232,11 @@ class Product extends LunarProduct
     {
         return $this->belongsToMany(
             \App\Models\SizeGuide::class,
-            'product_size_guides',
+            config('lunar.database.table_prefix') . 'product_size_guide',
             'product_id',
             'size_guide_id'
-        )->withTimestamps();
+        )->withPivot(['region', 'priority'])
+          ->withTimestamps();
     }
 
     /**
@@ -1720,5 +1738,42 @@ class Product extends LunarProduct
 
         // Duplicate tags
         $newProduct->tags()->sync($this->tags->pluck('id'));
+    }
+
+    /**
+     * Product availability relationship.
+     */
+    public function availability(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\ProductAvailability::class, 'product_id')
+            ->where('is_active', true)
+            ->orderBy('priority', 'desc');
+    }
+
+    /**
+     * All availability relationship (including inactive).
+     */
+    public function allAvailability(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\ProductAvailability::class, 'product_id')
+            ->orderBy('priority', 'desc');
+    }
+
+    /**
+     * Availability bookings relationship.
+     */
+    public function availabilityBookings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\AvailabilityBooking::class, 'product_id');
+    }
+
+    /**
+     * Availability rules relationship.
+     */
+    public function availabilityRules(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\AvailabilityRule::class, 'product_id')
+            ->where('is_active', true)
+            ->orderBy('priority', 'desc');
     }
 }

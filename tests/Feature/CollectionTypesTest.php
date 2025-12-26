@@ -86,3 +86,4 @@ class CollectionTypesTest extends TestCase
     }
 }
 
+

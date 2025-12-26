@@ -45,6 +45,14 @@ class VariantPerformance extends Model
         'stock_turnover_rate',
         'average_price',
         'price_changes',
+        'returns_count',
+        'return_rate',
+        'return_revenue',
+        'discount_applied_count',
+        'discount_amount_total',
+        'discount_impact_revenue',
+        'popularity_score',
+        'popularity_rank',
     ];
 
     /**
@@ -66,6 +74,14 @@ class VariantPerformance extends Model
         'stock_turnover_rate' => 'decimal:4',
         'average_price' => 'integer',
         'price_changes' => 'integer',
+        'returns_count' => 'integer',
+        'return_rate' => 'decimal:4',
+        'return_revenue' => 'integer',
+        'discount_applied_count' => 'integer',
+        'discount_amount_total' => 'integer',
+        'discount_impact_revenue' => 'integer',
+        'popularity_score' => 'decimal:2',
+        'popularity_rank' => 'integer',
     ];
 
     /**
@@ -86,6 +102,42 @@ class VariantPerformance extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(\App\Models\ProductVariant::class, 'variant_id');
+    }
+
+    /**
+     * Scope by date range.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  \DateTimeInterface|string  $startDate
+     * @param  \DateTimeInterface|string  $endDate
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
+        return $query->whereBetween('date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Scope by period.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $period
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePeriod($query, string $period)
+    {
+        return $query->where('period', $period);
+    }
+
+    /**
+     * Scope ordered by popularity.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOrderedByPopularity($query)
+    {
+        return $query->orderByDesc('popularity_score')->orderBy('popularity_rank');
     }
 }
 

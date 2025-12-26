@@ -38,3 +38,4 @@ class SendComingSoonAvailableNotification implements ShouldQueue
     }
 }
 
+

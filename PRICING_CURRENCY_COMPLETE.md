@@ -484,3 +484,4 @@ $bulkPrice = $service->calculateBulkPrice(
 
 The Pricing & Currency Management system is now complete with all required features.
 
+

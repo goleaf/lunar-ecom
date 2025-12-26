@@ -10,3 +10,4 @@ class CreateReferralAttribution extends CreateRecord
     protected static string $resource = ReferralAttributionResource::class;
 }
 
+

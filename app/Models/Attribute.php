@@ -32,6 +32,13 @@ class Attribute extends LunarAttribute
         'display_order',
         'sortable',
         'validation_rules',
+        'code',
+        'scope',
+        'localizable',
+        'channel_specific',
+        'required',
+        'default_value',
+        'ui_hint',
     ];
 
     /**
@@ -43,6 +50,10 @@ class Attribute extends LunarAttribute
         'display_order' => 'integer',
         'sortable' => 'boolean',
         'validation_rules' => 'array',
+        'localizable' => 'boolean',
+        'channel_specific' => 'boolean',
+        'required' => 'boolean',
+        'default_value' => 'array',
     ];
 
     /**
@@ -378,5 +389,136 @@ class Attribute extends LunarAttribute
     public function channelAttributeValues(): HasMany
     {
         return $this->hasMany(ChannelAttributeValue::class, 'attribute_id');
+    }
+
+    /**
+     * Check if attribute is for products.
+     *
+     * @return bool
+     */
+    public function isProductScope(): bool
+    {
+        return in_array($this->scope ?? 'product', ['product', 'both']);
+    }
+
+    /**
+     * Check if attribute is for variants.
+     *
+     * @return bool
+     */
+    public function isVariantScope(): bool
+    {
+        return in_array($this->scope ?? 'product', ['variant', 'both']);
+    }
+
+    /**
+     * Check if attribute is localizable.
+     *
+     * @return bool
+     */
+    public function isLocalizable(): bool
+    {
+        return $this->localizable ?? false;
+    }
+
+    /**
+     * Check if attribute is channel-specific.
+     *
+     * @return bool
+     */
+    public function isChannelSpecific(): bool
+    {
+        return $this->channel_specific ?? false;
+    }
+
+    /**
+     * Check if attribute is required.
+     *
+     * @return bool
+     */
+    public function isRequired(): bool
+    {
+        return $this->required ?? false;
+    }
+
+    /**
+     * Get default value for this attribute.
+     *
+     * @return mixed
+     */
+    public function getDefaultValue()
+    {
+        if ($this->default_value !== null) {
+            return $this->default_value;
+        }
+
+        // Type-specific defaults
+        return match($this->getTypeName()) {
+            'Number' => 0,
+            'Boolean' => false,
+            'Select', 'MultiSelect' => null,
+            'JSON', 'Json' => [],
+            default => null,
+        };
+    }
+
+    /**
+     * Scope attributes by scope.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $scope
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByScope($query, string $scope)
+    {
+        return $query->where(function ($q) use ($scope) {
+            $q->where('scope', $scope)
+              ->orWhere('scope', 'both');
+        });
+    }
+
+    /**
+     * Scope localizable attributes.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeLocalizable($query)
+    {
+        return $query->where('localizable', true);
+    }
+
+    /**
+     * Scope channel-specific attributes.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeChannelSpecific($query)
+    {
+        return $query->where('channel_specific', true);
+    }
+
+    /**
+     * Scope required attributes.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeRequired($query)
+    {
+        return $query->where('required', true);
+    }
+
+    /**
+     * Scope by UI hint.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $hint
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByUIHint($query, string $hint)
+    {
+        return $query->where('ui_hint', $hint);
     }
 }

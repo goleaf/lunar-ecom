@@ -19,3 +19,4 @@ class EditB2BContract extends EditRecord
     }
 }
 
+

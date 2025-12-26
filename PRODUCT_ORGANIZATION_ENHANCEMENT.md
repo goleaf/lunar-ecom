@@ -234,3 +234,4 @@ See `ADMIN_PANEL_ENHANCEMENTS.md` for details on integrating these features into
 3. Relation analytics and reporting
 4. Automated relation suggestions based on purchase patterns
 
+

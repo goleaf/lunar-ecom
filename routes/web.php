@@ -36,7 +36,7 @@ Route::get('/collections/{slug}', [CollectionController::class, 'show'])->name('
 
 // Category routes with SEO-friendly URLs
 Route::prefix('categories')->name('categories.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\CategoryController::class, 'roots'])->name('index');
+    Route::get('/', [\App\Http\Controllers\Storefront\CategoryController::class, 'index'])->name('index');
     Route::get('/tree', [\App\Http\Controllers\CategoryController::class, 'tree'])->name('tree');
     Route::get('/flat', [\App\Http\Controllers\CategoryController::class, 'flatList'])->name('flat');
     Route::get('/navigation', [\App\Http\Controllers\CategoryController::class, 'navigation'])->name('navigation');
@@ -177,6 +177,87 @@ Route::prefix('admin/products/questions')->name('admin.products.questions.')->mi
     Route::post('/{question}/answers/{answer}/moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'moderateAnswer'])->name('answer.moderate');
     Route::post('/bulk-moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'bulkModerate'])->name('bulk-moderate');
     Route::get('/products/{product}/metrics', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'metrics'])->name('metrics');
+});
+
+// Storefront Size Guide & Fit Finder
+Route::prefix('products/{product}/size-guide')->name('storefront.products.size-guide.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\SizeGuideController::class, 'show'])->name('show');
+    Route::post('/recommend', [\App\Http\Controllers\Storefront\SizeGuideController::class, 'recommend'])->name('recommend');
+    Route::get('/fit-statistics', [\App\Http\Controllers\Storefront\SizeGuideController::class, 'fitStatistics'])->name('fit-statistics');
+    Route::post('/fit-review', [\App\Http\Controllers\Storefront\SizeGuideController::class, 'submitFitReview'])->name('fit-review');
+});
+
+// Admin Size Guides
+Route::prefix('admin/size-guides')->name('admin.size-guides.')->middleware(['auth', 'admin'])->group(function () {
+    Route::resource('/', \App\Http\Controllers\Admin\SizeGuideController::class)->parameters(['' => 'sizeGuide']);
+    Route::post('/{sizeGuide}/size-charts', [\App\Http\Controllers\Admin\SizeGuideController::class, 'addSizeChart'])->name('size-charts.store');
+    Route::put('/{sizeGuide}/size-charts/{sizeChart}', [\App\Http\Controllers\Admin\SizeGuideController::class, 'updateSizeChart'])->name('size-charts.update');
+    Route::delete('/{sizeGuide}/size-charts/{sizeChart}', [\App\Http\Controllers\Admin\SizeGuideController::class, 'deleteSizeChart'])->name('size-charts.destroy');
+});
+
+// Storefront Pricing
+Route::prefix('pricing')->name('storefront.pricing.')->group(function () {
+    Route::get('/variants/{variant}', [\App\Http\Controllers\Storefront\PricingController::class, 'getPrice'])->name('variant');
+    Route::get('/variants/{variant}/tiers', [\App\Http\Controllers\Storefront\PricingController::class, 'getTieredPricing'])->name('tiers');
+    Route::get('/products/{product}/volume-discounts', [\App\Http\Controllers\Storefront\PricingController::class, 'getVolumeDiscounts'])->name('volume-discounts');
+});
+
+// Admin Price Matrices
+Route::prefix('admin/products/{product}/pricing')->name('admin.products.pricing.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/matrices', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'index'])->name('matrices.index');
+    Route::post('/matrices', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'store'])->name('matrices.store');
+    Route::put('/matrices/{matrix}', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'update'])->name('matrices.update');
+    Route::delete('/matrices/{matrix}', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'destroy'])->name('matrices.destroy');
+    Route::post('/matrices/{matrix}/tiers', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'addTier'])->name('matrices.tiers.store');
+    Route::put('/matrices/{matrix}/tiers/{tier}', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'updateTier'])->name('matrices.tiers.update');
+    Route::post('/matrices/{matrix}/approve', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'approve'])->name('matrices.approve');
+    Route::get('/import', [\App\Http\Controllers\Admin\PricingImportController::class, 'index'])->name('import.index');
+    Route::post('/import', [\App\Http\Controllers\Admin\PricingImportController::class, 'import'])->name('import');
+    Route::get('/export', [\App\Http\Controllers\Admin\PricingExportController::class, 'export'])->name('export');
+    Route::get('/report', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'report'])->name('report');
+    Route::get('/history', [\App\Http\Controllers\Admin\PricingHistoryController::class, 'index'])->name('history');
+});
+
+// Storefront Product Availability
+Route::prefix('products/{product}/availability')->name('storefront.products.availability.')->group(function () {
+    Route::post('/check', [\App\Http\Controllers\Storefront\AvailabilityController::class, 'checkAvailability'])->name('check');
+    Route::get('/dates', [\App\Http\Controllers\Storefront\AvailabilityController::class, 'getAvailableDates'])->name('dates');
+    Route::post('/pricing', [\App\Http\Controllers\Storefront\AvailabilityController::class, 'calculatePricing'])->name('pricing');
+    Route::post('/reserve', [\App\Http\Controllers\Storefront\AvailabilityController::class, 'reserveDate'])->name('reserve');
+});
+
+// Admin Product Availability
+Route::prefix('admin/products/{product}/availability')->name('admin.products.availability.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/calendar', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'calendar'])->name('calendar');
+    Route::post('/', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'store'])->name('store');
+    Route::put('/{availability}', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'update'])->name('update');
+    Route::post('/rules', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'storeRule'])->name('rules.store');
+    Route::get('/bookings', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'bookings'])->name('bookings');
+});
+
+// Storefront Product Customization
+Route::prefix('products/{product}/customizations')->name('storefront.products.customizations.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'index'])->name('index');
+    Route::post('/validate', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'validate'])->name('validate');
+    Route::post('/preview', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'preview'])->name('preview');
+    Route::post('/upload-image', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'uploadImage'])->name('upload-image');
+    Route::get('/templates', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'templates'])->name('templates');
+    Route::get('/examples', [\App\Http\Controllers\Storefront\ProductCustomizationController::class, 'examples'])->name('examples');
+});
+
+// Admin Product Customizations
+Route::prefix('admin/products/{product}/customizations')->name('admin.products.customizations.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'store'])->name('store');
+    Route::put('/{customization}', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'update'])->name('update');
+    Route::delete('/{customization}', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'destroy'])->name('destroy');
+    Route::get('/examples', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'examples'])->name('examples');
+    Route::post('/examples', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'storeExample'])->name('examples.store');
+});
+
+Route::prefix('admin/customizations')->name('admin.customizations.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/templates', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'templates'])->name('templates');
+    Route::post('/templates', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'storeTemplate'])->name('templates.store');
 });
 
 // Admin Product Badges

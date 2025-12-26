@@ -10,6 +10,7 @@ use App\Models\Coupon;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Models\ReferralRewardIssuance;
+use App\Services\ReferralDiscountStackingService;
 use Lunar\Models\Order;
 use Lunar\Models\Discount;
 use Carbon\Carbon;
@@ -26,13 +27,16 @@ class ReferralRewardService
 {
     protected ReferralAttributionService $attributionService;
     protected ReferralFraudService $fraudService;
+    protected ReferralDiscountStackingService $stackingService;
 
     public function __construct(
         ReferralAttributionService $attributionService,
-        ReferralFraudService $fraudService
+        ReferralFraudService $fraudService,
+        ReferralDiscountStackingService $stackingService
     ) {
         $this->attributionService = $attributionService;
         $this->fraudService = $fraudService;
+        $this->stackingService = $stackingService;
     }
 
     /**
@@ -386,16 +390,18 @@ class ReferralRewardService
             'ends_at' => now()->addDays($rule->coupon_validity_days ?? 30),
         ]);
 
-        // Set discount value
+        // Set discount value and stacking info
         $discount->data = [
             'value' => $rule->referee_reward_value,
             'min_basket' => $rule->min_order_total ?? 0,
+            'stacking_mode' => $rule->stacking_mode ?? ($rule->program ? $rule->program->default_stacking_mode : null) ?? 'exclusive',
+            'max_total_discount_percent' => $rule->max_total_discount_percent ?? ($rule->program ? $rule->program->max_total_discount_percent : null),
+            'max_total_discount_amount' => $rule->max_total_discount_amount ?? ($rule->program ? $rule->program->max_total_discount_amount : null),
+            'apply_before_tax' => $this->stackingService->appliesBeforeTax($rule),
+            'shipping_discount_stacks' => $this->stackingService->shippingDiscountStacks($rule),
         ];
 
         $discount->save();
-
-        // Assign to user (if Lunar supports user-specific discounts)
-        // Otherwise, create a coupon code
 
         return $discount;
     }
@@ -454,6 +460,11 @@ class ReferralRewardService
 
         $discount->data = [
             'value' => $value,
+            'stacking_mode' => $rule->stacking_mode ?? ($rule->program ? $rule->program->default_stacking_mode : null) ?? 'exclusive',
+            'max_total_discount_percent' => $rule->max_total_discount_percent ?? ($rule->program ? $rule->program->max_total_discount_percent : null),
+            'max_total_discount_amount' => $rule->max_total_discount_amount ?? ($rule->program ? $rule->program->max_total_discount_amount : null),
+            'apply_before_tax' => $this->stackingService->appliesBeforeTax($rule),
+            'shipping_discount_stacks' => $this->stackingService->shippingDiscountStacks($rule),
         ];
 
         $discount->save();

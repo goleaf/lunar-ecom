@@ -23,6 +23,24 @@ class CategoryController extends Controller
     ) {}
 
     /**
+     * Show all root categories.
+     */
+    public function index(Request $request)
+    {
+        $roots = $this->categoryRepository->getRootCategories();
+
+        $data = [
+            'categories' => $roots,
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json(['data' => $data]);
+        }
+
+        return view('storefront.categories.index', $data);
+    }
+
+    /**
      * Show category page.
      */
     public function show(string $path, Request $request)

@@ -36,13 +36,20 @@ class VariantPrice extends Model
         'compare_at_price',
         'channel_id',
         'customer_group_id',
+        'customer_id',
+        'contract_id',
         'min_quantity',
         'max_quantity',
         'starts_at',
         'ends_at',
         'tax_inclusive',
         'priority',
+        'pricing_layer',
+        'is_manual_override',
         'is_active',
+        'scheduled_change_at',
+        'scheduled_price',
+        'is_flash_deal',
     ];
 
     /**
@@ -57,6 +64,8 @@ class VariantPrice extends Model
         'max_quantity' => 'integer',
         'tax_inclusive' => 'boolean',
         'priority' => 'integer',
+        'pricing_layer' => 'string',
+        'is_manual_override' => 'boolean',
         'is_active' => 'boolean',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
@@ -100,6 +109,53 @@ class VariantPrice extends Model
     public function customerGroup(): BelongsTo
     {
         return $this->belongsTo(\Lunar\Models\CustomerGroup::class);
+    }
+
+    /**
+     * Customer relationship (for contract/customer-specific pricing).
+     *
+     * @return BelongsTo
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(\Lunar\Models\Customer::class);
+    }
+
+    /**
+     * Contract relationship.
+     *
+     * @return BelongsTo
+     */
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\B2BContract::class, 'contract_id');
+    }
+
+    /**
+     * Scope for pricing layer.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $layer
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForLayer($query, string $layer)
+    {
+        return $query->where('pricing_layer', $layer);
+    }
+
+    /**
+     * Scope for customer.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  int|null  $customerId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForCustomer($query, ?int $customerId)
+    {
+        return $query->where(function ($q) use ($customerId) {
+            $q->whereNull('customer_id')
+              ->orWhere('customer_id', $customerId);
+        });
     }
 
     /**

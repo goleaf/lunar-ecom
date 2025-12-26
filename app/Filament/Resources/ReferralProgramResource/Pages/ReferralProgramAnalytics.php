@@ -3,146 +3,157 @@
 namespace App\Filament\Resources\ReferralProgramResource\Pages;
 
 use App\Filament\Resources\ReferralProgramResource;
-use App\Models\ReferralProgram;
-use App\Services\ReferralAnalyticsService;
 use Filament\Resources\Pages\Page;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
+use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use App\Models\ReferralClick;
+use App\Models\ReferralAttribution;
+use App\Models\ReferralRewardIssuance;
+use Illuminate\Support\Facades\DB;
+use Filament\Widgets\StatsOverviewWidget;
+use Filament\Widgets\ChartWidget;
 
-class ReferralProgramAnalytics extends Page implements HasForms, HasTable
+class ReferralProgramAnalytics extends Page
 {
-    use InteractsWithForms, InteractsWithTable;
+    use InteractsWithRecord;
 
     protected static string $resource = ReferralProgramResource::class;
 
     protected static string $view = 'filament.resources.referral-program-resource.pages.referral-program-analytics';
 
-    public ?array $dateRange = [
-        'start' => null,
-        'end' => null,
-    ];
-
-    public ReferralProgram $record;
-
-    public function mount(int | string $record): void
+    public function getTitle(): string
     {
-        $this->record = ReferralProgramResource::getRecord($record);
-        $this->dateRange['start'] = now()->subDays(30)->format('Y-m-d');
-        $this->dateRange['end'] = now()->format('Y-m-d');
+        return 'Analytics: ' . $this->record->name;
     }
 
-    public function form(Form $form): Form
+    public function getHeading(): string
     {
-        return $form
-            ->schema([
-                DatePicker::make('dateRange.start')
-                    ->label('Start Date')
-                    ->default(now()->subDays(30))
-                    ->reactive()
-                    ->afterStateUpdated(fn () => $this->resetTable()),
-
-                DatePicker::make('dateRange.end')
-                    ->label('End Date')
-                    ->default(now())
-                    ->reactive()
-                    ->afterStateUpdated(fn () => $this->resetTable()),
-            ])
-            ->columns(2);
+        return 'Analytics: ' . $this->record->name;
     }
 
-    public function table(Table $table): Table
+    public function getStats(): array
     {
-        return $table
-            ->query($this->getTableQuery())
-            ->columns([
-                TextColumn::make('date')
-                    ->date()
-                    ->sortable(),
+        $programId = $this->record->id;
 
-                TextColumn::make('clicks')
-                    ->numeric()
-                    ->sortable(),
+        // Clicks - count clicks for users who have referral codes for this program
+        $clicks = ReferralClick::whereHas('referrer', function ($query) use ($programId) {
+            $query->whereHas('referralCodes', function ($q) use ($programId) {
+                $q->where('referral_program_id', $programId);
+            });
+        })->count();
 
-                TextColumn::make('signups')
-                    ->numeric()
-                    ->sortable(),
+        // Signups
+        $signups = ReferralAttribution::where('program_id', $programId)
+            ->where('status', ReferralAttribution::STATUS_CONFIRMED)
+            ->count();
 
-                TextColumn::make('first_purchases')
-                    ->label('First Purchases')
-                    ->numeric()
-                    ->sortable(),
+        // First Purchases
+        $firstPurchases = ReferralRewardIssuance::whereHas('rule', function ($query) use ($programId) {
+            $query->where('referral_program_id', $programId)
+                ->where('trigger_event', \App\Models\ReferralRule::TRIGGER_FIRST_ORDER_PAID);
+        })
+        ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+        ->count();
 
-                TextColumn::make('repeat_purchases')
-                    ->label('Repeat Purchases')
-                    ->numeric()
-                    ->sortable(),
+        // Conversion Rates
+        $clickToSignupRate = $clicks > 0 ? ($signups / $clicks) * 100 : 0;
+        $signupToPurchaseRate = $signups > 0 ? ($firstPurchases / $signups) * 100 : 0;
+        $clickToPurchaseRate = $clicks > 0 ? ($firstPurchases / $clicks) * 100 : 0;
 
-                TextColumn::make('total_orders')
-                    ->label('Total Orders')
-                    ->numeric()
-                    ->sortable(),
+        // Revenue
+        $revenue = ReferralRewardIssuance::whereHas('rule', function ($query) use ($programId) {
+            $query->where('referral_program_id', $programId);
+        })
+        ->whereHas('order')
+        ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+        ->with('order')
+        ->get()
+        ->sum(function ($issuance) {
+            return $issuance->order ? $issuance->order->total->value : 0;
+        });
 
-                TextColumn::make('total_revenue')
-                    ->money('EUR')
-                    ->sortable(),
+        // Cost
+        $cost = ReferralRewardIssuance::whereHas('rule', function ($query) use ($programId) {
+            $query->where('referral_program_id', $programId);
+        })
+        ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+        ->sum(DB::raw('COALESCE(referee_reward_value, 0) + COALESCE(referrer_reward_value, 0)'));
 
-                TextColumn::make('rewards_issued')
-                    ->label('Rewards Issued')
-                    ->numeric()
-                    ->sortable(),
-
-                TextColumn::make('rewards_value')
-                    ->label('Rewards Value')
-                    ->money('EUR')
-                    ->sortable(),
-
-                TextColumn::make('click_to_signup_rate')
-                    ->label('Click→Signup %')
-                    ->suffix('%')
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable(),
-
-                TextColumn::make('signup_to_purchase_rate')
-                    ->label('Signup→Purchase %')
-                    ->suffix('%')
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable(),
-
-                TextColumn::make('overall_conversion_rate')
-                    ->label('Overall Conversion %')
-                    ->suffix('%')
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable(),
-            ])
-            ->defaultSort('date', 'desc')
-            ->paginated([10, 25, 50, 100]);
+        return [
+            'clicks' => $clicks,
+            'signups' => $signups,
+            'first_purchases' => $firstPurchases,
+            'click_to_signup_rate' => round($clickToSignupRate, 2),
+            'signup_to_purchase_rate' => round($signupToPurchaseRate, 2),
+            'click_to_purchase_rate' => round($clickToPurchaseRate, 2),
+            'revenue' => $revenue,
+            'cost' => $cost,
+            'roi' => $cost > 0 ? round((($revenue - $cost) / $cost) * 100, 2) : 0,
+        ];
     }
 
-    protected function getTableQuery(): Builder
+    public function getFunnelData(): array
     {
-        $startDate = $this->dateRange['start'] ? Carbon::parse($this->dateRange['start']) : now()->subDays(30);
-        $endDate = $this->dateRange['end'] ? Carbon::parse($this->dateRange['end']) : now();
+        $programId = $this->record->id;
 
-        return $this->record->analytics()
-            ->whereBetween('date', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+        // Get data for last 30 days
+        $startDate = now()->subDays(30);
+
+        $clicks = ReferralClick::whereHas('referrer', function ($query) use ($programId) {
+            $query->whereHas('referralCodes', function ($q) use ($programId) {
+                $q->where('referral_program_id', $programId);
+            });
+        })
+        ->where('created_at', '>=', $startDate)
+        ->count();
+
+        $signups = ReferralAttribution::where('program_id', $programId)
+            ->where('status', ReferralAttribution::STATUS_CONFIRMED)
+            ->where('attributed_at', '>=', $startDate)
+            ->count();
+
+        $firstPurchases = ReferralRewardIssuance::whereHas('rule', function ($query) use ($programId) {
+            $query->where('referral_program_id', $programId)
+                ->where('trigger_event', \App\Models\ReferralRule::TRIGGER_FIRST_ORDER_PAID);
+        })
+        ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+        ->where('issued_at', '>=', $startDate)
+        ->count();
+
+        return [
+            ['stage' => 'Clicks', 'count' => $clicks, 'percentage' => 100],
+            ['stage' => 'Signups', 'count' => $signups, 'percentage' => $clicks > 0 ? ($signups / $clicks) * 100 : 0],
+            ['stage' => 'First Purchases', 'count' => $firstPurchases, 'percentage' => $signups > 0 ? ($firstPurchases / $signups) * 100 : 0],
+        ];
     }
 
-    public function getSummary(): array
+    public function getTopReferrers(): array
     {
-        $startDate = $this->dateRange['start'] ? Carbon::parse($this->dateRange['start']) : now()->subDays(30);
-        $endDate = $this->dateRange['end'] ? Carbon::parse($this->dateRange['end']) : now();
+        $programId = $this->record->id;
 
-        $service = app(ReferralAnalyticsService::class);
-        return $service->getProgramSummary($this->record, $startDate, $endDate);
+        return ReferralRewardIssuance::whereHas('rule', function ($query) use ($programId) {
+            $query->where('referral_program_id', $programId);
+        })
+        ->where('status', ReferralRewardIssuance::STATUS_ISSUED)
+        ->select('referrer_user_id', DB::raw('COUNT(*) as referral_count'))
+        ->groupBy('referrer_user_id')
+        ->orderBy('referral_count', 'desc')
+        ->limit(10)
+        ->get()
+        ->map(function ($item) {
+            $revenue = ReferralRewardIssuance::where('referrer_user_id', $item->referrer_user_id)
+                ->whereHas('order')
+                ->with('order')
+                ->get()
+                ->sum(function ($issuance) {
+                    return $issuance->order ? $issuance->order->total->value : 0;
+                });
+
+            return [
+                'user' => $item->referrer,
+                'count' => $item->referral_count,
+                'revenue' => $revenue,
+            ];
+        })
+        ->toArray();
     }
 }
-

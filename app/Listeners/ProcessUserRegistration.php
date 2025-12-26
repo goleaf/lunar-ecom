@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use Illuminate\Auth\Events\Registered;
+use App\Events\UserSignedUp;
 use App\Services\ReferralAttributionService;
 use App\Models\ReferralProgram;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -46,8 +47,13 @@ class ProcessUserRegistration implements ShouldQueue
             );
 
             if ($attribution) {
-                // Confirm attribution if fraud checks pass
-                // Signup reward will be processed by ProcessReferralSignup listener
+                // Fire UserSignedUp event
+                event(new UserSignedUp(
+                    $user,
+                    $explicitCode,
+                    $attribution->id
+                ));
+
                 break; // Only attribute to first eligible program
             }
         }

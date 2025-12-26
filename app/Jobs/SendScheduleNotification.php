@@ -46,3 +46,4 @@ class SendScheduleNotification implements ShouldQueue
     }
 }
 
+

@@ -62,3 +62,4 @@ class NotifyDigitalProductUpdate implements ShouldQueue
     }
 }
 
+

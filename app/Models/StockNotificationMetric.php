@@ -175,3 +175,4 @@ class StockNotificationMetric extends Model
     }
 }
 
+

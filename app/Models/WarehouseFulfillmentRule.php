@@ -60,3 +60,4 @@ class WarehouseFulfillmentRule extends Model
     }
 }
 
+

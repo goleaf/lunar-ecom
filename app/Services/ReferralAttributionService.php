@@ -48,7 +48,7 @@ class ReferralAttributionService
         }
 
         // Track click
-        ReferralClick::create([
+        $click = ReferralClick::create([
             'referrer_user_id' => $referrer->id,
             'referral_code' => strtoupper($referralCode),
             'ip_hash' => hash('sha256', request()->ip()),
@@ -56,6 +56,9 @@ class ReferralAttributionService
             'landing_url' => request()->fullUrl(),
             'session_id' => session()->getId(),
         ]);
+
+        // Fire referral clicked event
+        event(new \App\Events\ReferralClicked($click));
 
         // Store in cookie based on last-click-wins setting
         // Note: Cookie::has() doesn't work for queued cookies, so we check request cookies

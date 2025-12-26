@@ -295,3 +295,4 @@ $summary = $metrics->getMetricsSummary();
 - **Stock Checks**: <50ms (not cached, real-time)
 - **Promotion Lookup**: <10ms (cached)
 
+

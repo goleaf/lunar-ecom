@@ -90,3 +90,4 @@ class PriceSnapshot extends Model
     }
 }
 
+

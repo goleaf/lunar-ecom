@@ -260,3 +260,4 @@ $exclusive = Discount::create([
 
 For detailed documentation, see [DISCOUNT_STACKING_RULES.md](./DISCOUNT_STACKING_RULES.md)
 
+

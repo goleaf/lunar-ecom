@@ -18,3 +18,4 @@ class ViewReferralAttribution extends ViewRecord
     }
 }
 
+

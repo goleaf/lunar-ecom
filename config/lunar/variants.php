@@ -109,3 +109,4 @@ return [
     'auto_generate_title' => env('AUTO_GENERATE_VARIANT_TITLE', true),
 ];
 
+

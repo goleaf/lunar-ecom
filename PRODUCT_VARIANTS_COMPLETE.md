@@ -265,3 +265,4 @@ The extended ProductVariant model is registered in `AppServiceProvider`:
 
 The Product Variant system is now complete with all required fields and functionality.
 
+

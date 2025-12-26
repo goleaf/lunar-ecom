@@ -588,3 +588,4 @@ $variant->upc; // "123456789012"
 - Title generation is automatic but can be overridden
 - Position controls display order
 
+

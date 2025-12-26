@@ -2,359 +2,177 @@
 
 namespace App\Services;
 
-use App\Models\PriceMatrix;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\PriceMatrix;
+use App\Models\PricingTier;
+use App\Models\PricingRule;
 use App\Models\PriceHistory;
-use Lunar\Models\Currency;
-use Lunar\Models\CustomerGroup;
-use Illuminate\Support\Collection;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Lunar\Facades\Currency;
+use Lunar\Facades\Pricing;
 
-/**
- * MatrixPricingService - Advanced pricing calculation service.
- * 
- * Handles:
- * - Quantity-based tiered pricing
- * - Customer group pricing
- * - Regional pricing
- * - Mixed pricing rules
- * - Promotional pricing
- * - Mix-and-match pricing across variants
- * - Minimum order quantities
- */
 class MatrixPricingService
 {
     /**
-     * Calculate price for a variant based on context.
+     * Calculate price based on context.
      *
-     * @param ProductVariant $variant
-     * @param int $quantity
-     * @param Currency|null $currency
-     * @param CustomerGroup|string|null $customerGroup
-     * @param string|null $region
-     * @param array $variantQuantities For mix-and-match pricing
-     * @return array
+     * @param  ProductVariant  $variant
+     * @param  array  $context  ['quantity' => 10, 'customer_group' => 'wholesale', 'region' => 'US']
+     * @return array  ['price' => decimal, 'matrix_id' => int, 'savings' => decimal, 'savings_percentage' => float]
      */
-    public function calculatePrice(
-        ProductVariant $variant,
-        int $quantity = 1,
-        ?Currency $currency = null,
-        $customerGroup = null,
-        ?string $region = null,
-        array $variantQuantities = []
-    ): array {
-        // Get currency
-        if (!$currency) {
-            $currency = Currency::where('default', true)->first();
-        }
-
-        if (!$currency) {
-            throw new \RuntimeException('No currency available for price calculation.');
-        }
-
-        // Normalize customer group
-        $customerGroupHandle = $this->normalizeCustomerGroup($customerGroup);
-
-        // Get product
-        $product = $variant->product;
-
-        // Get active price matrices for this product, ordered by priority
-        $matrices = PriceMatrix::forProduct($product->id)
-            ->active()
-            ->orderBy('priority', 'desc')
-            ->get();
-
-        // Try mix-and-match pricing first if variant quantities provided
-        if (!empty($variantQuantities)) {
-            $mixMatchPrice = $this->calculateMixAndMatchPrice(
-                $product,
-                $variantQuantities,
-                $currency,
-                $customerGroupHandle,
-                $region
-            );
-
-            if ($mixMatchPrice !== null) {
-                return $this->formatPriceResponse(
-                    $mixMatchPrice,
-                    null,
-                    $currency,
-                    $quantity
-                );
-            }
-        }
-
-        // Calculate price using matrices
-        $bestPrice = null;
-        $matchedMatrix = null;
-
-        foreach ($matrices as $matrix) {
-            $rule = $matrix->getRulesForContext($quantity, $customerGroupHandle, $region);
-
-            if ($rule && isset($rule['price'])) {
-                $price = $rule['price'];
-
-                // Check minimum order quantity if specified
-                if (isset($rule['min_quantity']) && $quantity < $rule['min_quantity']) {
-                    continue;
-                }
-
-                // Use this price if it's better (lower) or first match
-                if ($bestPrice === null || $price < $bestPrice) {
-                    $bestPrice = $price;
-                    $matchedMatrix = $matrix;
-                }
-            }
-        }
-
-        // Fallback to variant's base price or Lunar pricing
-        if ($bestPrice === null) {
-            $bestPrice = $variant->getEffectivePrice($quantity, $customerGroup);
-        }
-
-        return $this->formatPriceResponse(
-            $bestPrice,
-            $variant->compare_at_price,
-            $currency,
-            $quantity,
-            $matchedMatrix
-        );
-    }
-
-    /**
-     * Get tiered pricing information for a variant.
-     *
-     * @param ProductVariant $variant
-     * @param Currency|null $currency
-     * @param CustomerGroup|string|null $customerGroup
-     * @param string|null $region
-     * @return Collection
-     */
-    public function getTieredPricing(
-        ProductVariant $variant,
-        ?Currency $currency = null,
-        $customerGroup = null,
-        ?string $region = null
-    ): Collection {
-        if (!$currency) {
-            $currency = Currency::where('default', true)->first();
-        }
-
-        $product = $variant->product;
-        $customerGroupHandle = $this->normalizeCustomerGroup($customerGroup);
-
+    public function calculatePrice(ProductVariant $variant, array $context = []): array
+    {
         // Get base price
-        $basePrice = $variant->getEffectivePrice(1, $customerGroup) ?? 0;
+        $currency = Currency::getDefault();
+        $basePricing = Pricing::for($variant)->currency($currency)->get();
+        $basePrice = $basePricing->matched?->price?->value ?? 0;
 
-        // Get all quantity-based matrices
-        $matrices = PriceMatrix::forProduct($product->id)
-            ->active()
-            ->byType(PriceMatrix::TYPE_QUANTITY)
-            ->orderBy('priority', 'desc')
-            ->get();
+        // Get applicable price matrices
+        $matrices = $this->getApplicableMatrices($variant, $context);
 
-        $tiers = collect();
+        if ($matrices->isEmpty()) {
+            return [
+                'price' => $basePrice,
+                'base_price' => $basePrice,
+                'matrix_id' => null,
+                'savings' => 0,
+                'savings_percentage' => 0,
+                'tier' => null,
+            ];
+        }
 
+        // Evaluate matrices (highest priority first)
         foreach ($matrices as $matrix) {
-            $matrixTiers = $matrix->getTierPricing();
+            $calculatedPrice = $this->calculateMatrixPrice($variant, $matrix, $context, $basePrice);
+            
+            if ($calculatedPrice !== null) {
+                $savings = $basePrice - $calculatedPrice;
+                $savingsPercentage = $basePrice > 0 ? ($savings / $basePrice) * 100 : 0;
 
-            foreach ($matrixTiers as $tier) {
-                $tierPrice = $tier['price'] ?? $basePrice;
-                $minQty = $tier['min_quantity'] ?? 1;
-                $maxQty = $tier['max_quantity'] ?? null;
-
-                // Check if this tier applies to the context
-                if ($customerGroupHandle && !$this->tierAppliesToContext($matrix, $customerGroupHandle, $region)) {
-                    continue;
-                }
-
-                $savings = $basePrice - $tierPrice;
-                $savingsPercent = $basePrice > 0 ? round(($savings / $basePrice) * 100, 2) : 0;
-
-                $tiers->push([
-                    'min_quantity' => $minQty,
-                    'max_quantity' => $maxQty,
-                    'price' => $tierPrice,
-                    'price_decimal' => $tierPrice / 100,
-                    'formatted_price' => $this->formatCurrency($tierPrice / 100, $currency),
-                    'savings' => $savings,
-                    'savings_percent' => $savingsPercent,
+                return [
+                    'price' => $calculatedPrice,
+                    'base_price' => $basePrice,
                     'matrix_id' => $matrix->id,
-                ]);
+                    'matrix_name' => $matrix->name,
+                    'savings' => $savings,
+                    'savings_percentage' => round($savingsPercentage, 2),
+                    'tier' => $this->getTierForContext($matrix, $context),
+                ];
             }
         }
 
-        // If no tiers found, add base price as single tier
-        if ($tiers->isEmpty()) {
-            $tiers->push([
-                'min_quantity' => 1,
-                'max_quantity' => null,
-                'price' => $basePrice,
-                'price_decimal' => $basePrice / 100,
-                'formatted_price' => $this->formatCurrency($basePrice / 100, $currency),
-                'savings' => 0,
-                'savings_percent' => 0,
-                'matrix_id' => null,
-            ]);
-        }
-
-        return $tiers->sortBy('min_quantity')->values();
+        // Fallback to base price
+        return [
+            'price' => $basePrice,
+            'base_price' => $basePrice,
+            'matrix_id' => null,
+            'savings' => 0,
+            'savings_percentage' => 0,
+            'tier' => null,
+        ];
     }
 
     /**
-     * Get volume discounts for a variant.
+     * Get applicable price matrices for variant and context.
      *
-     * @param ProductVariant $variant
-     * @param Currency|null $currency
-     * @param CustomerGroup|string|null $customerGroup
-     * @return array
+     * @param  ProductVariant  $variant
+     * @param  array  $context
+     * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function getVolumeDiscounts(
-        ProductVariant $variant,
-        ?Currency $currency = null,
-        $customerGroup = null
-    ): array {
-        if (!$currency) {
-            $currency = Currency::where('default', true)->first();
-        }
-
-        $basePrice = $variant->getEffectivePrice(1, $customerGroup) ?? 0;
-
-        $tiers = $this->getTieredPricing($variant, $currency, $customerGroup);
-
-        return $tiers->map(function ($tier) use ($basePrice) {
-            return [
-                'quantity_range' => $this->formatQuantityRange($tier['min_quantity'], $tier['max_quantity']),
-                'min_quantity' => $tier['min_quantity'],
-                'max_quantity' => $tier['max_quantity'],
-                'price' => $tier['price'],
-                'formatted_price' => $tier['formatted_price'],
-                'savings' => $tier['savings'],
-                'savings_percent' => $tier['savings_percent'],
-                'you_save' => $tier['savings_percent'] > 0 
-                    ? "Save {$tier['savings_percent']}%" 
-                    : null,
-            ];
-        })->toArray();
-    }
-
-    /**
-     * Calculate mix-and-match pricing across multiple variants.
-     *
-     * @param Product $product
-     * @param array $variantQuantities ['variant_id' => quantity]
-     * @param Currency $currency
-     * @param string|null $customerGroupHandle
-     * @param string|null $region
-     * @return int|null Price in cents, or null if no mix-and-match rule applies
-     */
-    protected function calculateMixAndMatchPrice(
-        Product $product,
-        array $variantQuantities,
-        Currency $currency,
-        ?string $customerGroupHandle,
-        ?string $region
-    ): ?int {
-        $totalQuantity = array_sum($variantQuantities);
-
-        // Get mix-and-match matrices
-        $matrices = PriceMatrix::forProduct($product->id)
+    protected function getApplicableMatrices(ProductVariant $variant, array $context): \Illuminate\Database\Eloquent\Collection
+    {
+        return PriceMatrix::where(function ($query) use ($variant) {
+                $query->where('product_id', $variant->product_id)
+                      ->whereNull('product_variant_id')
+                      ->orWhere('product_variant_id', $variant->id);
+            })
             ->active()
-            ->byType(PriceMatrix::TYPE_QUANTITY)
             ->orderBy('priority', 'desc')
-            ->get();
+            ->get()
+            ->filter(function ($matrix) use ($context) {
+                return $this->matrixMatchesContext($matrix, $context);
+            });
+    }
 
-        foreach ($matrices as $matrix) {
-            $rules = $matrix->rules;
+    /**
+     * Check if matrix matches context.
+     *
+     * @param  PriceMatrix  $matrix
+     * @param  array  $context
+     * @return bool
+     */
+    protected function matrixMatchesContext(PriceMatrix $matrix, array $context): bool
+    {
+        // Check date range
+        if ($matrix->starts_at && $matrix->starts_at->isFuture()) {
+            return false;
+        }
 
-            // Check if this matrix supports mix-and-match
-            if (!isset($rules['mix_and_match']) || !$rules['mix_and_match']) {
+        if ($matrix->expires_at && $matrix->expires_at->isPast()) {
+            return false;
+        }
+
+        // Check minimum/maximum order quantity
+        $quantity = $context['quantity'] ?? 1;
+        
+        if ($matrix->min_order_quantity && $quantity < $matrix->min_order_quantity) {
+            return false;
+        }
+
+        if ($matrix->max_order_quantity && $quantity > $matrix->max_order_quantity) {
+            return false;
+        }
+
+        // Check rules if matrix is rule-based
+        if ($matrix->matrix_type === 'rule_based' && $matrix->rules) {
+            return $this->evaluateRules($matrix->rules, $context);
+        }
+
+        return true;
+    }
+
+    /**
+     * Evaluate rules against context.
+     *
+     * @param  array  $rules
+     * @param  array  $context
+     * @return bool
+     */
+    protected function evaluateRules(array $rules, array $context): bool
+    {
+        $conditions = $rules['conditions'] ?? [];
+
+        foreach ($conditions as $condition) {
+            $key = $condition['type'] ?? $condition['key'] ?? null;
+            $operator = $condition['operator'] ?? '=';
+            $value = $condition['value'] ?? null;
+
+            if (!$key) {
                 continue;
             }
 
-            // Get tier for total quantity
-            $tier = $matrix->getRulesForContext($totalQuantity, $customerGroupHandle, $region);
+            $contextValue = $context[$key] ?? null;
 
-            if ($tier && isset($tier['price'])) {
-                return $tier['price'];
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Track price change in history.
-     *
-     * @param ProductVariant $variant
-     * @param int $oldPrice
-     * @param int $newPrice
-     * @param string $changeType
-     * @param PriceMatrix|null $matrix
-     * @param int|null $userId
-     * @param string|null $reason
-     * @return PriceHistory
-     */
-    public function trackPriceChange(
-        ProductVariant $variant,
-        int $oldPrice,
-        int $newPrice,
-        string $changeType = PriceHistory::TYPE_UPDATED,
-        ?PriceMatrix $matrix = null,
-        ?int $userId = null,
-        ?string $reason = null
-    ): PriceHistory {
-        $currency = Currency::where('default', true)->first();
-
-        return PriceHistory::create([
-            'product_id' => $variant->product_id,
-            'variant_id' => $variant->id,
-            'price_matrix_id' => $matrix?->id,
-            'currency_id' => $currency->id,
-            'old_price' => $oldPrice,
-            'new_price' => $newPrice,
-            'change_type' => $changeType,
-            'change_reason' => $reason,
-            'changed_by' => $userId ?? auth()->id(),
-        ]);
-    }
-
-    /**
-     * Normalize customer group to handle.
-     */
-    protected function normalizeCustomerGroup($customerGroup): ?string
-    {
-        if ($customerGroup instanceof CustomerGroup) {
-            return $customerGroup->handle;
-        }
-
-        if (is_string($customerGroup)) {
-            return $customerGroup;
-        }
-
-        return null;
-    }
-
-    /**
-     * Check if tier applies to context.
-     */
-    protected function tierAppliesToContext(
-        PriceMatrix $matrix,
-        ?string $customerGroupHandle,
-        ?string $region
-    ): bool {
-        // For quantity-based matrices, check if they have customer group or region filters
-        $rules = $matrix->rules;
-
-        if ($customerGroupHandle && isset($rules['customer_group_filter'])) {
-            if (!in_array($customerGroupHandle, $rules['customer_group_filter'])) {
+            if ($contextValue === null) {
                 return false;
             }
-        }
 
-        if ($region && isset($rules['region_filter'])) {
-            if (!in_array($region, $rules['region_filter'])) {
+            $matches = match ($operator) {
+                '=' => $contextValue == $value,
+                '!=' => $contextValue != $value,
+                '>' => is_numeric($contextValue) && is_numeric($value) && $contextValue > $value,
+                '>=' => is_numeric($contextValue) && is_numeric($value) && $contextValue >= $value,
+                '<' => is_numeric($contextValue) && is_numeric($value) && $contextValue < $value,
+                '<=' => is_numeric($contextValue) && is_numeric($value) && $contextValue <= $value,
+                'in' => in_array($contextValue, (array) $value),
+                'not_in' => !in_array($contextValue, (array) $value),
+                'between' => is_numeric($contextValue) && is_array($value) && count($value) === 2 && $contextValue >= $value[0] && $contextValue <= $value[1],
+                default => false,
+            };
+
+            if (!$matches) {
                 return false;
             }
         }
@@ -363,69 +181,394 @@ class MatrixPricingService
     }
 
     /**
-     * Format price response.
+     * Calculate price from a matrix.
+     *
+     * @param  ProductVariant  $variant
+     * @param  PriceMatrix  $matrix
+     * @param  array  $context
+     * @param  float  $basePrice
+     * @return float|null
      */
-    protected function formatPriceResponse(
-        int $price,
-        ?int $comparePrice,
-        Currency $currency,
-        int $quantity,
-        ?PriceMatrix $matrix = null
-    ): array {
-        $priceDecimal = $price / 100;
-        $comparePriceDecimal = $comparePrice ? $comparePrice / 100 : null;
+    protected function calculateMatrixPrice(ProductVariant $variant, PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        switch ($matrix->matrix_type) {
+            case 'quantity':
+                return $this->calculateQuantityPrice($matrix, $context, $basePrice);
 
-        $savings = null;
-        $savingsPercentage = null;
+            case 'customer_group':
+                return $this->calculateCustomerGroupPrice($matrix, $context, $basePrice);
 
-        if ($comparePrice && $comparePrice > $price) {
-            $savings = ($comparePrice - $price) / 100;
-            $savingsPercentage = round(($savings / ($comparePrice / 100)) * 100, 2);
+            case 'region':
+                return $this->calculateRegionalPrice($matrix, $context, $basePrice);
+
+            case 'rule_based':
+                return $this->calculateRuleBasedPrice($matrix, $context, $basePrice);
+
+            case 'mixed':
+                return $this->calculateMixedPrice($matrix, $context, $basePrice);
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Calculate quantity-based price.
+     */
+    protected function calculateQuantityPrice(PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        $quantity = $context['quantity'] ?? 1;
+
+        // Check tiers first
+        $tier = $matrix->tiers()->where('min_quantity', '<=', $quantity)
+            ->where(function ($q) use ($quantity) {
+                $q->whereNull('max_quantity')
+                  ->orWhere('max_quantity', '>=', $quantity);
+            })
+            ->orderBy('min_quantity', 'desc')
+            ->first();
+
+        if ($tier) {
+            return $this->applyTierPricing($tier, $basePrice);
         }
 
+        // Check rules
+        $rules = $matrix->pricingRules()->where('rule_type', 'quantity')->get();
+        
+        foreach ($rules as $rule) {
+            if ($rule->matches(['quantity' => $quantity])) {
+                return $this->applyRulePricing($rule, $basePrice);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate customer group price.
+     */
+    protected function calculateCustomerGroupPrice(PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        $customerGroup = $context['customer_group'] ?? $context['customer_group_id'] ?? null;
+
+        if (!$customerGroup) {
+            return null;
+        }
+
+        $rules = $matrix->pricingRules()->where('rule_type', 'customer_group')->get();
+
+        foreach ($rules as $rule) {
+            if ($rule->matches(['customer_group' => $customerGroup])) {
+                return $this->applyRulePricing($rule, $basePrice);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate regional price.
+     */
+    protected function calculateRegionalPrice(PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        $region = $context['region'] ?? $context['country'] ?? $context['country_code'] ?? null;
+
+        if (!$region) {
+            return null;
+        }
+
+        $rules = $matrix->pricingRules()->where('rule_type', 'region')->get();
+
+        foreach ($rules as $rule) {
+            if ($rule->matches(['region' => $region])) {
+                return $this->applyRulePricing($rule, $basePrice);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate rule-based price.
+     */
+    protected function calculateRuleBasedPrice(PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        $rules = $matrix->pricingRules()->orderBy('priority', 'desc')->get();
+
+        foreach ($rules as $rule) {
+            if ($rule->matches($context)) {
+                return $this->applyRulePricing($rule, $basePrice);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate mixed price (multiple conditions).
+     */
+    protected function calculateMixedPrice(PriceMatrix $matrix, array $context, float $basePrice): ?float
+    {
+        // For mixed matrices, all rules must match
+        $rules = $matrix->pricingRules()->orderBy('priority', 'desc')->get();
+
+        $allMatch = true;
+        $matchedRule = null;
+
+        foreach ($rules as $rule) {
+            if (!$rule->matches($context)) {
+                $allMatch = false;
+                break;
+            }
+            $matchedRule = $rule;
+        }
+
+        if ($allMatch && $matchedRule) {
+            return $this->applyRulePricing($matchedRule, $basePrice);
+        }
+
+        return null;
+    }
+
+    /**
+     * Apply tier pricing.
+     */
+    protected function applyTierPricing(PricingTier $tier, float $basePrice): float
+    {
+        return match ($tier->pricing_type) {
+            'fixed' => $tier->price ?? $basePrice,
+            'adjustment' => $basePrice + ($tier->price_adjustment ?? 0),
+            'percentage' => $basePrice * (1 - ($tier->percentage_discount ?? 0) / 100),
+            default => $basePrice,
+        };
+    }
+
+    /**
+     * Apply rule pricing.
+     */
+    protected function applyRulePricing(PricingRule $rule, float $basePrice): float
+    {
+        return match ($rule->adjustment_type) {
+            'fixed', 'override' => $rule->price ?? $basePrice,
+            'add' => $basePrice + ($rule->price_adjustment ?? 0),
+            'subtract' => $basePrice - ($rule->price_adjustment ?? 0),
+            'percentage' => $basePrice * (1 - ($rule->percentage_discount ?? 0) / 100),
+            default => $basePrice,
+        };
+    }
+
+    /**
+     * Get tiered pricing for a variant.
+     *
+     * @param  ProductVariant  $variant
+     * @param  array  $context
+     * @return array
+     */
+    public function getTieredPricing(ProductVariant $variant, array $context = []): array
+    {
+        $currency = Currency::getDefault();
+        $basePricing = Pricing::for($variant)->currency($currency)->get();
+        $basePrice = $basePricing->matched?->price?->value ?? 0;
+
+        $matrices = PriceMatrix::where('product_id', $variant->product_id)
+            ->where('matrix_type', 'quantity')
+            ->active()
+            ->orderBy('priority', 'desc')
+            ->get();
+
+        $tiers = [];
+
+        foreach ($matrices as $matrix) {
+            foreach ($matrix->tiers as $tier) {
+                $price = $this->applyTierPricing($tier, $basePrice);
+                $savings = $basePrice - $price;
+                $savingsPercentage = $basePrice > 0 ? ($savings / $basePrice) * 100 : 0;
+
+                $tiers[] = [
+                    'tier_id' => $tier->id,
+                    'matrix_id' => $matrix->id,
+                    'tier_name' => $tier->tier_name,
+                    'min_quantity' => $tier->min_quantity,
+                    'max_quantity' => $tier->max_quantity,
+                    'price' => $price,
+                    'base_price' => $basePrice,
+                    'savings' => $savings,
+                    'savings_percentage' => round($savingsPercentage, 2),
+                ];
+            }
+        }
+
+        // Sort by min_quantity
+        usort($tiers, function ($a, $b) {
+            return $a['min_quantity'] <=> $b['min_quantity'];
+        });
+
+        return $tiers;
+    }
+
+    /**
+     * Get volume discounts.
+     *
+     * @param  ProductVariant  $variant
+     * @param  array  $context
+     * @return array
+     */
+    public function getVolumeDiscounts(ProductVariant $variant, array $context = []): array
+    {
+        return $this->getTieredPricing($variant, $context);
+    }
+
+    /**
+     * Get tier for context.
+     */
+    protected function getTierForContext(PriceMatrix $matrix, array $context): ?array
+    {
+        if ($matrix->matrix_type !== 'quantity') {
+            return null;
+        }
+
+        $quantity = $context['quantity'] ?? 1;
+
+        $tier = $matrix->tiers()->where('min_quantity', '<=', $quantity)
+            ->where(function ($q) use ($quantity) {
+                $q->whereNull('max_quantity')
+                  ->orWhere('max_quantity', '>=', $quantity);
+            })
+            ->orderBy('min_quantity', 'desc')
+            ->first();
+
+        if ($tier) {
+            return [
+                'id' => $tier->id,
+                'name' => $tier->tier_name,
+                'min_quantity' => $tier->min_quantity,
+                'max_quantity' => $tier->max_quantity,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Record price change in history.
+     *
+     * @param  ProductVariant  $variant
+     * @param  float  $oldPrice
+     * @param  float  $newPrice
+     * @param  array  $context
+     * @param  string  $changeType
+     * @param  int|null  $matrixId
+     * @return PriceHistory
+     */
+    public function recordPriceChange(
+        ProductVariant $variant,
+        float $oldPrice,
+        float $newPrice,
+        array $context = [],
+        string $changeType = 'manual',
+        ?int $matrixId = null
+    ): PriceHistory {
+        return PriceHistory::create([
+            'product_id' => $variant->product_id,
+            'product_variant_id' => $variant->id,
+            'price_matrix_id' => $matrixId,
+            'old_price' => $oldPrice,
+            'new_price' => $newPrice,
+            'currency_code' => Currency::getDefault()->code ?? 'USD',
+            'change_type' => $changeType,
+            'context' => $context,
+            'changed_by' => auth()->id(),
+            'changed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Get pricing report.
+     *
+     * @param  array  $filters
+     * @return array
+     */
+    public function getPricingReport(array $filters = []): array
+    {
+        $query = PriceHistory::query();
+
+        if (isset($filters['product_id'])) {
+            $query->where('product_id', $filters['product_id']);
+        }
+
+        if (isset($filters['customer_group'])) {
+            $query->whereJsonContains('context->customer_group', $filters['customer_group']);
+        }
+
+        if (isset($filters['region'])) {
+            $query->whereJsonContains('context->region', $filters['region']);
+        }
+
+        if (isset($filters['start_date'])) {
+            $query->where('changed_at', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $query->where('changed_at', '<=', $filters['end_date']);
+        }
+
+        $history = $query->with(['product', 'productVariant', 'priceMatrix'])
+            ->orderBy('changed_at', 'desc')
+            ->get();
+
         return [
-            'price' => $price,
-            'price_decimal' => $priceDecimal,
-            'compare_price' => $comparePrice,
-            'compare_price_decimal' => $comparePriceDecimal,
-            'formatted_price' => $this->formatCurrency($priceDecimal, $currency),
-            'formatted_compare_price' => $comparePriceDecimal ? $this->formatCurrency($comparePriceDecimal, $currency) : null,
-            'savings' => $savings,
-            'savings_percentage' => $savingsPercentage,
-            'quantity' => $quantity,
-            'currency' => $currency->code,
-            'matrix_id' => $matrix?->id,
-            'you_save' => $savingsPercentage ? "Save {$savingsPercentage}%" : null,
+            'total_changes' => $history->count(),
+            'changes' => $history,
+            'summary' => $this->generateReportSummary($history),
         ];
     }
 
     /**
-     * Format currency.
+     * Generate report summary.
      */
-    protected function formatCurrency(float $amount, Currency $currency): string
+    protected function generateReportSummary($history): array
     {
-        $formatter = new \NumberFormatter(
-            app()->getLocale(),
-            \NumberFormatter::CURRENCY
-        );
+        $summary = [
+            'by_product' => [],
+            'by_customer_group' => [],
+            'by_region' => [],
+        ];
 
-        return $formatter->formatCurrency($amount, $currency->code);
-    }
+        foreach ($history as $change) {
+            // By product
+            $productId = $change->product_id;
+            if (!isset($summary['by_product'][$productId])) {
+                $summary['by_product'][$productId] = [
+                    'product_id' => $productId,
+                    'product_name' => $change->product->translateAttribute('name') ?? 'Unknown',
+                    'change_count' => 0,
+                ];
+            }
+            $summary['by_product'][$productId]['change_count']++;
 
-    /**
-     * Format quantity range.
-     */
-    protected function formatQuantityRange(int $min, ?int $max): string
-    {
-        if ($max === null) {
-            return "{$min}+";
+            // By customer group
+            $customerGroup = $change->context['customer_group'] ?? 'default';
+            if (!isset($summary['by_customer_group'][$customerGroup])) {
+                $summary['by_customer_group'][$customerGroup] = [
+                    'customer_group' => $customerGroup,
+                    'change_count' => 0,
+                ];
+            }
+            $summary['by_customer_group'][$customerGroup]['change_count']++;
+
+            // By region
+            $region = $change->context['region'] ?? 'default';
+            if (!isset($summary['by_region'][$region])) {
+                $summary['by_region'][$region] = [
+                    'region' => $region,
+                    'change_count' => 0,
+                ];
+            }
+            $summary['by_region'][$region]['change_count']++;
         }
 
-        if ($min === $max) {
-            return (string) $min;
-        }
-
-        return "{$min}-{$max}";
+        return $summary;
     }
 }
+
 

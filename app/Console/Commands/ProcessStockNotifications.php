@@ -45,3 +45,4 @@ class ProcessStockNotifications extends Command
     }
 }
 
+

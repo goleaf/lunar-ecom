@@ -10,3 +10,4 @@ class CreateB2BContract extends CreateRecord
     protected static string $resource = B2BContractResource::class;
 }
 
+

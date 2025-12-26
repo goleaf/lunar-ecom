@@ -10,3 +10,4 @@ class CreateReferralProgram extends CreateRecord
     protected static string $resource = ReferralProgramResource::class;
 }
 
+

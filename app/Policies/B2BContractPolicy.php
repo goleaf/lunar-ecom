@@ -66,3 +66,4 @@ class B2BContractPolicy
     }
 }
 
+

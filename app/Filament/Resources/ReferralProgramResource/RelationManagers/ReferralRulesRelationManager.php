@@ -119,13 +119,43 @@ class ReferralRulesRelationManager extends RelationManager
                 Forms\Components\Section::make('Stacking & Priority')
                     ->schema([
                         Forms\Components\Select::make('stacking_mode')
+                            ->label('Stacking Mode')
                             ->options([
-                                ReferralRule::STACKING_EXCLUSIVE => 'Exclusive',
-                                ReferralRule::STACKING_STACKABLE => 'Stackable',
-                                ReferralRule::STACKING_BEST_OF => 'Best Of',
+                                ReferralRule::STACKING_EXCLUSIVE => 'Exclusive (No stacking with other discounts)',
+                                ReferralRule::STACKING_STACKABLE => 'Stackable (Allow stacking with caps)',
+                                ReferralRule::STACKING_BEST_OF => 'Best Of (Choose largest discount)',
                             ])
                             ->default(ReferralRule::STACKING_EXCLUSIVE)
-                            ->required(),
+                            ->required()
+                            ->reactive()
+                            ->helperText('How this discount interacts with other promotions'),
+
+                        Forms\Components\TextInput::make('max_total_discount_percent')
+                            ->label('Max Total Discount (%)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->visible(fn ($get) => $get('stacking_mode') === ReferralRule::STACKING_STACKABLE)
+                            ->helperText('Maximum total discount percentage when stacking (e.g., 20% max)'),
+
+                        Forms\Components\TextInput::make('max_total_discount_amount')
+                            ->label('Max Total Discount Amount')
+                            ->numeric()
+                            ->minValue(0)
+                            ->prefix('€')
+                            ->visible(fn ($get) => $get('stacking_mode') === ReferralRule::STACKING_STACKABLE)
+                            ->helperText('Maximum total discount amount when stacking'),
+
+                        Forms\Components\Toggle::make('apply_before_tax')
+                            ->label('Apply Before Tax')
+                            ->default(true)
+                            ->helperText('If enabled, discount applies to subtotal before tax calculation'),
+
+                        Forms\Components\Toggle::make('shipping_discount_stacks')
+                            ->label('Shipping Discount Stacks')
+                            ->default(false)
+                            ->helperText('If enabled, shipping discounts can stack with this referral discount'),
 
                         Forms\Components\TextInput::make('priority')
                             ->numeric()
@@ -200,11 +230,20 @@ class ReferralRulesRelationManager extends RelationManager
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('priority')
-                    ->sortable(),
+                    ->sortable()
+                    ->label('Priority')
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state >= 10 => 'success',
+                        $state >= 5 => 'info',
+                        $state >= 0 => 'warning',
+                        default => 'gray',
+                    }),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->sortable(),
+                    ->sortable()
+                    ->label('Active'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('trigger_event')
@@ -222,15 +261,65 @@ class ReferralRulesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('test_rule')
+                    ->label('Test Rule')
+                    ->icon('heroicon-o-beaker')
+                    ->color('info')
+                    ->form([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Test User')
+                            ->relationship('program.referee', 'email')
+                            ->searchable()
+                            ->preload(),
+                        Forms\Components\TextInput::make('order_total')
+                            ->label('Order Total')
+                            ->numeric()
+                            ->default(100)
+                            ->prefix('€'),
+                    ])
+                    ->action(function (ReferralRule $record, array $data) {
+                        // Simulate rule application
+                        $user = \App\Models\User::find($data['user_id']);
+                        $orderTotal = $data['order_total'];
+
+                        $applicable = true;
+                        $reasons = [];
+
+                        if ($record->min_order_total && $orderTotal < $record->min_order_total) {
+                            $applicable = false;
+                            $reasons[] = "Order total ({$orderTotal}) below minimum ({$record->min_order_total})";
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title($applicable ? 'Rule Would Apply' : 'Rule Would Not Apply')
+                            ->body($applicable ? 'This rule would be triggered for this scenario.' : implode(', ', $reasons))
+                            ->{$applicable ? 'success' : 'warning'}()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('activate')
+                        ->label('Activate Selected')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->action(function ($records) {
+                            ReferralRule::whereIn('id', $records->pluck('id'))
+                                ->update(['is_active' => true]);
+                        }),
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->label('Deactivate Selected')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->action(function ($records) {
+                            ReferralRule::whereIn('id', $records->pluck('id'))
+                                ->update(['is_active' => false]);
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-            ->defaultSort('priority', 'desc');
+            ]);
     }
 }
 

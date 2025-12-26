@@ -93,6 +93,17 @@ class ProductVariant extends LunarProductVariant
         'variant_name',
         'title',
         'status',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'rejection_reason',
+        'scheduled_activation_at',
+        'scheduled_deactivation_at',
+        'is_locked',
+        'locked_reason',
+        'locked_at',
+        'cloned_from_id',
+        'cloned_at',
         'visibility',
         'channel_visibility',
         'sku_format',
@@ -101,6 +112,17 @@ class ProductVariant extends LunarProductVariant
         'compare_at_price',
         'tax_inclusive',
         'price_rounding_rules',
+        'expiry_date',
+        'shelf_life_days',
+        'is_subscription',
+        'subscription_interval',
+        'subscription_interval_count',
+        'subscription_trial_days',
+        'is_digital',
+        'requires_license_key',
+        'requires_lot_tracking',
+        'allows_personalization',
+        'personalization_fields',
         'map_price',
         'price_locked',
         'discount_override',
@@ -155,6 +177,16 @@ class ProductVariant extends LunarProductVariant
         'compare_at_price' => 'integer',
         'tax_inclusive' => 'boolean',
         'price_rounding_rules' => 'array',
+        'expiry_date' => 'date',
+        'shelf_life_days' => 'integer',
+        'is_subscription' => 'boolean',
+        'subscription_interval_count' => 'integer',
+        'subscription_trial_days' => 'integer',
+        'is_digital' => 'boolean',
+        'requires_license_key' => 'boolean',
+        'requires_lot_tracking' => 'boolean',
+        'allows_personalization' => 'boolean',
+        'personalization_fields' => 'array',
         'map_price' => 'integer',
         'price_locked' => 'boolean',
         'discount_override' => 'array',
@@ -168,6 +200,12 @@ class ProductVariant extends LunarProductVariant
         'is_fragile' => 'boolean',
         'is_hazardous' => 'boolean',
         'lead_time_days' => 'integer',
+        'is_locked' => 'boolean',
+        'approved_at' => 'datetime',
+        'scheduled_activation_at' => 'datetime',
+        'scheduled_deactivation_at' => 'datetime',
+        'locked_at' => 'datetime',
+        'cloned_at' => 'datetime',
         'enabled' => 'boolean',
         'low_stock_threshold' => 'integer',
         'position' => 'integer',
@@ -240,6 +278,18 @@ class ProductVariant extends LunarProductVariant
         // Validate variant option combinations for duplicates
         if ($variant->exists && $variant->isDirty()) {
             $variant->validateUniqueOptionCombination();
+        }
+
+        // Run validation rules
+        if ($variant->exists || !empty($variant->getDirty())) {
+            $validationService = app(\App\Services\VariantValidationService::class);
+            $errors = $validationService->validate($variant, $variant->getDirty());
+            
+            if (!empty($errors)) {
+                throw ValidationException::withMessages([
+                    'variant' => $errors,
+                ]);
+            }
         }
     });
     }
@@ -321,7 +371,12 @@ class ProductVariant extends LunarProductVariant
             'internal_reference' => ['nullable', 'string', 'max:100'],
             'title' => ['nullable', 'string', 'max:255'],
             'variant_name' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'in:active,inactive,archived'],
+            'status' => ['nullable', 'in:draft,active,inactive,archived'],
+            'approval_status' => ['nullable', 'in:pending,approved,rejected,not_required'],
+            'scheduled_activation_at' => ['nullable', 'date'],
+            'scheduled_deactivation_at' => ['nullable', 'date'],
+            'is_locked' => ['nullable', 'boolean'],
+            'locked_reason' => ['nullable', 'string', 'max:255'],
             'visibility' => ['nullable', 'in:public,hidden,channel_specific'],
             'channel_visibility' => ['nullable', 'array'],
             'channel_visibility.*' => ['integer', 'exists:' . config('lunar.database.table_prefix') . 'channels,id'],
@@ -588,23 +643,27 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
-     * Archive variant.
+     * Archive variant (using lifecycle service).
      *
+     * @param  bool  $force
      * @return bool
      */
-    public function archive(): bool
+    public function archive(bool $force = false): bool
     {
-        return $this->update(['status' => 'archived']);
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->archive($this, $force);
     }
 
     /**
-     * Activate variant.
+     * Activate variant (using lifecycle service).
      *
+     * @param  int|null  $approvedBy
      * @return bool
      */
-    public function activate(): bool
+    public function activate(?int $approvedBy = null): bool
     {
-        return $this->update(['status' => 'active']);
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->activate($this, $approvedBy);
     }
 
     /**
@@ -614,7 +673,498 @@ class ProductVariant extends LunarProductVariant
      */
     public function deactivate(): bool
     {
-        return $this->update(['status' => 'inactive']);
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->transitionStatus($this, 'inactive');
+    }
+
+    /**
+     * Check if variant is locked.
+     *
+     * @return bool
+     */
+    public function isLocked(): bool
+    {
+        return $this->is_locked ?? false;
+    }
+
+    /**
+     * Lock variant.
+     *
+     * @param  string  $reason
+     * @return bool
+     */
+    public function lock(string $reason): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->lock($this, $reason);
+    }
+
+    /**
+     * Unlock variant.
+     *
+     * @return bool
+     */
+    public function unlock(): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->unlock($this);
+    }
+
+    /**
+     * Clone variant.
+     *
+     * @param  array  $overrides
+     * @return ProductVariant
+     */
+    public function clone(array $overrides = []): ProductVariant
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->clone($this, $overrides);
+    }
+
+    /**
+     * Submit for approval.
+     *
+     * @param  int|null  $submittedBy
+     * @return bool
+     */
+    public function submitForApproval(?int $submittedBy = null): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->submitForApproval($this, $submittedBy);
+    }
+
+    /**
+     * Approve variant.
+     *
+     * @param  int|null  $approvedBy
+     * @param  bool  $autoActivate
+     * @return bool
+     */
+    public function approve(?int $approvedBy = null, bool $autoActivate = false): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->approve($this, $approvedBy, $autoActivate);
+    }
+
+    /**
+     * Reject variant.
+     *
+     * @param  string  $reason
+     * @param  int|null  $rejectedBy
+     * @return bool
+     */
+    public function reject(string $reason, ?int $rejectedBy = null): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->reject($this, $reason, $rejectedBy);
+    }
+
+    /**
+     * Schedule activation.
+     *
+     * @param  \Carbon\Carbon|string  $activationDate
+     * @return bool
+     */
+    public function scheduleActivation($activationDate): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->scheduleActivation($this, $activationDate);
+    }
+
+    /**
+     * Schedule deactivation.
+     *
+     * @param  \Carbon\Carbon|string  $deactivationDate
+     * @return bool
+     */
+    public function scheduleDeactivation($deactivationDate): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->scheduleDeactivation($this, $deactivationDate);
+    }
+
+    /**
+     * Check if variant has active orders.
+     *
+     * @return bool
+     */
+    public function hasActiveOrders(): bool
+    {
+        $service = app(\App\Services\VariantLifecycleService::class);
+        return $service->hasActiveOrders($this);
+    }
+
+    /**
+     * Clone source relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function clonedFrom()
+    {
+        return $this->belongsTo(ProductVariant::class, 'cloned_from_id');
+    }
+
+    /**
+     * Clones relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function clones()
+    {
+        return $this->hasMany(ProductVariant::class, 'cloned_from_id');
+    }
+
+    /**
+     * Approver relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function approver()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'approved_by');
+    }
+
+    /**
+     * Validation rules relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function validationRules()
+    {
+        return $this->hasMany(VariantValidationRule::class, 'product_variant_id');
+    }
+
+    /**
+     * Validate variant.
+     *
+     * @param  array  $context
+     * @return array Array of validation errors
+     */
+    public function validate(array $context = []): array
+    {
+        $service = app(\App\Services\VariantValidationService::class);
+        return $service->validateForContext($this, $context);
+    }
+
+    /**
+     * Check if variant is valid for context.
+     *
+     * @param  array  $context
+     * @return bool
+     */
+    public function isValidForContext(array $context = []): bool
+    {
+        $service = app(\App\Services\VariantValidationService::class);
+        return $service->isValidForContext($this, $context);
+    }
+
+    /**
+     * Validate or throw exception.
+     *
+     * @param  array  $context
+     * @return void
+     * @throws ValidationException
+     */
+    public function validateOrFail(array $context = []): void
+    {
+        $service = app(\App\Services\VariantValidationService::class);
+        $service->validateOrFail($this, $context);
+    }
+
+    /**
+     * Check if variant is available in channel.
+     *
+     * @param  int|null  $channelId
+     * @return bool
+     */
+    public function isAvailableInChannel(?int $channelId = null): bool
+    {
+        if ($channelId === null) {
+            return true;
+        }
+
+        $service = app(\App\Services\VariantValidationService::class);
+        $errors = $service->validateChannelAvailability($this, $channelId);
+        return empty($errors);
+    }
+
+    /**
+     * Check if variant is available in country.
+     *
+     * @param  string  $countryCode
+     * @return bool
+     */
+    public function isAvailableInCountry(string $countryCode): bool
+    {
+        $service = app(\App\Services\VariantValidationService::class);
+        $errors = $service->validateCountryRestrictions($this, $countryCode);
+        return empty($errors);
+    }
+
+    /**
+     * Check if variant is available for customer group.
+     *
+     * @param  int|null  $customerGroupId
+     * @return bool
+     */
+    public function isAvailableForCustomerGroup(?int $customerGroupId = null): bool
+    {
+        if ($customerGroupId === null) {
+            return true;
+        }
+
+        $service = app(\App\Services\VariantValidationService::class);
+        $errors = $service->validateCustomerGroupRestrictions($this, $customerGroupId);
+        return empty($errors);
+    }
+
+    /**
+     * Check if variant is eligible for shipping.
+     *
+     * @param  array  $shippingContext
+     * @return bool
+     */
+    public function isEligibleForShipping(array $shippingContext = []): bool
+    {
+        $service = app(\App\Services\VariantValidationService::class);
+        $errors = $service->validateShippingEligibility($this, $shippingContext);
+        return empty($errors);
+    }
+
+    /**
+     * Variant views relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function views()
+    {
+        return $this->hasMany(VariantView::class, 'product_variant_id');
+    }
+
+    /**
+     * Variant returns relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function returns()
+    {
+        return $this->hasMany(VariantReturn::class, 'product_variant_id');
+    }
+
+    /**
+     * Variant performance relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function performance()
+    {
+        return $this->hasMany(VariantPerformance::class, 'product_variant_id');
+    }
+
+    /**
+     * Track view for this variant.
+     *
+     * @param  array  $context
+     * @return VariantView
+     */
+    public function trackView(array $context = []): VariantView
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->trackView($this, $context);
+    }
+
+    /**
+     * Get analytics for variant.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getAnalytics(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateAnalytics($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get views for variant.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getViews(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->getViews($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get conversion rate.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return float
+     */
+    public function getConversionRate(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): float
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateConversionRate($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get revenue.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getRevenue(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateRevenue($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get stock turnover.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getStockTurnover(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateStockTurnover($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get return rate.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getReturnRate(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateReturnRate($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get discount impact.
+     *
+     * @param  \Carbon\Carbon|null  $startDate
+     * @param  \Carbon\Carbon|null  $endDate
+     * @return array
+     */
+    public function getDiscountImpact(?\Carbon\Carbon $startDate = null, ?\Carbon\Carbon $endDate = null): array
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculateDiscountImpact($this, $startDate, $endDate);
+    }
+
+    /**
+     * Get popularity score.
+     *
+     * @return float
+     */
+    public function getPopularityScore(): float
+    {
+        $service = app(\App\Services\VariantAnalyticsService::class);
+        return $service->calculatePopularityScore($this);
+    }
+
+    /**
+     * Get popularity rank.
+     *
+     * @return int|null
+     */
+    public function getPopularityRank(): ?int
+    {
+        return VariantPerformance::where('product_variant_id', $this->id)
+            ->value('popularity_rank');
+    }
+
+    /**
+     * Serial numbers relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function serialNumbers()
+    {
+        return $this->hasMany(VariantSerialNumber::class, 'product_variant_id');
+    }
+
+    /**
+     * Lots relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function lots()
+    {
+        return $this->hasMany(VariantLot::class, 'product_variant_id');
+    }
+
+    /**
+     * License keys relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function licenseKeys()
+    {
+        return $this->hasMany(VariantLicenseKey::class, 'product_variant_id');
+    }
+
+    /**
+     * Personalizations relationship.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function personalizations()
+    {
+        return $this->hasMany(VariantPersonalization::class, 'product_variant_id');
+    }
+
+    /**
+     * Check if variant is expired.
+     *
+     * @return bool
+     */
+    public function isExpired(): bool
+    {
+        return $this->expiry_date && $this->expiry_date->isPast();
+    }
+
+    /**
+     * Check if variant is digital.
+     *
+     * @return bool
+     */
+    public function isDigital(): bool
+    {
+        return $this->is_digital ?? false;
+    }
+
+    /**
+     * Check if variant is subscription.
+     *
+     * @return bool
+     */
+    public function isSubscription(): bool
+    {
+        return $this->is_subscription ?? false;
+    }
+
+    /**
+     * Check if variant allows personalization.
+     *
+     * @return bool
+     */
+    public function allowsPersonalization(): bool
+    {
+        return $this->allows_personalization ?? false;
     }
 
     /**
@@ -1119,6 +1669,152 @@ class ProductVariant extends LunarProductVariant
     {
         $service = app(\App\Services\VariantMediaService::class);
         return $service->getARFiles($this, $options);
+    }
+
+    /**
+     * Variant relationships (outgoing).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function relationships()
+    {
+        return $this->hasMany(VariantRelationship::class, 'variant_id');
+    }
+
+    /**
+     * Related variants (incoming relationships).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function relatedVariants()
+    {
+        return $this->hasMany(VariantRelationship::class, 'related_variant_id');
+    }
+
+    /**
+     * Get cross-variant relationships (same product, different attributes).
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getCrossVariants(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getCrossVariants($this);
+    }
+
+    /**
+     * Get replacement variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getReplacements(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getReplacements($this);
+    }
+
+    /**
+     * Get upgrade variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getUpgrades(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getUpgrades($this);
+    }
+
+    /**
+     * Get downgrade variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getDowngrades(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getDowngrades($this);
+    }
+
+    /**
+     * Get accessory variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAccessories(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getAccessories($this);
+    }
+
+    /**
+     * Get bundle component variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getBundleComponents(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getBundleComponents($this);
+    }
+
+    /**
+     * Get compatible variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getCompatible(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getCompatible($this);
+    }
+
+    /**
+     * Get alternative variants.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAlternatives(): \Illuminate\Support\Collection
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getAlternatives($this);
+    }
+
+    /**
+     * Get all relationships grouped by type.
+     *
+     * @return array
+     */
+    public function getAllRelationships(): array
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->getAllRelationshipsGrouped($this);
+    }
+
+    /**
+     * Create a relationship with another variant.
+     *
+     * @param  ProductVariant  $relatedVariant
+     * @param  string  $relationshipType
+     * @param  array  $options
+     * @return VariantRelationship
+     */
+    public function relateTo(ProductVariant $relatedVariant, string $relationshipType, array $options = []): VariantRelationship
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->createRelationship($this, $relatedVariant, $relationshipType, $options);
+    }
+
+    /**
+     * Remove relationship with another variant.
+     *
+     * @param  ProductVariant  $relatedVariant
+     * @param  string|null  $relationshipType
+     * @return bool
+     */
+    public function unrelateFrom(ProductVariant $relatedVariant, ?string $relationshipType = null): bool
+    {
+        $service = app(\App\Services\VariantRelationshipService::class);
+        return $service->deleteRelationship($this, $relatedVariant, $relationshipType);
     }
 
     /**

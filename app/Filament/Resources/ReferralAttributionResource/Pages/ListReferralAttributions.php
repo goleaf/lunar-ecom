@@ -18,3 +18,4 @@ class ListReferralAttributions extends ListRecords
     }
 }
 
+

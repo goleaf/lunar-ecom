@@ -108,3 +108,4 @@ class PriceListsRelationManager extends RelationManager
     }
 }
 
+

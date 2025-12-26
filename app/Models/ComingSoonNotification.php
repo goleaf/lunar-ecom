@@ -87,3 +87,4 @@ class ComingSoonNotification extends Model
     }
 }
 
+

@@ -135,6 +135,15 @@ class ReferralAttributionResource extends Resource
                     ->label('Rejection Reason')
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\IconColumn::make('fraud_flags')
+                    ->label('Fraud Flags')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->color('danger')
+                    ->getStateUsing(function (ReferralAttribution $record) {
+                        return $this->hasFraudFlags($record);
+                    })
+                    ->tooltip(fn (ReferralAttribution $record) => $this->getFraudFlagsTooltip($record)),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -220,6 +229,72 @@ class ReferralAttributionResource extends Resource
                 ]),
             ])
             ->defaultSort('attributed_at', 'desc');
+
+        return $table;
+    }
+
+    protected function hasFraudFlags(ReferralAttribution $record): bool
+    {
+        // Check for fraud flags
+        $referee = $record->referee;
+        $referrer = $record->referrer;
+
+        // Same IP check
+        $refereeIp = hash('sha256', request()->ip());
+        $referrerRecentOrders = \Lunar\Models\Order::whereHas('customer', function ($q) use ($referrer) {
+            $q->where('user_id', $referrer->id);
+        })->get();
+
+        foreach ($referrerRecentOrders as $order) {
+            $orderIp = hash('sha256', $order->meta['ip_address'] ?? '');
+            if ($orderIp === $refereeIp) {
+                return true;
+            }
+        }
+
+        // Same email domain
+        if ($referee->email && $referrer->email) {
+            $refereeDomain = substr(strrchr($referee->email, "@"), 1);
+            $referrerDomain = substr(strrchr($referrer->email, "@"), 1);
+            if ($refereeDomain === $referrerDomain && $refereeDomain !== 'gmail.com') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function getFraudFlagsTooltip(ReferralAttribution $record): string
+    {
+        $flags = [];
+
+        $referee = $record->referee;
+        $referrer = $record->referrer;
+
+        // Check same IP
+        $refereeIp = hash('sha256', request()->ip());
+        $referrerRecentOrders = \Lunar\Models\Order::whereHas('customer', function ($q) use ($referrer) {
+            $q->where('user_id', $referrer->id);
+        })->get();
+
+        foreach ($referrerRecentOrders as $order) {
+            $orderIp = hash('sha256', $order->meta['ip_address'] ?? '');
+            if ($orderIp === $refereeIp) {
+                $flags[] = 'Same IP address';
+                break;
+            }
+        }
+
+        // Check same email domain
+        if ($referee->email && $referrer->email) {
+            $refereeDomain = substr(strrchr($referee->email, "@"), 1);
+            $referrerDomain = substr(strrchr($referrer->email, "@"), 1);
+            if ($refereeDomain === $referrerDomain && $refereeDomain !== 'gmail.com') {
+                $flags[] = 'Same email domain';
+            }
+        }
+
+        return empty($flags) ? 'No fraud flags detected' : implode(', ', $flags);
     }
 
     public static function getPages(): array

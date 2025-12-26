@@ -18,3 +18,4 @@ class ViewB2BContract extends ViewRecord
     }
 }
 
+

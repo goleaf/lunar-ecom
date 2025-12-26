@@ -83,3 +83,4 @@ class ComparisonAnalytic extends Model
     }
 }
 
+

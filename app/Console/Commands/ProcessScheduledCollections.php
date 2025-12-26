@@ -95,3 +95,4 @@ class ProcessScheduledCollections extends Command
     }
 }
 
+

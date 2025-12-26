@@ -127,3 +127,4 @@ class RecommendationClick extends Model
     }
 }
 
+

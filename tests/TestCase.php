@@ -3,8 +3,28 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\LunarTestHelpers;
 
 abstract class TestCase extends BaseTestCase
 {
-    //
+    use CreatesApplication;
+    use RefreshDatabase;
+    use LunarTestHelpers;
+
+    /**
+    * Ensure database is migrated and seeded with minimal Lunar defaults.
+    */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Force in-memory cache to avoid external Redis during tests
+        config([
+            'cache.default' => 'array',
+            'cache.stores.redis' => ['driver' => 'array'],
+        ]);
+
+        $this->seedLunarTestData();
+    }
 }

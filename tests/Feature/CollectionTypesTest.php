@@ -24,7 +24,7 @@ class CollectionTypesTest extends TestCase
     {
         $collection = Collection::factory()->create();
 
-        $this->assertEquals(CollectionType::STANDARD, $collection->collection_type);
+        $this->assertEquals(CollectionType::STANDARD->value, $collection->collection_type);
     }
 
     public function test_collection_can_have_cross_sell_type(): void
@@ -33,7 +33,7 @@ class CollectionTypesTest extends TestCase
             'collection_type' => CollectionType::CROSS_SELL->value,
         ]);
 
-        $this->assertEquals(CollectionType::CROSS_SELL, $collection->collection_type);
+        $this->assertEquals(CollectionType::CROSS_SELL->value, $collection->collection_type);
     }
 
     public function test_collection_cross_sell_scope_works(): void
@@ -85,5 +85,3 @@ class CollectionTypesTest extends TestCase
         $this->assertNotEmpty(CollectionType::UP_SELL->description());
     }
 }
-
-

@@ -38,6 +38,7 @@ class CollectionFactory extends Factory
                 )->id;
             },
             'sort' => fake()->numberBetween(0, 100),
+            'collection_type' => \App\Enums\CollectionType::STANDARD->value,
             'attribute_data' => collect([
                 'name' => new Text($name),
                 'description' => new Text(fake()->optional()->paragraph()),
@@ -78,4 +79,3 @@ class CollectionFactory extends Factory
         ]);
     }
 }
-

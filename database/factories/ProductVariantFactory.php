@@ -13,6 +13,8 @@ use Lunar\FieldTypes\Text;
  */
 class ProductVariantFactory extends Factory
 {
+    protected bool $withPrices = true;
+
     /**
      * The name of the factory's corresponding model.
      *
@@ -115,6 +117,10 @@ class ProductVariantFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (ProductVariant $variant) {
+            if (!$this->withPrices) {
+                return;
+            }
+
             // Create a default price if currency and customer group exist
             $currency = \Lunar\Models\Currency::where('default', true)->first();
             $customerGroup = \Lunar\Models\CustomerGroup::where('default', true)->first();
@@ -137,6 +143,18 @@ class ProductVariantFactory extends Factory
                     ]);
                 }
             }
+        });
+    }
+
+    /**
+     * Skip automatic price creation for the variant.
+     */
+    public function withoutPrices(): static
+    {
+        return $this->state(function (array $attributes) {
+            $this->withPrices = false;
+
+            return [];
         });
     }
 
@@ -167,4 +185,3 @@ class ProductVariantFactory extends Factory
         ]);
     }
 }
-

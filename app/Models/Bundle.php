@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lunar\Models\Product;
 
@@ -73,6 +74,17 @@ class Bundle extends Model
         'allow_customization' => 'boolean',
         'show_individual_prices' => 'boolean',
         'show_savings' => 'boolean',
+    ];
+
+    /**
+     * Computed attributes for API consumers.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'bundle_type',
+        'discount_type',
+        'discount_value',
     ];
 
     /**
@@ -317,5 +329,86 @@ class Bundle extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    /**
+     * Determine if the bundle uses fixed pricing.
+     */
+    public function isFixed(): bool
+    {
+        return $this->pricing_type === 'fixed';
+    }
+
+    /**
+     * Determine if the bundle pricing is calculated dynamically.
+     */
+    public function isDynamic(): bool
+    {
+        return $this->pricing_type === 'dynamic';
+    }
+
+    /**
+     * Accessor for JS components expecting bundle_type.
+     */
+    public function getBundleTypeAttribute(): string
+    {
+        return $this->isDynamic() ? 'dynamic' : 'fixed';
+    }
+
+    /**
+     * Accessor for discount type used by UI helpers.
+     */
+    public function getDiscountTypeAttribute(): string
+    {
+        return $this->pricing_type === 'percentage' ? 'percentage' : 'fixed';
+    }
+
+    /**
+     * Accessor for discount value compatibility.
+     */
+    public function getDiscountValueAttribute(): ?int
+    {
+        return $this->discount_amount;
+    }
+
+    /**
+     * Increment view counter when the column exists.
+     */
+    public function incrementView(): void
+    {
+        $this->safeIncrementColumn('view_count');
+    }
+
+    /**
+     * Increment add to cart counter when the column exists.
+     */
+    public function incrementAddToCart(): void
+    {
+        $this->safeIncrementColumn('add_to_cart_count');
+    }
+
+    /**
+     * Increment purchase counter when the column exists.
+     */
+    public function incrementPurchase(): void
+    {
+        $this->safeIncrementColumn('purchase_count');
+    }
+
+    /**
+     * Increment a column only if it exists on the table.
+     */
+    protected function safeIncrementColumn(string $column): void
+    {
+        static $columnCache = [];
+
+        $table = $this->getTable();
+        if (!isset($columnCache[$table])) {
+            $columnCache[$table] = Schema::getColumnListing($table);
+        }
+
+        if (in_array($column, $columnCache[$table] ?? [], true)) {
+            $this->increment($column);
+        }
     }
 }

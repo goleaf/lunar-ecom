@@ -201,8 +201,26 @@ class CheckoutTest extends TestCase
     {
         $cart = Cart::factory()->create();
         
-        // Add some test items
+        // Add some test items with guaranteed pricing
         $variant = ProductVariant::factory()->create(['stock' => 10]);
+
+        $currency = \Lunar\Models\Currency::firstOrCreate(
+            ['code' => 'USD'],
+            ['name' => 'US Dollar', 'exchange_rate' => 1, 'decimal_places' => 2, 'enabled' => true, 'default' => true]
+        );
+        $customerGroup = \Lunar\Models\CustomerGroup::firstOrCreate(
+            ['handle' => 'retail'],
+            ['name' => 'Retail', 'default' => true]
+        );
+        \Lunar\Models\Price::firstOrCreate([
+            'priceable_type' => ProductVariant::class,
+            'priceable_id' => $variant->id,
+            'currency_id' => $currency->id,
+            'customer_group_id' => $customerGroup->id,
+        ], [
+            'price' => 1000,
+            'compare_price' => null,
+        ]);
         
         $cart->lines()->create([
             'purchasable_type' => ProductVariant::class,
@@ -213,5 +231,4 @@ class CheckoutTest extends TestCase
         return $cart;
     }
 }
-
 

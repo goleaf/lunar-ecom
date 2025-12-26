@@ -147,10 +147,9 @@ class CustomProductIndexer extends ScoutIndexer
      * Includes: name, description, SKU, brand, category names, attribute values.
      * 
      * @param Model $model
-     * @param string $engine The search engine being used (e.g., 'algolia', 'database')
      * @return array
      */
-    public function toSearchableArray(Model $model, string $engine): array
+    public function toSearchableArray(Model $model): array
     {
         if (!$model instanceof Product) {
             return [];
@@ -315,5 +314,4 @@ class CustomProductIndexer extends ScoutIndexer
         return $attributes;
     }
 }
-
 

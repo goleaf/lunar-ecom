@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Lunar\Brands\BrandHelper;
 use Illuminate\Http\Request;
 use Lunar\Models\Brand;
-use Lunar\Models\Product;
 
 /**
  * Controller for handling brand pages in the storefront.
@@ -62,31 +61,25 @@ class BrandController extends Controller
     public function show(string $slug, Request $request)
     {
         // Try to find brand by slug first, then by ID
-        $brand = Brand::where('name', 'like', str_replace('-', ' ', $slug))
+        $brand = Brand::query()
+            ->where('name', 'like', str_replace('-', ' ', $slug))
             ->orWhere('id', $slug)
             ->firstOrFail();
 
         // Get products for this brand
-        $products = BrandHelper::getProducts($brand, null)
-            ->load(['variants.prices', 'media', 'urls']);
-
-        // Paginate products
         $perPage = 24;
-        $currentPage = $request->get('page', 1);
-        $items = $products->slice(($currentPage - 1) * $perPage, $perPage)->values();
-        $products = new \Illuminate\Pagination\LengthAwarePaginator(
-            $items,
-            $products->count(),
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        $products = $brand->products()
+            ->where('status', 'published')
+            ->with(['variants.prices', 'media', 'urls'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
 
         // Get brand details
         $logoUrl = BrandHelper::getLogoUrl($brand);
         $description = BrandHelper::getDescription($brand);
         $websiteUrl = BrandHelper::getWebsiteUrl($brand);
-        $productCount = BrandHelper::getProductCount($brand);
+        $productCount = $products->total();
 
         // Get SEO data
         $canonicalUrl = route('storefront.brands.show', $brand->id);
@@ -136,4 +129,3 @@ class BrandController extends Controller
         return response()->json(['brands' => $brands]);
     }
 }
-

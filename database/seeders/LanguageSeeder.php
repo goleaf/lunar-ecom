@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Lunar\Languages\LanguageHelper;
 use Illuminate\Database\Seeder;
+use Database\Factories\LanguageFactory;
 use Lunar\Models\Language;
 
 /**
@@ -53,11 +54,16 @@ class LanguageSeeder extends Seeder
         Language::where('default', true)->update(['default' => false]);
 
         foreach ($languages as $languageData) {
+            $factoryData = LanguageFactory::new()
+                ->state($languageData)
+                ->make()
+                ->getAttributes();
+
             $language = Language::updateOrCreate(
                 ['code' => $languageData['code']],
                 [
-                    'name' => $languageData['name'],
-                    'default' => $languageData['default'],
+                    'name' => $factoryData['name'],
+                    'default' => $factoryData['default'],
                 ]
             );
 
@@ -69,4 +75,3 @@ class LanguageSeeder extends Seeder
         $this->command->info('   Available languages: English, Spanish, French, German, Chinese');
     }
 }
-

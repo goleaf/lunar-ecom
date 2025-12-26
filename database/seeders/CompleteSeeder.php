@@ -86,6 +86,7 @@ class CompleteSeeder extends Seeder
         $products = Product::factory()
             ->count(50)
             ->published()
+            ->withBrand()
             ->create();
 
         // Attach products to channels and collections
@@ -529,4 +530,3 @@ class CompleteSeeder extends Seeder
         );
     }
 }
-

@@ -5,10 +5,12 @@ namespace App\Services;
 use App\Models\Bundle;
 use App\Models\BundleAnalytic;
 use App\Models\BundleItem;
+use App\Models\BundlePrice;
 use App\Services\InventoryService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Lunar\Facades\CartSession;
+use Lunar\Facades\Currency;
+use Lunar\Facades\StorefrontSession;
 use Lunar\Models\Cart;
 use Lunar\Models\Product;
 use Lunar\Models\ProductVariant;
@@ -27,40 +29,42 @@ class BundleService
      *
      * @param  Bundle  $bundle
      * @param  array|null  $selectedItems  For dynamic bundles: [['product_id' => X, 'variant_id' => Y, 'quantity' => Z], ...]
+     * @param  int  $bundleQuantity
      * @return array
      */
-    public function calculateBundlePrice(Bundle $bundle, ?array $selectedItems = null): array
+    public function calculateBundlePrice(Bundle $bundle, ?array $selectedItems = null, int $bundleQuantity = 1): array
     {
+        $currency = Currency::getDefault();
+        $customerGroupId = StorefrontSession::getCustomerGroup()?->id;
+
         $items = $this->getBundleItems($bundle, $selectedItems);
         
         $originalPrice = 0;
         $itemPrices = [];
 
         foreach ($items as $item) {
-            $itemPrice = $item->getPrice() * $item->quantity;
-            $originalPrice += $itemPrice;
+            $itemPrice = $item->getPrice($currency, $customerGroupId);
+            $lineTotal = $itemPrice * $item->quantity;
+            $originalPrice += $lineTotal;
             
             $itemPrices[] = [
                 'item_id' => $item->id,
                 'product_id' => $item->product_id,
                 'product_variant_id' => $item->product_variant_id,
-                'product_name' => $item->product->translateAttribute('name'),
+                'product_name' => $item->product?->translateAttribute('name'),
                 'quantity' => $item->quantity,
-                'unit_price' => $item->getPrice(),
-                'total_price' => $itemPrice,
+                'unit_price' => $itemPrice,
+                'total_price' => $lineTotal,
             ];
         }
 
-        // Calculate discount
-        $discountAmount = 0;
-        if ($bundle->discount_type === 'percentage') {
-            $discountAmount = ($originalPrice * $bundle->discount_value) / 100;
-        } else {
-            $discountAmount = $bundle->discount_value * 100; // Convert to cents
-        }
+        [$bundlePrice, $discountAmount] = $this->calculateBundleTotals($bundle, $originalPrice, $bundleQuantity);
 
-        $bundlePrice = max(0, $originalPrice - $discountAmount);
-        $savingsAmount = $originalPrice - $bundlePrice;
+        $bundlePrice = (int) round($bundlePrice);
+        $discountAmount = (int) round($discountAmount);
+        $originalPrice = (int) round($originalPrice * $bundleQuantity);
+
+        $savingsAmount = max(0, $originalPrice - $bundlePrice);
         $savingsPercentage = $originalPrice > 0 ? round(($savingsAmount / $originalPrice) * 100, 2) : 0;
 
         return [
@@ -70,9 +74,40 @@ class BundleService
             'savings_amount' => $savingsAmount,
             'savings_percentage' => $savingsPercentage,
             'items' => $itemPrices,
-            'discount_type' => $bundle->discount_type,
-            'discount_value' => $bundle->discount_value,
+            'discount_type' => $bundle->pricing_type,
+            'discount_value' => $bundle->discount_amount,
         ];
+    }
+
+    /**
+     * Calculate bundle totals based on pricing type.
+     */
+    protected function calculateBundleTotals(Bundle $bundle, int $originalPrice, int $bundleQuantity): array
+    {
+        $pricePerBundle = $originalPrice;
+        $discountPerBundle = 0;
+
+        switch ($bundle->pricing_type) {
+            case 'fixed':
+                if ($bundle->bundle_price) {
+                    $pricePerBundle = $bundle->bundle_price;
+                    $discountPerBundle = max(0, $originalPrice - $bundle->bundle_price);
+                } else {
+                    $discountPerBundle = $bundle->discount_amount ?? 0;
+                    $pricePerBundle = max(0, $originalPrice - $discountPerBundle);
+                }
+                break;
+            case 'percentage':
+                $discountPerBundle = (int) round($originalPrice * (($bundle->discount_amount ?? 0) / 100));
+                $pricePerBundle = max(0, $originalPrice - $discountPerBundle);
+                break;
+            case 'dynamic':
+            default:
+                $pricePerBundle = $originalPrice;
+                $discountPerBundle = 0;
+        }
+
+        return [$pricePerBundle * $bundleQuantity, $discountPerBundle * $bundleQuantity];
     }
 
     /**
@@ -91,17 +126,24 @@ class BundleService
         $unavailableItems = [];
         $availabilityDetails = [];
 
+        if ($bundle->inventory_type === 'independent' && $bundle->stock < $requestedQuantity) {
+            $isAvailable = false;
+            $unavailableItems[] = [
+                'bundle_id' => $bundle->id,
+                'reason' => 'Insufficient bundle stock',
+                'required_quantity' => $requestedQuantity,
+                'available_quantity' => $bundle->stock,
+            ];
+        }
+
         foreach ($items as $item) {
-            $variant = $item->productVariant;
-            if (!$variant) {
-                $variant = $item->product->variants->first();
-            }
+            $variant = $item->getVariant() ?? $item->productVariant ?? $item->product->variants->first();
 
             if (!$variant) {
                 $isAvailable = false;
                 $unavailableItems[] = [
                     'product_id' => $item->product_id,
-                    'product_name' => $item->product->translateAttribute('name'),
+                    'product_name' => $item->product?->translateAttribute('name'),
                     'reason' => 'No variant available',
                 ];
                 continue;
@@ -113,7 +155,7 @@ class BundleService
             $availabilityDetails[] = [
                 'product_id' => $item->product_id,
                 'product_variant_id' => $variant->id,
-                'product_name' => $item->product->translateAttribute('name'),
+                'product_name' => $item->product?->translateAttribute('name'),
                 'required_quantity' => $requiredQuantity,
                 'available' => $availability['available'],
                 'total_available' => $availability['total_available'],
@@ -158,15 +200,20 @@ class BundleService
         }
 
         // Calculate price
-        $pricing = $this->calculateBundlePrice($bundle, $selectedItems);
+        $pricing = $this->calculateBundlePrice($bundle, $selectedItems, $quantity);
 
         // For fixed bundles, add as a single cart line
         // For dynamic bundles, we might add individual items or a bundle line
         if ($bundle->isFixed()) {
+            $bundleVariant = $bundle->product->variants->first();
+            if (!$bundleVariant) {
+                throw new \Exception('Bundle product does not have a purchasable variant.');
+            }
+
             // Add bundle as single line with metadata
             $cartLine = $cart->lines()->create([
                 'purchasable_type' => ProductVariant::class,
-                'purchasable_id' => $bundle->product->variants->first()->id ?? null,
+                'purchasable_id' => $bundleVariant->id,
                 'quantity' => $quantity,
                 'meta' => [
                     'is_bundle' => true,
@@ -186,7 +233,6 @@ class BundleService
 
             // Track analytics
             $this->trackBundleEvent($bundle, 'add_to_cart', $selectedItems, $pricing);
-            $bundle->incrementAddToCart();
 
             return [
                 'cart_line' => $cartLine,
@@ -198,17 +244,14 @@ class BundleService
             $cartLines = collect();
 
             foreach ($items as $item) {
-                $variant = $item->productVariant;
-                if (!$variant) {
-                    $variant = $item->product->variants->first();
-                }
+                $variant = $item->getVariant() ?? $item->productVariant ?? $item->product->variants->first();
 
                 if (!$variant) {
                     continue;
                 }
 
                 // Calculate item price with bundle discount
-                $itemPrice = $this->calculateItemPriceInBundle($item, $bundle, $pricing);
+                $itemPrice = $this->calculateItemPriceInBundle($item, $bundle, $pricing, $quantity);
 
                 $cartLine = $cart->lines()->create([
                     'purchasable_type' => ProductVariant::class,
@@ -228,13 +271,128 @@ class BundleService
 
             // Track analytics
             $this->trackBundleEvent($bundle, 'add_to_cart', $selectedItems, $pricing);
-            $bundle->incrementAddToCart();
 
             return [
                 'cart_lines' => $cartLines,
                 'pricing' => $pricing,
             ];
         }
+    }
+
+    /**
+     * Create a bundle with items and price tiers.
+     */
+    public function createBundle(array $data): Bundle
+    {
+        return DB::transaction(function () use ($data) {
+            $items = $data['items'] ?? [];
+            $prices = $data['prices'] ?? [];
+
+            unset($data['items'], $data['prices']);
+
+            $data['stock'] = $data['stock'] ?? 0;
+            $data['min_quantity'] = $data['min_quantity'] ?? 1;
+            $data['display_order'] = $data['display_order'] ?? 0;
+
+            $bundle = Bundle::create($data);
+
+            if ($items) {
+                $this->syncBundleItems($bundle, $items);
+            }
+
+            if ($prices) {
+                $this->syncBundlePrices($bundle, $prices);
+            }
+
+            return $bundle->load(['items.product', 'items.productVariant', 'prices']);
+        });
+    }
+
+    /**
+     * Update a bundle and optionally sync items/prices.
+     */
+    public function updateBundle(Bundle $bundle, array $data): Bundle
+    {
+        return DB::transaction(function () use ($bundle, $data) {
+            $items = $data['items'] ?? null;
+            $prices = $data['prices'] ?? null;
+
+            unset($data['items'], $data['prices']);
+
+            foreach (['stock' => 0, 'min_quantity' => 1, 'display_order' => 0] as $field => $default) {
+                if (array_key_exists($field, $data)) {
+                    $data[$field] = $data[$field] ?? $default;
+                }
+            }
+
+            $bundle->fill($data);
+            $bundle->save();
+
+            if (is_array($items)) {
+                $this->syncBundleItems($bundle, $items);
+            }
+
+            if (is_array($prices)) {
+                $this->syncBundlePrices($bundle, $prices);
+            }
+
+            return $bundle->load(['items.product', 'items.productVariant', 'prices']);
+        });
+    }
+
+    /**
+     * Add a new item to an existing bundle.
+     */
+    public function addBundleItem(Bundle $bundle, array $data): BundleItem
+    {
+        $displayOrder = ($bundle->items()->max('display_order') ?? 0) + 1;
+
+        $item = $bundle->items()->create([
+            'product_id' => $data['product_id'],
+            'product_variant_id' => $data['product_variant_id'] ?? null,
+            'quantity' => $data['quantity'] ?? 1,
+            'min_quantity' => $data['min_quantity'] ?? 1,
+            'max_quantity' => $data['max_quantity'] ?? null,
+            'is_required' => $data['is_required'] ?? true,
+            'is_default' => $data['is_default'] ?? false,
+            'price_override' => $data['price_override'] ?? null,
+            'discount_amount' => $data['discount_amount'] ?? null,
+            'display_order' => $data['display_order'] ?? $displayOrder,
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        return $item->load(['product', 'productVariant']);
+    }
+
+    /**
+     * Add a price tier to a bundle.
+     */
+    public function addBundlePrice(Bundle $bundle, array $data): BundlePrice
+    {
+        $price = $bundle->prices()->create([
+            'currency_id' => $data['currency_id'],
+            'customer_group_id' => $data['customer_group_id'] ?? null,
+            'price' => $data['price'],
+            'compare_at_price' => $data['compare_at_price'] ?? null,
+            'min_quantity' => $data['min_quantity'] ?? 1,
+            'max_quantity' => $data['max_quantity'] ?? null,
+        ]);
+
+        return $price->fresh();
+    }
+
+    /**
+     * Get active bundles ready for display.
+     */
+    public function getAvailableBundles(?int $limit = null): Collection
+    {
+        $query = Bundle::with(['product.media', 'items'])->active()->orderBy('display_order');
+
+        if ($limit) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -246,8 +404,40 @@ class BundleService
      */
     protected function getBundleItems(Bundle $bundle, ?array $selectedItems = null): Collection
     {
-        if ($bundle->isFixed()) {
-            return $bundle->items;
+        $bundle->loadMissing(['items.product.variants', 'items.productVariant']);
+
+        $hasDynamicPayload = is_array($selectedItems)
+            && array_is_list($selectedItems)
+            && isset($selectedItems[0]['product_id']);
+
+        if (!$bundle->isDynamic() && !$hasDynamicPayload) {
+            $items = $bundle->items;
+
+            if (!$selectedItems) {
+                return $items;
+            }
+
+            return $items->map(function (BundleItem $item) use ($selectedItems) {
+                $providedQuantity = $selectedItems[$item->id] ?? $selectedItems[(string) $item->id] ?? $item->quantity;
+                $quantity = is_numeric($providedQuantity) ? (int) $providedQuantity : $item->quantity;
+
+                $minimum = $item->is_required ? ($item->min_quantity ?? 1) : 0;
+                $maximum = $item->max_quantity;
+
+                $quantity = max($minimum, $quantity);
+                if ($maximum !== null) {
+                    $quantity = min($quantity, $maximum);
+                }
+
+                if (!$item->is_required && $quantity <= 0) {
+                    return null;
+                }
+
+                $clone = clone $item;
+                $clone->quantity = $quantity;
+
+                return $clone;
+            })->filter()->values();
         }
 
         // Dynamic bundle: build items from selected items
@@ -286,16 +476,64 @@ class BundleService
     }
 
     /**
+     * Replace bundle items with the provided collection.
+     */
+    protected function syncBundleItems(Bundle $bundle, array $items): void
+    {
+        $bundle->items()->delete();
+        $displayOrder = 0;
+
+        foreach ($items as $itemData) {
+            $bundle->items()->create([
+                'product_id' => $itemData['product_id'],
+                'product_variant_id' => $itemData['product_variant_id'] ?? null,
+                'quantity' => $itemData['quantity'] ?? 1,
+                'min_quantity' => $itemData['min_quantity'] ?? 1,
+                'max_quantity' => $itemData['max_quantity'] ?? null,
+                'is_required' => $itemData['is_required'] ?? true,
+                'is_default' => $itemData['is_default'] ?? false,
+                'price_override' => $itemData['price_override'] ?? null,
+                'discount_amount' => $itemData['discount_amount'] ?? null,
+                'display_order' => $itemData['display_order'] ?? $displayOrder++,
+                'notes' => $itemData['notes'] ?? null,
+            ]);
+        }
+    }
+
+    /**
+     * Replace bundle price tiers.
+     */
+    protected function syncBundlePrices(Bundle $bundle, array $prices): void
+    {
+        $bundle->prices()->delete();
+
+        foreach ($prices as $priceData) {
+            $bundle->prices()->create([
+                'currency_id' => $priceData['currency_id'],
+                'customer_group_id' => $priceData['customer_group_id'] ?? null,
+                'price' => $priceData['price'],
+                'compare_at_price' => $priceData['compare_at_price'] ?? null,
+                'min_quantity' => $priceData['min_quantity'] ?? 1,
+                'max_quantity' => $priceData['max_quantity'] ?? null,
+            ]);
+        }
+    }
+
+    /**
      * Calculate item price in bundle (with discount applied).
      *
      * @param  BundleItem  $item
      * @param  Bundle  $bundle
      * @param  array  $pricing
+     * @param  int  $bundleQuantity
      * @return int  Price in cents
      */
-    protected function calculateItemPriceInBundle(BundleItem $item, Bundle $bundle, array $pricing): int
+    protected function calculateItemPriceInBundle(BundleItem $item, Bundle $bundle, array $pricing, int $bundleQuantity = 1): int
     {
-        $originalItemPrice = $item->getPrice() * $item->quantity;
+        $currency = Currency::getDefault();
+        $customerGroupId = StorefrontSession::getCustomerGroup()?->id;
+
+        $originalItemPrice = $item->getPrice($currency, $customerGroupId) * $item->quantity * $bundleQuantity;
         
         // Apply proportional discount
         if ($pricing['original_price'] > 0) {
@@ -405,7 +643,9 @@ class BundleService
      */
     public function handleBundleReturn(Bundle $bundle, \Lunar\Models\Order $order, ?array $returnedItems = null): array
     {
-        if (!$bundle->allow_individual_returns && $returnedItems !== null) {
+        $allowIndividualReturns = $bundle->allow_individual_returns ?? true;
+
+        if (!$allowIndividualReturns && $returnedItems !== null) {
             throw new \Exception('Individual item returns not allowed for this bundle');
         }
 
@@ -436,15 +676,19 @@ class BundleService
 
         $analytics = $query->get();
 
+        $totalViews = $analytics->where('event_type', 'view')->count();
+        $totalAddToCart = $analytics->where('event_type', 'add_to_cart')->count();
+        $totalPurchases = $analytics->where('event_type', 'purchase')->count();
+
         return [
-            'total_views' => $bundle->view_count,
-            'total_add_to_cart' => $bundle->add_to_cart_count,
-            'total_purchases' => $bundle->purchase_count,
-            'conversion_rate' => $bundle->view_count > 0 
-                ? round(($bundle->purchase_count / $bundle->view_count) * 100, 2) 
+            'total_views' => $totalViews,
+            'total_add_to_cart' => $totalAddToCart,
+            'total_purchases' => $totalPurchases,
+            'conversion_rate' => $totalViews > 0 
+                ? round(($totalPurchases / $totalViews) * 100, 2) 
                 : 0,
-            'add_to_cart_rate' => $bundle->view_count > 0
-                ? round(($bundle->add_to_cart_count / $bundle->view_count) * 100, 2)
+            'add_to_cart_rate' => $totalViews > 0
+                ? round(($totalAddToCart / $totalViews) * 100, 2)
                 : 0,
             'average_savings_amount' => $analytics->whereNotNull('savings_amount')->avg('savings_amount'),
             'average_savings_percentage' => $analytics->whereNotNull('savings_percentage')->avg('savings_percentage'),

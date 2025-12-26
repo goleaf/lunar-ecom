@@ -19,9 +19,12 @@ trait LunarTestHelpers
      */
     protected function createTestProduct(array $overrides = []): Product
     {
-        $productType = ProductType::first();
-        
-        $product = new Product(array_merge([
+        $productType = ProductType::firstOrCreate(
+            ['name' => 'Test Product Type'],
+            ['name' => 'Test Product Type']
+        );
+
+        return \Database\Factories\ProductFactory::new()->create(array_merge([
             'product_type_id' => $productType->id,
             'status' => 'published',
             'attribute_data' => collect([
@@ -29,10 +32,6 @@ trait LunarTestHelpers
                 'description' => new Text('Test product description'),
             ]),
         ], $overrides));
-        
-        $product->save();
-
-        return $product;
     }
 
     /**
@@ -60,12 +59,13 @@ trait LunarTestHelpers
     protected function seedLunarTestData(): void
     {
         // Create default language first
-        \Lunar\Models\Language::firstOrCreate([
-            'code' => 'en',
-        ], [
-            'name' => 'English',
-            'default' => true,
-        ]);
+        \Lunar\Models\Language::firstOrCreate(
+            ['code' => 'en'],
+            [
+                'name' => 'English',
+                'default' => true,
+            ]
+        );
 
         // Create default channel
         \Lunar\Models\Channel::firstOrCreate([

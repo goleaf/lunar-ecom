@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Lunar\Currencies\CurrencyHelper;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
+use Database\Factories\CurrencyFactory;
 use Lunar\Models\Currency;
 
 /**
@@ -79,19 +81,52 @@ class CurrencySeeder extends Seeder
         // First, unset any existing default currencies
         Currency::where('default', true)->update(['default' => false]);
 
+        $table = config('lunar.database.table_prefix') . 'currencies';
+        $hasFormat = Schema::hasColumn($table, 'format');
+        $hasDecimalPoint = Schema::hasColumn($table, 'decimal_point');
+        $hasThousandPoint = Schema::hasColumn($table, 'thousand_point');
+
         foreach ($currencies as $currencyData) {
+            $factory = CurrencyFactory::new()->state([
+                'code' => $currencyData['code'],
+                'name' => $currencyData['name'],
+                'exchange_rate' => $currencyData['exchange_rate'],
+                'decimal_places' => $currencyData['decimal_places'],
+                'enabled' => true,
+                'default' => $currencyData['default'],
+            ]);
+
+            if ($hasFormat || $hasDecimalPoint || $hasThousandPoint) {
+                $factory = $factory->withFormatting(
+                    $currencyData['format'],
+                    $currencyData['decimal_point'],
+                    $currencyData['thousand_point']
+                );
+            }
+
+            $factoryData = $factory->make()->getAttributes();
+
+            $updateData = [
+                'name' => $factoryData['name'],
+                'exchange_rate' => $factoryData['exchange_rate'],
+                'decimal_places' => $factoryData['decimal_places'],
+                'enabled' => $factoryData['enabled'],
+                'default' => $factoryData['default'],
+            ];
+
+            if ($hasFormat) {
+                $updateData['format'] = $factoryData['format'];
+            }
+            if ($hasDecimalPoint) {
+                $updateData['decimal_point'] = $factoryData['decimal_point'];
+            }
+            if ($hasThousandPoint) {
+                $updateData['thousand_point'] = $factoryData['thousand_point'];
+            }
+
             $currency = Currency::updateOrCreate(
                 ['code' => $currencyData['code']],
-                [
-                    'name' => $currencyData['name'],
-                    'exchange_rate' => $currencyData['exchange_rate'],
-                    'decimal_places' => $currencyData['decimal_places'],
-                    'format' => $currencyData['format'],
-                    'decimal_point' => $currencyData['decimal_point'],
-                    'thousand_point' => $currencyData['thousand_point'],
-                    'enabled' => true,
-                    'default' => $currencyData['default'],
-                ]
+                $updateData
             );
 
             $this->command->info("  ✓ {$currency->code} - {$currency->name} (Rate: {$currency->exchange_rate})");
@@ -102,4 +137,3 @@ class CurrencySeeder extends Seeder
         $this->command->info('   Enabled currencies: USD, EUR, GBP, JPY, AUD');
     }
 }
-

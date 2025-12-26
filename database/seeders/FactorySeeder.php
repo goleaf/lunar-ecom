@@ -64,6 +64,7 @@ class FactorySeeder extends Seeder
         $products = Product::factory()
             ->count(20)
             ->published()
+            ->withBrand()
             ->create();
 
         // Attach products to channels
@@ -180,4 +181,3 @@ class FactorySeeder extends Seeder
         );
     }
 }
-

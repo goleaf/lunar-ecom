@@ -7,6 +7,8 @@ use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
+use Database\Factories\BrandFactory;
+use Lunar\Models\Brand;
 use Lunar\Models\Language;
 
 /**
@@ -118,17 +120,29 @@ class ProductFactory extends Factory
     /**
      * Indicate that the product has a brand.
      */
-    public function withBrand($brand = null): static
+    public function withBrand(Brand|string|null $brand = null): static
     {
         return $this->state(function (array $attributes) use ($brand) {
-            if ($brand instanceof \Lunar\Models\Brand) {
+            if ($brand instanceof Brand) {
                 return ['brand_id' => $brand->id];
             }
             
-            // Create or get brand by name
-            $brandModel = \Lunar\Models\Brand::firstOrCreate(
-                ['name' => $brand ?? fake()->company()]
-            );
+            if (is_string($brand)) {
+                $brandModel = Brand::query()->where('name', $brand)->first();
+                if (!$brandModel) {
+                    $brandModel = BrandFactory::new()->withProfile($brand)->create();
+                }
+                
+                return ['brand_id' => $brandModel->id];
+            }
+
+            // Use an existing brand if available, otherwise create one.
+            $existingBrandId = Brand::query()->inRandomOrder()->value('id');
+            if ($existingBrandId) {
+                return ['brand_id' => $existingBrandId];
+            }
+
+            $brandModel = BrandFactory::new()->create();
             
             return ['brand_id' => $brandModel->id];
         });
@@ -143,5 +157,15 @@ class ProductFactory extends Factory
             'status' => 'scheduled',
         ]);
     }
-}
 
+    /**
+     * Indicate that the product represents a bundle.
+     */
+    public function bundle(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_bundle' => true,
+            'status' => 'published',
+        ]);
+    }
+}

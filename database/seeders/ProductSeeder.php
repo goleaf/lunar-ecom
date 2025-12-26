@@ -42,6 +42,7 @@ class ProductSeeder extends Seeder
         $products = Product::factory()
             ->count(10)
             ->published()
+            ->withBrand()
             ->create();
 
         foreach ($products as $product) {
@@ -81,4 +82,3 @@ class ProductSeeder extends Seeder
         $this->command->info("Created {$products->count()} products with variants and prices.");
     }
 }
-

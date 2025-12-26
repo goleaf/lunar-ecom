@@ -165,6 +165,10 @@ class AppServiceProvider extends ServiceProvider
             \Lunar\Models\Contracts\ProductVariant::class,
             \App\Models\ProductVariant::class,
         );
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Cart::class,
+            \App\Models\Cart::class,
+        );
         
         // Register extended Channel model (if Lunar supports Channel contracts)
         // Note: Channel may not have a contract, so this might not be needed

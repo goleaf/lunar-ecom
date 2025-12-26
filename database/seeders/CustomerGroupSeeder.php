@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
+use Database\Factories\CustomerGroupFactory;
 use Lunar\Models\CustomerGroup;
 
 class CustomerGroupSeeder extends Seeder
@@ -48,11 +49,16 @@ class CustomerGroupSeeder extends Seeder
 
         foreach (self::GROUPS as $group) {
             $handle = Arr::get($group, 'handle');
-            $data = Arr::only($group, ['name', 'default']);
+            $data = Arr::only($group, ['handle', 'name', 'default']);
+
+            $factoryData = CustomerGroupFactory::new()
+                ->state($data)
+                ->make()
+                ->getAttributes();
 
             $model = CustomerGroup::updateOrCreate(
                 ['handle' => $handle],
-                $data
+                Arr::only($factoryData, ['name', 'default'])
             );
 
             $groupsByHandle[$handle] = $model;
@@ -75,5 +81,4 @@ class CustomerGroupSeeder extends Seeder
         return $groupsByHandle;
     }
 }
-
 

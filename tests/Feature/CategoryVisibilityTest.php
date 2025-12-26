@@ -47,18 +47,18 @@ class CategoryVisibilityTest extends TestCase
     public function test_category_can_have_language_visibility(): void
     {
         $category = Category::factory()->create(['is_active' => true]);
-        $language = Language::factory()->create(['code' => 'en']);
+        $language = Language::firstOrCreate(['code' => 'en'], ['name' => 'English', 'default' => true]);
 
         $this->service->setLanguageVisibility($category, $language, false);
 
         $this->assertFalse($category->isVisibleInLanguage($language));
-        $this->assertTrue($category->isVisibleInLanguage(Language::factory()->create(['code' => 'fr'])));
+        $this->assertTrue($category->isVisibleInLanguage(Language::firstOrCreate(['code' => 'fr'], ['name' => 'French'])));
     }
 
     public function test_category_language_visibility_falls_back_to_global(): void
     {
         $category = Category::factory()->create(['is_active' => false]);
-        $language = Language::factory()->create(['code' => 'en']);
+        $language = Language::firstOrCreate(['code' => 'en'], ['name' => 'English', 'default' => true]);
 
         // No language-specific setting, should use global is_active
         $this->assertFalse($category->isVisibleInLanguage($language));
@@ -85,7 +85,7 @@ class CategoryVisibilityTest extends TestCase
     {
         $category1 = Category::factory()->create(['is_active' => true]);
         $category2 = Category::factory()->create(['is_active' => false]);
-        $language = Language::factory()->create(['code' => 'en']);
+        $language = Language::firstOrCreate(['code' => 'en'], ['name' => 'English', 'default' => true]);
 
         $this->service->setLanguageVisibility($category2, $language, true);
 
@@ -112,5 +112,4 @@ class CategoryVisibilityTest extends TestCase
         $this->assertTrue($category->isInNavigationForChannel($channel2));
     }
 }
-
 

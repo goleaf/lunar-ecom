@@ -60,9 +60,9 @@ class CustomerSeeder extends Seeder
             $addressCount = fake()->numberBetween(1, 3);
             $addresses = Address::factory()
                 ->count($addressCount)
-                ->forCountry($country)
                 ->create([
                     'customer_id' => $customer->id,
+                    'country_id' => $country->id,
                 ]);
 
             // Set defaults

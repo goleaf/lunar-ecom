@@ -13,7 +13,6 @@ use Lunar\Models\Channel;
 use Lunar\Models\Collection;
 use Lunar\Models\CollectionGroup;
 use Lunar\Models\Currency;
-use Lunar\Models\CustomerGroup;
 use Lunar\Models\Language;
 use Lunar\Models\Price;
 use Lunar\Models\Product;

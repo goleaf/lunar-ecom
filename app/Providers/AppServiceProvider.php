@@ -73,6 +73,12 @@ class AppServiceProvider extends ServiceProvider
                     \App\Admin\Extensions\Resources\ProductResourceExtension::class,
                 \Lunar\Admin\Filament\Resources\CustomerGroupResource::class =>
                     \App\Admin\Extensions\Resources\CustomerGroupResourceExtension::class,
+                \Lunar\Admin\Filament\Resources\CollectionGroupResource::class =>
+                    \App\Admin\Extensions\Resources\CollectionGroupResourceExtension::class,
+
+                // Page extensions
+                \Lunar\Admin\Filament\Resources\CollectionGroupResource\Pages\ListCollectionGroups::class =>
+                    \App\Admin\Extensions\Pages\CollectionGroupListPageExtension::class,
                 //
                 //     // Relation manager extensions
                 //     \Lunar\Admin\Filament\Resources\ProductResource\RelationManagers\CustomerGroupPricingRelationManager::class => 

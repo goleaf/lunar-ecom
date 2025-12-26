@@ -6,16 +6,19 @@ use App\Lunar\Languages\LanguageHelper;
 use App\Lunar\StorefrontSession\StorefrontSessionHelper;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Middleware for automatic language detection.
  * 
  * Detects language from:
- * 1. URL parameter (?lang=xx)
- * 2. Browser Accept-Language header
- * 3. Session (if already set)
- * 4. Default language
+ * 1. URL locale (/{locale}/...) or URL parameter (?lang=xx)
+ * 2. User saved preference (if present on the user model)
+ * 3. Cookie (site_locale)
+ * 4. Session (storefront_language)
+ * 5. Browser Accept-Language header
+ * 6. Default language
  */
 class LanguageDetectionMiddleware
 {
@@ -26,36 +29,68 @@ class LanguageDetectionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if language is already set in session
-        if (!session()->has('storefront_language')) {
-            $detectedLanguage = null;
+        $detectedLanguage = null;
 
-            // 1. Check URL parameter
-            if ($request->has('lang')) {
-                $langCode = $request->get('lang');
-                $detectedLanguage = LanguageHelper::findByCode($langCode);
-            }
+        // 1) URL locale prefix (/{locale}/...)
+        $routeLocale = $request->route('locale');
+        if (is_string($routeLocale) && $routeLocale !== '') {
+            $detectedLanguage = LanguageHelper::findByCode(strtolower($routeLocale));
+        }
 
-            // 2. Detect from browser Accept-Language header
-            if (!$detectedLanguage && $request->hasHeader('Accept-Language')) {
-                $detectedLanguage = $this->detectFromBrowser($request);
-            }
+        // 1b) URL parameter (?lang=xx) for backward compatibility
+        if (!$detectedLanguage && $request->has('lang')) {
+            $langCode = (string) $request->get('lang');
+            $detectedLanguage = LanguageHelper::findByCode(strtolower($langCode));
+        }
 
-            // 3. Use default language if nothing detected
-            if (!$detectedLanguage) {
-                $detectedLanguage = LanguageHelper::getDefault();
-            }
+        // 2) User preference (if the project stores it on the user model)
+        if (!$detectedLanguage && auth()->check()) {
+            $user = auth()->user();
+            $preferred = $user?->getAttribute('locale')
+                ?: $user?->getAttribute('language')
+                ?: $user?->getAttribute('preferred_locale')
+                ?: $user?->getAttribute('preferred_language');
 
-            // Set the detected language
-            if ($detectedLanguage) {
-                StorefrontSessionHelper::setLanguage($detectedLanguage);
+            if (is_string($preferred) && $preferred !== '') {
+                $detectedLanguage = LanguageHelper::findByCode(strtolower($preferred));
             }
-        } else {
-            // Language is already set, just ensure locale is set
-            $language = StorefrontSessionHelper::getLanguage();
-            if ($language) {
-                app()->setLocale($language->code);
+        }
+
+        // 3) Cookie preference
+        if (!$detectedLanguage) {
+            $cookieLocale = $request->cookie('site_locale');
+            if (is_string($cookieLocale) && $cookieLocale !== '') {
+                $detectedLanguage = LanguageHelper::findByCode(strtolower($cookieLocale));
             }
+        }
+
+        // 4) Session (storefront_language)
+        if (!$detectedLanguage && session()->has('storefront_language')) {
+            $sessionLocale = (string) session('storefront_language');
+            if ($sessionLocale !== '') {
+                $detectedLanguage = LanguageHelper::findByCode(strtolower($sessionLocale));
+            }
+        }
+
+        // 5) Browser Accept-Language header
+        if (!$detectedLanguage && $request->hasHeader('Accept-Language')) {
+            $detectedLanguage = $this->detectFromBrowser($request);
+        }
+
+        // 6) Default language fallback
+        if (!$detectedLanguage) {
+            $detectedLanguage = LanguageHelper::getDefault();
+        }
+
+        if ($detectedLanguage) {
+            StorefrontSessionHelper::setLanguage($detectedLanguage);
+
+            // Persist preference cookie so future visits are deterministic.
+            Cookie::queue(Cookie::make(
+                'site_locale',
+                $detectedLanguage->code,
+                now()->addDays(365)->diffInMinutes()
+            ));
         }
 
         return $next($request);

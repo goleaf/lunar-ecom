@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Livewire\Storefront\Pages;
+
+use App\Http\Controllers\Storefront\StockNotificationController;
+use Livewire\Component;
+
+class StockNotificationUnsubscribe extends Component
+{
+    public string $token;
+
+    public function mount(string $token): void
+    {
+        $this->token = $token;
+    }
+
+    public function render()
+    {
+        return app(StockNotificationController::class)->unsubscribe($this->token);
+    }
+}
+
+

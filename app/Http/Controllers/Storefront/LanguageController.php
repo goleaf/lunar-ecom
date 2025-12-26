@@ -7,6 +7,7 @@ use App\Lunar\Languages\LanguageHelper;
 use App\Lunar\StorefrontSession\StorefrontSessionHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Lunar\Models\Language;
 
 /**
@@ -60,6 +61,13 @@ class LanguageController extends Controller
 
         // Set the language in the storefront session
         StorefrontSessionHelper::setLanguage($language);
+
+        // Persist cookie preference (used by deterministic locale resolution).
+        Cookie::queue(Cookie::make(
+            'site_locale',
+            $language->code,
+            now()->addDays(365)->diffInMinutes()
+        ));
 
         return response()->json([
             'success' => true,

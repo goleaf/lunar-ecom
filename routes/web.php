@@ -9,9 +9,11 @@ use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\CurrencyController;
 use App\Http\Controllers\Storefront\LanguageController;
+use App\Http\Controllers\Storefront\ReferralLandingController;
 use App\Http\Controllers\Storefront\BrandController;
 use App\Http\Controllers\Storefront\MediaController;
 use App\Http\Controllers\Storefront\VariantController;
+use App\Livewire\Storefront\ReferralLandingPage;
 
 // Dynamic robots.txt
 Route::get('/robots.txt', [\App\Http\Controllers\Storefront\RobotsController::class, 'index'])->name('robots');
@@ -21,9 +23,24 @@ Route::get('/home', ProductIndex::class)->name('storefront.home');
 
 // Referral link tracking (must be before other routes to catch ref parameter)
 Route::get('/ref/{ref}', function ($ref) {
-    // Redirect to homepage with ref parameter
-    return redirect()->route('storefront.homepage', ['ref' => $ref]);
+    // Backward compatible short link -> localized landing page
+    return redirect()->route('storefront.referrals.landing', [
+        'locale' => app()->getLocale(),
+        'code' => $ref,
+    ] + request()->query());
 })->name('referral.link');
+
+// Localized referral landing page
+Route::get('/r/{code}', [ReferralLandingController::class, 'redirectToLocalized'])
+    ->where('code', '[A-Za-z0-9_-]+')
+    ->name('storefront.referrals.redirect');
+
+Route::get('/{locale}/r/{code}', ReferralLandingPage::class)
+    ->where([
+        'locale' => '[a-zA-Z]{2}',
+        'code' => '[A-Za-z0-9_-]+',
+    ])
+    ->name('storefront.referrals.landing');
 
 Route::get('/products', ProductIndex::class)->name('storefront.products.index');
 Route::get('/products/{slug}', ProductShow::class)->name('storefront.products.show');

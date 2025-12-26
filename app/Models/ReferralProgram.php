@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -30,6 +31,7 @@ class ReferralProgram extends Model
         'audience_user_ids',
         'audience_group_ids',
         'terms_url',
+        'referral_landing_template_id',
         'fraud_policy_id',
         'last_click_wins',
         'attribution_ttl_days',
@@ -80,6 +82,14 @@ class ReferralProgram extends Model
     const AUDIENCE_SCOPE_ALL = 'all';
     const AUDIENCE_SCOPE_USERS = 'users';
     const AUDIENCE_SCOPE_GROUPS = 'groups';
+
+    /**
+     * Landing template for the referral landing page.
+     */
+    public function landingTemplate(): BelongsTo
+    {
+        return $this->belongsTo(ReferralLandingTemplate::class, 'referral_landing_template_id');
+    }
 
     /**
      * Get referral rules for this program.

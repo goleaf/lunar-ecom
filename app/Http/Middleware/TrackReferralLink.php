@@ -21,7 +21,9 @@ class TrackReferralLink
     public function handle(Request $request, Closure $next): Response
     {
         // Check for referral code in URL or query parameter
-        $referralCode = $request->route('ref') ?? $request->query('ref');
+        $referralCode = $request->route('ref')
+            ?? $request->route('code') // /{locale}/r/{code}
+            ?? $request->query('ref');
 
         if ($referralCode) {
             // Find referrer by code (case-insensitive)
@@ -32,6 +34,7 @@ class TrackReferralLink
             if ($referrer && $referrer->status === 'active' && !$referrer->referral_blocked) {
                 // Get active programs
                 $programs = ReferralProgram::active()->get();
+                $tracked = false;
 
                 foreach ($programs as $program) {
                     if ($program->isEligibleForUser(null)) {
@@ -39,10 +42,30 @@ class TrackReferralLink
                         $this->attributionService->trackClick(
                             $referrer->referral_code,
                             $referrer,
-                            $program->last_click_wins ?? true
+                            $program->last_click_wins ?? true,
+                            $program,
+                            $program->attribution_ttl_days ?? null,
+                            app()->getLocale()
                         );
+                        // Make referrer/program available downstream (controller/view) without re-querying.
+                        $request->attributes->set('referral_referrer', $referrer);
+                        $request->attributes->set('referral_program', $program);
+                        $tracked = true;
                         break; // Only track for first eligible program
                     }
+                }
+
+                // If no eligible program exists yet, still store attribution cookies (program_id optional).
+                if (!$tracked) {
+                    $this->attributionService->trackClick(
+                        $referrer->referral_code,
+                        $referrer,
+                        true,
+                        null,
+                        null,
+                        app()->getLocale()
+                    );
+                    $request->attributes->set('referral_referrer', $referrer);
                 }
 
                 // Store in session for later use

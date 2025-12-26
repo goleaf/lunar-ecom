@@ -4,27 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Lunar E-commerce Store')</title>
+    <title>{{ $pageTitle ?? trim($__env->yieldContent('title', 'Lunar E-commerce Store')) }}</title>
     
     {{-- SEO Meta Tags --}}
-    @hasSection('meta')
-        @yield('meta')
+    @isset($pageMeta)
+        {!! $pageMeta !!}
     @else
-        @php
-            $defaultMeta = \App\Services\SEOService::getDefaultMetaTags(
-                'Lunar E-commerce Store',
-                'Shop the best products at Lunar Store',
-                null,
-                request()->url()
-            );
-        @endphp
-        <meta name="description" content="{{ $defaultMeta['description'] }}">
-        <meta property="og:title" content="{{ $defaultMeta['og:title'] }}">
-        <meta property="og:description" content="{{ $defaultMeta['og:description'] }}">
-        <meta property="og:type" content="{{ $defaultMeta['og:type'] }}">
-        <meta property="og:url" content="{{ $defaultMeta['og:url'] }}">
-        <link rel="canonical" href="{{ $defaultMeta['canonical'] }}">
-    @endif
+        @hasSection('meta')
+            @yield('meta')
+        @else
+            @php
+                $defaultMeta = \App\Services\SEOService::getDefaultMetaTags(
+                    'Lunar E-commerce Store',
+                    'Shop the best products at Lunar Store',
+                    null,
+                    request()->url()
+                );
+            @endphp
+            <meta name="description" content="{{ $defaultMeta['description'] }}">
+            <meta property="og:title" content="{{ $defaultMeta['og:title'] }}">
+            <meta property="og:description" content="{{ $defaultMeta['og:description'] }}">
+            <meta property="og:type" content="{{ $defaultMeta['og:type'] }}">
+            <meta property="og:url" content="{{ $defaultMeta['og:url'] }}">
+            <link rel="canonical" href="{{ $defaultMeta['canonical'] }}">
+        @endif
+    @endisset
     
     {{-- Organization and Website Structured Data --}}
     <script type="application/ld+json">
@@ -86,8 +90,8 @@
                         <div class="mr-4 w-64">
                             @include('storefront.components.search-autocomplete')
                         </div>
-                        @include('storefront.components.language-selector')
-                        @include('storefront.components.currency-selector')
+                        <livewire:storefront.language-selector />
+                        <livewire:storefront.currency-selector />
                         @auth
                             <a href="{{ route('storefront.addresses.index') }}" class="text-gray-700 hover:text-gray-900">
                                 Addresses
@@ -118,7 +122,11 @@
                 </div>
             @endif
 
-            @yield('content')
+            @if (isset($slot))
+                {{ $slot }}
+            @else
+                @yield('content')
+            @endif
         </main>
 
         <footer class="bg-white border-t mt-12">

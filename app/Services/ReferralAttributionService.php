@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 class ReferralAttributionService
 {
     protected const COOKIE_NAME = 'referral_code';
-    protected const COOKIE_TTL = 30; // days
+    protected const COOKIE_TTL = 30; // days (fallback if program does not specify)
 
     /**
      * Attribution priority constants
@@ -37,8 +37,18 @@ class ReferralAttributionService
      * @param string $referralCode
      * @param User|null $referrer
      * @param bool $lastClickWins If true, overwrite existing cookie; if false, only set if not exists
+     * @param ReferralProgram|null $program Program context (optional, used for TTL + metadata cookies)
+     * @param int|null $cookieTtlDays Override cookie TTL in days (optional)
+     * @param string|null $localeSeen Locale the user saw when attribution occurred (optional)
      */
-    public function trackClick(string $referralCode, ?User $referrer = null, bool $lastClickWins = true): void
+    public function trackClick(
+        string $referralCode,
+        ?User $referrer = null,
+        bool $lastClickWins = true,
+        ?ReferralProgram $program = null,
+        ?int $cookieTtlDays = null,
+        ?string $localeSeen = null
+    ): void
     {
         // Validate code exists
         $referrer = $referrer ?? User::whereRaw('UPPER(referral_code) = ?', [strtoupper($referralCode)])->first();
@@ -46,6 +56,10 @@ class ReferralAttributionService
         if (!$referrer) {
             return;
         }
+
+        $cookieTtlDays = $cookieTtlDays
+            ?? $program?->attribution_ttl_days
+            ?? self::COOKIE_TTL;
 
         // Track click
         $click = ReferralClick::create([
@@ -65,13 +79,18 @@ class ReferralAttributionService
         $hasCookie = request()->cookie(self::COOKIE_NAME);
         
         if ($lastClickWins || !$hasCookie) {
-            Cookie::queue(
-                Cookie::make(
-                    self::COOKIE_NAME,
-                    $referralCode,
-                    now()->addDays(self::COOKIE_TTL)->diffInMinutes()
-                )
-            );
+            $minutes = now()->addDays($cookieTtlDays)->diffInMinutes();
+
+            // Primary attribution cookie (legacy + required)
+            Cookie::queue(Cookie::make(self::COOKIE_NAME, $referralCode, $minutes));
+
+            // Extra attribution metadata cookies (required by referral landing pages)
+            Cookie::queue(Cookie::make('referral_referrer_id', (string) $referrer->id, $minutes));
+            if ($program) {
+                Cookie::queue(Cookie::make('referral_program_id', (string) $program->id, $minutes));
+            }
+            Cookie::queue(Cookie::make('referral_attributed_at', now()->toIso8601String(), $minutes));
+            Cookie::queue(Cookie::make('referral_locale_seen', $localeSeen ?: app()->getLocale(), $minutes));
         }
     }
 

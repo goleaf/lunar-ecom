@@ -6,7 +6,7 @@ use App\Models\ProductSchedule;
 use App\Models\SeasonalProductRule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Lunar\Models\Product;
+use App\Models\Product;
 
 /**
  * Service for managing seasonal product automation.
@@ -60,7 +60,7 @@ class SeasonalProductService
                             'schedule_type' => 'one_time',
                             'scheduled_at' => $publishDate->setTimezone($rule->timezone),
                             'expires_at' => $unpublishDate->setTimezone($rule->timezone),
-                            'target_status' => 'published',
+                            'target_status' => Product::STATUS_ACTIVE,
                             'season_tag' => $rule->season_tag,
                             'auto_unpublish_after_season' => $rule->auto_unpublish,
                             'timezone' => $rule->timezone,
@@ -68,7 +68,7 @@ class SeasonalProductService
 
                         // Publish product if date has passed
                         if ($publishDate->lte($now)) {
-                            $product->update(['status' => 'published']);
+                            $product->update(['status' => Product::STATUS_ACTIVE]);
                         }
 
                         $processed++;
@@ -152,5 +152,4 @@ class SeasonalProductService
         }
     }
 }
-
 

@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\FileUpload;
 use Lunar\Panel\Filament\Resources\ProductResource;
+use App\Models\Product;
 
 /**
  * Create Product Wizard Page - Step-by-step product creation.
@@ -53,10 +54,13 @@ class CreateProductWizard extends CreateRecord
                                 Select::make('status')
                                     ->label('Status')
                                     ->options([
-                                        'draft' => 'Draft',
-                                        'published' => 'Published',
+                                        Product::STATUS_DRAFT => 'Draft',
+                                        Product::STATUS_ACTIVE => 'Active',
+                                        Product::STATUS_PUBLISHED => 'Published (legacy)',
+                                        Product::STATUS_ARCHIVED => 'Archived',
+                                        Product::STATUS_DISCONTINUED => 'Discontinued',
                                     ])
-                                    ->default('draft')
+                                    ->default(Product::STATUS_DRAFT)
                                     ->required(),
                             ]),
                     ]),
@@ -155,4 +159,3 @@ class CreateProductWizard extends CreateRecord
         return $data;
     }
 }
-

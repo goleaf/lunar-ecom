@@ -4,7 +4,6 @@ namespace App\Lunar\Collections;
 
 use Illuminate\Database\Eloquent\Collection;
 use Lunar\Models\Collection as LunarCollection;
-use Lunar\Models\Product;
 
 /**
  * Helper class for working with Lunar Collections.
@@ -34,7 +33,7 @@ class CollectionHelper
         // Base query with relationships
         $query = $collection->products()
             ->with(['variants.prices', 'images'])
-            ->where('status', 'published');
+            ->published();
 
         // Apply sorting based on collection's sort type
         // Note: Lunar has built-in sorting actions, but for simplicity we implement basic sorting here
@@ -132,4 +131,3 @@ class CollectionHelper
         return $collection->breadcrumb;
     }
 }
-

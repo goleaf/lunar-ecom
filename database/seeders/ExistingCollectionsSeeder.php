@@ -9,7 +9,7 @@ use Database\Factories\CollectionFactory;
 use Database\Factories\CollectionGroupFactory;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
-use Lunar\Models\Collection;
+use App\Models\Collection;
 use Lunar\Models\CollectionGroup;
 use Lunar\Models\Language;
 
@@ -77,7 +77,7 @@ class ExistingCollectionsSeeder extends Seeder
                 $name .= ' ' . ($i + 1);
             }
 
-            $factoryData = CollectionFactory::new()
+            CollectionFactory::new()
                 ->state([
                     'collection_group_id' => $group->id,
                     'type' => 'static',
@@ -87,10 +87,7 @@ class ExistingCollectionsSeeder extends Seeder
                         'description' => $this->translatedField($languages, "Browse {$name} products."),
                     ]),
                 ])
-                ->make()
-                ->getAttributes();
-
-            Collection::create($factoryData);
+                ->create();
             $created++;
         }
 
@@ -115,4 +112,3 @@ class ExistingCollectionsSeeder extends Seeder
         return new TranslatedText(collect($translations));
     }
 }
-

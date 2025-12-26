@@ -3,7 +3,7 @@
 namespace App\Lunar\Search;
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use Lunar\Models\Product;
+use App\Models\Product;
 
 /**
  * Helper class for working with Lunar Search.
@@ -36,7 +36,7 @@ class SearchHelper
         // Use Laravel Scout for search
         // Products use the Searchable trait from Lunar
         $results = Product::search($query)
-            ->where('status', 'published')
+            ->whereIn('status', [Product::STATUS_PUBLISHED, Product::STATUS_ACTIVE])
             ->paginate($perPage, 'page', $page);
 
         return $results;
@@ -56,7 +56,7 @@ class SearchHelper
         }
 
         $queryBuilder = Product::search($query)
-            ->where('status', 'published');
+            ->whereIn('status', [Product::STATUS_PUBLISHED, Product::STATUS_ACTIVE]);
 
         if ($limit) {
             $queryBuilder->take($limit);
@@ -86,5 +86,4 @@ class SearchHelper
         return config('scout.driver', 'database');
     }
 }
-
 

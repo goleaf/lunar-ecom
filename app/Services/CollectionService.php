@@ -270,7 +270,7 @@ class CollectionService
         
         return [
             'total_products' => $products->count(),
-            'published_products' => $products->where('status', 'published')->count(),
+            'published_products' => $products->filter(fn ($product) => $product->isPublished())->count(),
             'draft_products' => $products->where('status', 'draft')->count(),
             'total_variants' => $products->sum(fn($product) => $product->variants->count()),
             'total_stock' => $products->sum(function ($product) {

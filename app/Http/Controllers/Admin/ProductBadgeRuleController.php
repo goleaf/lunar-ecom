@@ -118,7 +118,7 @@ class ProductBadgeRuleController extends Controller
         $limit = $request->input('limit', 10);
         
         $service = app(\App\Services\BadgeService::class);
-        $products = \App\Models\Product::where('status', 'published')
+        $products = \App\Models\Product::published()
             ->limit($limit)
             ->get();
 
@@ -143,5 +143,4 @@ class ProductBadgeRuleController extends Controller
         ]);
     }
 }
-
 

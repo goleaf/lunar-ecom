@@ -46,7 +46,7 @@ class RecommendationService
             if ($product->brand_id) {
                 $brandProducts = Product::where('brand_id', $product->brand_id)
                     ->where('id', '!=', $product->id)
-                    ->where('status', 'published')
+                    ->published()
                     ->limit($limit)
                     ->get();
                 $products = $products->merge($brandProducts->map(fn($p) => ['product' => $p, 'score' => 0.1]));
@@ -124,7 +124,7 @@ class RecommendationService
                     $q->where('categories.id', $category->id);
                 })
                 ->where('id', '!=', $product->id)
-                ->where('status', 'published')
+                ->published()
                 ->limit($limit)
                 ->get();
                 
@@ -138,7 +138,7 @@ class RecommendationService
                     $q->whereIn('attribute_id', $complementaryAttributes->pluck('id'));
                 })
                 ->where('id', '!=', $product->id)
-                ->where('status', 'published')
+                ->published()
                 ->limit($limit)
                 ->get();
                 
@@ -245,7 +245,7 @@ class RecommendationService
             $allProductIds = $relatedProductIds->merge($purchasedProductIds)->unique();
 
             return Product::whereIn('id', $allProductIds)
-                ->where('status', 'published')
+                ->published()
                 ->limit($limit)
                 ->get();
         });
@@ -541,7 +541,7 @@ class RecommendationService
             ->pluck('product_id');
 
         return Product::whereIn('id', $coPurchasedProductIds)
-            ->where('status', 'published')
+            ->published()
             ->get();
     }
 
@@ -560,7 +560,7 @@ class RecommendationService
             $q->whereIn('categories.id', $categoryIds);
         })
         ->where('id', '!=', $product->id)
-        ->where('status', 'published')
+        ->published()
         ->limit($limit)
         ->get();
     }
@@ -573,7 +573,7 @@ class RecommendationService
         // Assuming products have tags relationship
         // Adjust based on your Lunar setup
         return Product::where('id', '!=', $product->id)
-            ->where('status', 'published')
+            ->published()
             ->limit($limit)
             ->get();
     }
@@ -593,7 +593,7 @@ class RecommendationService
             $q->whereIn('attribute_id', $attributeIds);
         })
         ->where('id', '!=', $product->id)
-        ->where('status', 'published')
+        ->published()
         ->limit($limit)
         ->get();
     }
@@ -638,7 +638,7 @@ class RecommendationService
         }
 
         return Product::whereIn('id', $relatedProductIds)
-            ->where('status', 'published')
+            ->published()
             ->limit($limit)
             ->get();
     }
@@ -675,7 +675,7 @@ class RecommendationService
         }
 
         return Product::whereIn('id', $relatedProductIds)
-            ->where('status', 'published')
+            ->published()
             ->whereNotIn('id', $purchasedProductIds) // Exclude already purchased
             ->limit($limit)
             ->get();

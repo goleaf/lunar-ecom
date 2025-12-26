@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Lunar\Models\Product;
-use Lunar\Models\ProductVariant;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Lunar\Models\Collection;
 use Lunar\Models\Brand;
 use Lunar\FieldTypes\Text;
@@ -128,7 +128,7 @@ class ProductImportService
             // Create product with attribute data
             $product = Product::create([
                 'product_type_id' => $productType->id,
-                'status' => $data['status'] ?? 'published',
+                'status' => $data['status'] ?? Product::STATUS_ACTIVE,
                 'attribute_data' => $attributeData,
             ]);
 

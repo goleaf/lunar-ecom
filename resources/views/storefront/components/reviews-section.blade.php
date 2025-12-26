@@ -84,7 +84,9 @@
                 @auth
                     <a href="#write-review" class="text-blue-600 hover:text-blue-800 font-medium">Write a Review</a>
                 @else
-                    <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-800 font-medium">Login to Write a Review</a>
+                    <a href="{{ \Illuminate\Support\Facades\Route::has('login') ? route('login') : url('/login') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Login to Write a Review
+                    </a>
                 @endauth
             </div>
         @endif
@@ -97,4 +99,3 @@
         </div>
     @endauth
 </div>
-

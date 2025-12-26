@@ -20,8 +20,7 @@ class CategorySeeder extends Seeder
         // Create top-level categories
         $topLevelCategories = collect();
         for ($i = 0; $i < 8; $i++) {
-            $categoryData = Category::factory()->make()->toArray();
-            $category = Category::create($categoryData);
+            $category = Category::factory()->create();
             // Ensure it's a root node
             if ($category->parent_id === null && (!$category->getLft() || !$category->getRgt())) {
                 $category->makeRoot()->save();
@@ -41,9 +40,7 @@ class CategorySeeder extends Seeder
             if ($parent->getLft() && $parent->getRgt()) {
                 $childCount = fake()->numberBetween(3, 6);
                 for ($j = 0; $j < $childCount; $j++) {
-                    $childData = Category::factory()->make()->toArray();
-                    unset($childData['parent_id']);
-                    $child = Category::create($childData);
+                    $child = Category::factory()->create();
                     $parent->appendNode($child);
                 }
             }
@@ -56,9 +53,7 @@ class CategorySeeder extends Seeder
             if ($parent->getLft() && $parent->getRgt()) {
                 $childCount = fake()->numberBetween(2, 4);
                 for ($j = 0; $j < $childCount; $j++) {
-                    $childData = Category::factory()->make()->toArray();
-                    unset($childData['parent_id']);
-                    $child = Category::create($childData);
+                    $child = Category::factory()->create();
                     $parent->appendNode($child);
                 }
             }
@@ -73,4 +68,3 @@ class CategorySeeder extends Seeder
         $this->command->info('✅ Categories created!');
     }
 }
-

@@ -23,7 +23,7 @@
                 };
             @endphp
             <div class="product-badge-wrapper {{ $positionClasses }}">
-                <span class="{{ $badge->getCssClasses() }}" 
+                <span class="{{ $badge->getCssClasses() }}"
                       style="{{ $badge->getInlineStyles() }}"
                       title="{{ $badge->description ?? '' }}">
                     @if($badge->show_icon && $badge->icon)

@@ -559,7 +559,7 @@ class BundleService
         return Product::whereHas('categories', function ($q) use ($bundle) {
             $q->where('categories.id', $bundle->category_id);
         })
-        ->where('status', 'published')
+        ->published()
         ->where('id', '!=', $bundle->product_id)
         ->with(['variants.prices', 'variants.stock'])
         ->get();

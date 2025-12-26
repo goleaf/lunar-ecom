@@ -31,7 +31,7 @@ class SitemapController extends Controller
         $baseUrl = config('app.url');
 
         // Products sitemap
-        $productCount = Product::where('status', 'published')->count();
+        $productCount = Product::published()->count();
         if ($productCount > 0) {
             $pages = ceil($productCount / self::MAX_URLS_PER_SITEMAP);
             for ($i = 1; $i <= $pages; $i++) {
@@ -86,7 +86,7 @@ class SitemapController extends Controller
      */
     public function products(int $page = 1)
     {
-        $products = Product::where('status', 'published')
+        $products = Product::published()
             ->with(['urls'])
             ->orderBy('updated_at', 'desc')
             ->skip(($page - 1) * self::MAX_URLS_PER_SITEMAP)
@@ -209,4 +209,3 @@ class SitemapController extends Controller
             ->header('Content-Type', 'application/xml; charset=utf-8');
     }
 }
-

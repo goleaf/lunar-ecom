@@ -133,8 +133,8 @@ class CollectionSchedulingService
 
         foreach ($products as $product) {
             // Only publish if product is not already published
-            if ($product->status !== 'published') {
-                $product->status = 'published';
+            if (!$product->isPublished()) {
+                $product->status = Product::STATUS_PUBLISHED;
                 $product->published_at = now();
                 $product->save();
             }
@@ -153,8 +153,8 @@ class CollectionSchedulingService
 
         foreach ($products as $product) {
             // Only unpublish if product is currently published
-            if ($product->status === 'published') {
-                $product->status = 'draft';
+            if ($product->isPublished()) {
+                $product->status = Product::STATUS_DRAFT;
                 $product->save();
             }
         }
@@ -250,5 +250,4 @@ class CollectionSchedulingService
         return $query->get();
     }
 }
-
 

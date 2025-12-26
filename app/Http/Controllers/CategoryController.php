@@ -55,7 +55,7 @@ class CategoryController extends Controller
                 $q->whereIn('categories.id', $categoryIds);
             })
             ->with(['variants.prices', 'media', 'brand'])
-            ->where('status', 'published');
+            ->published();
         
         // Apply additional filters
         $productsQuery = $this->applyProductFilters($productsQuery, $request);
@@ -256,4 +256,3 @@ class CategoryController extends Controller
         ]);
     }
 }
-

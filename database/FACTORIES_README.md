@@ -6,7 +6,7 @@ This document explains how to use the factories and seeders for the Lunar e-comm
 
 ### ProductFactory
 
-Creates products with proper Lunar attribute data structure.
+Creates products with proper Lunar attribute data structure. Auto-attaches to the default channel and creates URLs per language.
 
 **Basic Usage:**
 ```php
@@ -16,8 +16,20 @@ $product = Product::factory()->create();
 // Create a published product
 $product = Product::factory()->published()->create();
 
+// Create an active product
+$product = Product::factory()->active()->create();
+
 // Create a draft product
 $product = Product::factory()->draft()->create();
+
+// Create a scheduled product
+$product = Product::factory()->scheduled()->create();
+
+// Create an archived product
+$product = Product::factory()->archived()->create();
+
+// Create a discontinued product
+$product = Product::factory()->discontinued()->create();
 
 // Create product with custom brand
 $product = Product::factory()->withBrand('Nike')->create();
@@ -29,6 +41,9 @@ $product = Product::factory()
         'weight' => '500g',
     ])
     ->create();
+
+// Create a bundle product
+$product = Product::factory()->bundle()->create();
 ```
 
 **With Relationships:**
@@ -149,6 +164,22 @@ Creates product types.
 ```php
 // Create a product type
 $productType = ProductType::factory()->create();
+
+// Create a specific type
+$productType = ProductType::factory()->digital()->create();
+```
+
+### ProductVersionFactory
+
+Creates version snapshots for products.
+
+**Basic Usage:**
+```php
+// Create a product version
+$product = Product::factory()->create();
+$version = ProductVersion::factory()->create([
+    'product_id' => $product->id,
+]);
 ```
 
 ## Seeders
@@ -292,4 +323,3 @@ $variant = ProductVariant::factory()->inStock(10)->create([
     'product_id' => $product->id,
 ]);
 ```
-

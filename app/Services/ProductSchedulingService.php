@@ -180,7 +180,7 @@ class ProductSchedulingService
      */
     protected function publishProduct(Product $product, ProductSchedule $schedule): void
     {
-        $status = $schedule->target_status ?? 'published';
+        $status = $schedule->target_status ?? Product::STATUS_ACTIVE;
         $product->update([
             'status' => $status,
             'is_coming_soon' => false, // Remove coming soon status when published
@@ -220,8 +220,8 @@ class ProductSchedulingService
     protected function startFlashSale(Product $product, ProductSchedule $schedule): void
     {
         // Publish product if not already published
-        if ($product->status !== 'published') {
-            $product->update(['status' => 'published']);
+        if (!$product->isActive()) {
+            $product->update(['status' => Product::STATUS_ACTIVE]);
         }
 
         // Apply sale pricing to all variants
@@ -569,7 +569,7 @@ class ProductSchedulingService
 
         // Default: check product status
         return [
-            'available' => $product->status === 'published',
+            'available' => $product->isPublished(),
             'status' => $product->status,
         ];
     }
@@ -593,7 +593,7 @@ class ProductSchedulingService
             'type' => 'publish',
             'schedule_type' => 'one_time',
             'scheduled_at' => $publishDateTime,
-            'target_status' => 'published',
+            'target_status' => Product::STATUS_ACTIVE,
             'timezone' => $timezone,
         ]);
     }
@@ -651,4 +651,3 @@ class ProductSchedulingService
         ]);
     }
 }
-

@@ -52,7 +52,7 @@ class BundleController extends Controller
      */
     public function create()
     {
-        $products = \Lunar\Models\Product::where('status', 'published')->get();
+        $products = \App\Models\Product::published()->get();
         $currencies = \Lunar\Models\Currency::where('enabled', true)->get();
         $customerGroups = \Lunar\Models\CustomerGroup::all();
 
@@ -124,7 +124,7 @@ class BundleController extends Controller
     public function edit(Bundle $bundle)
     {
         $bundle->load(['items.product', 'items.productVariant', 'prices']);
-        $products = \Lunar\Models\Product::where('status', 'published')->get();
+        $products = \App\Models\Product::published()->get();
         $currencies = \Lunar\Models\Currency::where('enabled', true)->get();
         $customerGroups = \Lunar\Models\CustomerGroup::all();
 

@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Storefront\ProductController;
+use App\Livewire\Storefront\ProductIndex;
+use App\Livewire\Storefront\ProductShow;
 use App\Http\Controllers\Storefront\CollectionController;
 use App\Http\Controllers\Storefront\SearchController;
 use App\Http\Controllers\Storefront\CartController;
@@ -16,7 +17,7 @@ use App\Http\Controllers\Storefront\VariantController;
 Route::get('/robots.txt', [\App\Http\Controllers\Storefront\RobotsController::class, 'index'])->name('robots');
 
 Route::get('/', [\App\Http\Controllers\Storefront\HomepageController::class, 'index'])->name('storefront.homepage');
-Route::get('/home', [ProductController::class, 'index'])->name('storefront.home');
+Route::get('/home', ProductIndex::class)->name('storefront.home');
 
 // Referral link tracking (must be before other routes to catch ref parameter)
 Route::get('/ref/{ref}', function ($ref) {
@@ -24,8 +25,8 @@ Route::get('/ref/{ref}', function ($ref) {
     return redirect()->route('storefront.homepage', ['ref' => $ref]);
 })->name('referral.link');
 
-Route::get('/products', [ProductController::class, 'index'])->name('storefront.products.index');
-Route::get('/products/{slug}', [ProductController::class, 'show'])->name('storefront.products.show');
+Route::get('/products', ProductIndex::class)->name('storefront.products.index');
+Route::get('/products/{slug}', ProductShow::class)->name('storefront.products.show');
 
 // Homepage
 Route::get('/', [\App\Http\Controllers\Storefront\HomepageController::class, 'index'])->name('storefront.homepage');

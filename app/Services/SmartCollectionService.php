@@ -33,7 +33,7 @@ class SmartCollectionService
         }
 
         // Build query based on rules
-        $query = Product::where('status', 'published');
+        $query = Product::published();
         $query = $this->applyRules($query, $rules);
 
         // Apply max products limit if set
@@ -341,4 +341,3 @@ class SmartCollectionService
         }
     }
 }
-

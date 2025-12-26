@@ -33,7 +33,7 @@ class ProductPolicy
         }
         
         // Regular users and guests can only view published products
-        return $product->status === 'published';
+        return $product->isPublished();
     }
 
     /**
@@ -101,4 +101,3 @@ class ProductPolicy
         return false;
     }
 }
-

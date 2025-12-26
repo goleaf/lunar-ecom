@@ -4,7 +4,7 @@ namespace App\Lunar\Search\Indexers;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Lunar\Models\Product;
+use App\Models\Product;
 use Lunar\Search\ScoutIndexer;
 use Lunar\Facades\Pricing;
 
@@ -44,7 +44,7 @@ class CustomProductIndexer extends ScoutIndexer
     {
         // Example: Only index published products
         if ($model instanceof Product) {
-            return $model->status === 'published';
+            return $model->isPublished();
         }
 
         return true;
@@ -314,4 +314,3 @@ class CustomProductIndexer extends ScoutIndexer
         return $attributes;
     }
 }
-

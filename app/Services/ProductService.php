@@ -20,7 +20,7 @@ class ProductService
     {
         $product = new Product([
             'product_type_id' => $data['product_type_id'],
-            'status' => $data['status'] ?? 'published',
+            'status' => $data['status'] ?? Product::STATUS_ACTIVE,
             'brand' => $data['brand'] ?? null,
             'attribute_data' => $data['attribute_data'] ?? collect(),
         ]);

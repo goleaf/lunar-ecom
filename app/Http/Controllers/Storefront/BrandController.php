@@ -69,7 +69,7 @@ class BrandController extends Controller
         // Get products for this brand
         $perPage = 24;
         $products = $brand->products()
-            ->where('status', 'published')
+            ->published()
             ->with(['variants.prices', 'media', 'urls'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage)

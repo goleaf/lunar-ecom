@@ -154,11 +154,20 @@ class AttributeFilterHelper
     /**
      * Get filter display name.
      * 
-     * @param Attribute $attribute
+     * @param mixed $attribute
      * @return string
      */
-    public static function getFilterDisplayName(Attribute $attribute): string
+    public static function getFilterDisplayName($attribute): string
     {
+        if (is_array($attribute)) {
+            $name = $attribute['name'] ?? null;
+            if (is_array($name)) {
+                return $name[app()->getLocale()] ?? $name[array_key_first($name)] ?? ($attribute['handle'] ?? 'Attribute');
+            }
+
+            return $name ?? ($attribute['handle'] ?? 'Attribute');
+        }
+
         $name = $attribute->name;
         
         if (is_array($name)) {
@@ -171,12 +180,33 @@ class AttributeFilterHelper
     /**
      * Format filter value for display.
      * 
-     * @param Attribute $attribute
+     * @param mixed $attribute
      * @param mixed $value
      * @return string
      */
-    public static function formatFilterValue(Attribute $attribute, $value): string
+    public static function formatFilterValue($attribute, $value): string
     {
+        if (is_array($attribute)) {
+            $isNumeric = $attribute['is_numeric'] ?? false;
+            $isBoolean = $attribute['is_boolean'] ?? false;
+            $isColor = $attribute['is_color'] ?? false;
+            $unit = $attribute['unit'] ?? null;
+
+            if ($isNumeric) {
+                return $value . ($unit ? ' ' . $unit : '');
+            }
+
+            if ($isBoolean) {
+                return $value ? 'Yes' : 'No';
+            }
+
+            if ($isColor) {
+                return ucfirst($value);
+            }
+
+            return (string) $value;
+        }
+
         if ($attribute->isNumeric()) {
             return $value . ($attribute->unit ? ' ' . $attribute->unit : '');
         }
@@ -192,4 +222,3 @@ class AttributeFilterHelper
         return (string) $value;
     }
 }
-

@@ -118,18 +118,26 @@ class AttributeService
     public function getFilterOptions(Collection $attributes, $productQuery = null): Collection
     {
         return $attributes->map(function ($attribute) use ($productQuery) {
-            $valueCounts = $attribute->getValueCounts($productQuery);
+            if (!($attribute instanceof Attribute)) {
+                $attribute = Attribute::find($attribute->id) ?? $attribute;
+            }
+
+            $valueCounts = method_exists($attribute, 'getValueCounts')
+                ? $attribute->getValueCounts($productQuery)
+                : collect();
             
             return [
                 'id' => $attribute->id,
                 'handle' => $attribute->handle,
                 'name' => $attribute->name,
-                'type' => $attribute->getTypeName(),
+                'type' => method_exists($attribute, 'getTypeName')
+                    ? $attribute->getTypeName()
+                    : class_basename($attribute->type),
                 'unit' => $attribute->unit,
-                'is_numeric' => $attribute->isNumeric(),
-                'is_color' => $attribute->isColor(),
-                'is_select' => $attribute->isSelect(),
-                'is_boolean' => $attribute->isBoolean(),
+                'is_numeric' => method_exists($attribute, 'isNumeric') ? $attribute->isNumeric() : false,
+                'is_color' => method_exists($attribute, 'isColor') ? $attribute->isColor() : false,
+                'is_select' => method_exists($attribute, 'isSelect') ? $attribute->isSelect() : false,
+                'is_boolean' => method_exists($attribute, 'isBoolean') ? $attribute->isBoolean() : false,
                 'options' => $this->formatFilterOptions($attribute, $valueCounts),
             ];
         });
@@ -138,13 +146,22 @@ class AttributeService
     /**
      * Format filter options based on attribute type.
      *
-     * @param  Attribute  $attribute
+     * @param  mixed  $attribute
      * @param  Collection  $valueCounts
      * @return array
      */
-    protected function formatFilterOptions(Attribute $attribute, Collection $valueCounts): array
+    protected function formatFilterOptions($attribute, Collection $valueCounts): array
     {
-        if ($attribute->isNumeric()) {
+        $typeName = method_exists($attribute, 'getTypeName')
+            ? $attribute->getTypeName()
+            : class_basename($attribute->type);
+        $isNumeric = method_exists($attribute, 'isNumeric') ? $attribute->isNumeric() : $typeName === 'Number';
+        $isColor = method_exists($attribute, 'isColor')
+            ? $attribute->isColor()
+            : ($typeName === 'Color' || str_contains(strtolower($attribute->handle ?? ''), 'color'));
+        $isBoolean = method_exists($attribute, 'isBoolean') ? $attribute->isBoolean() : $typeName === 'Boolean';
+
+        if ($isNumeric) {
             $values = $valueCounts->keys()->sort()->values();
             return [
                 'min' => $values->min() ?? 0,
@@ -153,7 +170,7 @@ class AttributeService
             ];
         }
 
-        if ($attribute->isColor()) {
+        if ($isColor) {
             return $valueCounts->map(function ($count, $value) {
                 return [
                     'value' => $value,
@@ -164,7 +181,7 @@ class AttributeService
             })->values()->toArray();
         }
 
-        if ($attribute->isBoolean()) {
+        if ($isBoolean) {
             return [
                 [
                     'value' => true,
@@ -266,5 +283,3 @@ class AttributeService
         Cache::flush();
     }
 }
-
-

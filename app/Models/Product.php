@@ -1289,6 +1289,23 @@ class Product extends LunarProduct
         return $this->hasMany(\App\Models\FitFeedback::class, 'product_id');
     }
 
+    /**
+     * Digital product relationship (via first variant).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOneThrough
+     */
+    public function digitalProduct()
+    {
+        return $this->hasOneThrough(
+            \App\Models\DigitalProduct::class,
+            \App\Models\ProductVariant::class,
+            'product_id',
+            'product_variant_id',
+            'id',
+            'id'
+        );
+    }
+
     // ============================================
     // Product Core Model - Relationships
     // ============================================
@@ -1747,13 +1764,25 @@ class Product extends LunarProduct
 
         // Update name if provided
         if ($newName) {
-            // Lunar uses attribute_data for translatable fields
-            $attributeData = $newProduct->attribute_data ?? [];
-            foreach ($attributeData as $locale => $data) {
-                if (isset($data['name'])) {
-                    $attributeData[$locale]['name'] = $newName;
-                }
+            // Lunar stores attribute_data as FieldType objects keyed by handle.
+            $attributeData = $newProduct->attribute_data ?? collect();
+            if (!($attributeData instanceof \Illuminate\Support\Collection)) {
+                $attributeData = collect($attributeData);
             }
+
+            $nameField = $attributeData->get('name');
+            if ($nameField instanceof \Lunar\FieldTypes\TranslatedText) {
+                $translations = $nameField->getValue();
+                $updatedTranslations = $translations->map(
+                    fn () => new \Lunar\FieldTypes\Text($newName)
+                );
+                $attributeData->put('name', new \Lunar\FieldTypes\TranslatedText($updatedTranslations));
+            } elseif ($nameField instanceof \Lunar\FieldTypes\Text) {
+                $attributeData->put('name', new \Lunar\FieldTypes\Text($newName));
+            } else {
+                $attributeData->put('name', new \Lunar\FieldTypes\Text($newName));
+            }
+
             $newProduct->attribute_data = $attributeData;
         }
 

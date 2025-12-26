@@ -64,7 +64,7 @@ class CategoryController extends Controller
         // Get products with filters
         $productsQuery = Product::query()
             ->with(['variants.prices', 'media', 'brand', 'attributeValues.attribute'])
-            ->where('status', 'published');
+            ->published();
 
         // Include products from descendant categories
         $categoryIds = $category->descendants()->pluck('id')->push($category->id);
@@ -197,4 +197,3 @@ class CategoryController extends Controller
         ];
     }
 }
-

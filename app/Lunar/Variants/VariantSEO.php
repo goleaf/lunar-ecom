@@ -3,7 +3,6 @@
 namespace App\Lunar\Variants;
 
 use App\Models\ProductVariant;
-use Lunar\Models\Product;
 use Lunar\Facades\Pricing;
 
 /**
@@ -255,7 +254,11 @@ class VariantSEO
         $product = $variant->product;
         
         // Check product status
-        if ($product->status !== 'published') {
+        if (method_exists($product, 'isPublished')) {
+            if (!$product->isPublished()) {
+                return 'noindex, nofollow';
+            }
+        } elseif ($product->status !== 'published') {
             return 'noindex, nofollow';
         }
         
@@ -569,4 +572,3 @@ class VariantSEO
         ];
     }
 }
-

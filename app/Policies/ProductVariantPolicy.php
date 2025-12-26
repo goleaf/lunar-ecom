@@ -33,7 +33,7 @@ class ProductVariantPolicy
         }
         
         // Regular users and guests can only view variants of published products
-        return $variant->product && $variant->product->status === 'published';
+        return $variant->product && $variant->product->isPublished();
     }
 
     /**
@@ -101,4 +101,3 @@ class ProductVariantPolicy
         return false;
     }
 }
-

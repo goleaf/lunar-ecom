@@ -153,7 +153,7 @@ class BadgeService
         // Get products to evaluate
         $products = $product 
             ? collect([$product])
-            : Product::where('status', 'published')->get();
+            : Product::published()->get();
 
         foreach ($products as $product) {
             foreach ($rules as $rule) {
@@ -485,4 +485,3 @@ class BadgeService
         ];
     }
 }
-

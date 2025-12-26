@@ -142,7 +142,7 @@ class SmartCollectionRuleController extends Controller
             ]);
         }
 
-        $query = \App\Models\Product::where('status', 'published');
+        $query = \App\Models\Product::published();
         $query = $this->smartCollectionService->applyRules($query, $rules);
         
         $count = $query->count();
@@ -228,4 +228,3 @@ class SmartCollectionRuleController extends Controller
         return $value;
     }
 }
-

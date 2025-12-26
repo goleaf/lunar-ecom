@@ -169,7 +169,7 @@ class SearchService
     protected function applyScoutFilters($query, array $filters): \Laravel\Scout\Builder
     {
         // Always filter by published status
-        $query->where('status', 'published');
+        $query->published();
 
         foreach ($filters as $field => $value) {
             if (empty($value)) {
@@ -261,7 +261,7 @@ class SearchService
         return Cache::remember($cacheKey, 300, function () use ($query, $limit) {
             // Get product name suggestions using Scout
             $products = Product::search($query)
-                ->where('status', 'published')
+                ->published()
                 ->take($limit)
                 ->get();
 
@@ -447,7 +447,7 @@ class SearchService
     protected function buildSearchQuery(string $query, array $filters = []): \Illuminate\Database\Eloquent\Builder
     {
         $searchQuery = Product::query()
-            ->where('status', 'published');
+            ->published();
 
         // Apply text search
         if (!empty(trim($query))) {
@@ -786,4 +786,3 @@ class SearchService
     }
 
 }
-

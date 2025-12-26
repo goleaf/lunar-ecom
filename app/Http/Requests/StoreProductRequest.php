@@ -33,7 +33,17 @@ class StoreProductRequest extends FormRequest
         $baseRules = [
             // Lunar product fields
             'product_type_id' => ['required', 'exists:' . config('lunar.database.table_prefix') . 'product_types,id'],
-            'status' => ['required', 'string', 'in:draft,published'],
+            'status' => ['required', 'string', 'in:draft,active,published,archived,discontinued'],
+            'visibility' => ['nullable', 'string', 'in:public,private,scheduled'],
+            'short_description' => ['nullable', 'string', 'max:500'],
+            'full_description' => ['nullable', 'string'],
+            'technical_description' => ['nullable', 'string'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string'],
+            'meta_keywords' => ['nullable', 'string'],
+            'published_at' => ['nullable', 'date'],
+            'scheduled_publish_at' => ['nullable', 'date'],
+            'scheduled_unpublish_at' => ['nullable', 'date'],
             'attribute_data' => ['nullable', 'array'],
         ];
 
@@ -52,7 +62,7 @@ class StoreProductRequest extends FormRequest
             'product_type_id.required' => 'The product type is required.',
             'product_type_id.exists' => 'The selected product type is invalid.',
             'status.required' => 'The status is required.',
-            'status.in' => 'The status must be either draft or published.',
+            'status.in' => 'The status must be draft, active, published, archived, or discontinued.',
         ], Product::getValidationMessages());
     }
 
@@ -83,4 +93,3 @@ class StoreProductRequest extends FormRequest
         }
     }
 }
-

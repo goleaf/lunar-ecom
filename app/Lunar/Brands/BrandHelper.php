@@ -162,7 +162,7 @@ class BrandHelper
     public static function getProducts(Brand $brand, ?int $limit = null): Collection
     {
         $query = $brand->products()
-            ->where('status', 'published')
+            ->published()
             ->with(['variants', 'variants.prices'])
             ->orderBy('created_at', 'desc');
 
@@ -182,8 +182,7 @@ class BrandHelper
     public static function getProductCount(Brand $brand): int
     {
         return $brand->products()
-            ->where('status', 'published')
+            ->published()
             ->count();
     }
 }
-

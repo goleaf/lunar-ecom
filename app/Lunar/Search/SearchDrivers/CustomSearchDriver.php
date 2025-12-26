@@ -3,7 +3,7 @@
 namespace App\Lunar\Search\SearchDrivers;
 
 use Lunar\Base\SearchDriverInterface;
-use Lunar\Models\Product;
+use App\Models\Product;
 
 /**
  * Example custom search driver.
@@ -28,7 +28,7 @@ class CustomSearchDriver implements SearchDriverInterface
         // This is a simple example - you could integrate with Elasticsearch, Algolia, etc.
         
         $query = Product::query()
-            ->where('status', 'published');
+            ->published();
         
         // Simple text search (can be enhanced with full-text search, etc.)
         $query->whereHas('urls', function ($q) use ($term) {
@@ -63,5 +63,4 @@ class CustomSearchDriver implements SearchDriverInterface
         // Implement deletion logic here
     }
 }
-
 

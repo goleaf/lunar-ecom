@@ -2,7 +2,7 @@
 
 ## 📊 Overview
 
-This project now includes **16 factories** and **11 seeders** for comprehensive database seeding and testing.
+This project now includes **43 factories** and **30 seeders** for comprehensive database seeding and testing.
 
 ## 🏭 Factories Created
 
@@ -10,9 +10,9 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 1. **ProductFactory** (`database/factories/ProductFactory.php`)
    - Creates products with proper Lunar attribute data
-   - States: `published()`, `draft()`, `scheduled()`
+   - States: `published()`, `active()`, `draft()`, `scheduled()`, `archived()`, `discontinued()`, `bundle()`
    - Methods: `withBrand()`, `withAttributes()`
-   - Auto-attaches to default channel
+   - Auto-attaches to default channel and creates URLs per language
 
 2. **ProductVariantFactory** (`database/factories/ProductVariantFactory.php`)
    - Creates product variants with SKUs, stock, dimensions
@@ -22,15 +22,19 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 3. **ProductTypeFactory** (`database/factories/ProductTypeFactory.php`)
    - Creates product types
+   - States: `simple()`, `configurable()`, `bundle()`, `digital()`, `service()`
+
+4. **ProductVersionFactory** (`database/factories/ProductVersionFactory.php`)
+   - Creates version snapshots for products
 
 ### Collection & Attribute Factories
 
-4. **CollectionFactory** (`database/factories/CollectionFactory.php`)
+5. **CollectionFactory** (`database/factories/CollectionFactory.php`)
    - Creates collections with attribute data
    - Methods: `withPosition()`, `withAttributes()`
    - Auto-creates collection groups
 
-5. **AttributeFactory** (`database/factories/AttributeFactory.php`)
+6. **AttributeFactory** (`database/factories/AttributeFactory.php`)
    - Creates attributes for products/collections
    - States: `required()`, `filterable()`, `system()`
    - Methods: `type()`
@@ -38,55 +42,55 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 ### Customer & Address Factories
 
-6. **CustomerFactory** (`database/factories/CustomerFactory.php`)
+7. **CustomerFactory** (`database/factories/CustomerFactory.php`)
    - Creates customers with personal information
    - States: `withCompany()`, `withUser()`
 
-7. **AddressFactory** (`database/factories/AddressFactory.php`)
+8. **AddressFactory** (`database/factories/AddressFactory.php`)
    - Creates addresses for customers
    - States: `shippingDefault()`, `billingDefault()`
    - Methods: `forCountry()`
 
 ### Cart & Order Factories
 
-8. **CartFactory** (`database/factories/CartFactory.php`)
+9. **CartFactory** (`database/factories/CartFactory.php`)
    - Creates shopping carts
    - States: `forUser()`, `forCustomer()`, `withCoupon()`, `completed()`
 
-9. **CartLineFactory** (`database/factories/CartLineFactory.php`)
+10. **CartLineFactory** (`database/factories/CartLineFactory.php`)
    - Creates cart line items
    - Methods: `quantity()`, `forPurchasable()`
 
-10. **OrderFactory** (`database/factories/OrderFactory.php`)
+11. **OrderFactory** (`database/factories/OrderFactory.php`)
     - Creates orders with proper totals
     - States: `pending()`, `paid()`, `shipped()`, `delivered()`, `cancelled()`
     - Methods: `forUser()`, `forCustomer()`
 
-11. **OrderLineFactory** (`database/factories/OrderLineFactory.php`)
+12. **OrderLineFactory** (`database/factories/OrderLineFactory.php`)
     - Creates order line items
     - Methods: `quantity()`, `forPurchasable()`
 
 ### Additional Factories
 
-12. **UrlFactory** (`database/factories/UrlFactory.php`)
+13. **UrlFactory** (`database/factories/UrlFactory.php`)
     - Creates URLs for products, collections, etc.
     - States: `default()`
     - Methods: `forElement()`
 
-13. **DiscountFactory** (`database/factories/DiscountFactory.php`)
+14. **DiscountFactory** (`database/factories/DiscountFactory.php`)
     - Creates discounts with various types
     - States: `active()`, `expired()`, `percentage()`, `fixed()`
     - Methods: `withCoupon()`
 
-14. **TransactionFactory** (`database/factories/TransactionFactory.php`)
+15. **TransactionFactory** (`database/factories/TransactionFactory.php`)
     - Creates payment transactions
     - States: `successful()`, `failed()`, `refund()`
     - Methods: `driver()`
 
-15. **TagFactory** (`database/factories/TagFactory.php`)
+16. **TagFactory** (`database/factories/TagFactory.php`)
     - Creates tags for products
 
-16. **UserFactory** (`database/factories/UserFactory.php`)
+17. **UserFactory** (`database/factories/UserFactory.php`)
     - Already existed, creates users
 
 ## 🌱 Seeders Created
@@ -100,9 +104,10 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 2. **FactorySeeder** (`database/seeders/FactorySeeder.php`)
    - Sets up Lunar essentials
-   - Creates 5 attributes, 3 product types, 5 collections
+   - Creates 5 attributes, 5 product types, 5 collections
    - Creates 20 products with variants and prices
    - Attaches products to channels and collections
+   - Creates initial product version snapshots
 
 3. **CompleteSeeder** (`database/seeders/CompleteSeeder.php`)
    - **MAXIMUM COMPREHENSIVE SEEDER**
@@ -113,7 +118,7 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
      - 20 users
    - 30 carts with items
    - 40 orders with order lines
-   - Product URLs
+   - Product URLs and version snapshots
    - Tags attached to products
    - 20 active discounts
    - 30 transactions
@@ -123,7 +128,8 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 4. **ProductSeeder** (`database/seeders/ProductSeeder.php`)
    - Creates 10 products with variants and prices
-   - Attaches to channels and collections
+   - Sets product types and attaches to channels/collections
+   - Creates product version snapshots
 
 5. **CollectionSeeder** (`database/seeders/CollectionSeeder.php`)
    - Creates 10 collections
@@ -141,7 +147,10 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 
 ### Existing Seeders
 
-9. **LunarDemoSeeder** (`database/seeders/LunarDemoSeeder.php`)
+9. **ProductTypeSeeder** (`database/seeders/ProductTypeSeeder.php`)
+   - Seeds core product types (simple/configurable/bundle/digital/service)
+
+10. **LunarDemoSeeder** (`database/seeders/LunarDemoSeeder.php`)
    - Original detailed demo seeder
 
 ## 🧪 Tests Created
@@ -151,7 +160,7 @@ This project now includes **16 factories** and **11 seeders** for comprehensive 
 - Tests all factory states and methods
 - Tests relationships and data integrity
 - 30+ test cases covering:
-  - Product factories (published, draft, with attributes, with brand)
+  - Product factories (published, active, draft, scheduled, with attributes, with brand)
   - Product variant factories (stock levels, dimensions, prices)
   - Collection factories (position, attributes)
   - Attribute factories (required, filterable, system)
@@ -240,8 +249,8 @@ public function test_product_creation(): void
 
 ## 📈 Statistics
 
-- **16 Factories** created
-- **11 Seeders** created (including existing)
+- **43 Factories** created
+- **30 Seeders** created (including existing)
 - **40+ Test Cases** created
 - **0 Linter Errors**
 - **Complete Coverage** of Lunar models
@@ -256,4 +265,3 @@ public function test_product_creation(): void
 ## 📚 Documentation
 
 See `database/FACTORIES_README.md` for detailed factory usage documentation.
-

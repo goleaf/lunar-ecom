@@ -89,14 +89,36 @@ class ProductVersion extends BaseModel
             $excludedFields = ['id', 'created_at', 'updated_at', 'deleted_at'];
             
             foreach ($this->product_data as $key => $value) {
-                if (!in_array($key, $excludedFields)) {
-                    // Handle JSON fields properly
-                    if (in_array($key, ['attribute_data', 'custom_meta']) && is_string($value)) {
-                        $product->{$key} = json_decode($value, true);
-                    } else {
-                        $product->{$key} = $value;
+                if (in_array($key, $excludedFields)) {
+                    continue;
+                }
+
+                if ($key === 'attribute_data') {
+                    $decoded = $value;
+                    if (is_string($value)) {
+                        $decoded = json_decode($value, true);
+                    }
+
+                    if (is_array($decoded)) {
+                        $attributeData = collect();
+                        foreach ($decoded as $handle => $item) {
+                            $fieldType = $item['field_type'] ?? null;
+                            $fieldValue = $item['value'] ?? null;
+                            if ($fieldType && class_exists($fieldType)) {
+                                $attributeData->put($handle, new $fieldType($fieldValue));
+                            }
+                        }
+                        $product->attribute_data = $attributeData;
+                        continue;
                     }
                 }
+
+                if ($key === 'custom_meta' && is_string($value)) {
+                    $product->custom_meta = json_decode($value, true);
+                    continue;
+                }
+
+                $product->{$key} = $value;
             }
             
             $product->save();
@@ -108,4 +130,3 @@ class ProductVersion extends BaseModel
         return $product;
     }
 }
-

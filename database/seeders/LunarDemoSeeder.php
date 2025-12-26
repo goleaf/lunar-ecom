@@ -220,161 +220,174 @@ class LunarDemoSeeder extends Seeder
 
         // Description attribute
         // Uses Text field type (supports single-line, multi-line, rich text)
-        $attributes['description'] = Attribute::firstOrCreate(
-            ['handle' => 'description'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 2,
-                'name' => [
-                    'en' => 'Description',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => true,
-                'filterable' => false,
-                'system' => false,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $descriptionData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 2,
+            'name' => ['en' => 'Description'],
+            'handle' => 'description',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => true,
+            'filterable' => false,
+            'system' => false,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['description'] = Attribute::updateOrCreate(
+            ['handle' => 'description', 'attribute_type' => 'product'],
+            Arr::except($descriptionData, ['handle', 'attribute_type'])
         );
 
         // Color attribute (filterable for faceted search)
         // Product variant attributes use 'product_variant' as attribute_type
-        $attributes['color'] = Attribute::firstOrCreate(
-            ['handle' => 'color'],
-            [
-                'attribute_type' => 'product_variant',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 3,
-                'name' => [
-                    'en' => 'Color',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => false,
-                'filterable' => true,
-                'system' => false,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $colorData = AttributeFactory::new()->state([
+            'attribute_type' => 'product_variant',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 3,
+            'name' => ['en' => 'Color'],
+            'handle' => 'color',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => false,
+            'filterable' => true,
+            'system' => false,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['color'] = Attribute::updateOrCreate(
+            ['handle' => 'color', 'attribute_type' => 'product_variant'],
+            Arr::except($colorData, ['handle', 'attribute_type'])
         );
 
         // Size attribute (filterable for faceted search)
-        $attributes['size'] = Attribute::firstOrCreate(
-            ['handle' => 'size'],
-            [
-                'attribute_type' => 'product_variant',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 4,
-                'name' => [
-                    'en' => 'Size',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => false,
-                'filterable' => true,
-                'system' => false,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $sizeData = AttributeFactory::new()->state([
+            'attribute_type' => 'product_variant',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 4,
+            'name' => ['en' => 'Size'],
+            'handle' => 'size',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => false,
+            'filterable' => true,
+            'system' => false,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['size'] = Attribute::updateOrCreate(
+            ['handle' => 'size', 'attribute_type' => 'product_variant'],
+            Arr::except($sizeData, ['handle', 'attribute_type'])
         );
 
         // Material attribute
-        $attributes['material'] = Attribute::firstOrCreate(
-            ['handle' => 'material'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 5,
-                'name' => [
-                    'en' => 'Material',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => true,
-                'filterable' => true,
-                'system' => false,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $materialData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 5,
+            'name' => ['en' => 'Material'],
+            'handle' => 'material',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => true,
+            'filterable' => true,
+            'system' => false,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['material'] = Attribute::updateOrCreate(
+            ['handle' => 'material', 'attribute_type' => 'product'],
+            Arr::except($materialData, ['handle', 'attribute_type'])
         );
 
         // Weight attribute (Number field type)
-        $attributes['weight'] = Attribute::firstOrCreate(
-            ['handle' => 'weight'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 6,
-                'name' => [
-                    'en' => 'Weight (kg)',
-                ],
-                'type' => \Lunar\FieldTypes\Number::class,
-                'required' => false,
-                'searchable' => false,
-                'filterable' => true,
-                'system' => false,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $weightData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 6,
+            'name' => ['en' => 'Weight (kg)'],
+            'handle' => 'weight',
+            'type' => \Lunar\FieldTypes\Number::class,
+            'required' => false,
+            'searchable' => false,
+            'filterable' => true,
+            'system' => false,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['weight'] = Attribute::updateOrCreate(
+            ['handle' => 'weight', 'attribute_type' => 'product'],
+            Arr::except($weightData, ['handle', 'attribute_type'])
         );
 
         // Create SEO attribute group
-        $seoGroup = AttributeGroup::firstOrCreate(
-            ['handle' => 'seo'],
-            [
-                'name' => 'SEO',
+        $seoGroupData = AttributeGroupFactory::new()
+            ->state([
+                'handle' => 'seo',
+                'name' => ['en' => 'SEO'],
                 'attributable_type' => Product::class,
                 'position' => 2,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        $seoGroup = AttributeGroup::firstOrCreate(
+            ['handle' => 'seo'],
+            Arr::only($seoGroupData, ['name', 'attributable_type', 'position'])
         );
 
         // Meta Title attribute (SEO group)
-        $attributes['meta_title'] = Attribute::firstOrCreate(
-            ['handle' => 'meta_title'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $seoGroup->id,
-                'position' => 1,
-                'name' => [
-                    'en' => 'Meta Title',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => false,
-                'filterable' => false,
-                'system' => false,
-                'section' => 'seo',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $metaTitleData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $seoGroup->id,
+            'position' => 1,
+            'name' => ['en' => 'Meta Title'],
+            'handle' => 'meta_title',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => false,
+            'filterable' => false,
+            'system' => false,
+            'section' => 'seo',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['meta_title'] = Attribute::updateOrCreate(
+            ['handle' => 'meta_title', 'attribute_type' => 'product'],
+            Arr::except($metaTitleData, ['handle', 'attribute_type'])
         );
 
         // Meta Description attribute (SEO group)
-        $attributes['meta_description'] = Attribute::firstOrCreate(
-            ['handle' => 'meta_description'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $seoGroup->id,
-                'position' => 2,
-                'name' => [
-                    'en' => 'Meta Description',
-                ],
-                'type' => \Lunar\FieldTypes\Text::class,
-                'required' => false,
-                'searchable' => false,
-                'filterable' => false,
-                'system' => false,
-                'section' => 'seo',
-                'default_value' => null,
-                'configuration' => [],
-            ]
+        $metaDescriptionData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $seoGroup->id,
+            'position' => 2,
+            'name' => ['en' => 'Meta Description'],
+            'handle' => 'meta_description',
+            'type' => \Lunar\FieldTypes\Text::class,
+            'required' => false,
+            'searchable' => false,
+            'filterable' => false,
+            'system' => false,
+            'section' => 'seo',
+            'default_value' => null,
+            'configuration' => [],
+        ])->make()->getAttributes();
+
+        $attributes['meta_description'] = Attribute::updateOrCreate(
+            ['handle' => 'meta_description', 'attribute_type' => 'product'],
+            Arr::except($metaDescriptionData, ['handle', 'attribute_type'])
         );
 
         return $attributes;
@@ -382,8 +395,14 @@ class LunarDemoSeeder extends Seeder
 
     protected function createProductType(array $attributes): ProductType
     {
+        $factoryData = ProductTypeFactory::new()
+            ->state(['name' => 'Physical Product'])
+            ->make()
+            ->getAttributes();
+
         $productType = ProductType::firstOrCreate(
-            ['name' => 'Physical Product']
+            ['name' => 'Physical Product'],
+            Arr::only($factoryData, ['name'])
         );
 
         // Attach attributes to product type if not already attached
@@ -402,9 +421,17 @@ class LunarDemoSeeder extends Seeder
     {
         // Create collection group following Lunar Collections documentation
         // See: https://docs.lunarphp.com/1.x/reference/collections
+        $groupData = CollectionGroupFactory::new()
+            ->state([
+                'handle' => 'main-catalogue',
+                'name' => 'Main Catalogue',
+            ])
+            ->make()
+            ->getAttributes();
+
         $group = CollectionGroup::firstOrCreate(
             ['handle' => 'main-catalogue'],
-            ['name' => 'Main Catalogue']
+            Arr::only($groupData, ['name', 'handle'])
         );
 
         $collections = [];
@@ -427,7 +454,7 @@ class LunarDemoSeeder extends Seeder
                 return $existing;
             }
 
-            return Collection::create($data);
+            return CollectionFactory::new()->state($data)->create();
         };
 
         // Create collections using attribute_data with FieldType objects
@@ -611,11 +638,13 @@ class LunarDemoSeeder extends Seeder
             $data['meta_description'] = new \Lunar\FieldTypes\Text($attributeData['meta_description']);
         }
 
-        $product = Product::create([
-            'product_type_id' => $productType->id,
-            'status' => 'published',
-            'attribute_data' => $data,
-        ]);
+        $product = ProductFactory::new()
+            ->state([
+                'product_type_id' => $productType->id,
+                'status' => 'published',
+                'attribute_data' => $data,
+            ])
+            ->create();
 
         // Attach to channel
         $product->channels()->attach($channel->id);
@@ -643,38 +672,42 @@ class LunarDemoSeeder extends Seeder
                 $variantAttributeData[$attrKey] = new \Lunar\FieldTypes\Text($attrValue);
             }
 
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'sku' => $variantData['sku'],
-                'tax_class_id' => $this->taxClass->id,
-                'attribute_data' => $variantAttributeData->count() > 0 ? $variantAttributeData : null,
-                'stock' => $variantData['stock'] ?? 0,
-                'backorder' => 0,
-                'purchasable' => 'always',
-                'shippable' => true,
-                'unit_quantity' => 1,
-            ]);
+            $variant = ProductVariantFactory::new()
+                ->withoutPrices()
+                ->create([
+                    'product_id' => $product->id,
+                    'sku' => $variantData['sku'],
+                    'tax_class_id' => $this->taxClass->id,
+                    'attribute_data' => $variantAttributeData->count() > 0 ? $variantAttributeData : null,
+                    'stock' => $variantData['stock'] ?? 0,
+                    'backorder' => 0,
+                    'purchasable' => 'always',
+                    'shippable' => true,
+                    'unit_quantity' => 1,
+                ]);
 
             // Create price for variant
-            Price::create([
-                'priceable_type' => ProductVariant::class,
-                'priceable_id' => $variant->id,
-                'price' => $variantData['price'], // Price in smallest currency unit (cents for USD)
-                'currency_id' => $currency->id,
-                'compare_price' => $variantData['compare_price'] ?? null,
-                'min_quantity' => 1,
-            ]);
+            PriceFactory::new()
+                ->forVariant($variant)
+                ->create([
+                    'price' => $variantData['price'],
+                    'currency_id' => $currency->id,
+                    'compare_price' => $variantData['compare_price'] ?? null,
+                ]);
         }
 
         // Create URL
         $slug = Str::slug($attributeData['name']);
-        Url::create([
-            'language_id' => Language::where('code', 'en')->first()->id,
-            'element_type' => Product::class,
-            'element_id' => $product->id,
-            'slug' => $slug,
-            'default' => true,
-        ]);
+        $languageId = Language::where('code', 'en')->first()?->id;
+        if ($languageId) {
+            UrlFactory::new()
+                ->forElement($product)
+                ->default()
+                ->create([
+                    'language_id' => $languageId,
+                    'slug' => $slug,
+                ]);
+        }
 
         return $product;
     }
@@ -682,10 +715,22 @@ class LunarDemoSeeder extends Seeder
     protected function createTags(array $products): void
     {
         $tags = [
-            'new' => Tag::firstOrCreate(['value' => 'new']),
-            'bestseller' => Tag::firstOrCreate(['value' => 'bestseller']),
-            'sale' => Tag::firstOrCreate(['value' => 'sale']),
-            'premium' => Tag::firstOrCreate(['value' => 'premium']),
+            'new' => Tag::firstOrCreate(
+                ['value' => 'new'],
+                Arr::only(TagFactory::new()->state(['value' => 'new'])->make()->getAttributes(), ['value'])
+            ),
+            'bestseller' => Tag::firstOrCreate(
+                ['value' => 'bestseller'],
+                Arr::only(TagFactory::new()->state(['value' => 'bestseller'])->make()->getAttributes(), ['value'])
+            ),
+            'sale' => Tag::firstOrCreate(
+                ['value' => 'sale'],
+                Arr::only(TagFactory::new()->state(['value' => 'sale'])->make()->getAttributes(), ['value'])
+            ),
+            'premium' => Tag::firstOrCreate(
+                ['value' => 'premium'],
+                Arr::only(TagFactory::new()->state(['value' => 'premium'])->make()->getAttributes(), ['value'])
+            ),
         ];
 
         // Attach tags to products (using direct relationship)

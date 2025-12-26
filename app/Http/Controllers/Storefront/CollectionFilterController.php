@@ -22,7 +22,7 @@ class CollectionFilterController extends Controller
      */
     public function index(Request $request, Collection $collection)
     {
-        $query = $collection->products()->where('status', 'published');
+        $query = $collection->products()->published();
 
         // Apply filters
         $query = $this->applyFilters($query, $request);
@@ -264,7 +264,7 @@ class CollectionFilterController extends Controller
      */
     public function getFilterOptions(Collection $collection, Request $request)
     {
-        $baseQuery = $collection->products()->where('status', 'published');
+        $baseQuery = $collection->products()->published();
 
         // Apply all filters except the one we're getting options for
         $tempRequest = clone $request;
@@ -463,4 +463,3 @@ class CollectionFilterController extends Controller
         ];
     }
 }
-

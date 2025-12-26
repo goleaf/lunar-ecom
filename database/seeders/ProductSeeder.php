@@ -5,11 +5,11 @@ namespace Database\Seeders;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
+use Database\Factories\PriceFactory;
 use Database\Seeders\ProductTypeSeeder;
 use Lunar\Models\Channel;
 use Lunar\Models\Collection;
 use Lunar\Models\Currency;
-use Lunar\Models\Price;
 use Lunar\Models\TaxClass;
 
 class ProductSeeder extends Seeder
@@ -65,13 +65,13 @@ class ProductSeeder extends Seeder
 
             // Create prices for variants
             foreach ($variants as $variant) {
-                Price::create([
-                    'price' => fake()->randomFloat(2, 10, 500),
-                    'compare_price' => fake()->optional(0.4)->randomFloat(2, 500, 1000),
-                    'currency_id' => $currency->id,
-                    'priceable_type' => ProductVariant::class,
-                    'priceable_id' => $variant->id,
-                ]);
+                PriceFactory::new()
+                    ->forVariant($variant)
+                    ->create([
+                        'price' => random_int(1000, 50000),
+                        'compare_price' => random_int(0, 1) ? random_int(50000, 100000) : null,
+                        'currency_id' => $currency->id,
+                    ]);
             }
 
             // Attach to collections

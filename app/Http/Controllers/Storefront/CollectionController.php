@@ -124,7 +124,7 @@ class CollectionController extends Controller
      */
     protected function getFilterOptionsForCollection(Collection $collection, Request $request)
     {
-        $baseQuery = $collection->products()->where('status', 'published');
+        $baseQuery = $collection->products()->published();
         
         // Get price range
         $productIds = $baseQuery->pluck('id');
@@ -166,4 +166,3 @@ class CollectionController extends Controller
         ];
     }
 }
-

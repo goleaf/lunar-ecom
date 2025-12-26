@@ -347,8 +347,7 @@ class CompleteSeeder extends Seeder
         $this->command->info('📂 Creating categories...');
         $rootCategories = collect();
         for ($i = 0; $i < 5; $i++) {
-            $categoryData = Category::factory()->make()->toArray();
-            $category = Category::create($categoryData);
+            $category = Category::factory()->create();
             // Ensure it's a root node
             if ($category->parent_id === null && (!$category->getLft() || !$category->getRgt())) {
                 $category->makeRoot()->save();
@@ -367,9 +366,7 @@ class CompleteSeeder extends Seeder
             if ($rootCategory->getLft() && $rootCategory->getRgt()) {
                 $childCount = fake()->numberBetween(2, 4);
                 for ($j = 0; $j < $childCount; $j++) {
-                    $childData = Category::factory()->make()->toArray();
-                    unset($childData['parent_id']); // Ensure no parent_id
-                    $child = Category::create($childData);
+                    $child = Category::factory()->create();
                     $rootCategory->appendNode($child);
                 }
             }

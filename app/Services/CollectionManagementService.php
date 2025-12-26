@@ -146,7 +146,7 @@ class CollectionManagementService
             return $this->getProductsByType($rules['type'], $rules);
         }
 
-        $query = Product::where('status', 'published');
+        $query = Product::published();
 
         // Apply custom rules
         if (is_array($rules) && !empty($rules)) {
@@ -219,7 +219,7 @@ class CollectionManagementService
         $limit = $options['limit'] ?? 20;
         $days = $options['days'] ?? 30;
 
-        return Product::where('status', 'published')
+        return Product::published()
             ->where('created_at', '>=', now()->subDays($days))
             ->orderByDesc('created_at')
             ->limit($limit)
@@ -237,7 +237,7 @@ class CollectionManagementService
         $limit = $options['limit'] ?? 20;
 
         // Featured products could be marked with a custom attribute or high rating
-        return Product::where('status', 'published')
+        return Product::published()
             ->where(function ($q) {
                 $q->where('average_rating', '>=', 4.5)
                   ->orWhere('total_reviews', '>=', 10);
@@ -260,7 +260,7 @@ class CollectionManagementService
         $season = $options['season'] ?? $this->getCurrentSeason();
 
         // This would match products with seasonal tags/categories
-        return Product::where('status', 'published')
+        return Product::published()
             ->whereHas('categories', function ($q) use ($season) {
                 $q->where('name', 'like', "%{$season}%");
             })
@@ -395,4 +395,3 @@ class CollectionManagementService
         return $removed;
     }
 }
-

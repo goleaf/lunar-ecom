@@ -113,7 +113,11 @@ class BrandHelper
         $logo = $brand->getFirstMedia('logo');
         
         if ($logo) {
-            return $logo->getUrl($conversion) ?? $logo->getUrl();
+            try {
+                return $logo->getUrl($conversion);
+            } catch (\Throwable $e) {
+                return $logo->getUrl();
+            }
         }
 
         // Try to get from attribute_data if stored there

@@ -100,6 +100,8 @@ class Product extends LunarProduct
      * @var array<string, string>
      */
     protected $casts = [
+        // Keep Lunar core casts working (Lunar uses attribute_data heavily for translations/SEO fields).
+        'attribute_data' => \Lunar\Base\Casts\AsAttributeData::class,
         'weight' => 'integer',
         'length' => 'decimal:2',
         'width' => 'decimal:2',

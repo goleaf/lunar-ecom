@@ -16,7 +16,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create($this->prefix.'pricing_rules', function (Blueprint $table) {
+        $tableName = $this->prefix.'pricing_rules';
+
+        // This project already has an earlier migration creating this table.
+        // Avoid duplicate CREATE TABLE failures (especially on SQLite).
+        if (Schema::hasTable($tableName)) {
+            return;
+        }
+
+        Schema::create($tableName, function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('handle')->unique()->index();

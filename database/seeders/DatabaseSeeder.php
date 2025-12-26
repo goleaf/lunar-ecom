@@ -40,9 +40,11 @@ class DatabaseSeeder extends Seeder
             $staff->assignRole('admin');
         }
 
-        // Seed customer groups early so other seeders (pricing/discounts/customers) can rely on them.
+        // Seed core reference data early so other seeders can rely on it.
         $this->call([
             CustomerGroupSeeder::class,
+            LanguageSeeder::class,
+            BrandSeeder::class,
         ]);
 
         // Seed Lunar demo data
@@ -61,7 +63,14 @@ class DatabaseSeeder extends Seeder
             SearchSeeder::class,
             ExistingProductVariantsSeeder::class,
             SharedProductVariantsSeeder::class,
+            ExistingCollectionsSeeder::class,
+            ExistingProductCollectionAssignmentsSeeder::class,
+            ExistingCollectionUrlsSeeder::class,
+            ExistingProductTranslationsSeeder::class,
             ExistingProductUrlsSeeder::class,
+            // Ensure attributes exist + are attached to all product types, then backfill existing products.
+            ProductTypeAttributesSeeder::class,
+            BackfillProductAttributeDataSeeder::class,
         ]);
         
         // Option 2: Use FactorySeeder - Creates data using factories (more flexible)

@@ -169,6 +169,8 @@ class ProductVariant extends LunarProductVariant
      * @var array<string, string>
      */
     protected $casts = [
+        // Keep Lunar core casts working (Lunar uses attribute_data for options/attribute-driven content).
+        'attribute_data' => \Lunar\Base\Casts\AsAttributeData::class,
         'uuid' => 'string',
         'sku_format' => 'array',
         'channel_visibility' => 'array',

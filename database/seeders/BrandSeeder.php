@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 use Lunar\Models\Brand;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
@@ -12,6 +13,108 @@ use Lunar\FieldTypes\TranslatedText;
  */
 class BrandSeeder extends Seeder
 {
+    /**
+     * Generate a simple PNG logo for a brand (colored background + initials).
+     *
+     * Returns a temporary file path.
+     */
+    protected function generateBrandLogoPng(string $brandName, int $size = 400): string
+    {
+        if (!function_exists('imagecreatetruecolor')) {
+            throw new \RuntimeException('GD extension is required to generate PNG logos.');
+        }
+
+        $img = imagecreatetruecolor($size, $size);
+        if (!$img) {
+            throw new \RuntimeException('Failed to create image canvas.');
+        }
+
+        // Deterministic background color based on brand name.
+        $hash = crc32(mb_strtolower($brandName));
+        $r = 80 + ($hash & 0x7F);
+        $g = 80 + (($hash >> 8) & 0x7F);
+        $b = 80 + (($hash >> 16) & 0x7F);
+
+        $bg = imagecolorallocate($img, $r, $g, $b);
+        $fg = imagecolorallocate($img, 255, 255, 255);
+
+        imagefilledrectangle($img, 0, 0, $size, $size, $bg);
+
+        $initials = mb_strtoupper(
+            collect(preg_split('/\s+/', trim($brandName)) ?: [])
+                ->filter()
+                ->map(fn ($part) => mb_substr($part, 0, 1))
+                ->implode('')
+        );
+
+        if ($initials === '') {
+            $initials = mb_strtoupper(mb_substr($brandName, 0, 2));
+        }
+        $initials = mb_substr($initials, 0, 3);
+
+        // Use built-in GD font to avoid bundling external font files.
+        $font = 5; // Largest built-in font
+        $textW = imagefontwidth($font) * strlen($initials);
+        $textH = imagefontheight($font);
+        $x = (int) (($size - $textW) / 2);
+        $y = (int) (($size - $textH) / 2);
+
+        // Slight shadow for contrast
+        $shadow = imagecolorallocate($img, 0, 0, 0);
+        imagestring($img, $font, $x + 2, $y + 2, $initials, $shadow);
+        imagestring($img, $font, $x, $y, $initials, $fg);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'brand_logo_');
+        if ($tmp === false) {
+            imagedestroy($img);
+            throw new \RuntimeException('Failed to create temporary file.');
+        }
+
+        // Ensure png extension (helps with mime detection / file naming)
+        $pngPath = $tmp . '.png';
+        @unlink($pngPath);
+
+        $ok = imagepng($img, $pngPath, 9);
+        imagedestroy($img);
+        @unlink($tmp);
+
+        if (!$ok) {
+            throw new \RuntimeException('Failed to write PNG logo.');
+        }
+
+        return $pngPath;
+    }
+
+    /**
+     * Ensure a brand has a logo in the `logo` media collection.
+     */
+    protected function ensureBrandLogo(Brand $brand): void
+    {
+        try {
+            if ($brand->getFirstMedia('logo')) {
+                return;
+            }
+
+            $pngPath = $this->generateBrandLogoPng($brand->name, 400);
+
+            $filename = str($brand->name)->slug()->append('-logo.png')->toString();
+
+            $brand->addMedia($pngPath)
+                ->usingName($brand->name . ' Logo')
+                ->usingFileName($filename)
+                ->toMediaCollection('logo');
+
+            @unlink($pngPath);
+        } catch (\Throwable $e) {
+            // Seeding should not hard-fail if image generation fails in some environments.
+            Log::warning('BrandSeeder: failed to attach logo', [
+                'brand_id' => $brand->id ?? null,
+                'brand_name' => $brand->name ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
     /**
      * Run the database seeds.
      */
@@ -405,11 +508,29 @@ class BrandSeeder extends Seeder
                 ]
             );
 
+            // Ensure each brand has a logo image.
+            $this->ensureBrandLogo($brand);
+
             $this->command->info("  ✓ Created brand: {$brand->name}");
         }
 
+        // Backfill any other brands created by factories/other seeders which are missing a logo.
+        $missingLogoCount = Brand::query()
+            ->get()
+            ->filter(fn (Brand $b) => !$b->getFirstMedia('logo'))
+            ->count();
+
+        if ($missingLogoCount > 0) {
+            $this->command->info("🖼️ Backfilling logos for {$missingLogoCount} existing brands...");
+            Brand::query()->chunk(100, function ($chunk) {
+                foreach ($chunk as $brand) {
+                    $this->ensureBrandLogo($brand);
+                }
+            });
+        }
+
         $this->command->info('✅ Brand seeding completed!');
-        $this->command->info('   Note: Brand logos can be added via media upload in the admin panel.');
+        $this->command->info('   Note: Brand logos can also be replaced via media upload in the admin panel.');
     }
 }
 

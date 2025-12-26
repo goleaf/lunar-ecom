@@ -7,6 +7,7 @@ use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
+use Lunar\Models\Language;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
@@ -28,15 +29,30 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $name = fake()->words(3, true);
+
+        $languageCodes = Language::query()->orderBy('id')->pluck('code')->all();
+        if (empty($languageCodes)) {
+            $languageCodes = ['en'];
+        }
+
+        $translatedName = collect();
+        foreach ($languageCodes as $code) {
+            // Keep it deterministic-ish and easy to spot in admin/storefront when switching locales.
+            $translatedName[$code] = new Text($code === 'en' ? $name : "{$name} ({$code})");
+        }
+
+        $baseDescription = fake()->paragraph();
+        $translatedDescription = collect();
+        foreach ($languageCodes as $code) {
+            $translatedDescription[$code] = new Text($code === 'en' ? $baseDescription : "{$baseDescription} ({$code})");
+        }
         
         return [
             'product_type_id' => ProductType::factory(),
             'status' => fake()->randomElement(['published', 'draft', 'scheduled']),
             'attribute_data' => collect([
-                'name' => new TranslatedText(collect([
-                    'en' => new Text($name),
-                ])),
-                'description' => new Text(fake()->paragraph()),
+                'name' => new TranslatedText($translatedName),
+                'description' => new TranslatedText($translatedDescription),
             ]),
             'brand_id' => null, // Brands are optional, can be set via withBrand() method
         ];

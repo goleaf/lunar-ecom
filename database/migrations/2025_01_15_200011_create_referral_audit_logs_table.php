@@ -22,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['actor_type', 'actor_id', 'created_at']);
-            $table->index(['subject_type', 'subject_id']);
+            // NOTE: $table->morphs('subject') already creates an index on (subject_type, subject_id)
             $table->index(['action', 'created_at']);
         });
     }

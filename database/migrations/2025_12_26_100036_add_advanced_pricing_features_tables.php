@@ -18,22 +18,27 @@ return new class extends Migration
     public function up(): void
     {
         // Add scheduled price change fields to variant_prices
-        Schema::table($this->prefix.'variant_prices', function (Blueprint $table) {
-            if (!Schema::hasColumn($this->prefix.'variant_prices', 'scheduled_change_at')) {
-                $table->timestamp('scheduled_change_at')->nullable()->after('ends_at')->index();
-            }
-            
-            if (!Schema::hasColumn($this->prefix.'variant_prices', 'scheduled_price')) {
-                $table->integer('scheduled_price')->nullable()->after('scheduled_change_at');
-            }
-            
-            if (!Schema::hasColumn($this->prefix.'variant_prices', 'is_flash_deal')) {
-                $table->boolean('is_flash_deal')->default(false)->after('scheduled_price')->index();
-            }
-        });
+        $variantPricesTable = $this->prefix.'variant_prices';
+        if (Schema::hasTable($variantPricesTable)) {
+            Schema::table($variantPricesTable, function (Blueprint $table) use ($variantPricesTable) {
+                if (! Schema::hasColumn($variantPricesTable, 'scheduled_change_at')) {
+                    $table->timestamp('scheduled_change_at')->nullable()->after('ends_at')->index();
+                }
+
+                if (! Schema::hasColumn($variantPricesTable, 'scheduled_price')) {
+                    $table->integer('scheduled_price')->nullable()->after('scheduled_change_at');
+                }
+
+                if (! Schema::hasColumn($variantPricesTable, 'is_flash_deal')) {
+                    $table->boolean('is_flash_deal')->default(false)->after('scheduled_price')->index();
+                }
+            });
+        }
 
         // Price simulation table
-        Schema::create($this->prefix.'price_simulations', function (Blueprint $table) {
+        $priceSimulationsTable = $this->prefix.'price_simulations';
+        if (! Schema::hasTable($priceSimulationsTable)) {
+            Schema::create($priceSimulationsTable, function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_variant_id')
                 ->constrained($this->prefix.'product_variants')
@@ -53,10 +58,13 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['product_variant_id', 'currency_id', 'quantity']);
-        });
+            });
+        }
 
         // Margin alerts table
-        Schema::create($this->prefix.'margin_alerts', function (Blueprint $table) {
+        $marginAlertsTable = $this->prefix.'margin_alerts';
+        if (! Schema::hasTable($marginAlertsTable)) {
+            Schema::create($marginAlertsTable, function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_variant_id')
                 ->constrained($this->prefix.'product_variants')
@@ -72,10 +80,13 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['product_variant_id', 'is_resolved', 'created_at']);
-        });
+            });
+        }
 
         // Historical price tracking table
-        Schema::create($this->prefix.'price_history', function (Blueprint $table) {
+        $priceHistoryTable = $this->prefix.'price_history';
+        if (! Schema::hasTable($priceHistoryTable)) {
+            Schema::create($priceHistoryTable, function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_variant_id')
                 ->constrained($this->prefix.'product_variants')
@@ -98,7 +109,8 @@ return new class extends Migration
 
             $table->index(['product_variant_id', 'currency_id', 'effective_from']);
             $table->index(['product_variant_id', 'effective_from', 'effective_to']);
-        });
+            });
+        }
     }
 
     /**

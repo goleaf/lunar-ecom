@@ -24,7 +24,7 @@ class SeedBrands extends Command
      *
      * @var string
      */
-    protected $description = 'Seed sample brands with descriptions';
+    protected $description = 'Seed sample brands with descriptions and logo images';
 
     /**
      * Execute the console command.

@@ -15,7 +15,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create($this->prefix.'attribute_groups', function (Blueprint $table) {
+        $tableName = $this->prefix.'attribute_groups';
+
+        // Lunar core already creates this table. Avoid duplicate CREATE TABLE failures.
+        if (Schema::hasTable($tableName)) {
+            return;
+        }
+
+        Schema::create($tableName, function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('handle')->unique();

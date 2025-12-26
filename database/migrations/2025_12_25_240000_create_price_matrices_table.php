@@ -12,7 +12,15 @@ return new class extends LunarMigration
      */
     public function up(): void
     {
-        Schema::create($this->prefix.'price_matrices', function (Blueprint $table) {
+        $tableName = $this->prefix.'price_matrices';
+
+        // This project currently has another earlier migration that creates this table.
+        // SQLite (and most DBs) will hard-fail on duplicate CREATE TABLE, so guard it.
+        if (Schema::hasTable($tableName)) {
+            return;
+        }
+
+        Schema::create($tableName, function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained($this->prefix.'products')->cascadeOnDelete();
             $table->foreignId('product_variant_id')->nullable()->constrained($this->prefix.'product_variants')->cascadeOnDelete();

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\AsCollection;
 use Lunar\Models\Attribute as LunarAttribute;
 
 /**
@@ -23,30 +24,16 @@ class Attribute extends LunarAttribute
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'unit',
-        'display_order',
-        'sortable',
-        'validation_rules',
-        'code',
-        'scope',
-        'localizable',
-        'channel_specific',
-        'required',
-        'default_value',
-        'ui_hint',
-    ];
-
-    /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
     protected $casts = [
+        // Keep Lunar's core casts (these are required for translated/admin fields).
+        'name' => AsCollection::class,
+        'description' => AsCollection::class,
+        'configuration' => AsCollection::class,
+
         'display_order' => 'integer',
         'sortable' => 'boolean',
         'validation_rules' => 'array',

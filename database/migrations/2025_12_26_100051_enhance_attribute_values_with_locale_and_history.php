@@ -19,7 +19,7 @@ return new class extends Migration
         $prefix = $this->prefix;
 
         // Enhance product_attribute_values
-        Schema::table($prefix.'product_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'product_attribute_values', function (Blueprint $table) use ($prefix) {
             if (!Schema::hasColumn($prefix.'product_attribute_values', 'locale')) {
                 $table->string('locale', 10)->nullable()->after('attribute_id')->index();
             }
@@ -39,7 +39,7 @@ return new class extends Migration
         });
 
         // Enhance variant_attribute_values
-        Schema::table($prefix.'variant_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'variant_attribute_values', function (Blueprint $table) use ($prefix) {
             if (!Schema::hasColumn($prefix.'variant_attribute_values', 'locale')) {
                 $table->string('locale', 10)->nullable()->after('attribute_id')->index();
             }
@@ -59,7 +59,7 @@ return new class extends Migration
         });
 
         // Enhance channel_attribute_values
-        Schema::table($prefix.'channel_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'channel_attribute_values', function (Blueprint $table) use ($prefix) {
             if (!Schema::hasColumn($prefix.'channel_attribute_values', 'locale')) {
                 $table->string('locale', 10)->nullable()->after('attribute_id')->index();
             }
@@ -86,19 +86,19 @@ return new class extends Migration
     {
         $prefix = $this->prefix;
 
-        Schema::table($prefix.'product_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'product_attribute_values', function (Blueprint $table) use ($prefix) {
             $table->dropUnique('product_attr_locale_unique');
             $table->unique(['product_id', 'attribute_id']);
             $table->dropColumn(['locale', 'is_override', 'created_by', 'updated_by']);
         });
 
-        Schema::table($prefix.'variant_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'variant_attribute_values', function (Blueprint $table) use ($prefix) {
             $table->dropUnique('variant_attr_locale_unique');
             $table->unique(['product_variant_id', 'attribute_id']);
             $table->dropColumn(['locale', 'is_override', 'created_by', 'updated_by']);
         });
 
-        Schema::table($prefix.'channel_attribute_values', function (Blueprint $table) {
+        Schema::table($prefix.'channel_attribute_values', function (Blueprint $table) use ($prefix) {
             $table->dropUnique('channel_attr_locale_unique');
             $table->unique(['product_id', 'channel_id', 'attribute_id']);
             $table->dropColumn(['locale', 'is_override', 'created_by', 'updated_by']);

@@ -12,7 +12,9 @@ return new class extends LunarMigration
      */
     public function up(): void
     {
-        Schema::create($this->prefix.'product_answers', function (Blueprint $table) {
+        $driver = Schema::getConnection()->getDriverName();
+
+        Schema::create($this->prefix.'product_answers', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('question_id')->constrained($this->prefix.'product_questions')->cascadeOnDelete();
             
@@ -46,7 +48,11 @@ return new class extends LunarMigration
             $table->index(['question_id', 'is_approved']);
             $table->index(['answerer_type', 'answerer_id']);
             $table->index(['is_official', 'is_approved']);
-            $table->fullText(['answer']); // For search
+
+            // For search (SQLite schema grammar doesn't support fulltext indexes)
+            if ($driver !== 'sqlite') {
+                $table->fullText(['answer']);
+            }
         });
     }
 

@@ -195,26 +195,27 @@ class LunarDemoSeeder extends Seeder
 
         // Name attribute (required, system attribute)
         // Uses TranslatedText for multi-language support
-        $attributes['name'] = Attribute::firstOrCreate(
-            ['handle' => 'name'],
-            [
-                'attribute_type' => 'product',
-                'attribute_group_id' => $productGroup->id,
-                'position' => 1,
-                'name' => [
-                    'en' => 'Name',
-                ],
-                'type' => \Lunar\FieldTypes\TranslatedText::class,
-                'required' => true,
-                'searchable' => true,
-                'filterable' => false,
-                'system' => true,
-                'section' => 'main',
-                'default_value' => null,
-                'configuration' => [
-                    'richtext' => false,
-                ],
-            ]
+        $nameData = AttributeFactory::new()->state([
+            'attribute_type' => 'product',
+            'attribute_group_id' => $productGroup->id,
+            'position' => 1,
+            'name' => ['en' => 'Name'],
+            'handle' => 'name',
+            'type' => \Lunar\FieldTypes\TranslatedText::class,
+            'required' => true,
+            'searchable' => true,
+            'filterable' => false,
+            'system' => true,
+            'section' => 'main',
+            'default_value' => null,
+            'configuration' => [
+                'richtext' => false,
+            ],
+        ])->make()->getAttributes();
+
+        $attributes['name'] = Attribute::updateOrCreate(
+            ['handle' => 'name', 'attribute_type' => 'product'],
+            Arr::except($nameData, ['handle', 'attribute_type'])
         );
 
         // Description attribute

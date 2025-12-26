@@ -72,8 +72,8 @@ All components have been implemented, integrated, syntax-checked, and verified. 
 
 ### Modified Files ✅
 1. `app/Services/CartManager.php` - Integrated pricing engine
-2. `app/Http/Controllers/Storefront/CartController.php` - Added pricing endpoint
-3. `app/Http/Controllers/Storefront/CheckoutController.php` - Forces repricing + snapshot storage
+2. `app/Http/Controllers/Frontend/CartController.php` - Added pricing endpoint
+3. `app/Http/Controllers/Frontend/CheckoutController.php` - Forces repricing + snapshot storage
 4. `app/Providers/AppServiceProvider.php` - Registered observers
 5. `app/Providers/EventServiceProvider.php` - Registered event listeners
 6. `config/lunar/cart.php` - Added pricing configuration

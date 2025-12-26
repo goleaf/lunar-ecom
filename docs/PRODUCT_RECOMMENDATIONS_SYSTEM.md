@@ -80,7 +80,7 @@ A comprehensive product recommendation engine that provides multiple types of re
 
 ### Controllers
 
-**RecommendationController** (`app/Http/Controllers/Storefront/RecommendationController.php`)
+**RecommendationController** (`app/Http/Controllers/Frontend/RecommendationController.php`)
 - `index()`: Get recommendations for a product
 - `trackView()`: Track product view
 - `trackClick()`: Track recommendation click

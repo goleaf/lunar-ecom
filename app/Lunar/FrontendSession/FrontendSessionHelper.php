@@ -15,7 +15,7 @@ use Lunar\Models\Language;
  * Helper class for working with the frontend session.
  *
  * Wraps Lunar's session utilities (channel, currency, customer groups, customer, language)
- * behind project naming that avoids "Storefront" terminology.
+ * behind project naming that avoids legacy naming.
  */
 class FrontendSessionHelper
 {
@@ -23,7 +23,7 @@ class FrontendSessionHelper
      * Initialize the channel.
      * 
      * Sets the channel based on what's been previously set, otherwise uses the default.
-     * This is automatically called when using the StorefrontSession facade.
+     * This is automatically called when using Lunar's session facade.
      * 
      * @return Channel|null
      */

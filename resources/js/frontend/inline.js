@@ -115,6 +115,26 @@ function initQaForms() {
             }
         });
     });
+
+    // Helpful votes on questions/answers (Q&A page).
+    document.querySelectorAll('.mark-helpful[data-url]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            try {
+                const response = await fetch(button.dataset.url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (_) {
+                alert('Unable to mark helpful.');
+            }
+        });
+    });
 }
 
 function initComingSoonForm() {
@@ -632,6 +652,51 @@ window.imageUploader = function imageUploader(modelId, modelType, collectionName
     };
 };
 
+function initProductFilters() {
+    const container = document.getElementById('product-filters-container');
+    if (!container || !window.ProductAttributeFilter) return;
+
+    if (container.dataset.initialized === '1') return;
+    container.dataset.initialized = '1';
+
+    const categoryId = container.dataset.categoryId ? Number(container.dataset.categoryId) : null;
+    const productTypeId = container.dataset.productTypeId ? Number(container.dataset.productTypeId) : null;
+    const apiBaseUrl = container.dataset.apiBaseUrl || '/api/filters';
+
+    // eslint-disable-next-line no-new
+    new window.ProductAttributeFilter('product-filters-container', {
+        categoryId,
+        productTypeId,
+        apiBaseUrl,
+        productsContainerId: 'products-container',
+        filterLogic: 'and',
+        onFilterChange: function (data) {
+            const productsContainer = document.getElementById('products-container');
+            if (!productsContainer) return;
+
+            let html = '<div class="products-grid">';
+            (data?.data || []).forEach((product) => {
+                html += `
+                    <div class="product-card">
+                        <h3>${product?.name || 'Product'}</h3>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            if (data?.meta?.last_page > 1) {
+                html += '<div class="pagination">';
+                for (let i = 1; i <= data.meta.last_page; i++) {
+                    html += `<a href="?page=${i}" class="page-link ${i === data.meta.current_page ? 'active' : ''}">${i}</a>`;
+                }
+                html += '</div>';
+            }
+
+            productsContainer.innerHTML = html;
+        },
+    });
+}
+
 export function initFrontendInlineMigrations() {
     if (!isFrontend()) return;
 
@@ -645,6 +710,7 @@ export function initFrontendInlineMigrations() {
     initDownloads();
     initCartPage();
     initBundleShow();
+    initProductFilters();
 }
 
 initFrontendInlineMigrations();

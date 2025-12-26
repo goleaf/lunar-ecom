@@ -346,7 +346,7 @@ class SearchService
     }
 
     /**
-     * Mega-menu autocomplete suggestions for storefront search (Products + Brands + Categories).
+     * Mega-menu autocomplete suggestions for the frontend search (Products + Brands + Categories).
      *
      * Returns arrays ready for UI rendering (Livewire).
      *

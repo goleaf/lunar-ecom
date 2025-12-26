@@ -222,9 +222,9 @@ When displaying, use `translateAttribute()` which automatically uses the current
 
 ### New Files
 - `database/seeders/LanguageSeeder.php` - Language seeder
-- `app/Http/Controllers/Storefront/LanguageController.php` - Language API controller
+- `app/Http/Controllers/Frontend/LanguageController.php` - Language API controller
 - `app/Http/Middleware/LanguageDetectionMiddleware.php` - Language detection middleware
-- `resources/views/storefront/components/language-selector.blade.php` - Frontend language selector
+- `resources/views/frontend/components/language-selector.blade.php` - Frontend language selector
 - `resources/lang/{locale}/frontend.php` - Translation files for 5 languages
 - `app/Console/Commands/SeedLanguages.php` - Artisan command for seeding languages
 
@@ -232,7 +232,7 @@ When displaying, use `translateAttribute()` which automatically uses the current
 - `app/Lunar/StorefrontSession/StorefrontSessionHelper.php` - Added language support
 - `app/Http/Middleware/StorefrontSessionMiddleware.php` - Added language initialization
 - `routes/web.php` - Added language routes
-- `resources/views/storefront/layout.blade.php` - Added language selector and translation helpers
+- `resources/views/frontend/layout.blade.php` - Added language selector and translation helpers
 - `bootstrap/app.php` - Registered language detection middleware
 
 ## Language Detection Priority

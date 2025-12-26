@@ -31,36 +31,6 @@
     </div>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const container = document.querySelector('.customers-also-viewed');
-            if (container) {
-                const sourceProductId = container.dataset.sourceProductId;
-                
-                container.addEventListener('click', function(e) {
-                    const productCard = e.target.closest('.recommended-product');
-                    if (productCard) {
-                        const recommendedProductId = productCard.dataset.productId;
-                        
-                        fetch('{{ route("frontend.recommendations.track-click") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                source_product_id: sourceProductId,
-                                recommended_product_id: recommendedProductId,
-                                recommendation_type: 'customers_also_viewed',
-                                display_location: 'product_page',
-                                recommendation_algorithm: 'personalized'
-                            })
-                        }).catch(err => console.error('Failed to track recommendation click:', err));
-                    }
-                });
-            }
-        });
-    </script>
     @endpush
 @endif
 

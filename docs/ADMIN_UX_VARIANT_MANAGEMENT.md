@@ -11,7 +11,7 @@ Comprehensive admin UX for variant management:
 3. **Inline price & stock editing** - Edit directly in tables
 4. **Bulk updates** - Update multiple variants at once
 5. **Drag & drop attribute ordering** - Reorder variants
-6. **Variant preview** - Preview variant on storefront
+6. **Variant preview** - Preview variant on frontend
 7. **Variant cloning** - Duplicate variants
 8. **Change history timeline** - Track changes
 
@@ -118,7 +118,7 @@ PreviewVariantAction::make()
 **Features:**
 - Open variant in new tab
 - Preview mode
-- Storefront view
+- Frontend view
 
 ### CloneVariantAction
 

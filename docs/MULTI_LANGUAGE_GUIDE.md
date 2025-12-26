@@ -233,7 +233,7 @@ return [
 
 ### Frontend Component
 
-The language switcher is automatically included in the navigation bar (`resources/views/storefront/components/language-selector.blade.php`).
+The language switcher is automatically included in the navigation bar (`resources/views/frontend/components/language-selector.blade.php`).
 
 Users can:
 - View all available languages

@@ -114,7 +114,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Variant created successfully',
+            'message' => __('frontend.messages.variant_created'),
             'variant' => VariantHelper::getDisplayData($variant),
         ], 201);
     }
@@ -155,7 +155,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Variant updated successfully',
+            'message' => __('frontend.messages.variant_updated'),
             'variant' => VariantHelper::getDisplayData($variant),
         ]);
     }
@@ -192,7 +192,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Stock updated successfully',
+            'message' => __('frontend.messages.stock_updated'),
             'stock' => VariantHelper::getStockStatus($variant),
         ]);
     }
@@ -218,7 +218,7 @@ class VariantController extends Controller
         // Ensure media belongs to the product
         if ($media->model_type !== Product::class || $media->model_id !== $variant->product_id) {
             return response()->json([
-                'error' => 'Media does not belong to the product',
+                'error' => __('frontend.messages.media_not_belong_to_product'),
             ], 422);
         }
 
@@ -226,7 +226,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Image attached successfully',
+            'message' => __('frontend.messages.image_attached'),
             'images' => VariantHelper::getImages($variant),
         ]);
     }
@@ -247,7 +247,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Image detached successfully',
+            'message' => __('frontend.messages.image_detached'),
             'images' => VariantHelper::getImages($variant),
         ]);
     }
@@ -272,7 +272,7 @@ class VariantController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Primary image set successfully',
+            'message' => __('frontend.messages.primary_image_set'),
             'images' => VariantHelper::getImages($variant),
         ]);
     }

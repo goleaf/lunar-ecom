@@ -181,6 +181,14 @@
         </div>
     </div>
 </div>
+
+<div
+    id="collection-filters-config"
+    class="hidden"
+    data-collection-id="{{ $collection->id }}"
+    data-base-url="{{ route('frontend.collections.filter', $collection->id) }}"
+    data-filter-options='@json($filterOptions ?? [])'
+></div>
 @endsection
 
 @push('styles')
@@ -188,14 +196,5 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/collection-filters.js') }}"></script>
-<script>
-    // Initialize with collection data
-    window.collectionFilters = {
-        collectionId: {{ $collection->id }},
-        baseUrl: '{{ route('frontend.collections.filter', $collection->id) }}',
-        filterOptions: @json($filterOptions ?? []),
-    };
-</script>
 @endpush
 

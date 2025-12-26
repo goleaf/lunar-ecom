@@ -137,40 +137,5 @@
     </div>
 </div>
 
-<script>
-function resendEmail(downloadId) {
-    fetch(`/downloads/${downloadId}/resend-email`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Download instructions email has been sent.');
-        } else {
-            alert('Failed to send email. Please try again.');
-        }
-    });
-}
-
-function showLicenseKey(licenseKey) {
-    document.getElementById('licenseKeyText').textContent = licenseKey;
-    document.getElementById('licenseModal').classList.remove('hidden');
-}
-
-function closeLicenseModal() {
-    document.getElementById('licenseModal').classList.add('hidden');
-}
-
-function copyLicenseKey() {
-    const licenseKey = document.getElementById('licenseKeyText').textContent;
-    navigator.clipboard.writeText(licenseKey).then(() => {
-        alert('License key copied to clipboard!');
-    });
-}
-</script>
 @endsection
 

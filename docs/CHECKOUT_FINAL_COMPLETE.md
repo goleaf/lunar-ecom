@@ -22,9 +22,9 @@ The checkout and order locking system is **fully implemented**, **tested**, and 
 - ✅ `app/Services/StockService.php` - (Enhanced)
 
 ### Controllers (5 files)
-- ✅ `app/Http/Controllers/Storefront/CheckoutController.php`
-- ✅ `app/Http/Controllers/Storefront/CheckoutStatusController.php`
-- ✅ `app/Http/Controllers/Storefront/CartController.php` - (Protected)
+- ✅ `app/Http/Controllers/Frontend/CheckoutController.php`
+- ✅ `app/Http/Controllers/Frontend/CheckoutStatusController.php`
+- ✅ `app/Http/Controllers/Frontend/CartController.php` - (Protected)
 - ✅ `app/Http/Controllers/Admin/CheckoutLockController.php`
 - ✅ `app/Http/Controllers/Health/CheckoutHealthController.php`
 

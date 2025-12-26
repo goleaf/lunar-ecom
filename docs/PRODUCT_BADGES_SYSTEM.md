@@ -148,7 +148,7 @@ Route::prefix('admin/products/{product}/badges')->name('admin.products.product-b
 ## Frontend Components
 
 ### Product Badges Component
-- **Location**: `resources/views/storefront/components/product-badges.blade.php`
+- **Location**: `resources/views/frontend/components/product-badges.blade.php`
 - **Usage**: `<x-frontend.product-badges :product="$product" :limit="3" />`
 - **Features**:
   - Displays badges with custom styling

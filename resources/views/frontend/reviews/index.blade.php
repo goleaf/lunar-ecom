@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Reviews for ' . $product->translateAttribute('name'))
+@section('title', __('frontend.reviews.title_for_product', ['product' => $product->translateAttribute('name')]))
 
 @section('content')
 <div class="px-4 py-6">

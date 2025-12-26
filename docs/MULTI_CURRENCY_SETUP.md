@@ -137,7 +137,7 @@ Content-Type: application/json
 
 3. **Currency Switching**: When a user switches currency:
    - The frontend sends a POST request to `/currency/switch`
-   - The `CurrencyController` sets the currency in the storefront session
+   - The `CurrencyController` sets the currency in the frontend session
    - The page reloads to show all prices in the new currency
 
 4. **Automatic Conversion**: Lunar automatically handles currency conversion when displaying prices. Prices stored in the database are in the default currency (USD), and are converted on-the-fly based on the current currency's exchange rate.
@@ -146,14 +146,14 @@ Content-Type: application/json
 
 ### New Files
 - `database/seeders/CurrencySeeder.php` - Currency seeder
-- `app/Http/Controllers/Storefront/CurrencyController.php` - Currency API controller
-- `resources/views/storefront/components/currency-selector.blade.php` - Frontend currency selector
+- `app/Http/Controllers/Frontend/CurrencyController.php` - Currency API controller
+- `resources/views/frontend/components/currency-selector.blade.php` - Frontend currency selector
 - `app/Console/Commands/SeedCurrencies.php` - Artisan command for seeding currencies
 
 ### Modified Files
 - `app/Lunar/Currencies/CurrencyHelper.php` - Added support for format fields
 - `routes/web.php` - Added currency routes
-- `resources/views/storefront/layout.blade.php` - Added currency selector to navigation
+- `resources/views/frontend/layout.blade.php` - Added currency selector to navigation
 
 ## Updating Exchange Rates
 

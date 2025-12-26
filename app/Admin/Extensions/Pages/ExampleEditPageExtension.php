@@ -54,7 +54,7 @@ class ExampleEditPageExtension extends EditPageExtension
             ...$actions,
             // Add custom header actions here
             // Actions\ActionGroup::make([
-            //     Actions\Action::make('View on Storefront'),
+            //     Actions\Action::make('View on Frontend'),
             //     Actions\Action::make('Copy Link'),
             //     Actions\Action::make('Duplicate'),
             // ]),

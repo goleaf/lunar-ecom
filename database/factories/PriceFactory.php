@@ -49,7 +49,8 @@ class PriceFactory extends Factory
             'customer_group_id' => $customerGroupId,
             'priceable_type' => ProductVariant::class,
             'priceable_id' => ProductVariant::factory(),
-            'tier' => 1,
+            // Lunar renamed `tier` -> `min_quantity` (2024_01_31_100000_update_tier_to_min_quantity_on_prices_table).
+            'min_quantity' => 1,
         ];
     }
 

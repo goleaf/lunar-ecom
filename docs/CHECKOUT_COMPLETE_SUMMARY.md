@@ -101,7 +101,7 @@ php artisan checkout:monitor --hours=24
 
 ## 📡 API Endpoints Summary
 
-### Storefront
+### Frontend
 - `GET  /checkout` - Start checkout
 - `POST /checkout` - Process checkout
 - `GET  /checkout/status` - Get status

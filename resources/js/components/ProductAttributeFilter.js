@@ -494,9 +494,8 @@ class ProductAttributeFilter {
     }
 }
 
-// Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ProductAttributeFilter;
-}
+// Vite/ESM + legacy global support
+window.ProductAttributeFilter = ProductAttributeFilter;
+export default ProductAttributeFilter;
 
 

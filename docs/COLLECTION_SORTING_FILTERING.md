@@ -63,8 +63,8 @@ A comprehensive sorting and filtering system for collection pages with AJAX load
 
 ## Controllers
 
-### Storefront\CollectionFilterController
-- **Location**: `app/Http/Controllers/Storefront/CollectionFilterController.php`
+### Frontend\CollectionFilterController
+- **Location**: `app/Http/Controllers/Frontend/CollectionFilterController.php`
 - **Methods**:
   - `index()`: Main filtering/sorting endpoint (AJAX and regular)
   - `applyFilters()`: Apply all filters to query
@@ -84,7 +84,7 @@ A comprehensive sorting and filtering system for collection pages with AJAX load
 ## Views
 
 ### Collection Show Page
-- **Location**: `resources/views/storefront/collections/show.blade.php`
+- **Location**: `resources/views/frontend/collections/show.blade.php`
 - **Features**:
   - Filter sidebar
   - Sort dropdown
@@ -94,7 +94,7 @@ A comprehensive sorting and filtering system for collection pages with AJAX load
   - Loading indicators
 
 ### Product Grid Partial
-- **Location**: `resources/views/storefront/collections/_product-grid.blade.php`
+- **Location**: `resources/views/frontend/collections/_product-grid.blade.php`
 - **Features**:
   - Reusable product grid
   - Empty state handling

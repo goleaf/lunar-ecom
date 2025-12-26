@@ -76,7 +76,7 @@ class CartController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Item added to cart',
+                    'message' => __('frontend.messages.item_added_to_cart'),
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
                         'grand_total' => $breakdown['grand_total'],
@@ -91,7 +91,7 @@ class CartController extends Controller
             }
 
             return redirect()->route('frontend.cart.index')
-                ->with('success', 'Item added to cart');
+                ->with('success', __('frontend.messages.item_added_to_cart'));
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -133,7 +133,7 @@ class CartController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Cart updated',
+                    'message' => __('frontend.messages.cart_updated'),
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
                         'grand_total' => $breakdown['grand_total'],
@@ -148,7 +148,7 @@ class CartController extends Controller
             }
 
             return redirect()->route('frontend.cart.index')
-                ->with('success', 'Cart updated');
+                ->with('success', __('frontend.messages.cart_updated'));
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -182,7 +182,7 @@ class CartController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Item removed from cart',
+                    'message' => __('frontend.messages.item_removed_from_cart'),
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
                         'grand_total' => $breakdown['grand_total'],
@@ -197,7 +197,7 @@ class CartController extends Controller
             }
 
             return redirect()->route('frontend.cart.index')
-                ->with('success', 'Item removed from cart');
+                ->with('success', __('frontend.messages.item_removed_from_cart'));
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -224,7 +224,7 @@ class CartController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Cart cleared',
+                'message' => __('frontend.messages.cart_cleared'),
                 'cart' => [
                     'item_count' => 0,
                     'total' => null,
@@ -233,7 +233,7 @@ class CartController extends Controller
         }
 
         return redirect()->route('frontend.cart.index')
-            ->with('success', 'Cart cleared');
+            ->with('success', __('frontend.messages.cart_cleared'));
     }
 
     /**
@@ -260,7 +260,7 @@ class CartController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Discount applied successfully',
+                    'message' => __('frontend.messages.discount_applied'),
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
                         'grand_total' => $breakdown['grand_total'],
@@ -278,7 +278,7 @@ class CartController extends Controller
             }
 
             return redirect()->route('frontend.cart.index')
-                ->with('success', 'Discount applied successfully');
+                ->with('success', __('frontend.messages.discount_applied'));
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -312,7 +312,7 @@ class CartController extends Controller
                 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Discount removed',
+                    'message' => __('frontend.messages.discount_removed'),
                     'cart' => [
                         'item_count' => $this->cartManager->getItemCount(),
                         'grand_total' => $breakdown['grand_total'],
@@ -328,7 +328,7 @@ class CartController extends Controller
             }
 
             return redirect()->route('frontend.cart.index')
-                ->with('success', 'Discount removed');
+                ->with('success', __('frontend.messages.discount_removed'));
         } catch (\RuntimeException $e) {
             if ($request->expectsJson()) {
                 return response()->json([

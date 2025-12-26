@@ -87,7 +87,7 @@
 
 ## 🎯 Controllers Protected
 
-### Storefront Controllers (11)
+### Frontend Controllers (11)
 1. ✅ AddressController - All methods
 2. ✅ ProductController - show
 3. ✅ CategoryController - show
@@ -96,7 +96,7 @@
 6. ✅ MediaController - All upload/delete operations
 7. ✅ ReviewController - index, store
 8. ✅ ProductAssociationController - store, destroy, index
-9. ✅ CartController (Storefront) - add
+9. ✅ CartController (Frontend) - add
 10. ✅ CartController (API) - addItem
 11. ✅ CheckoutController - confirmation
 

@@ -17,7 +17,7 @@ class LanguageController extends Controller
 {
     /**
      * Get all available languages.
-     * 
+     *
      * @return JsonResponse
      */
     public function index(): JsonResponse
@@ -40,7 +40,7 @@ class LanguageController extends Controller
 
     /**
      * Switch to a different language.
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */
@@ -59,7 +59,7 @@ class LanguageController extends Controller
             ], 404);
         }
 
-        // Set the language in the storefront session
+        // Set the language in the frontend session
         FrontendSessionHelper::setLanguage($language);
 
         // Persist cookie preference (used by deterministic locale resolution).
@@ -71,14 +71,14 @@ class LanguageController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Language switched successfully',
+            'message' => __('frontend.messages.language_switched'),
             'language' => $this->getCurrentLanguageData(),
         ]);
     }
 
     /**
      * Get the current language.
-     * 
+     *
      * @return JsonResponse
      */
     public function current(): JsonResponse
@@ -90,13 +90,13 @@ class LanguageController extends Controller
 
     /**
      * Get current language data as array.
-     * 
+     *
      * @return array|null
      */
     protected function getCurrentLanguageData(): ?array
     {
         $language = FrontendSessionHelper::getLanguage();
-        
+
         if (!$language) {
             return null;
         }

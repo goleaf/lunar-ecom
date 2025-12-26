@@ -96,7 +96,7 @@ All form requests now use policy authorization:
 - `UpdateVariantRequest`
 - `GenerateVariantsRequest`
 
-### Storefront Controllers (11 files)
+### Frontend Controllers (11 files)
 1. **AddressController** - All methods (viewAny, view, create, update, delete, setDefaultShipping, setDefaultBilling)
 2. **ProductController** - show method
 3. **CategoryController** - show method
@@ -105,7 +105,7 @@ All form requests now use policy authorization:
 6. **MediaController** - uploadProductImages, uploadCollectionImages, uploadBrandLogo, deleteMedia, reorderMedia
 7. **ReviewController** - index, store methods
 8. **ProductAssociationController** - store, destroy, index methods
-9. **CartController** (Storefront) - add method
+9. **CartController** (Frontend) - add method
 10. **CartController** (API) - addItem method
 11. **CheckoutController** - confirmation method
 

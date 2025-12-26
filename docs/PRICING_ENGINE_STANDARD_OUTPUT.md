@@ -163,7 +163,7 @@ When a variant has `price_locked = true`, the output format remains the same, bu
 
 ## Integration
 
-### Storefront
+### Frontend
 
 ```php
 class ProductController extends Controller

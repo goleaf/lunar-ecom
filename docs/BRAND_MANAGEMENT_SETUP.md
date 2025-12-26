@@ -135,18 +135,18 @@ GET  /products?brand_id=1 - Products filtered by brand
 
 ## Views
 
-### Brand Index (`resources/views/storefront/brands/index.blade.php`)
+### Brand Index (`resources/views/frontend/brands/index.blade.php`)
 - A-Z navigation
 - Brand cards grouped by letter
 - Responsive grid layout
 
-### Brand Show (`resources/views/storefront/brands/show.blade.php`)
+### Brand Show (`resources/views/frontend/brands/show.blade.php`)
 - Brand header with logo and description
 - Product grid
 - Pagination
 - Back to directory link
 
-### Brand Card (`resources/views/storefront/brands/_brand-card.blade.php`)
+### Brand Card (`resources/views/frontend/brands/_brand-card.blade.php`)
 - Reusable brand card component
 - Logo display
 - Product count
@@ -186,18 +186,18 @@ $products = Product::with('brand')
 
 ### New Files
 - `app/Lunar/Brands/BrandHelper.php` - Brand helper utilities
-- `app/Http/Controllers/Storefront/BrandController.php` - Brand controller
-- `resources/views/storefront/brands/index.blade.php` - Brand directory page
-- `resources/views/storefront/brands/show.blade.php` - Brand show page
-- `resources/views/storefront/brands/_brand-card.blade.php` - Brand card component
+- `app/Http/Controllers/Frontend/BrandController.php` - Brand controller
+- `resources/views/frontend/brands/index.blade.php` - Brand directory page
+- `resources/views/frontend/brands/show.blade.php` - Brand show page
+- `resources/views/frontend/brands/_brand-card.blade.php` - Brand card component
 - `database/seeders/BrandSeeder.php` - Brand seeder
 - `app/Console/Commands/SeedBrands.php` - Artisan command for seeding brands
 
 ### Modified Files
 - `routes/web.php` - Added brand routes
-- `app/Http/Controllers/Storefront/ProductController.php` - Added brand filtering
-- `resources/views/storefront/products/index.blade.php` - Added brand filter dropdown
-- `resources/views/storefront/layout.blade.php` - Added brands link to navigation
+- `app/Http/Controllers/Frontend/ProductController.php` - Added brand filtering
+- `resources/views/frontend/products/index.blade.php` - Added brand filter dropdown
+- `resources/views/frontend/layout.blade.php` - Added brands link to navigation
 
 ## Usage Examples
 

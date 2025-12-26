@@ -48,8 +48,8 @@ The Lunar PHP Cart has been **fully integrated** into your Laravel application w
 ## 📁 File Structure
 
 ### Controllers
-- `app/Http/Controllers/Storefront/CartController.php` - Main cart controller with all operations
-- `app/Http/Controllers/Storefront/CheckoutController.php` - Checkout processing
+- `app/Http/Controllers/Frontend/CartController.php` - Main cart controller with all operations
+- `app/Http/Controllers/Frontend/CheckoutController.php` - Checkout processing
 
 ### Services
 - `app/Services/CartManager.php` - Cart business logic
@@ -64,8 +64,8 @@ The Lunar PHP Cart has been **fully integrated** into your Laravel application w
 - `app/Listeners/ClearCartOnLogout.php` - Clears cart on logout (if configured)
 
 ### Views
-- `resources/views/storefront/cart/index.blade.php` - Cart page view
-- `resources/views/storefront/components/cart-widget.blade.php` - Header cart widget
+- `resources/views/frontend/cart/index.blade.php` - Cart page view
+- `resources/views/frontend/components/cart-widget.blade.php` - Header cart widget
 
 ### Configuration
 - `config/lunar/cart.php` - Lunar cart configuration

@@ -9,7 +9,7 @@ use Lunar\Models\Product;
 /**
  * Ensures every product is assigned to at least one collection.
  *
- * Storefront /collections page uses `Collection::whereHas('products')`, so without pivot
+ * Frontend /collections page uses `Collection::whereHas('products')`, so without pivot
  * assignments collections won't appear.
  */
 class ExistingProductCollectionAssignmentsSeeder extends Seeder

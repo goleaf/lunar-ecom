@@ -38,7 +38,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to add an address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $countries = AddressHelper::getCountries();
@@ -56,7 +56,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to add an address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $validated = $request->validate([
@@ -93,7 +93,7 @@ class AddressController extends Controller
         }
 
         return redirect()->route('frontend.addresses.index')
-            ->with('success', 'Address added successfully');
+            ->with('success', __('frontend.messages.address_added'));
     }
 
     /**
@@ -105,7 +105,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to edit an address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $this->authorize('update', $address);
@@ -127,7 +127,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to update an address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $this->authorize('update', $address);
@@ -170,7 +170,7 @@ class AddressController extends Controller
         }
 
         return redirect()->route('frontend.addresses.index')
-            ->with('success', 'Address updated successfully');
+            ->with('success', __('frontend.messages.address_updated'));
     }
 
     /**
@@ -182,7 +182,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to delete an address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $this->authorize('delete', $address);
@@ -190,7 +190,7 @@ class AddressController extends Controller
         $address->delete();
 
         return redirect()->route('frontend.addresses.index')
-            ->with('success', 'Address deleted successfully');
+            ->with('success', __('frontend.messages.address_deleted'));
     }
 
     /**
@@ -202,7 +202,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to set default address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $this->authorize('setDefaultShipping', $address);
@@ -210,7 +210,7 @@ class AddressController extends Controller
         AddressHelper::setDefaultShipping($address);
 
         return redirect()->route('frontend.addresses.index')
-            ->with('success', 'Default shipping address updated');
+            ->with('success', __('frontend.messages.default_shipping_updated'));
     }
 
     /**
@@ -222,7 +222,7 @@ class AddressController extends Controller
         
         if (!$user) {
             return redirect()->route('login')
-                ->with('error', 'Please log in to set default address');
+                ->with('error', __('frontend.messages.login_required'));
         }
 
         $this->authorize('setDefaultBilling', $address);
@@ -230,7 +230,7 @@ class AddressController extends Controller
         AddressHelper::setDefaultBilling($address);
 
         return redirect()->route('frontend.addresses.index')
-            ->with('success', 'Default billing address updated');
+            ->with('success', __('frontend.messages.default_billing_updated'));
     }
 }
 

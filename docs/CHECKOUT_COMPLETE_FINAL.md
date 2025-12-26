@@ -21,9 +21,9 @@ All components of the checkout and order locking system have been implemented an
 - ✅ `app/Services/CheckoutService.php` - Checkout orchestration
 
 #### Controllers
-- ✅ `app/Http/Controllers/Storefront/CheckoutController.php` - Updated with new system
-- ✅ `app/Http/Controllers/Storefront/CheckoutStatusController.php` - Status API
-- ✅ `app/Http/Controllers/Storefront/CartController.php` - Protected with lock checks
+- ✅ `app/Http/Controllers/Frontend/CheckoutController.php` - Updated with new system
+- ✅ `app/Http/Controllers/Frontend/CheckoutStatusController.php` - Status API
+- ✅ `app/Http/Controllers/Frontend/CartController.php` - Protected with lock checks
 - ✅ `app/Http/Controllers/Admin/CheckoutLockController.php` - Admin management
 
 #### Middleware
@@ -128,7 +128,7 @@ POST /admin/checkout-locks/{id}/release - Release lock manually
 
 ## 🔧 API Endpoints
 
-### Storefront
+### Frontend
 ```
 GET  /checkout                    - Display checkout (creates lock)
 POST /checkout                    - Process checkout

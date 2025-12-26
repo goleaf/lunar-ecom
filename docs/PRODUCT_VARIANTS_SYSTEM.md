@@ -540,7 +540,7 @@ return view('products.show', [
 - `app/Lunar/Products/ProductOptionHelper.php` - Product option helper
 
 ### Controllers
-- `app/Http/Controllers/Storefront/VariantController.php` - Variant API controller
+- `app/Http/Controllers/Frontend/VariantController.php` - Variant API controller
 
 ### Requests
 - `app/Http/Requests/StoreVariantRequest.php` - Create variant validation

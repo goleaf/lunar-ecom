@@ -1,44 +1,3 @@
-@extends('frontend.layout')
-
-@section('title', $metaTags['title'] ?? $product->translateAttribute('name'))
-
-@section('meta')
-    <meta name="description" content="{{ $metaTags['description'] }}">
-    <meta name="keywords" content="{{ $metaTags['keywords'] }}">
-    <meta name="robots" content="{{ $robotsMeta }}">
-
-    {{-- Open Graph --}}
-    <meta property="og:title" content="{{ $metaTags['og:title'] }}">
-    <meta property="og:description" content="{{ $metaTags['og:description'] }}">
-    @if($metaTags['og:image'])
-        <meta property="og:image" content="{{ $metaTags['og:image'] }}">
-    @endif
-    <meta property="og:url" content="{{ $metaTags['og:url'] }}">
-    <meta property="og:type" content="{{ $metaTags['og:type'] }}">
-    @if(isset($metaTags['og:site_name']))
-        <meta property="og:site_name" content="{{ $metaTags['og:site_name'] }}">
-    @endif
-
-    {{-- Twitter Card --}}
-    @if(isset($metaTags['twitter:card']))
-        <meta name="twitter:card" content="{{ $metaTags['twitter:card'] }}">
-        <meta name="twitter:title" content="{{ $metaTags['twitter:title'] }}">
-        <meta name="twitter:description" content="{{ $metaTags['twitter:description'] }}">
-        @if(isset($metaTags['twitter:image']))
-            <meta name="twitter:image" content="{{ $metaTags['twitter:image'] }}">
-        @endif
-    @endif
-
-    {{-- Canonical URL --}}
-    <link rel="canonical" href="{{ $metaTags['canonical'] }}">
-
-    {{-- Structured Data (JSON-LD) --}}
-    <script type="application/ld+json">
-        {!! json_encode($structuredData, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
-    </script>
-@endsection
-
-@section('content')
 <div class="px-4 py-6">
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
@@ -263,5 +222,4 @@
             :limit="8" />
     </div>
 </div>
-@endsection
 

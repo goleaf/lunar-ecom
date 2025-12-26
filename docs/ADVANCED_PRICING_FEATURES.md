@@ -312,7 +312,7 @@ return [
 
 ## Integration Examples
 
-### Storefront Controller
+### Frontend Controller
 
 ```php
 use App\Services\UnifiedPricingEngine;

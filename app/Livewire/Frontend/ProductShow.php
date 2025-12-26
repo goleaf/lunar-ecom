@@ -8,6 +8,7 @@ use App\Models\ProductVariant;
 use App\Services\ProductRelationService;
 use App\Traits\ChecksCheckoutLock;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\HtmlString;
 use Livewire\Component;
 use Lunar\Facades\CartSession;
 use Lunar\Models\Url;
@@ -114,12 +115,21 @@ class ProductShow extends Component
         $metaTitle = $this->product->translateAttribute('meta_title');
         $metaDescription = $this->product->translateAttribute('meta_description');
 
+        $pageMeta = new HtmlString(view('frontend.products._meta-show', [
+            'metaTags' => $this->metaTags,
+            'robotsMeta' => $this->robotsMeta,
+            'structuredData' => $this->structuredData,
+        ])->render());
+
         return view('livewire.frontend.product-show', [
             'description' => $description,
             'material' => $material,
             'weight' => $weight,
             'metaTitle' => $metaTitle,
             'metaDescription' => $metaDescription,
+        ])->layout('frontend.layout', [
+            'pageTitle' => $metaTitle ?: ($this->metaTags['title'] ?? $this->product->translateAttribute('name')),
+            'pageMeta' => $pageMeta,
         ]);
     }
 }

@@ -11,7 +11,7 @@ The system provides:
 3. **Bulk attribute editing** - Edit attributes for multiple products
 4. **Drag & drop media** - Intuitive media management
 5. **Real-time validation** - Instant feedback on form fields
-6. **Preview storefront view** - Preview products before publishing
+6. **Preview frontend view** - Preview products before publishing
 7. **Clone product button** - Duplicate products quickly
 8. **Change history timeline** - Track all product changes
 
@@ -93,11 +93,11 @@ Intuitive media management with drag & drop.
 <livewire:admin.livewire.drag-drop-media-manager :product="$product" />
 ```
 
-### Preview Storefront Action
+### Preview Frontend Action
 
-Preview products in storefront view.
+Preview products in frontend view.
 
-**Location**: `app/Admin/Actions/PreviewStorefrontAction.php`
+**Location**: `app/Admin/Actions/PreviewFrontendAction.php`
 
 **Usage**:
 
@@ -106,7 +106,7 @@ Preview products in storefront view.
 protected function getHeaderActions(): array
 {
     return [
-        \App\Admin\Actions\PreviewStorefrontAction::make(),
+        \App\Admin\Actions\PreviewFrontendAction::make(),
     ];
 }
 ```
@@ -250,7 +250,7 @@ The extended edit page includes:
 
 ```php
 // Click "Preview" button in header
-// Opens storefront view in new tab
+// Opens frontend view in new tab
 // Shows product as customers see it
 ```
 
@@ -362,7 +362,7 @@ LunarPanel::panel(function ($panel) {
 - ✅ Field dependencies
 - ✅ Error messages
 
-### Preview Storefront
+### Preview Frontend
 - ✅ One-click preview
 - ✅ New tab
 - ✅ Preview mode

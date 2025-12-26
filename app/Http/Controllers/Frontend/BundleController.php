@@ -12,7 +12,7 @@ use Lunar\Facades\Currency;
 use Lunar\Facades\StorefrontSession;
 
 /**
- * Controller for storefront bundle functionality.
+ * Controller for frontend bundle functionality.
  */
 class BundleController extends Controller
 {
@@ -175,7 +175,7 @@ class BundleController extends Controller
             );
 
             return response()->json([
-                'message' => 'Bundle added to cart successfully',
+                'message' => __('frontend.messages.bundle_added_to_cart'),
                 'cart' => $cart->fresh(),
                 'pricing' => $result['pricing'],
             ]);

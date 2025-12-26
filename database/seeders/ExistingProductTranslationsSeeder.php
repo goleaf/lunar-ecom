@@ -11,7 +11,7 @@ use Lunar\Models\Language;
 /**
  * Ensures every product has translated attribute_data for all system languages.
  *
- * Currently focuses on commonly-used storefront/admin fields that are typically translated:
+ * Currently focuses on commonly-used frontend/admin fields that are typically translated:
  * - name
  * - description
  *

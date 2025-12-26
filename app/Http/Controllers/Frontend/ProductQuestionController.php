@@ -59,7 +59,7 @@ class ProductQuestionController extends Controller
                         'answer_count' => $q->answers()->count(),
                     ];
                 }),
-                'message' => 'Similar questions found. Please review them before submitting.',
+                'message' => __('frontend.messages.similar_questions_found'),
             ], 422);
         }
 
@@ -69,7 +69,7 @@ class ProductQuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Your question has been submitted and will be reviewed.',
+            'message' => __('frontend.messages.question_submitted'),
             'question' => $question,
         ]);
     }
@@ -82,7 +82,7 @@ class ProductQuestionController extends Controller
         if (!$question->isApproved()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This question is not available for answering.',
+                'message' => __('frontend.messages.question_not_available'),
             ], 403);
         }
 
@@ -97,7 +97,7 @@ class ProductQuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Your answer has been submitted and will be reviewed.',
+            'message' => __('frontend.messages.answer_submitted'),
             'answer' => $answer,
         ]);
     }

@@ -73,8 +73,8 @@ A deterministic, auditable, real-time cart pricing engine has been successfully 
 - `app/Services/CartManager.php` - Integrated pricing engine, added `forceReprice()` method
 
 **Updated Controllers:**
-- `app/Http/Controllers/Storefront/CartController.php` - Added `pricing()` endpoint
-- `app/Http/Controllers/Storefront/CheckoutController.php` - Forces repricing before checkout
+- `app/Http/Controllers/Frontend/CartController.php` - Added `pricing()` endpoint
+- `app/Http/Controllers/Frontend/CheckoutController.php` - Forces repricing before checkout
 
 **Routes:**
 - Added `/cart/pricing` route for detailed pricing information

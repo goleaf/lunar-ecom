@@ -163,14 +163,14 @@ $checkoutService->cancelCheckout($lock);
 - `app/Services/CheckoutStateMachine.php`
 - `app/Services/CheckoutService.php`
 - `app/Http/Middleware/ProtectCheckoutCart.php`
-- `app/Http/Controllers/Storefront/CheckoutStatusController.php`
+- `app/Http/Controllers/Frontend/CheckoutStatusController.php`
 - `app/Console/Commands/CleanupExpiredCheckoutLocks.php`
 - `app/Listeners/PreventCartModificationDuringCheckout.php`
 - `CHECKOUT_ORDER_LOCKING.md`
 - `CHECKOUT_IMPLEMENTATION_SUMMARY.md`
 
 **Modified Files:**
-- `app/Http/Controllers/Storefront/CheckoutController.php`
+- `app/Http/Controllers/Frontend/CheckoutController.php`
 - `bootstrap/app.php` (middleware registration)
 - `routes/web.php` (checkout status routes)
 - `routes/console.php` (scheduled cleanup)

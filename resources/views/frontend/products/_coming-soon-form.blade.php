@@ -10,7 +10,7 @@
             </p>
         @endif
 
-        <form id="comingSoonForm" class="space-y-3">
+        <form id="comingSoonForm" class="space-y-3" data-url="{{ route('frontend.coming-soon.subscribe', $product->id) }}">
             @csrf
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Get notified when available</label>
@@ -35,35 +35,6 @@
         </form>
     </div>
 
-    <script>
-        document.getElementById('comingSoonForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            const messageDiv = document.getElementById('comingSoonMessage');
-
-            try {
-                const response = await fetch('{{ route("frontend.coming-soon.subscribe", $product->id) }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    messageDiv.innerHTML = '<span class="text-green-600">✓ ' + data.message + '</span>';
-                    form.reset();
-                } else {
-                    messageDiv.innerHTML = '<span class="text-red-600">✗ ' + (data.message || 'Something went wrong') + '</span>';
-                }
-            } catch (error) {
-                messageDiv.innerHTML = '<span class="text-red-600">✗ Failed to subscribe. Please try again.</span>';
-            }
-        });
-    </script>
 @endif
 
 

@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Unsubscribed')
+@section('title', __('frontend.coming_soon.unsubscribed_title'))
 
 @section('content')
 <div class="max-w-2xl mx-auto px-4 py-12">

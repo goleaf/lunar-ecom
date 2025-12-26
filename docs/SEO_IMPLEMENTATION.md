@@ -66,13 +66,13 @@ This document describes the comprehensive SEO features implemented for the Lunar
 - `app/Services/SEOService.php` - General SEO service
 
 ### Controllers
-- `app/Http/Controllers/Storefront/SitemapController.php` - XML sitemap generation
-- `app/Http/Controllers/Storefront/RobotsController.php` - Dynamic robots.txt
+- `app/Http/Controllers/Frontend/SitemapController.php` - XML sitemap generation
+- `app/Http/Controllers/Frontend/RobotsController.php` - Dynamic robots.txt
 
 ### Views
 - `resources/views/sitemap/index.blade.php` - Sitemap index template
 - `resources/views/sitemap/urlset.blade.php` - URL set template
-- Updated all storefront views with SEO meta sections
+- Updated all frontend views with SEO meta sections
 
 ### Routes
 - `/sitemap/` - Main sitemap index
@@ -127,7 +127,7 @@ $breadcrumbData = SEOService::generateBreadcrumbStructuredData($breadcrumbs);
 
 ## View Implementation
 
-All storefront views now include SEO meta tags:
+All frontend views now include SEO meta tags:
 
 ```blade
 @section('meta')

@@ -226,7 +226,7 @@ The `recommendation_logic` field uses JSON format:
 
 ## Next Steps
 
-To use this system on the storefront:
+To use this system on the frontend:
 
 1. Create API endpoints or Livewire components to display size guides
 2. Build interactive fit finder quiz component

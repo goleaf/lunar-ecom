@@ -128,18 +128,18 @@ class ReviewController extends Controller
 
             if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Review submitted successfully. It will be reviewed before publication.',
+                    'message' => __('frontend.messages.review_submitted'),
                     'review' => $review,
                 ], 201);
             }
 
             return redirect()
                 ->route('frontend.products.show', $product->urls->first()?->slug ?? $product->id)
-                ->with('success', 'Review submitted successfully. It will be reviewed before publication.');
+                ->with('success', __('frontend.messages.review_submitted'));
         } catch (ValidationException $e) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Validation failed',
+                    'message' => __('frontend.messages.validation_failed'),
                     'errors' => $e->errors(),
                 ], 422);
             }
@@ -175,13 +175,13 @@ class ReviewController extends Controller
             );
 
             return response()->json([
-                'message' => 'Vote recorded successfully',
+                'message' => __('frontend.messages.vote_recorded'),
                 'vote' => $vote,
                 'review' => $review->fresh(['helpfulVotes']),
             ]);
         } catch (ValidationException $e) {
             return response()->json([
-                'message' => 'You have already voted on this review',
+                'message' => __('frontend.messages.already_voted'),
                 'errors' => $e->errors(),
             ], 422);
         }
@@ -203,7 +203,7 @@ class ReviewController extends Controller
         $this->reviewService->reportReview($review, $validated['reason'] ?? null);
 
         return response()->json([
-            'message' => 'Review reported successfully. Thank you for your feedback.',
+            'message' => __('frontend.messages.review_reported'),
         ]);
     }
 

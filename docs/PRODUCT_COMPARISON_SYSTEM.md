@@ -56,7 +56,7 @@ No database models required - uses session storage for comparison items.
 
 ## Controllers
 
-### Storefront\ComparisonController
+### Frontend\ComparisonController
 - `index()`: Display comparison page
 - `add()`: Add product to comparison (AJAX)
 - `remove()`: Remove product from comparison (AJAX)
@@ -80,7 +80,7 @@ Route::prefix('comparison')->name('frontend.comparison.')->group(function () {
 ## Frontend Components
 
 ### Compare Button
-- **Location**: `resources/views/storefront/components/compare-button.blade.php`
+- **Location**: `resources/views/frontend/components/compare-button.blade.php`
 - **Usage**: `<x-frontend.compare-button :product="$product" />`
 - **Features**:
   - Toggle add/remove from comparison
@@ -89,7 +89,7 @@ Route::prefix('comparison')->name('frontend.comparison.')->group(function () {
   - AJAX updates without page reload
 
 ### Comparison Bar
-- **Location**: `resources/views/storefront/components/comparison-bar.blade.php`
+- **Location**: `resources/views/frontend/components/comparison-bar.blade.php`
 - **Usage**: Included in layout automatically
 - **Features**:
   - Fixed bottom bar when items in comparison
@@ -98,7 +98,7 @@ Route::prefix('comparison')->name('frontend.comparison.')->group(function () {
   - Clear all button
 
 ### Comparison Page
-- **Location**: `resources/views/storefront/comparison/index.blade.php`
+- **Location**: `resources/views/frontend/comparison/index.blade.php`
 - **Features**:
   - Side-by-side comparison table
   - Sticky first column

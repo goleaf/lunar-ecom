@@ -358,7 +358,7 @@ Features:
 
 ### Search Results Page
 
-The search results page (`resources/views/storefront/search/index.blade.php`) includes:
+The search results page (`resources/views/frontend/search/index.blade.php`) includes:
 - Faceted search filters
 - Product grid
 - Pagination
@@ -433,8 +433,8 @@ This command:
 - `app/Lunar/Search/SearchAnalyticsHelper.php` - Analytics helper
 
 ### Controllers
-- `app/Http/Controllers/Storefront/SearchController.php` - Search endpoints
-- `app/Http/Controllers/Storefront/SearchAnalyticsController.php` - Analytics endpoints
+- `app/Http/Controllers/Frontend/SearchController.php` - Search endpoints
+- `app/Http/Controllers/Frontend/SearchAnalyticsController.php` - Analytics endpoints
 
 ### Indexers
 - `app/Lunar/Search/Indexers/CustomProductIndexer.php` - Product indexer
@@ -444,8 +444,8 @@ This command:
 - `app/Models/SearchSynonym.php` - Search synonyms
 
 ### Views
-- `resources/views/storefront/search/index.blade.php` - Search results page
-- `resources/views/storefront/components/search-autocomplete.blade.php` - Autocomplete component
+- `resources/views/frontend/search/index.blade.php` - Search results page
+- `resources/views/frontend/components/search-autocomplete.blade.php` - Autocomplete component
 
 ### Commands
 - `app/Console/Commands/ConfigureMeilisearchIndex.php` - Index configuration command

@@ -7,8 +7,16 @@
 
     class CollectionFilters {
         constructor() {
-            this.collectionId = window.collectionFilters?.collectionId;
-            this.baseUrl = window.collectionFilters?.baseUrl;
+            const configEl = document.getElementById('collection-filters-config');
+            this.collectionId = configEl?.dataset?.collectionId;
+            this.baseUrl = configEl?.dataset?.baseUrl;
+            this.initialFilterOptions = (() => {
+                try {
+                    return JSON.parse(configEl?.dataset?.filterOptions || '[]');
+                } catch (_) {
+                    return [];
+                }
+            })();
             this.currentPage = 1;
             this.filters = {};
             this.sortBy = 'default';
@@ -514,8 +522,8 @@
 
         loadFilterOptions() {
             // Initial load of filter options
-            if (window.collectionFilters?.filterOptions) {
-                this.updateFilterOptions(window.collectionFilters.filterOptions);
+            if (this.initialFilterOptions) {
+                this.updateFilterOptions(this.initialFilterOptions);
             }
         }
 
@@ -551,9 +559,9 @@
 
     // Initialize when DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-        if (window.collectionFilters) {
-            window.collectionFilters = new CollectionFilters();
-        }
+        const configEl = document.getElementById('collection-filters-config');
+        if (!configEl) return;
+        window.collectionFilters = new CollectionFilters();
     });
 
     // Make clearAllFilters available globally

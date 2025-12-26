@@ -27,13 +27,13 @@ class CheckoutController extends Controller
 
         if (!$cart || $cart->lines->isEmpty()) {
             return redirect()->route('frontend.cart.index')
-                ->with('error', 'Your cart is empty');
+                ->with('error', __('frontend.messages.cart_empty'));
         }
 
         // Check if cart is locked
         if ($this->checkoutService->isCartLocked($cart)) {
             return redirect()->route('frontend.cart.index')
-                ->with('error', 'Your cart is currently being checked out. Please wait or try again.');
+                ->with('error', __('frontend.messages.cart_locked'));
         }
 
         // Start checkout lock
@@ -56,7 +56,7 @@ class CheckoutController extends Controller
 
         if (!$cart || $cart->lines->isEmpty()) {
             return redirect()->route('frontend.cart.index')
-                ->with('error', 'Your cart is empty');
+                ->with('error', __('frontend.messages.cart_empty'));
         }
 
         // Get active checkout lock
@@ -106,14 +106,14 @@ class CheckoutController extends Controller
             $order = $this->checkoutService->processCheckout($lock, $paymentData);
 
             return redirect()->route('frontend.checkout.confirmation', $order)
-                ->with('success', 'Order placed successfully');
+                ->with('success', __('frontend.messages.order_placed'));
 
         } catch (\Exception $e) {
             // Release checkout lock on failure
             $this->checkoutService->releaseCheckout($lock);
 
             return redirect()->route('frontend.checkout.index')
-                ->with('error', 'Checkout failed: ' . $e->getMessage())
+                ->with('error', __('frontend.messages.checkout_failed', ['message' => $e->getMessage()]))
                 ->withInput();
         }
     }

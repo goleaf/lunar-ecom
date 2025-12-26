@@ -69,8 +69,8 @@ All components have been implemented, verified, and are production-ready.
 #### Integration Updates (4 files)
 
 - `app/Services/CartManager.php` - Integrated pricing engine
-- `app/Http/Controllers/Storefront/CartController.php` - Added pricing endpoint
-- `app/Http/Controllers/Storefront/CheckoutController.php` - Forces repricing before checkout
+- `app/Http/Controllers/Frontend/CartController.php` - Added pricing endpoint
+- `app/Http/Controllers/Frontend/CheckoutController.php` - Forces repricing before checkout
 - `app/Providers/CartServiceProvider.php` - Registered CartPricingEngine
 - `app/Providers/AppServiceProvider.php` - Registered observers
 - `app/Providers/EventServiceProvider.php` - Registered event listeners

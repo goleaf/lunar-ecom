@@ -61,7 +61,7 @@
                     @endif
 
                     {{-- Add to Cart Form --}}
-                    <form id="addToCartForm" method="POST" action="{{ route('frontend.bundles.add-to-cart', $bundle) }}" class="space-y-4">
+                    <form id="addToCartForm" method="POST" action="{{ route('frontend.bundles.add-to-cart', $bundle) }}" class="space-y-4" data-cart-url="{{ route('frontend.cart.index') }}">
                         @csrf
                         <div>
                             <label class="block text-sm font-medium mb-2">{{ __('frontend.product.quantity') }}</label>
@@ -154,32 +154,6 @@
 </div>
 
 @push('scripts')
-<script>
-document.getElementById('addToCartForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const response = await fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok) {
-        // Redirect to cart or show success message
-        window.location.href = '{{ route("frontend.cart.index") }}';
-    } else {
-        alert(data.message || 'Failed to add bundle to cart');
-        if (data.errors) {
-            console.error(data.errors);
-        }
-    }
-});
-</script>
 @endpush
 @endsection
 

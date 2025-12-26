@@ -123,7 +123,7 @@ Route::prefix('admin/schedules')->name('admin.schedules.')->group(function () {
 ## Frontend Components
 
 ### Flash Sale Badge
-- **Location**: `resources/views/storefront/components/flash-sale-badge.blade.php`
+- **Location**: `resources/views/frontend/components/flash-sale-badge.blade.php`
 - **Usage**: `<x-frontend.flash-sale-badge :product="$product" />`
 - **Features**: Shows flash sale badge with countdown
 
@@ -147,7 +147,7 @@ Route::prefix('admin/schedules')->name('admin.schedules.')->group(function () {
 ### 2. Unpublish
 - Unpublishes product at scheduled time
 - Changes status to draft/archived
-- Hides from storefront
+- Hides from frontend
 
 ### 3. Flash Sale
 - Publishes product if not published

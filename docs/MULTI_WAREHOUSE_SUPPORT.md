@@ -336,7 +336,7 @@ $bestWarehouse = $warehouses->first();
 
 ## Integration Examples
 
-### Storefront Fulfillment
+### Frontend Fulfillment
 
 ```php
 use App\Services\MultiWarehouseService;

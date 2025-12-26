@@ -350,14 +350,14 @@ $options = $service->getFilterOptions($attributes, $productQuery);
 
 ### Product Index Page
 
-The product index page (`resources/views/storefront/products.index.blade.php`) includes:
+The product index page (`resources/views/frontend/products.index.blade.php`) includes:
 - Filter sidebar with attribute filters
 - Active filters display
 - Product grid with filtered results
 
 ### Category Pages
 
-Category pages (`resources/views/storefront/categories/show.blade.php`) include:
+Category pages (`resources/views/frontend/categories/show.blade.php`) include:
 - Filter sidebar with category-specific attributes
 - Price and brand filters
 - Attribute filters grouped by attribute group
@@ -389,13 +389,13 @@ Category pages (`resources/views/storefront/categories/show.blade.php`) include:
 
 ### Controllers
 - `app/Http/Controllers/AttributeFilterController.php` - API endpoints
-- `app/Http/Controllers/Storefront/ProductController.php` - Product listing with filters
-- `app/Http/Controllers/Storefront/CategoryController.php` - Category pages with filters
+- `app/Http/Controllers/Frontend/ProductController.php` - Product listing with filters
+- `app/Http/Controllers/Frontend/CategoryController.php` - Category pages with filters
 
 ### Views
-- `resources/views/storefront/components/attribute-filters.blade.php` - Filter component
-- `resources/views/storefront/products/index.blade.php` - Product listing with filters
-- `resources/views/storefront/categories/show.blade.php` - Category page with filters
+- `resources/views/frontend/components/attribute-filters.blade.php` - Filter component
+- `resources/views/frontend/products/index.blade.php` - Product listing with filters
+- `resources/views/frontend/categories/show.blade.php` - Category page with filters
 
 ### Seeders
 - `database/seeders/AttributeSeeder.php` - Common attributes seeder

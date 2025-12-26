@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Product Comparison')
+@section('title', __('frontend.comparison.title'))
 
 @section('content')
 <div class="px-4 py-6">
@@ -8,7 +8,7 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold">{{ __('frontend.comparison.title') }}</h1>
             <div class="flex gap-2">
-                <button onclick="clearComparison()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+                <button onclick="clearComparison()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300" data-comparison-confirm-clear="{{ __('frontend.comparison.confirm_clear') }}">
                     {{ __('frontend.comparison.clear_all') }}
                 </button>
                 <a href="{{ route('frontend.products.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -235,45 +235,6 @@
 </div>
 
 @push('scripts')
-<script>
-function removeFromComparison(productId) {
-    fetch(`/comparison/products/${productId}/remove`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
-}
-
-function clearComparison() {
-    if (!confirm('{{ __('frontend.comparison.confirm_clear') }}')) {
-        return;
-    }
-    
-    fetch('/comparison/clear', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
-}
-</script>
 @endpush
 @endsection
 

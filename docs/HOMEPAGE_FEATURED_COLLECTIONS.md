@@ -60,8 +60,8 @@ A comprehensive homepage system displaying featured collections with hero images
 
 ## Controllers
 
-### Storefront\HomepageController
-- **Location**: `app/Http/Controllers/Storefront/HomepageController.php`
+### Frontend\HomepageController
+- **Location**: `app/Http/Controllers/Frontend/HomepageController.php`
 - **Methods**:
   - `index()`: Display homepage with all sections
   - `getPromotionalBanners()`: Get active promotional banners
@@ -70,7 +70,7 @@ A comprehensive homepage system displaying featured collections with hero images
 ## Views
 
 ### Homepage Index
-- **Location**: `resources/views/storefront/homepage/index.blade.php`
+- **Location**: `resources/views/frontend/homepage/index.blade.php`
 - **Sections**:
   - Hero section with slider
   - Promotional banners (top)
@@ -80,7 +80,7 @@ A comprehensive homepage system displaying featured collections with hero images
   - New Arrivals section
 
 ### Collection Card Component
-- **Location**: `resources/views/storefront/components/collection-card.blade.php`
+- **Location**: `resources/views/frontend/components/collection-card.blade.php`
 - **Features**:
   - Collection image with fallback
   - Collection name and description

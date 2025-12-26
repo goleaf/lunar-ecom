@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Questions & Answers - ' . $product->translateAttribute('name'))
+@section('title', __('frontend.qa.title_for_product', ['product' => $product->translateAttribute('name')]))
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -12,7 +12,7 @@
 
     <div class="bg-white shadow rounded-lg p-6">
         <h2 class="text-xl font-semibold mb-4">Ask a question</h2>
-        <form id="question-form" class="space-y-4">
+        <form id="question-form" class="space-y-4" data-url="{{ route('frontend.products.questions.store', $product) }}">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Your question</label>
@@ -99,84 +99,6 @@
 </div>
 
 @push('scripts')
-<script>
-const questionForm = document.getElementById('question-form');
-const questionMessage = document.getElementById('question-message');
-
-questionForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    questionMessage.textContent = 'Submitting...';
-
-    const formData = new FormData(questionForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch('{{ route('frontend.products.questions.store', $product) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            questionMessage.textContent = data.message || 'Question submitted.';
-            setTimeout(() => window.location.reload(), 800);
-        } else {
-            questionMessage.textContent = data.message || 'Unable to submit question.';
-        }
-    } catch (error) {
-        questionMessage.textContent = 'Unable to submit question.';
-    }
-});
-
-document.querySelectorAll('.answer-form').forEach((form) => {
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch(form.dataset.url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload)
-            });
-            if (response.ok) {
-                window.location.reload();
-            }
-        } catch (error) {
-            alert('Failed to submit answer.');
-        }
-    });
-});
-
-document.querySelectorAll('.mark-helpful').forEach((button) => {
-    button.addEventListener('click', async () => {
-        try {
-            const response = await fetch(button.dataset.url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            if (response.ok) {
-                window.location.reload();
-            }
-        } catch (error) {
-            alert('Unable to mark helpful.');
-        }
-    });
-});
-</script>
 @endpush
 @endsection
 

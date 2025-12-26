@@ -63,7 +63,7 @@ A comprehensive "Notify Me When Available" feature that allows customers to subs
 
 ## Controllers
 
-### Storefront\StockNotificationController
+### Frontend\StockNotificationController
 - `subscribe()`: Subscribe to notifications (AJAX)
 - `unsubscribe()`: Unsubscribe via token
 - `check()`: Check subscription status (AJAX)
@@ -101,7 +101,7 @@ Route::prefix('stock-notifications')->name('frontend.stock-notifications.')->gro
 ## Frontend Components
 
 ### Notify Me Button
-- **Location**: `resources/views/storefront/components/notify-me-button.blade.php`
+- **Location**: `resources/views/frontend/components/notify-me-button.blade.php`
 - **Usage**: `<x-frontend.notify-me-button :product="$product" />`
 - **Features**:
   - Only shows when product is out of stock
@@ -111,7 +111,7 @@ Route::prefix('stock-notifications')->name('frontend.stock-notifications.')->gro
   - Alpine.js powered
 
 ### Unsubscribe Page
-- **Location**: `resources/views/storefront/stock-notifications/unsubscribed.blade.php`
+- **Location**: `resources/views/frontend/stock-notifications/unsubscribed.blade.php`
 - **Features**:
   - Success/error messages
   - Clear confirmation

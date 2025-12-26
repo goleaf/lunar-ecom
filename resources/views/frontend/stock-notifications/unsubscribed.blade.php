@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Unsubscribe from Stock Notifications')
+@section('title', __('frontend.stock_notifications.unsubscribed_title'))
 
 @section('content')
 <div class="px-4 py-6">

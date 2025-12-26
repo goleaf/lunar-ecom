@@ -95,7 +95,7 @@ app/
 │   └── CartLineObserver.php                     # Cart line observer
 ├── Listeners/
 │   └── CartRepricingListener.php                # Event listener
-└── Http/Controllers/Storefront/
+└── Http/Controllers/Frontend/
     ├── CartController.php                       # Updated with pricing endpoint
     └── CheckoutController.php                   # Forces repricing + snapshot
 

@@ -36,8 +36,8 @@ Complete overview of Lunar's multi-language support implementation.
 - `POST /language/switch` - Switch language
 
 **Files:**
-- `resources/views/storefront/components/language-selector.blade.php` - Frontend component
-- `app/Http/Controllers/Storefront/LanguageController.php` - API controller
+- `resources/views/frontend/components/language-selector.blade.php` - Frontend component
+- `app/Http/Controllers/Frontend/LanguageController.php` - API controller
 - `routes/web.php` - Language routes (lines 132-136)
 
 ### 3. Fallback Support ✅
@@ -80,7 +80,7 @@ Complete overview of Lunar's multi-language support implementation.
 app/
 ├── Http/
 │   ├── Controllers/
-│   │   └── Storefront/
+│   │   └── Frontend/
 │   │       └── LanguageController.php          # Language API endpoints
 │   └── Middleware/
 │       ├── LanguageDetectionMiddleware.php     # Auto-detect language
@@ -108,7 +108,7 @@ resources/
 │   ├── de/frontend.php                       # German translations
 │   └── zh/frontend.php                       # Chinese translations
 └── views/
-    └── storefront/
+    └── frontend/
         └── components/
             └── language-selector.blade.php     # Language switcher UI
 

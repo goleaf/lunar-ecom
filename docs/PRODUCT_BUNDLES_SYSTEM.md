@@ -89,7 +89,7 @@ A comprehensive product bundling system that allows customers to purchase multip
 
 ## Controllers
 
-### Storefront\BundleController
+### Frontend\BundleController
 - `index()`: Display all bundles
 - `show()`: Display single bundle
 - `addToCart()`: Add bundle to cart
@@ -105,7 +105,7 @@ A comprehensive product bundling system that allows customers to purchase multip
 
 ## Routes
 
-### Storefront
+### Frontend
 ```php
 Route::prefix('bundles')->name('frontend.bundles.')->group(function () {
     Route::get('/', [BundleController::class, 'index'])->name('index');
@@ -236,12 +236,12 @@ When a bundle is added to cart:
 ## Frontend Components
 
 ### Bundle Index
-- `resources/views/storefront/bundles/index.blade.php`
+- `resources/views/frontend/bundles/index.blade.php`
 - Displays grid of available bundles
 - Shows bundle image, name, price, savings
 
 ### Bundle Show
-- `resources/views/storefront/bundles/show.blade.php`
+- `resources/views/frontend/bundles/show.blade.php`
 - Displays bundle details
 - Shows individual items
 - Customization interface (if enabled)

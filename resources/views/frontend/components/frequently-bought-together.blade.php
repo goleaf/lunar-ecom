@@ -51,24 +51,6 @@
     </div>
 
     @push('scripts')
-    <script>
-        function trackRecommendationClick(sourceProductId, recommendedProductId, type, location) {
-            fetch('{{ route("frontend.recommendations.track-click") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    source_product_id: sourceProductId,
-                    recommended_product_id: recommendedProductId,
-                    recommendation_type: type,
-                    display_location: location,
-                    recommendation_algorithm: 'frequently_bought_together'
-                })
-            }).catch(err => console.error('Failed to track recommendation click:', err));
-        }
-    </script>
     @endpush
 @endif
 

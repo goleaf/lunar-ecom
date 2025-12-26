@@ -20,7 +20,7 @@
 7. ✅ `app/Policies/OrderPolicy.php`
 
 ### Controllers Updated: 16
-- **Storefront Controllers:** 11 files
+- **Frontend Controllers:** 11 files
 - **Admin Controllers:** 2 files (staff-only checks)
 - **API Controllers:** 3 files
 

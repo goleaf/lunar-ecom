@@ -29,7 +29,7 @@ class CartController extends Controller
 
 ### 2. Enhanced Cart Controller Protection
 
-**File:** `app/Http/Controllers/Storefront/CartController.php`
+**File:** `app/Http/Controllers/Frontend/CartController.php`
 
 All cart modification methods now check for checkout locks:
 - `add()` - Prevents adding items during checkout
@@ -96,7 +96,7 @@ All cart modification methods now check for checkout locks:
    - `app/Services/CheckoutService.php`
 
 4. **Controllers**
-   - `app/Http/Controllers/Storefront/CheckoutStatusController.php`
+   - `app/Http/Controllers/Frontend/CheckoutStatusController.php`
 
 5. **Middleware**
    - `app/Http/Middleware/ProtectCheckoutCart.php`
@@ -114,8 +114,8 @@ All cart modification methods now check for checkout locks:
 
 ### Modified Files
 
-1. `app/Http/Controllers/Storefront/CheckoutController.php`
-2. `app/Http/Controllers/Storefront/CartController.php`
+1. `app/Http/Controllers/Frontend/CheckoutController.php`
+2. `app/Http/Controllers/Frontend/CartController.php`
 3. `bootstrap/app.php` (middleware registration)
 4. `routes/web.php` (checkout status routes)
 5. `routes/console.php` (cleanup schedule)

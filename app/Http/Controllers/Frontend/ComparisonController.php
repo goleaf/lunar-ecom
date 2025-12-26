@@ -95,7 +95,7 @@ class ComparisonController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Comparison cleared',
+            'message' => __('frontend.messages.comparison_cleared'),
         ]);
     }
 
@@ -177,7 +177,7 @@ class ComparisonController extends Controller
         } catch (\Exception $e) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => 'PDF export failed: ' . $e->getMessage(),
+                    'message' => __('frontend.messages.pdf_export_failed', ['message' => $e->getMessage()]),
                 ], 500);
             }
             

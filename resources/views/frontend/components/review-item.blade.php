@@ -103,27 +103,3 @@
     </div>
 </div>
 
-<script>
-function markHelpful(reviewId, isHelpful) {
-    fetch(`/reviews/${reviewId}/helpful`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({ is_helpful: isHelpful })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.message) {
-            // Reload the review section
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Unable to record your vote. Please try again.');
-    });
-}
-</script>
-

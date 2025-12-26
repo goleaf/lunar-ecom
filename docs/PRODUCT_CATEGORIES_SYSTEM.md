@@ -399,7 +399,7 @@ The category show page supports filtering:
 
 ### Category Show Page
 
-The category show page (`resources/views/storefront/categories.show.blade.php`) includes:
+The category show page (`resources/views/frontend/categories.show.blade.php`) includes:
 
 - Breadcrumb navigation
 - Category header with image and description
@@ -466,14 +466,14 @@ $count = $category->product_count;
 
 ### Controllers
 - `app/Http/Controllers/CategoryController.php` - API endpoints
-- `app/Http/Controllers/Storefront/CategoryController.php` - Storefront controller
+- `app/Http/Controllers/Frontend/CategoryController.php` - Frontend controller
 
 ### Media
 - `app/Lunar/Media/CategoryMediaDefinitions.php` - Category image definitions
 
 ### Views
-- `resources/views/storefront/categories/show.blade.php` - Category page
-- `resources/views/storefront/components/category-tree.blade.php` - Navigation component
+- `resources/views/frontend/categories/show.blade.php` - Category page
+- `resources/views/frontend/components/category-tree.blade.php` - Navigation component
 
 ### Migrations
 - `database/migrations/2025_12_25_091447_create_categories_table.php` - Categories table

@@ -42,40 +42,6 @@
     </div>
 
     @push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Track recommendation clicks
-            const recommendationsContainer = document.querySelector('.product-recommendations[data-type="{{ $type }}"]');
-            if (recommendationsContainer) {
-                const sourceProductId = recommendationsContainer.dataset.sourceProductId;
-                const recommendationType = recommendationsContainer.dataset.type;
-                const location = recommendationsContainer.dataset.location;
-                
-                recommendationsContainer.addEventListener('click', function(e) {
-                    const productCard = e.target.closest('.recommended-product');
-                    if (productCard) {
-                        const recommendedProductId = productCard.dataset.productId;
-                        
-                        // Track click via API
-                        fetch('{{ route("frontend.recommendations.track-click") }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                source_product_id: sourceProductId,
-                                recommended_product_id: recommendedProductId,
-                                recommendation_type: recommendationType,
-                                display_location: location,
-                                recommendation_algorithm: 'hybrid'
-                            })
-                        }).catch(err => console.error('Failed to track recommendation click:', err));
-                    }
-                });
-            }
-        });
-    </script>
     @endpush
 @endif
 

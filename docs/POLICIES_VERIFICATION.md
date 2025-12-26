@@ -19,21 +19,21 @@
 ### ✅ Authorization Coverage
 
 #### Controllers with Policy Checks (16 files, 43+ checks)
-1. **AddressController** (Storefront) - 5 checks
-2. **ProductController** (Storefront) - 1 check
-3. **CategoryController** (Storefront) - 1 check
+1. **AddressController** (Frontend) - 5 checks
+2. **ProductController** (Frontend) - 1 check
+3. **CategoryController** (Frontend) - 1 check
 4. **CategoryController** (API) - 1 check
-5. **CollectionController** (Storefront) - 1 check
+5. **CollectionController** (Frontend) - 1 check
 6. **CollectionController** (API) - 6 checks
-7. **VariantController** (Storefront) - 8 checks
+7. **VariantController** (Frontend) - 8 checks
 8. **ProductVariantController** (API) - 4 checks
 9. **VariantManagementController** (API) - 2 checks
-10. **MediaController** (Storefront) - 6 checks
-11. **ReviewController** (Storefront) - 2 checks
-12. **ProductAssociationController** (Storefront) - 3 checks
-13. **CartController** (Storefront) - 1 check
+10. **MediaController** (Frontend) - 6 checks
+11. **ReviewController** (Frontend) - 2 checks
+12. **ProductAssociationController** (Frontend) - 3 checks
+13. **CartController** (Frontend) - 1 check
 14. **CartController** (API) - 1 check
-15. **CheckoutController** (Storefront) - 1 check
+15. **CheckoutController** (Frontend) - 1 check
 16. **Admin Controllers** - Staff-only checks (ReviewModerationController, SearchAnalyticsController)
 
 #### Form Requests with Policy Checks (5 files)

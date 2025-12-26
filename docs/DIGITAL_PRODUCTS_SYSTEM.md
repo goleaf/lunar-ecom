@@ -96,7 +96,7 @@ A comprehensive system for managing digital/downloadable products with secure do
 
 ## Controllers
 
-### Storefront\DownloadController
+### Frontend\DownloadController
 - `index()`: Display customer downloads
 - `download()`: Download file via secure token
 - `resendEmail()`: Resend download email
@@ -132,7 +132,7 @@ Route::prefix('downloads')->name('frontend.downloads.')->middleware('auth')->gro
 ## Frontend Components
 
 ### Downloads Index
-- **Location**: `resources/views/storefront/downloads/index.blade.php`
+- **Location**: `resources/views/frontend/downloads/index.blade.php`
 - **Features**:
   - List all customer downloads
   - Show download status and limits

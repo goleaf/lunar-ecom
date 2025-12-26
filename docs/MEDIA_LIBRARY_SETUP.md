@@ -347,17 +347,17 @@ Add custom size types in `config/lunar/media.php`:
 
 ### New Files
 - `app/Lunar/Media/BrandMediaDefinitions.php` - Brand logo media definitions
-- `app/Http/Controllers/Storefront/MediaController.php` - Media upload/management API
-- `resources/views/storefront/components/image-uploader.blade.php` - Drag-and-drop upload component
-- `resources/views/storefront/components/responsive-image.blade.php` - Responsive image component
+- `app/Http/Controllers/Frontend/MediaController.php` - Media upload/management API
+- `resources/views/frontend/components/image-uploader.blade.php` - Drag-and-drop upload component
+- `resources/views/frontend/components/responsive-image.blade.php` - Responsive image component
 
 ### Modified Files
 - `app/Lunar/Media/CustomMediaDefinitions.php` - Enhanced with responsive conversions and optimization
 - `app/Lunar/Media/MediaHelper.php` - Added responsive image and multiple upload methods
 - `config/lunar/media.php` - Added optimization and responsive image configuration
 - `routes/web.php` - Added media upload routes
-- `resources/views/storefront/products/_product-card.blade.php` - Updated to use responsive images
-- `resources/views/storefront/products/show.blade.php` - Updated to use responsive images
+- `resources/views/frontend/products/_product-card.blade.php` - Updated to use responsive images
+- `resources/views/frontend/products/show.blade.php` - Updated to use responsive images
 
 ## Best Practices
 

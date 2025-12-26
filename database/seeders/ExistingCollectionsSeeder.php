@@ -14,7 +14,7 @@ use Lunar\Models\CollectionGroup;
 use Lunar\Models\Language;
 
 /**
- * Ensures there are collections in the database (for storefront /collections page).
+ * Ensures there are collections in the database (for the frontend /collections page).
  *
  * Creates a default CollectionGroup and a base set of collections if none exist.
  * Collections are created with translated "name" and "description" in attribute_data

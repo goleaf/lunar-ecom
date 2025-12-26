@@ -128,7 +128,7 @@ All cart controller methods now use `CartTransparencyService` to ensure consiste
 
 ## View Integration
 
-The cart view (`resources/views/storefront/cart/index.blade.php`) displays:
+The cart view (`resources/views/frontend/cart/index.blade.php`) displays:
 
 1. **Subtotal (pre-discount)** - Always shown
 2. **Total Discounts** - Always shown (even if $0.00)

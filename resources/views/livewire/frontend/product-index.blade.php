@@ -1,17 +1,3 @@
-@extends('frontend.layout')
-
-@section('title', $metaTags['title'] ?? 'Products')
-
-@section('meta')
-    <meta name="description" content="{{ $metaTags['description'] }}">
-    <meta property="og:title" content="{{ $metaTags['og:title'] }}">
-    <meta property="og:description" content="{{ $metaTags['og:description'] }}">
-    <meta property="og:type" content="{{ $metaTags['og:type'] }}">
-    <meta property="og:url" content="{{ $metaTags['og:url'] }}">
-    <link rel="canonical" href="{{ $metaTags['canonical'] }}">
-@endsection
-
-@section('content')
 <div class="px-4 py-6">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">{{ __('frontend.nav.products') }}</h1>
@@ -165,5 +151,4 @@
         </div>
     </div>
 </div>
-@endsection
 

@@ -371,7 +371,7 @@ public function index()
 ### Frontend: Blade Component
 
 ```blade
-{{-- resources/views/storefront/components/category-tree.blade.php --}}
+{{-- resources/views/frontend/components/category-tree.blade.php --}}
 <ul class="category-tree">
     @foreach($categories as $category)
         <li class="category-item">

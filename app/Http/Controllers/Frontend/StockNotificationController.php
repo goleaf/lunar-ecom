@@ -41,7 +41,7 @@ class StockNotificationController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'You will be notified when this product is back in stock',
+                'message' => __('frontend.messages.stock_notification_subscribed'),
                 'notification' => $notification,
             ]);
         } catch (\Exception $e) {

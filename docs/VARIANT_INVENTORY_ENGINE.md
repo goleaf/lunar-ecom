@@ -284,7 +284,7 @@ For virtual/digital products (`virtual_stock = true`):
 
 ## Integration Examples
 
-### Storefront Availability Check
+### Frontend Availability Check
 
 ```php
 $engine = app(VariantInventoryEngine::class);

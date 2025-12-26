@@ -17,7 +17,7 @@ class CurrencyController extends Controller
 {
     /**
      * Get all enabled currencies.
-     * 
+     *
      * @return JsonResponse
      */
     public function index(): JsonResponse
@@ -45,7 +45,7 @@ class CurrencyController extends Controller
 
     /**
      * Switch to a different currency.
-     * 
+     *
      * @param Request $request
      * @return JsonResponse
      */
@@ -70,19 +70,19 @@ class CurrencyController extends Controller
             ], 400);
         }
 
-        // Set the currency in the storefront session
+        // Set the currency in the frontend session
         FrontendSessionHelper::setCurrency($currency);
 
         return response()->json([
             'success' => true,
-            'message' => 'Currency switched successfully',
+            'message' => __('frontend.messages.currency_switched'),
             'currency' => $this->getCurrentCurrencyData(),
         ]);
     }
 
     /**
      * Get the current currency.
-     * 
+     *
      * @return JsonResponse
      */
     public function current(): JsonResponse
@@ -94,13 +94,13 @@ class CurrencyController extends Controller
 
     /**
      * Get current currency data as array.
-     * 
+     *
      * @return array|null
      */
     protected function getCurrentCurrencyData(): ?array
     {
         $currency = FrontendSessionHelper::getCurrency();
-        
+
         if (!$currency) {
             return null;
         }

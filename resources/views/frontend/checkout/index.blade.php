@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Checkout')
+@section('title', __('frontend.checkout.title'))
 
 @section('content')
 <div class="px-4 py-6">

@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Categories')
+@section('title', __('frontend.categories'))
 
 @section('meta')
     <meta name="description" content="Browse all product categories">

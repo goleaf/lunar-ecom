@@ -298,7 +298,7 @@ protected array $lowStockThresholds = [
 
 ## Integration Examples
 
-### Storefront Product Page
+### Frontend Product Page
 
 ```php
 use App\Services\VariantAvailabilityService;

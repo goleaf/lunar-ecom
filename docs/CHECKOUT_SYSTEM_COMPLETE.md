@@ -21,9 +21,9 @@ The checkout and order locking system is **fully implemented** and ready for pro
 - ✅ `app/Services/StockService.php` - (Enhanced with reservations)
 
 ### Controllers (5 files)
-- ✅ `app/Http/Controllers/Storefront/CheckoutController.php` - Main checkout
-- ✅ `app/Http/Controllers/Storefront/CheckoutStatusController.php` - Status API
-- ✅ `app/Http/Controllers/Storefront/CartController.php` - (Protected)
+- ✅ `app/Http/Controllers/Frontend/CheckoutController.php` - Main checkout
+- ✅ `app/Http/Controllers/Frontend/CheckoutStatusController.php` - Status API
+- ✅ `app/Http/Controllers/Frontend/CartController.php` - (Protected)
 - ✅ `app/Http/Controllers/Admin/CheckoutLockController.php` - Admin interface
 - ✅ `app/Http/Controllers/Health/CheckoutHealthController.php` - Health checks
 
@@ -156,7 +156,7 @@ curl http://your-domain/health/checkout
 
 ## 📊 API Endpoints
 
-### Storefront
+### Frontend
 ```
 GET  /checkout                    - Display checkout (creates lock)
 POST /checkout                    - Process checkout

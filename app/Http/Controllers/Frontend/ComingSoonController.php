@@ -38,7 +38,7 @@ class ComingSoonController extends Controller
         if (!$product->isComingSoon()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This product is not marked as coming soon',
+                'message' => __('frontend.messages.product_not_coming_soon'),
             ], 422);
         }
 
@@ -50,7 +50,7 @@ class ComingSoonController extends Controller
         if ($existing) {
             return response()->json([
                 'success' => true,
-                'message' => 'You are already subscribed to notifications for this product',
+                'message' => __('frontend.messages.coming_soon_already_subscribed'),
             ]);
         }
 
@@ -65,7 +65,7 @@ class ComingSoonController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'You have been subscribed to notifications for this product',
+            'message' => __('frontend.messages.coming_soon_subscribed'),
         ]);
     }
 

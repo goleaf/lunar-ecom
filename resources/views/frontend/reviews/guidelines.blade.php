@@ -1,6 +1,6 @@
 @extends('frontend.layout')
 
-@section('title', 'Review Guidelines')
+@section('title', __('frontend.reviews.guidelines_title'))
 
 @section('content')
 <div class="px-4 py-6 max-w-3xl mx-auto">

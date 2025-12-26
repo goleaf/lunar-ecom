@@ -1,0 +1,39 @@
+This repo has two product surfaces only:
+- Admin (Filament / Lunar Panel)
+- Frontend (Livewire)
+
+Global naming rules:
+- Do NOT create new folders, namespaces, views, translations, or route names containing "Storefront"/"storefront".
+- Frontend routes MUST use the `frontend.*` name prefix.
+- Admin routes MUST use the `admin.*` name prefix.
+
+Foldering + namespaces:
+- Admin code lives in `app/Admin/**` (namespace `App\Admin\...`).
+- Frontend page/UI code lives in:
+  - `app/Livewire/Frontend/**` (namespace `App\Livewire\Frontend\...`)
+  - `app/Http/Controllers/Frontend/**` (namespace `App\Http\Controllers\Frontend\...`) for endpoints/actions (JSON, POST actions, downloads, etc.)
+  - `app/View/Components/Frontend/**` (namespace `App\View\Components\Frontend\...`) for Blade components.
+
+Views:
+- Frontend Blade views live in `resources/views/frontend/**`.
+- Frontend Livewire views live in `resources/views/livewire/frontend/**`.
+- Admin views live in `resources/views/admin/**`.
+- Blade component views:
+  - `resources/views/components/frontend/**`
+  - `resources/views/components/admin/**`
+
+Livewire-only frontend rule:
+- New frontend *pages* must be Livewire components (prefer `app/Livewire/Frontend/Pages/**`) and be routed directly in `routes/web.php` as `Route::get(..., SomePage::class)`.
+- Avoid adding new frontend GET page controllers. Use controllers for non-page concerns only (webhooks, JSON endpoints, downloads, POST/PUT/DELETE actions).
+
+Translations:
+- Frontend translations live in `resources/lang/<locale>/frontend.php` and are accessed via `__('frontend...')`.
+
+Session:
+- Use `App\Lunar\FrontendSession\FrontendSessionHelper` for app-level currency/language/session state.
+- `App\Http\Middleware\FrontendSessionMiddleware` is the default web middleware for initializing the frontend session.
+
+When making refactors:
+- Prefer `git mv` for moves/renames to preserve history.
+- After large renames, run a search to ensure no legacy "storefront" references remain (excluding vendor URLs if present).
+

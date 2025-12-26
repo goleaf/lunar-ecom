@@ -144,7 +144,7 @@ class DownloadController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Download instructions email has been sent.',
+            'message' => __('frontend.messages.download_email_resent'),
         ]);
     }
 }

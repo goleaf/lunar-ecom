@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Services\AttributeService;
 use App\Services\ProductAttributeFilterService;
 use App\Services\SEOService;
+use Illuminate\Support\HtmlString;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Lunar\Models\Brand;
@@ -93,6 +94,10 @@ class ProductIndex extends Component
             request()->url()
         );
 
+        $pageMeta = new HtmlString(view('frontend.products._meta', [
+            'metaTags' => $metaTags,
+        ])->render());
+
         return view('livewire.frontend.product-index', compact(
             'products',
             'brands',
@@ -100,7 +105,10 @@ class ProductIndex extends Component
             'filterOptions',
             'groupedAttributes',
             'metaTags'
-        ));
+        ))->layout('frontend.layout', [
+            'pageTitle' => $metaTags['title'] ?? 'Products',
+            'pageMeta' => $pageMeta,
+        ]);
     }
 }
 

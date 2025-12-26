@@ -42,7 +42,7 @@ class ProductFactory extends Factory
 
         $translatedName = collect();
         foreach ($languageCodes as $code) {
-            // Keep it deterministic-ish and easy to spot in admin/storefront when switching locales.
+            // Keep it deterministic-ish and easy to spot in admin/frontend when switching locales.
             $translatedName[$code] = new Text($code === 'en' ? $name : "{$name} ({$code})");
         }
 

@@ -217,7 +217,6 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/homepage.js') }}"></script>
 @endpush
 
 

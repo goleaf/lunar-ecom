@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Lunar\Models\Product as LunarProduct;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -43,12 +44,23 @@ class Product extends LunarProduct
     use HasFactory;
     use LogsActivity;
 
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_PUBLISHED = 'published';
+    public const STATUS_ARCHIVED = 'archived';
+    public const STATUS_DISCONTINUED = 'discontinued';
+
+    public const VISIBILITY_PUBLIC = 'public';
+    public const VISIBILITY_PRIVATE = 'private';
+    public const VISIBILITY_SCHEDULED = 'scheduled';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
+        'uuid',
         'sku',
         'barcode',
         'weight',
@@ -102,6 +114,7 @@ class Product extends LunarProduct
     protected $casts = [
         // Keep Lunar core casts working (Lunar uses attribute_data heavily for translations/SEO fields).
         'attribute_data' => \Lunar\Base\Casts\AsAttributeData::class,
+        'uuid' => 'string',
         'weight' => 'integer',
         'length' => 'decimal:2',
         'width' => 'decimal:2',
@@ -138,6 +151,12 @@ class Product extends LunarProduct
     {
         parent::boot();
 
+        static::creating(function ($product) {
+            if (empty($product->uuid)) {
+                $product->uuid = (string) Str::uuid();
+            }
+        });
+
         // Validate barcode on saving
         static::saving(function ($product) {
             if ($product->barcode && !$product->validateEan13($product->barcode)) {
@@ -154,7 +173,10 @@ class Product extends LunarProduct
             }
 
             // Auto-set published_at when status changes to published
-            if ($product->isDirty('status') && $product->status === 'published' && !$product->published_at) {
+            if ($product->isDirty('status')
+                && in_array($product->status, [self::STATUS_PUBLISHED, self::STATUS_ACTIVE], true)
+                && !$product->published_at
+            ) {
                 $product->published_at = now();
             }
 
@@ -240,6 +262,7 @@ class Product extends LunarProduct
         }
 
         return [
+            'uuid' => ['nullable', 'uuid', "unique:{$tableName},uuid," . ($productId ?? 'NULL') . ',id'],
             'sku' => $skuRule,
             'barcode' => [
                 'nullable',
@@ -1324,7 +1347,7 @@ class Product extends LunarProduct
      */
     public function scopePublic($query)
     {
-        return $query->where('visibility', 'public');
+        return $query->where('visibility', self::VISIBILITY_PUBLIC);
     }
 
     /**
@@ -1335,7 +1358,7 @@ class Product extends LunarProduct
      */
     public function scopePrivate($query)
     {
-        return $query->where('visibility', 'private');
+        return $query->where('visibility', self::VISIBILITY_PRIVATE);
     }
 
     /**
@@ -1346,7 +1369,7 @@ class Product extends LunarProduct
      */
     public function scopeScheduled($query)
     {
-        return $query->where('visibility', 'scheduled');
+        return $query->where('visibility', self::VISIBILITY_SCHEDULED);
     }
 
     /**
@@ -1357,7 +1380,7 @@ class Product extends LunarProduct
      */
     public function scopePublished($query)
     {
-        return $query->where('status', 'published')
+        return $query->whereIn('status', [self::STATUS_PUBLISHED, self::STATUS_ACTIVE])
             ->whereNotNull('published_at');
     }
 
@@ -1369,7 +1392,7 @@ class Product extends LunarProduct
      */
     public function scopeDraft($query)
     {
-        return $query->where('status', 'draft');
+        return $query->where('status', self::STATUS_DRAFT);
     }
 
     /**
@@ -1380,7 +1403,7 @@ class Product extends LunarProduct
      */
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->whereIn('status', [self::STATUS_ACTIVE, self::STATUS_PUBLISHED]);
     }
 
     /**
@@ -1391,7 +1414,7 @@ class Product extends LunarProduct
      */
     public function scopeArchived($query)
     {
-        return $query->where('status', 'archived');
+        return $query->where('status', self::STATUS_ARCHIVED);
     }
 
     /**
@@ -1402,7 +1425,7 @@ class Product extends LunarProduct
      */
     public function scopeDiscontinued($query)
     {
-        return $query->where('status', 'discontinued');
+        return $query->where('status', self::STATUS_DISCONTINUED);
     }
 
     /**
@@ -1469,8 +1492,31 @@ class Product extends LunarProduct
             ]);
         }
 
-        $this->status = 'published';
-        $this->visibility = 'public';
+        $this->status = self::STATUS_PUBLISHED;
+        $this->visibility = self::VISIBILITY_PUBLIC;
+        $this->published_at = $publishAt ?? now();
+        $this->scheduled_publish_at = null;
+        $this->save();
+
+        return $this;
+    }
+
+    /**
+     * Mark product as active (alias of publish but uses active status).
+     *
+     * @param  \DateTimeInterface|string|null  $publishAt
+     * @return $this
+     */
+    public function activate($publishAt = null)
+    {
+        if ($this->is_locked) {
+            throw ValidationException::withMessages([
+                'product' => ['Cannot activate locked product. Reason: ' . ($this->lock_reason ?? 'No reason provided')]
+            ]);
+        }
+
+        $this->status = self::STATUS_ACTIVE;
+        $this->visibility = self::VISIBILITY_PUBLIC;
         $this->published_at = $publishAt ?? now();
         $this->scheduled_publish_at = null;
         $this->save();
@@ -1485,7 +1531,7 @@ class Product extends LunarProduct
      */
     public function unpublish()
     {
-        $this->status = 'draft';
+        $this->status = self::STATUS_DRAFT;
         $this->scheduled_unpublish_at = null;
         $this->save();
 
@@ -1506,7 +1552,7 @@ class Product extends LunarProduct
             ]);
         }
 
-        $this->visibility = 'scheduled';
+        $this->visibility = self::VISIBILITY_SCHEDULED;
         $this->scheduled_publish_at = is_string($publishAt) ? \Carbon\Carbon::parse($publishAt) : $publishAt;
         $this->save();
 
@@ -1572,13 +1618,23 @@ class Product extends LunarProduct
     }
 
     /**
+     * Check if product is active.
+     *
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return in_array($this->status, [self::STATUS_ACTIVE, self::STATUS_PUBLISHED], true);
+    }
+
+    /**
      * Check if product is published.
      *
      * @return bool
      */
     public function isPublished(): bool
     {
-        return $this->status === 'published' && $this->published_at !== null;
+        return $this->isActive() && $this->published_at !== null;
     }
 
     /**
@@ -1676,8 +1732,9 @@ class Product extends LunarProduct
         }
 
         $newProduct = $this->replicate();
-        $newProduct->status = 'draft';
-        $newProduct->visibility = 'private';
+        $newProduct->uuid = null;
+        $newProduct->status = self::STATUS_DRAFT;
+        $newProduct->visibility = self::VISIBILITY_PRIVATE;
         $newProduct->published_at = null;
         $newProduct->scheduled_publish_at = null;
         $newProduct->scheduled_unpublish_at = null;

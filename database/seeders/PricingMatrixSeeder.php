@@ -6,6 +6,8 @@ use Illuminate\Database\Seeder;
 use App\Models\PriceMatrix;
 use App\Models\Product;
 use Carbon\Carbon;
+use Database\Factories\PriceMatrixFactory;
+use Illuminate\Support\Facades\Schema;
 
 class PricingMatrixSeeder extends Seeder
 {
@@ -24,10 +26,15 @@ class PricingMatrixSeeder extends Seeder
 
         $this->command->info('Creating pricing matrices...');
 
+        $table = config('lunar.database.table_prefix') . 'price_matrices';
+        $endColumn = Schema::hasColumn($table, 'expires_at')
+            ? 'expires_at'
+            : (Schema::hasColumn($table, 'ends_at') ? 'ends_at' : null);
+
         // Example 1: Quantity-based tiered pricing
-        PriceMatrix::create([
+        PriceMatrixFactory::new()->create([
             'product_id' => $product->id,
-            'matrix_type' => PriceMatrix::TYPE_QUANTITY,
+            'matrix_type' => 'quantity',
             'rules' => [
                 'tiers' => [
                     ['min_quantity' => 1, 'max_quantity' => 10, 'price' => 10000],   // $100.00
@@ -43,9 +50,9 @@ class PricingMatrixSeeder extends Seeder
         ]);
 
         // Example 2: Customer group pricing
-        PriceMatrix::create([
+        PriceMatrixFactory::new()->create([
             'product_id' => $product->id,
-            'matrix_type' => PriceMatrix::TYPE_CUSTOMER_GROUP,
+            'matrix_type' => 'customer_group',
             'rules' => [
                 'customer_groups' => [
                     'retail' => ['price' => 10000],      // $100.00
@@ -59,9 +66,9 @@ class PricingMatrixSeeder extends Seeder
         ]);
 
         // Example 3: Regional pricing
-        PriceMatrix::create([
+        PriceMatrixFactory::new()->create([
             'product_id' => $product->id,
-            'matrix_type' => PriceMatrix::TYPE_REGION,
+            'matrix_type' => 'region',
             'rules' => [
                 'regions' => [
                     'US' => ['price' => 10000],  // $100.00
@@ -76,9 +83,9 @@ class PricingMatrixSeeder extends Seeder
         ]);
 
         // Example 4: Mixed pricing with complex conditions
-        PriceMatrix::create([
+        PriceMatrixFactory::new()->create([
             'product_id' => $product->id,
-            'matrix_type' => PriceMatrix::TYPE_MIXED,
+            'matrix_type' => 'mixed',
             'rules' => [
                 'conditions' => [
                     [
@@ -105,23 +112,27 @@ class PricingMatrixSeeder extends Seeder
         ]);
 
         // Example 5: Promotional pricing with date range
-        PriceMatrix::create([
+        $promoData = [
             'product_id' => $product->id,
-            'matrix_type' => PriceMatrix::TYPE_QUANTITY,
+            'matrix_type' => 'quantity',
             'rules' => [
                 'tiers' => [
                     ['min_quantity' => 1, 'price' => 8000],  // 20% off
                 ],
             ],
             'starts_at' => Carbon::now()->startOfMonth(),
-            'ends_at' => Carbon::now()->endOfMonth(),
             'is_active' => true,
             'priority' => 10, // High priority for promotional pricing
             'description' => 'Monthly promotional pricing',
-        ]);
+        ];
+
+        if ($endColumn) {
+            $promoData[$endColumn] = Carbon::now()->endOfMonth();
+        }
+
+        PriceMatrixFactory::new()->create($promoData);
 
         $this->command->info('Pricing matrices created successfully!');
         $this->command->info('Created 5 example pricing matrices for product ID: ' . $product->id);
     }
 }
-

@@ -71,7 +71,7 @@ class ProductCoreService
 
         // Process products scheduled for publish
         $productsToPublish = Product::scheduledForPublish()
-            ->where('status', '!=', 'published')
+            ->whereNotIn('status', [Product::STATUS_PUBLISHED, Product::STATUS_ACTIVE])
             ->get();
 
         foreach ($productsToPublish as $product) {
@@ -85,7 +85,7 @@ class ProductCoreService
 
         // Process products scheduled for unpublish
         $productsToUnpublish = Product::scheduledForUnpublish()
-            ->where('status', 'published')
+            ->whereIn('status', [Product::STATUS_PUBLISHED, Product::STATUS_ACTIVE])
             ->get();
 
         foreach ($productsToUnpublish as $product) {
@@ -225,4 +225,3 @@ class ProductCoreService
         return $product->lock_reason;
     }
 }
-

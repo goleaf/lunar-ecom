@@ -44,7 +44,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CustomerGroupSeeder::class,
             LanguageSeeder::class,
+            CurrencySeeder::class,
             BrandSeeder::class,
+            AttributeSeeder::class,
         ]);
 
         // Seed Lunar demo data
@@ -68,6 +70,7 @@ class DatabaseSeeder extends Seeder
             ExistingCollectionUrlsSeeder::class,
             ExistingProductTranslationsSeeder::class,
             ExistingProductUrlsSeeder::class,
+            PricingMatrixSeeder::class,
             // Ensure attributes exist + are attached to all product types, then backfill existing products.
             ProductTypeAttributesSeeder::class,
             BackfillProductAttributeDataSeeder::class,

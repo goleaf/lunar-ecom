@@ -12,8 +12,17 @@ use App\Models\Review;
 use App\Models\SearchAnalytic;
 use App\Models\SearchSynonym;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
+use Database\Factories\AttributeGroupFactory;
+use Database\Factories\ChannelFactory;
+use Database\Factories\CollectionGroupFactory;
+use Database\Factories\CountryFactory;
+use Database\Factories\CurrencyFactory;
 use Database\Factories\DiscountFactory;
+use Database\Factories\LanguageFactory;
+use Database\Factories\PriceFactory;
 use Database\Factories\TagFactory;
+use Database\Factories\TaxClassFactory;
 use Database\Factories\TransactionFactory;
 use Database\Factories\UrlFactory;
 use Lunar\Models\Address;
@@ -70,7 +79,7 @@ class CompleteSeeder extends Seeder
         $attributes = Attribute::factory()->count(10)->create([
             'attribute_group_id' => $attributeGroup->id,
         ]);
-        $productTypes = ProductType::factory()->count(5)->create();
+        $productTypes = collect(ProductTypeSeeder::seed())->values();
 
         // Step 3: Create collections
         $this->command->info('📚 Creating collections...');
@@ -87,6 +96,9 @@ class CompleteSeeder extends Seeder
             ->count(50)
             ->published()
             ->withBrand()
+            ->state(fn () => [
+                'product_type_id' => $productTypes->random()->id,
+            ])
             ->create();
 
         // Attach products to channels and collections
@@ -113,14 +125,25 @@ class CompleteSeeder extends Seeder
                 ]);
 
             foreach ($variants as $variant) {
-                Price::create([
-                    'price' => fake()->randomFloat(2, 10, 2000),
-                    'compare_price' => fake()->optional(0.3)->randomFloat(2, 2000, 4000),
-                    'currency_id' => $currency->id,
-                    'priceable_type' => ProductVariant::class,
-                    'priceable_id' => $variant->id,
-                ]);
+                PriceFactory::new()
+                    ->forVariant($variant)
+                    ->create([
+                        'price' => fake()->numberBetween(1000, 200000),
+                        'compare_price' => fake()->optional(0.3)->numberBetween(120000, 400000),
+                        'currency_id' => $currency->id,
+                        'customer_group_id' => $customerGroup?->id,
+                    ]);
                 $allVariants->push($variant);
+            }
+        }
+
+        // Create version snapshots for products.
+        foreach ($products as $product) {
+            $product->createVersion('Seed v1', 'Initial seeded version');
+            if (fake()->boolean(35)) {
+                $product->short_description = fake()->sentence();
+                $product->save();
+                $product->createVersion('Seed v2', 'Seeded revision');
             }
         }
 
@@ -211,9 +234,13 @@ class CompleteSeeder extends Seeder
             }
         }
 
-        // Step 8: Create URLs for products
-        $this->command->info('🔗 Creating product URLs...');
+        // Step 8: Ensure default URLs for products
+        $this->command->info('🔗 Ensuring default product URLs...');
         foreach ($products as $product) {
+            if ($product->defaultUrl()->exists()) {
+                continue;
+            }
+
             UrlFactory::new()
                 ->forElement($product)
                 ->default()
@@ -429,6 +456,8 @@ class CompleteSeeder extends Seeder
                 ->create();
         }
 
+        $this->command->info('Creating bundles...');
+        $this->call(BundleSeeder::class);
         $this->command->info('✅ Complete seeding finished!');
         $this->command->info("📊 Created:");
         $this->command->info("   - {$products->count()} products");
@@ -442,57 +471,79 @@ class CompleteSeeder extends Seeder
 
     protected function getOrCreateChannel(): Channel
     {
-        return Channel::firstOrCreate(
-            ['handle' => 'webstore'],
-            [
+        $factoryData = ChannelFactory::new()
+            ->state([
+                'handle' => 'webstore',
                 'name' => 'Web Store',
                 'url' => 'http://localhost',
                 'default' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            Arr::only($factoryData, ['name', 'handle', 'url', 'default'])
         );
     }
 
     protected function getOrCreateCurrency(): Currency
     {
-        return Currency::firstOrCreate(
-            ['code' => 'USD'],
-            [
+        $factoryData = CurrencyFactory::new()
+            ->state([
+                'code' => 'USD',
                 'name' => 'US Dollar',
                 'exchange_rate' => 1.00,
                 'decimal_places' => 2,
                 'default' => true,
                 'enabled' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Currency::firstOrCreate(
+            ['code' => 'USD'],
+            Arr::only($factoryData, ['name', 'exchange_rate', 'decimal_places', 'default', 'enabled'])
         );
     }
 
     protected function getOrCreateLanguage(): Language
     {
-        return Language::firstOrCreate(
-            ['code' => 'en'],
-            [
+        $factoryData = LanguageFactory::new()
+            ->state([
+                'code' => 'en',
                 'name' => 'English',
                 'default' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Language::firstOrCreate(
+            ['code' => 'en'],
+            Arr::only($factoryData, ['name', 'default'])
         );
     }
 
     protected function getOrCreateTaxClass(): TaxClass
     {
+        $factoryData = TaxClassFactory::new()
+            ->defaultClass()
+            ->state([
+                'name' => 'Standard Tax',
+            ])
+            ->make()
+            ->getAttributes();
+
         return TaxClass::firstOrCreate(
             ['name' => 'Standard Tax'],
-            [
-                'name' => 'Standard Tax',
-                'default' => true,
-            ]
+            Arr::only($factoryData, ['name', 'default'])
         );
     }
 
     protected function getOrCreateCountry(): Country
     {
-        return Country::firstOrCreate(
-            ['iso2' => 'US'],
-            [
+        $factoryData = CountryFactory::new()
+            ->state([
                 'name' => 'United States',
                 'iso3' => 'USA',
                 'iso2' => 'US',
@@ -500,33 +551,51 @@ class CompleteSeeder extends Seeder
                 'capital' => 'Washington',
                 'currency' => 'USD',
                 'native' => 'United States',
-                'emoji' => '🇺🇸',
-                'emoji_u' => 'U+1F1FA U+1F1F8',
-            ]
+                'emoji' => '??',
+                'emoji_u' => 'U+003F',
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Country::firstOrCreate(
+            ['iso2' => 'US'],
+            Arr::only($factoryData, ['name', 'iso3', 'iso2', 'phonecode', 'capital', 'currency', 'native', 'emoji', 'emoji_u'])
         );
     }
 
     protected function getOrCreateAttributeGroup(): \Lunar\Models\AttributeGroup
     {
-        return \Lunar\Models\AttributeGroup::firstOrCreate(
-            ['handle' => 'product'],
-            [
+        $factoryData = AttributeGroupFactory::new()
+            ->state([
+                'handle' => 'product',
                 'name' => [
                     'en' => 'Product',
                 ],
                 'attributable_type' => \App\Models\Product::class,
                 'position' => 0,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return \Lunar\Models\AttributeGroup::firstOrCreate(
+            ['handle' => 'product'],
+            Arr::only($factoryData, ['name', 'attributable_type', 'position'])
         );
     }
 
     protected function getOrCreateCollectionGroup(): CollectionGroup
     {
+        $factoryData = CollectionGroupFactory::new()
+            ->state([
+                'handle' => 'default',
+                'name' => 'Default',
+            ])
+            ->make()
+            ->getAttributes();
+
         return CollectionGroup::firstOrCreate(
             ['handle' => 'default'],
-            [
-                'name' => 'Default',
-            ]
+            Arr::only($factoryData, ['name', 'handle'])
         );
     }
 }

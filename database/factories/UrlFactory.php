@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Product;
 use Lunar\Models\Language;
-use Lunar\Models\Product;
 use Lunar\Models\Url;
 
 /**
@@ -66,4 +66,3 @@ class UrlFactory extends Factory
         ]);
     }
 }
-

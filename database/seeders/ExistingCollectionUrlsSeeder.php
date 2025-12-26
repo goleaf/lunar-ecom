@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Database\Factories\UrlFactory;
 use Lunar\Models\Collection;
 use Lunar\Models\Language;
 use Lunar\Models\Url;
@@ -63,11 +64,13 @@ class ExistingCollectionUrlsSeeder extends Seeder
 
                         $slug = $this->uniqueSlugForLanguage($slugBase, $language->id, $collection->id);
 
-                        $collection->urls()->create([
-                            'language_id' => $language->id,
-                            'slug' => $slug,
-                            'default' => true,
-                        ]);
+                        UrlFactory::new()
+                            ->forElement($collection)
+                            ->default()
+                            ->create([
+                                'language_id' => $language->id,
+                                'slug' => $slug,
+                            ]);
 
                         $created++;
                     }
@@ -111,5 +114,4 @@ class ExistingCollectionUrlsSeeder extends Seeder
             ->exists();
     }
 }
-
 

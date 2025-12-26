@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\Arr;
+use Database\Factories\CollectionFactory;
+use Database\Factories\CollectionGroupFactory;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
 use Lunar\Models\Collection;
@@ -31,11 +34,17 @@ class ExistingCollectionsSeeder extends Seeder
             return;
         }
 
-        $group = CollectionGroup::firstOrCreate(
+        $groupData = CollectionGroupFactory::new()
+            ->state([
+                'handle' => 'default',
+                'name' => 'Default',
+            ])
+            ->make()
+            ->getAttributes();
+
+        $group = CollectionGroup::updateOrCreate(
             ['handle' => 'default'],
-            [
-                'name' => $this->translatedArray($languages, 'Default'),
-            ]
+            Arr::only($groupData, ['name', 'handle'])
         );
 
         $existingCount = Collection::query()->count();
@@ -68,15 +77,20 @@ class ExistingCollectionsSeeder extends Seeder
                 $name .= ' ' . ($i + 1);
             }
 
-            Collection::create([
-                'collection_group_id' => $group->id,
-                'type' => 'static',
-                'sort' => 'custom',
-                'attribute_data' => collect([
-                    'name' => $this->translatedField($languages, $name),
-                    'description' => $this->translatedField($languages, "Browse {$name} products."),
-                ]),
-            ]);
+            $factoryData = CollectionFactory::new()
+                ->state([
+                    'collection_group_id' => $group->id,
+                    'type' => 'static',
+                    'sort' => 'custom',
+                    'attribute_data' => collect([
+                        'name' => $this->translatedField($languages, $name),
+                        'description' => $this->translatedField($languages, "Browse {$name} products."),
+                    ]),
+                ])
+                ->make()
+                ->getAttributes();
+
+            Collection::create($factoryData);
             $created++;
         }
 
@@ -101,5 +115,4 @@ class ExistingCollectionsSeeder extends Seeder
         return new TranslatedText(collect($translations));
     }
 }
-
 

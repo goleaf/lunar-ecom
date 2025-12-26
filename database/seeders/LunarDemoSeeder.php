@@ -6,8 +6,22 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use App\Lunar\Associations\AssociationManager;
 use App\Lunar\Taxation\TaxHelper;
+use App\Models\Attribute;
+use Illuminate\Support\Arr;
+use Database\Factories\AttributeFactory;
+use Database\Factories\AttributeGroupFactory;
+use Database\Factories\ChannelFactory;
+use Database\Factories\CollectionFactory;
+use Database\Factories\CollectionGroupFactory;
+use Database\Factories\CurrencyFactory;
+use Database\Factories\LanguageFactory;
+use Database\Factories\PriceFactory;
+use Database\Factories\ProductFactory;
+use Database\Factories\ProductTypeFactory;
+use Database\Factories\ProductVariantFactory;
+use Database\Factories\TagFactory;
+use Database\Factories\UrlFactory;
 use Lunar\Base\Enums\ProductAssociation as ProductAssociationEnum;
-use Lunar\Models\Attribute;
 use Lunar\Models\AttributeGroup;
 use Lunar\Models\Channel;
 use Lunar\Models\Collection;
@@ -76,38 +90,56 @@ class LunarDemoSeeder extends Seeder
 
     protected function createChannel(): Channel
     {
-        return Channel::firstOrCreate(
-            ['handle' => 'webstore'],
-            [
+        $factoryData = ChannelFactory::new()
+            ->state([
+                'handle' => 'webstore',
                 'name' => 'Web Store',
                 'url' => 'http://localhost',
                 'default' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            Arr::only($factoryData, ['name', 'handle', 'url', 'default'])
         );
     }
 
     protected function createCurrency(): Currency
     {
-        return Currency::firstOrCreate(
-            ['code' => 'USD'],
-            [
+        $factoryData = CurrencyFactory::new()
+            ->state([
+                'code' => 'USD',
                 'name' => 'US Dollar',
                 'exchange_rate' => 1.00,
                 'decimal_places' => 2,
                 'default' => true,
                 'enabled' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Currency::firstOrCreate(
+            ['code' => 'USD'],
+            Arr::only($factoryData, ['name', 'exchange_rate', 'decimal_places', 'default', 'enabled'])
         );
     }
 
     protected function createLanguage(): Language
     {
-        return Language::firstOrCreate(
-            ['code' => 'en'],
-            [
+        $factoryData = LanguageFactory::new()
+            ->state([
+                'code' => 'en',
                 'name' => 'English',
                 'default' => true,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        return Language::firstOrCreate(
+            ['code' => 'en'],
+            Arr::only($factoryData, ['name', 'default'])
         );
     }
 
@@ -127,22 +159,34 @@ class LunarDemoSeeder extends Seeder
     protected function createAttributes(): array
     {
         // Create attribute groups
-        $productGroup = AttributeGroup::firstOrCreate(
-            ['handle' => 'product'],
-            [
-                'name' => 'Product',
+        $productGroupData = AttributeGroupFactory::new()
+            ->state([
+                'handle' => 'product',
+                'name' => ['en' => 'Product'],
                 'attributable_type' => Product::class,
                 'position' => 0,
-            ]
+            ])
+            ->make()
+            ->getAttributes();
+
+        $productGroup = AttributeGroup::firstOrCreate(
+            ['handle' => 'product'],
+            Arr::only($productGroupData, ['name', 'attributable_type', 'position'])
         );
+
+        $shippingGroupData = AttributeGroupFactory::new()
+            ->state([
+                'handle' => 'shipping',
+                'name' => ['en' => 'Shipping'],
+                'attributable_type' => Product::class,
+                'position' => 1,
+            ])
+            ->make()
+            ->getAttributes();
 
         $shippingGroup = AttributeGroup::firstOrCreate(
             ['handle' => 'shipping'],
-            [
-                'name' => 'Shipping',
-                'attributable_type' => Product::class,
-                'position' => 1,
-            ]
+            Arr::only($shippingGroupData, ['name', 'attributable_type', 'position'])
         );
 
         // Create attributes following Lunar Attributes documentation
@@ -721,4 +765,3 @@ class LunarDemoSeeder extends Seeder
         }
     }
 }
-

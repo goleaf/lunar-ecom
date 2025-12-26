@@ -2,7 +2,7 @@
 
 namespace App\Lunar\Products;
 
-use Lunar\Models\Product;
+use App\Models\Product;
 use Lunar\Models\ProductVariant;
 use Lunar\Facades\Pricing;
 
@@ -354,11 +354,10 @@ class ProductSEO
      */
     public static function getRobotsMeta(Product $product): string
     {
-        if ($product->status !== 'published') {
+        if (!$product->isPublished()) {
             return 'noindex, nofollow';
         }
 
         return 'index, follow';
     }
 }
-

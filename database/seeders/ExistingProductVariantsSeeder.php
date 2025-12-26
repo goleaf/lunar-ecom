@@ -6,6 +6,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Database\Factories\PriceFactory;
+use Database\Factories\ProductVariantFactory;
 use Lunar\Models\Currency;
 use Lunar\Models\CustomerGroup;
 use Lunar\Models\Price;
@@ -92,27 +94,27 @@ class ExistingProductVariantsSeeder extends Seeder
                     for ($i = 1; $i <= $toCreate; $i++) {
                         $sku = $this->uniqueVariantSku($baseSku, $product->id, $existingCount + $i);
 
-                        // NOTE: Do not use the factory here because it auto-creates prices
-                        // (afterCreating hook) which in this project triggers Redis-backed cache increments.
-                        // We keep seeding independent from Redis by creating the variant and price manually.
-                        $variant = ProductVariant::create([
-                            'product_id' => $product->id,
-                            'tax_class_id' => $taxClass?->id,
-                            'sku' => $sku,
-                            'title' => 'Default',
-                            'variant_name' => null,
-                            'attribute_data' => null,
-                            // Ensure the variant is eligible for "shared/cross variants" logic.
-                            // In this project, cross-variant generation filters by `status = active`.
-                            'status' => 'active',
-                            'visibility' => 'public',
-                            'enabled' => true,
-                            'stock' => random_int(0, 1000),
-                            'backorder' => 0,
-                            'purchasable' => 'always',
-                            'shippable' => true,
-                            'unit_quantity' => 1,
-                        ]);
+                        // Use the factory but skip price creation to avoid cache side-effects.
+                        $variant = ProductVariantFactory::new()
+                            ->withoutPrices()
+                            ->create([
+                                'product_id' => $product->id,
+                                'tax_class_id' => $taxClass?->id,
+                                'sku' => $sku,
+                                'title' => 'Default',
+                                'variant_name' => null,
+                                'attribute_data' => null,
+                                // Ensure the variant is eligible for "shared/cross variants" logic.
+                                // In this project, cross-variant generation filters by `status = active`.
+                                'status' => 'active',
+                                'visibility' => 'public',
+                                'enabled' => true,
+                                'stock' => random_int(0, 1000),
+                                'backorder' => 0,
+                                'purchasable' => 'always',
+                                'shippable' => true,
+                                'unit_quantity' => 1,
+                            ]);
 
                         $createdVariants++;
 
@@ -194,18 +196,22 @@ class ExistingProductVariantsSeeder extends Seeder
         // A reasonable default base price (in cents) for dev/demo.
         // Avoid triggering app-level cache invalidation that may rely on Redis.
         Price::withoutEvents(function () use ($variantId, $currencyId, $customerGroupId) {
-            Price::create([
-                'price' => random_int(1000, 100000),
-                'compare_price' => random_int(0, 1) ? random_int(1100, 120000) : null,
-                'currency_id' => $currencyId,
-                'customer_group_id' => $customerGroupId,
-                'priceable_type' => ProductVariant::class,
-                'priceable_id' => $variantId,
-            ]);
+            $variant = ProductVariant::find($variantId);
+            if (!$variant) {
+                return;
+            }
+
+            PriceFactory::new()
+                ->forVariant($variant)
+                ->create([
+                    'price' => random_int(1000, 100000),
+                    'compare_price' => random_int(0, 1) ? random_int(1100, 120000) : null,
+                    'currency_id' => $currencyId,
+                    'customer_group_id' => $customerGroupId,
+                ]);
         });
 
         return 1;
     }
 }
-
 

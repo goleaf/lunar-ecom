@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
+use Database\Seeders\ProductTypeSeeder;
 use Lunar\Models\Channel;
 use Lunar\Models\Collection;
 use Lunar\Models\Currency;
@@ -38,11 +39,16 @@ class ProductSeeder extends Seeder
             return;
         }
 
+        $productTypes = collect(ProductTypeSeeder::seed())->values();
+
         // Create products with variants
         $products = Product::factory()
             ->count(10)
             ->published()
             ->withBrand()
+            ->state(fn () => [
+                'product_type_id' => $productTypes->random()->id,
+            ])
             ->create();
 
         foreach ($products as $product) {
@@ -77,6 +83,9 @@ class ProductSeeder extends Seeder
                 }
                 $product->collections()->sync($collectionData);
             }
+
+            // Create at least one version snapshot per product.
+            $product->createVersion('Seed v1', 'Initial seeded version');
         }
 
         $this->command->info("Created {$products->count()} products with variants and prices.");

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Database\Factories\UrlFactory;
 use Lunar\Models\Language;
 use Lunar\Models\Url;
 
@@ -68,11 +69,13 @@ class ExistingProductUrlsSeeder extends Seeder
 
                         $slug = $this->uniqueSlugForLanguage($slugBase, $language->id, $product->id);
 
-                        $product->urls()->create([
-                            'language_id' => $language->id,
-                            'slug' => $slug,
-                            'default' => true,
-                        ]);
+                        UrlFactory::new()
+                            ->forElement($product)
+                            ->default()
+                            ->create([
+                                'language_id' => $language->id,
+                                'slug' => $slug,
+                            ]);
 
                         $created++;
                     }
@@ -120,5 +123,4 @@ class ExistingProductUrlsSeeder extends Seeder
             ->exists();
     }
 }
-
 

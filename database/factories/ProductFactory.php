@@ -4,12 +4,15 @@ namespace Database\Factories;
 
 use App\Models\Product;
 use App\Models\ProductType;
+use Database\Factories\BrandFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Lunar\FieldTypes\Text;
 use Lunar\FieldTypes\TranslatedText;
-use Database\Factories\BrandFactory;
 use Lunar\Models\Brand;
 use Lunar\Models\Language;
+use Lunar\Models\Url;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
@@ -48,10 +51,48 @@ class ProductFactory extends Factory
         foreach ($languageCodes as $code) {
             $translatedDescription[$code] = new Text($code === 'en' ? $baseDescription : "{$baseDescription} ({$code})");
         }
-        
+
+        $status = fake()->randomElement([
+            Product::STATUS_PUBLISHED,
+            Product::STATUS_ACTIVE,
+            Product::STATUS_DRAFT,
+            Product::STATUS_ARCHIVED,
+            Product::STATUS_DISCONTINUED,
+        ]);
+
+        $visibility = fake()->randomElement([
+            Product::VISIBILITY_PUBLIC,
+            Product::VISIBILITY_PRIVATE,
+            Product::VISIBILITY_SCHEDULED,
+        ]);
+
+        $publishedAt = in_array($status, [Product::STATUS_PUBLISHED, Product::STATUS_ACTIVE], true)
+            ? Carbon::instance(fake()->dateTimeBetween('-6 months', 'now'))
+            : null;
+
+        $scheduledPublishAt = $visibility === Product::VISIBILITY_SCHEDULED
+            ? Carbon::instance(fake()->dateTimeBetween('+1 day', '+1 month'))
+            : null;
+
+        $scheduledUnpublishAt = $scheduledPublishAt
+            ? (clone $scheduledPublishAt)->addDays(fake()->numberBetween(3, 30))
+            : null;
+
         return [
             'product_type_id' => ProductType::factory(),
-            'status' => fake()->randomElement(['published', 'draft', 'scheduled']),
+            'status' => $status,
+            'visibility' => $visibility,
+            'short_description' => fake()->sentence(),
+            'full_description' => fake()->paragraphs(3, true),
+            'technical_description' => fake()->optional(0.5)->paragraph(),
+            'meta_title' => fake()->optional(0.7)->sentence(6),
+            'meta_description' => fake()->optional(0.7)->sentence(12),
+            'meta_keywords' => fake()->optional(0.5)->words(6, true),
+            'published_at' => $publishedAt,
+            'scheduled_publish_at' => $scheduledPublishAt,
+            'scheduled_unpublish_at' => $scheduledUnpublishAt,
+            'version' => 1,
+            'is_locked' => false,
             'attribute_data' => collect([
                 'name' => new TranslatedText($translatedName),
                 'description' => new TranslatedText($translatedDescription),
@@ -66,7 +107,21 @@ class ProductFactory extends Factory
     public function published(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'published',
+            'status' => Product::STATUS_PUBLISHED,
+            'visibility' => Product::VISIBILITY_PUBLIC,
+            'published_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indicate that the product is active.
+     */
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => Product::STATUS_ACTIVE,
+            'visibility' => Product::VISIBILITY_PUBLIC,
+            'published_at' => now(),
         ]);
     }
 
@@ -76,7 +131,9 @@ class ProductFactory extends Factory
     public function draft(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'draft',
+            'status' => Product::STATUS_DRAFT,
+            'visibility' => Product::VISIBILITY_PRIVATE,
+            'published_at' => null,
         ]);
     }
 
@@ -87,7 +144,7 @@ class ProductFactory extends Factory
     {
         return $this->state(function (array $defaultAttributes) use ($attributes) {
             $attributeData = $defaultAttributes['attribute_data'] ?? collect();
-            
+
             foreach ($attributes as $key => $value) {
                 if (is_string($value)) {
                     $attributeData[$key] = new Text($value);
@@ -96,7 +153,7 @@ class ProductFactory extends Factory
                     $attributeData[$key] = $value;
                 }
             }
-            
+
             return [
                 'attribute_data' => $attributeData,
             ];
@@ -104,15 +161,50 @@ class ProductFactory extends Factory
     }
 
     /**
-     * Configure the factory to create products with variants.
+     * Configure the factory to create products with default relations.
      */
     public function configure(): static
     {
         return $this->afterCreating(function (Product $product) {
-            // Attach to default channel if it exists
+            // Attach to default channel if it exists.
             $channel = \Lunar\Models\Channel::where('default', true)->first();
             if ($channel) {
                 $product->channels()->syncWithoutDetaching([$channel->id]);
+            }
+
+            // Ensure URLs exist for each language (unique per locale).
+            $languages = Language::query()->orderBy('id')->get();
+            if ($languages->isEmpty()) {
+                $languages = collect([
+                    Language::firstOrCreate(['code' => 'en'], ['name' => 'English', 'default' => true])
+                ]);
+            }
+
+            foreach ($languages as $language) {
+                $baseSlug = Str::slug($product->translateAttribute('name', $language->code) ?? $product->id);
+                $slug = $baseSlug;
+
+                $suffix = 1;
+                while (Url::query()
+                    ->where('language_id', $language->id)
+                    ->where('slug', $slug)
+                    ->exists()
+                ) {
+                    $slug = "{$baseSlug}-{$suffix}";
+                    $suffix++;
+                }
+
+                Url::firstOrCreate(
+                    [
+                        'language_id' => $language->id,
+                        'slug' => $slug,
+                        'element_type' => Product::class,
+                        'element_id' => $product->id,
+                    ],
+                    [
+                        'default' => $language->default ?? false,
+                    ]
+                );
             }
         });
     }
@@ -126,13 +218,13 @@ class ProductFactory extends Factory
             if ($brand instanceof Brand) {
                 return ['brand_id' => $brand->id];
             }
-            
+
             if (is_string($brand)) {
                 $brandModel = Brand::query()->where('name', $brand)->first();
                 if (!$brandModel) {
                     $brandModel = BrandFactory::new()->withProfile($brand)->create();
                 }
-                
+
                 return ['brand_id' => $brandModel->id];
             }
 
@@ -143,7 +235,7 @@ class ProductFactory extends Factory
             }
 
             $brandModel = BrandFactory::new()->create();
-            
+
             return ['brand_id' => $brandModel->id];
         });
     }
@@ -154,7 +246,30 @@ class ProductFactory extends Factory
     public function scheduled(?\DateTime $date = null): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'scheduled',
+            'status' => Product::STATUS_DRAFT,
+            'visibility' => Product::VISIBILITY_SCHEDULED,
+            'scheduled_publish_at' => $date ? Carbon::instance($date) : now()->addDay(),
+            'scheduled_unpublish_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the product is archived.
+     */
+    public function archived(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => Product::STATUS_ARCHIVED,
+        ]);
+    }
+
+    /**
+     * Indicate that the product is discontinued.
+     */
+    public function discontinued(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => Product::STATUS_DISCONTINUED,
         ]);
     }
 
@@ -165,7 +280,7 @@ class ProductFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_bundle' => true,
-            'status' => 'published',
+            'status' => Product::STATUS_PUBLISHED,
         ]);
     }
 }

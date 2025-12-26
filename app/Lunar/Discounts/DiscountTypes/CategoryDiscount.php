@@ -4,7 +4,7 @@ namespace App\Lunar\Discounts\DiscountTypes;
 
 use Filament\Forms;
 use Lunar\Admin\Base\LunarPanelDiscountInterface;
-use Lunar\Models\Cart;
+use Lunar\Models\Contracts\Cart;
 use Lunar\Models\Category;
 use Lunar\DiscountTypes\AbstractDiscountType;
 

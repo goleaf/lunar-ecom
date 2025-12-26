@@ -61,6 +61,7 @@ class DatabaseSeeder extends Seeder
             SearchSeeder::class,
             ExistingProductVariantsSeeder::class,
             SharedProductVariantsSeeder::class,
+            ExistingProductUrlsSeeder::class,
         ]);
         
         // Option 2: Use FactorySeeder - Creates data using factories (more flexible)

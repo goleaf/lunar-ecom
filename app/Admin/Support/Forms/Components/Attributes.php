@@ -6,9 +6,11 @@ use Filament\Forms\Components\Component;
 use Filament\Forms\Get;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Livewire\Component as Livewire;
 use Lunar\Admin\Support\Facades\AttributeData;
 use Lunar\Admin\Support\Forms\Components\Attributes as LunarAttributes;
+use Lunar\Base\FieldType;
 use Lunar\Models\Attribute;
 use Lunar\Models\AttributeGroup;
 use Lunar\Models\Product;
@@ -26,6 +28,40 @@ class Attributes extends LunarAttributes
     protected function setUp(): void
     {
         parent::setUp();
+
+        /**
+         * Filament expects state mutation callbacks to return arrays for group components.
+         * In some cases Lunar's Attributes component can receive non-array state (e.g. an
+         * AttributeData object). Coerce safely to an array to avoid TypeErrors.
+         */
+        $this->mutateStateForValidationUsing(function ($state): array {
+            if ($state instanceof Collection) {
+                $state = $state->all();
+            }
+
+            // Convert AttributeData / Arrayable objects to arrays when possible.
+            if (is_object($state) && method_exists($state, 'toArray')) {
+                $state = $state->toArray();
+            }
+
+            // If it's a JSON string, try decoding it.
+            if (is_string($state)) {
+                $decoded = json_decode($state, true);
+                $state = is_array($decoded) ? $decoded : [];
+            }
+
+            if (! is_array($state)) {
+                return [];
+            }
+
+            foreach ($state as $key => $value) {
+                if ($value instanceof FieldType) {
+                    $state[$key] = $value->getValue();
+                }
+            }
+
+            return $state;
+        });
 
         // Override the schema to ensure it always returns an array
         if (blank($this->childComponents)) {

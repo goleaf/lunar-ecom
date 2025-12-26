@@ -69,8 +69,10 @@ class AppServiceProvider extends ServiceProvider
             // See: https://docs.lunarphp.com/1.x/admin/extending/order-management
             ->extensions([
                 // Resource extensions
-                \Lunar\Panel\Filament\Resources\ProductResource::class => 
+                \Lunar\Admin\Filament\Resources\ProductResource::class =>
                     \App\Admin\Extensions\Resources\ProductResourceExtension::class,
+                \Lunar\Admin\Filament\Resources\CustomerGroupResource::class =>
+                    \App\Admin\Extensions\Resources\CustomerGroupResourceExtension::class,
                 //
                 //     // Relation manager extensions
                 //     \Lunar\Admin\Filament\Resources\ProductResource\RelationManagers\CustomerGroupPricingRelationManager::class => 

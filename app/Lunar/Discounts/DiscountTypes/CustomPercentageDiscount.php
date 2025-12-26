@@ -2,7 +2,7 @@
 
 namespace App\Lunar\Discounts\DiscountTypes;
 
-use Lunar\Models\Cart;
+use Lunar\Models\Contracts\Cart;
 use Lunar\DiscountTypes\AbstractDiscountType;
 
 /**

@@ -100,7 +100,7 @@ class ProductController extends Controller
         // Find product by URL slug
         // See: https://docs.lunarphp.com/1.x/reference/urls
         $url = Url::where('slug', $slug)
-            ->where('element_type', Product::class)
+            ->where('element_type', Product::morphName())
             ->firstOrFail();
 
         // Load product with media eager loaded

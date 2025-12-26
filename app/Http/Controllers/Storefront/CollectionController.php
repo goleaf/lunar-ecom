@@ -49,7 +49,7 @@ class CollectionController extends Controller
         // Find collection by URL slug
         // See: https://docs.lunarphp.com/1.x/reference/urls
         $url = Url::where('slug', $slug)
-            ->where('element_type', Collection::class)
+            ->where('element_type', Collection::morphName())
             ->firstOrFail();
 
         // Load collection with media eager loaded

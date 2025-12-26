@@ -7,12 +7,9 @@ use App\Models\Collection;
 use App\Models\SmartCollectionRule;
 use App\Services\SmartCollectionService;
 use Illuminate\Http\Request;
-use Lunar\Hub\Http\Livewire\Traits\Notifies;
 
 class SmartCollectionRuleController extends Controller
 {
-    use Notifies;
-
     protected SmartCollectionService $smartCollectionService;
 
     public function __construct(SmartCollectionService $smartCollectionService)
@@ -179,6 +176,15 @@ class SmartCollectionRuleController extends Controller
         }
 
         return redirect()->route('admin.collections.smart-rules', $collection);
+    }
+
+    /**
+     * Lightweight notification helper (replaces legacy Lunar Hub Notifies trait).
+     */
+    protected function notify(string $message, string $type = 'success'): void
+    {
+        $key = $type === 'error' ? 'error' : 'success';
+        session()->flash($key, $message);
     }
 
     /**

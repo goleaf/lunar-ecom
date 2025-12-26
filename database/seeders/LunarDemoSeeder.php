@@ -43,7 +43,7 @@ class LunarDemoSeeder extends Seeder
         $channel = $this->createChannel();
         $currency = $this->createCurrency();
         $language = $this->createLanguage();
-        $this->createCustomerGroup();
+        CustomerGroupSeeder::seed();
         
         // Create default tax class for product variants
         $this->taxClass = $this->getOrCreateDefaultTaxClass();
@@ -107,17 +107,6 @@ class LunarDemoSeeder extends Seeder
             ['code' => 'en'],
             [
                 'name' => 'English',
-                'default' => true,
-            ]
-        );
-    }
-
-    protected function createCustomerGroup(): CustomerGroup
-    {
-        return CustomerGroup::firstOrCreate(
-            ['handle' => 'retail'],
-            [
-                'name' => 'Retail',
                 'default' => true,
             ]
         );

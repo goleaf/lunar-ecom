@@ -59,7 +59,8 @@ class CompleteSeeder extends Seeder
         $channel = $this->getOrCreateChannel();
         $currency = $this->getOrCreateCurrency();
         $language = $this->getOrCreateLanguage();
-        $customerGroup = $this->getOrCreateCustomerGroup();
+        $customerGroups = CustomerGroupSeeder::seed();
+        $customerGroup = $customerGroups[CustomerGroupSeeder::DEFAULT_HANDLE] ?? CustomerGroup::where('default', true)->first();
         $taxClass = $this->getOrCreateTaxClass();
         $country = $this->getOrCreateCountry();
 
@@ -127,6 +128,25 @@ class CompleteSeeder extends Seeder
         $customers = Customer::factory()->count(25)->create();
         
         foreach ($customers as $customer) {
+            // Ensure every customer belongs to at least the default group (needed for customer-group pricing/discounts).
+            if ($customerGroup) {
+                $extraGroupHandles = collect(array_keys($customerGroups))
+                    ->reject(fn ($h) => $h === CustomerGroupSeeder::DEFAULT_HANDLE)
+                    ->values();
+
+                $attachIds = [$customerGroup->id];
+
+                // Give some customers an extra group so customer-group pricing is easy to test.
+                if ($extraGroupHandles->isNotEmpty() && fake()->boolean(40)) {
+                    $extra = $customerGroups[$extraGroupHandles->random()] ?? null;
+                    if ($extra) {
+                        $attachIds[] = $extra->id;
+                    }
+                }
+
+                $customer->customerGroups()->syncWithoutDetaching($attachIds);
+            }
+
             // Create 1-3 addresses per customer
             $addressCount = fake()->numberBetween(1, 3);
             $addresses = Address::factory()
@@ -451,17 +471,6 @@ class CompleteSeeder extends Seeder
             ['code' => 'en'],
             [
                 'name' => 'English',
-                'default' => true,
-            ]
-        );
-    }
-
-    protected function getOrCreateCustomerGroup(): CustomerGroup
-    {
-        return CustomerGroup::firstOrCreate(
-            ['handle' => 'default'],
-            [
-                'name' => 'Default',
                 'default' => true,
             ]
         );

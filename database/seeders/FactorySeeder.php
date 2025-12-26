@@ -31,7 +31,8 @@ class FactorySeeder extends Seeder
         $channel = $this->getOrCreateChannel();
         $currency = $this->getOrCreateCurrency();
         $language = $this->getOrCreateLanguage();
-        $customerGroup = $this->getOrCreateCustomerGroup();
+        $customerGroups = CustomerGroupSeeder::seed();
+        $customerGroup = $customerGroups[CustomerGroupSeeder::DEFAULT_HANDLE] ?? CustomerGroup::where('default', true)->first();
         $taxClass = $this->getOrCreateTaxClass();
 
         // Step 2: Create attribute groups and attributes
@@ -138,17 +139,6 @@ class FactorySeeder extends Seeder
             ['code' => 'en'],
             [
                 'name' => 'English',
-                'default' => true,
-            ]
-        );
-    }
-
-    protected function getOrCreateCustomerGroup(): CustomerGroup
-    {
-        return CustomerGroup::firstOrCreate(
-            ['handle' => 'default'],
-            [
-                'name' => 'Default',
                 'default' => true,
             ]
         );

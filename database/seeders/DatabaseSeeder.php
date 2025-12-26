@@ -40,6 +40,11 @@ class DatabaseSeeder extends Seeder
             $staff->assignRole('admin');
         }
 
+        // Seed customer groups early so other seeders (pricing/discounts/customers) can rely on them.
+        $this->call([
+            CustomerGroupSeeder::class,
+        ]);
+
         // Seed Lunar demo data
         // You can choose from several options:
         

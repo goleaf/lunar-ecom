@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Lunar\Models\Address;
 use Lunar\Models\Country;
 use Lunar\Models\Customer;
+use Lunar\Models\CustomerGroup;
 
 class CustomerSeeder extends Seeder
 {
@@ -15,6 +16,9 @@ class CustomerSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('Seeding customers...');
+
+        $customerGroups = CustomerGroupSeeder::seed();
+        $defaultGroup = $customerGroups[CustomerGroupSeeder::DEFAULT_HANDLE] ?? CustomerGroup::where('default', true)->first();
 
         $country = Country::firstOrCreate(
             ['iso2' => 'US'],
@@ -34,6 +38,24 @@ class CustomerSeeder extends Seeder
         $customers = Customer::factory()->count(30)->create();
 
         foreach ($customers as $customer) {
+            // Attach customers to groups so customer-group pricing/discounts can be tested.
+            if ($defaultGroup) {
+                $attachIds = [$defaultGroup->id];
+
+                $extraGroupHandles = collect(array_keys($customerGroups))
+                    ->reject(fn ($h) => $h === CustomerGroupSeeder::DEFAULT_HANDLE)
+                    ->values();
+
+                if ($extraGroupHandles->isNotEmpty() && fake()->boolean(40)) {
+                    $extra = $customerGroups[$extraGroupHandles->random()] ?? null;
+                    if ($extra) {
+                        $attachIds[] = $extra->id;
+                    }
+                }
+
+                $customer->customerGroups()->syncWithoutDetaching($attachIds);
+            }
+
             // Create 1-3 addresses per customer
             $addressCount = fake()->numberBetween(1, 3);
             $addresses = Address::factory()

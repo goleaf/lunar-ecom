@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\ProductQuestionController;
+use App\Http\Controllers\Frontend\ProductQuestionController;
 use App\Models\Product;
 use Livewire\Component;
 

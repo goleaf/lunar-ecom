@@ -21,7 +21,7 @@ class EditProduct extends EditRecord
             Actions\Action::make('preview')
                 ->label('Preview')
                 ->icon('heroicon-o-eye')
-                ->url(fn (Product $record) => route('storefront.products.show', $record->defaultUrl?->slug ?? $record->id))
+                ->url(fn (Product $record) => route('frontend.products.show', $record->defaultUrl?->slug ?? $record->id))
                 ->openUrlInNewTab(),
             Actions\Action::make('publish')
                 ->label('Publish')
@@ -139,3 +139,4 @@ class EditProduct extends EditRecord
         ];
     }
 }
+

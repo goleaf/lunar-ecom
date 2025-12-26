@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $collection->translateAttribute('name'))
 
@@ -170,7 +170,7 @@
 
                 <!-- Products Grid -->
                 <div id="products-container">
-                    @include('storefront.collections._product-grid', ['products' => $products, 'collection' => $collection])
+                    @include('frontend.collections._product-grid', ['products' => $products, 'collection' => $collection])
                 </div>
 
                 <!-- Pagination -->
@@ -193,8 +193,9 @@
     // Initialize with collection data
     window.collectionFilters = {
         collectionId: {{ $collection->id }},
-        baseUrl: '{{ route('storefront.collections.filter', $collection->id) }}',
+        baseUrl: '{{ route('frontend.collections.filter', $collection->id) }}',
         filterOptions: @json($filterOptions ?? []),
     };
 </script>
 @endpush
+

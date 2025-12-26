@@ -873,7 +873,8 @@ use Lunar\Admin\Support\Facades\LunarPanel;
 
 LunarPanel::panel(function ($panel) {
     return $panel
-        // Change the panel URL path (default is '/lunar')
+        // Change the panel URL path (default is '/admin')
+        // Change the panel URL path (default is '/admin')
         ->path('admin')
         
         // Register standalone Filament Pages
@@ -937,7 +938,7 @@ All Filament panel customization options are available. For more information, co
 - [Admin Panel Extending the Panel](https://docs.lunarphp.com/1.x/admin/extending/panel)
 - [Filament Panel Documentation](https://filamentphp.com/docs/3.x/panels)
 
-## Storefront Routes
+## Frontend Routes
 
 - Home: `/`
 - Products: `/products`
@@ -2113,7 +2114,7 @@ class CustomMediaDefinitions implements MediaDefinitionsInterface
             ->sharpen(10)
             ->keepOriginalImageFormat();
 
-        // Additional conversions for storefront
+        // Additional conversions for frontend
         $model->addMediaConversion('thumb')
             ->fit(Fit::Fill, 400, 400)
             ->sharpen(10)
@@ -2338,7 +2339,7 @@ $product->deleteMedia($mediaId);
 
 ## Collections
 
-This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections). Collections are similar to Categories and allow you to organize products either explicitly or via criteria (like tags) for use on your storefront.
+This project implements collections following the [Lunar Collections documentation](https://docs.lunarphp.com/1.x/reference/collections). Collections are similar to Categories and allow you to organize products either explicitly or via criteria (like tags) for use on your frontend.
 
 **Overview**:
 
@@ -2508,7 +2509,7 @@ $children = CollectionHelper::getChildren($collection);
 $breadcrumb = CollectionHelper::getBreadcrumb($collection);
 ```
 
-**Storefront Integration**:
+**Frontend Integration**:
 
 The `CollectionController` demonstrates how to display collections:
 
@@ -2596,7 +2597,7 @@ $sortedProducts = CollectionHelper::getSortedProducts($phones);
 
 - **Collection Groups**: Use collection groups to organize collections for different purposes (menus, landing pages, navigation)
 - **Nested Collections**: Use child collections to create category hierarchies
-- **Sort Types**: Choose appropriate sort types based on your storefront needs
+- **Sort Types**: Choose appropriate sort types based on your frontend needs
 - **Eager Loading**: Always eager load relationships when displaying collections:
   ```php
   Collection::with(['group', 'children', 'products.variants.prices', 'urls'])->get();
@@ -2835,7 +2836,7 @@ $manager->dissociate($product, $targetProduct);
 $manager->dissociate($product, $targetProduct, ProductAssociationEnum::CROSS_SELL);
 ```
 
-**Storefront Integration**:
+**Frontend Integration**:
 
 The `ProductController` demonstrates how to load and display associations:
 
@@ -2888,7 +2889,7 @@ The `ProductAssociationController` provides API endpoints for managing associati
 
 **Example Use Cases**:
 
-1. **E-commerce Storefront**: Display "Customers also bought" (cross-sell), "Upgrade to Pro" (up-sell), "Similar products" (alternate)
+1. **E-commerce Frontend**: Display "Customers also bought" (cross-sell), "Upgrade to Pro" (up-sell), "Similar products" (alternate)
 2. **Product Recommendations**: Use associations to power recommendation engines
 3. **Bundle Suggestions**: Cross-sell complementary products to create bundles
 4. **Stock Alternatives**: Show alternate products when items are out of stock
@@ -3078,12 +3079,12 @@ $products = Product::search('query')
     ->paginate(12);
 ```
 
-**Storefront Integration**:
+**Frontend Integration**:
 
-The `SearchController` demonstrates how to implement search in your storefront:
+The `SearchController` demonstrates how to implement search in your frontend:
 
 ```php
-use App\Http\Controllers\Storefront\SearchController;
+use App\Http\Controllers\Frontend\SearchController;
 use Illuminate\Http\Request;
 
 // In your routes
@@ -3557,9 +3558,9 @@ return [
 ];
 ```
 
-**Storefront Usage**:
+**Frontend Usage**:
 
-The storefront uses URLs to generate SEO-friendly links and find resources by slug:
+The frontend uses URLs to generate SEO-friendly links and find resources by slug:
 
 **Finding Products by Slug**:
 
@@ -3578,7 +3579,7 @@ public function show(string $slug)
     $product = Product::with(['variants.prices', 'media', 'collections'])
         ->findOrFail($url->element_id);
     
-    return view('storefront.products.show', compact('product'));
+    return view('frontend.products.show', compact('product'));
 }
 ```
 
@@ -3599,7 +3600,7 @@ public function show(string $slug)
     $collection = Collection::with(['group', 'children', 'media', 'urls'])
         ->findOrFail($url->element_id);
     
-    return view('storefront.collections.show', compact('collection'));
+    return view('frontend.collections.show', compact('collection'));
 }
 ```
 
@@ -3647,7 +3648,7 @@ Route::get('/collections/{slug}', [CollectionController::class, 'show'])
 
 **Best Practices**:
 
-- **Use Slugs Instead of IDs**: Always use slugs in your storefront URLs for SEO and user-friendliness
+- **Use Slugs Instead of IDs**: Always use slugs in your frontend URLs for SEO and user-friendliness
 - **Language-Specific URLs**: Create separate URLs for each language if you support multiple languages
 - **Default URLs**: Always have a default URL for each language to ensure resources are accessible
 - **Unique Slugs**: Ensure slugs are unique per language (Lunar handles this automatically)
@@ -6220,7 +6221,7 @@ $order->refunds;      // Get all transactions that are refunds (refund = true)
 
 **Payments**:
 
-Lunar will be looking to add support for the most popular payment providers, so keep an eye out here as they will list them all out. In the meantime, you can absolutely still get a storefront working. At the end of the day, Lunar doesn't really mind what payment provider you use or plan to use.
+Lunar will be looking to add support for the most popular payment providers, so keep an eye out here as they will list them all out. In the meantime, you can absolutely still get a frontend working. At the end of the day, Lunar doesn't really mind what payment provider you use or plan to use.
 
 In terms of an order, all it's worried about is whether or not the `placed_at` column is populated on the orders table. The rest is completely up to you how you want to handle that. We have some helper utilities to make such things easier for you as laid out above.
 
@@ -6877,7 +6878,7 @@ public function processPayment(Request $request)
 
 ### Stripe Payment Addon
 
-The Stripe payment addon enables Stripe payments on your Lunar storefront. This section covers installation, configuration, backend usage, storefront integration, and webhook setup.
+The Stripe payment addon enables Stripe payments on your Lunar frontend. This section covers installation, configuration, backend usage, frontend integration, and webhook setup.
 
 **Installation**:
 
@@ -6990,7 +6991,7 @@ $charge = Stripe::getCharge($chargeId);
 $charges = Stripe::getCharges($paymentIntentId);
 ```
 
-**Storefront Integration**:
+**Frontend Integration**:
 
 First, set up a backend API route to create or fetch the PaymentIntent:
 
@@ -7205,7 +7206,7 @@ Event::listen(CartMissingForIntent::class, function (CartMissingForIntent $event
 
 ### PayPal Payment Addon
 
-The PayPal payment addon enables PayPal payments on your Lunar storefront. This section covers installation, configuration, and usage.
+The PayPal payment addon enables PayPal payments on your Lunar frontend. This section covers installation, configuration, and usage.
 
 **Installation**:
 
@@ -7289,7 +7290,7 @@ if (!$response->success) {
 $order = $response->order;
 ```
 
-**Storefront Integration**:
+**Frontend Integration**:
 
 1. **Integrate PayPal JavaScript SDK** in your checkout page:
 
@@ -7393,7 +7394,7 @@ Route::post('/api/paypal/capture-order', function (Request $request) {
 
 ## Pricing
 
-This project implements pricing following the [Lunar Pricing documentation](https://docs.lunarphp.com/1.x/reference/pricing). When you display prices on your storefront, you want to be sure the customer is seeing the correct format relative to the currency they are purchasing in. Every storefront is different. We understand as a developer you might want to do this your own way or have very specific requirements, so we have made price formatting easy to swap out with your own implementation, but also we provide a suitable default that will suit most use cases.
+This project implements pricing following the [Lunar Pricing documentation](https://docs.lunarphp.com/1.x/reference/pricing). When you display prices on your frontend, you want to be sure the customer is seeing the correct format relative to the currency they are purchasing in. Every frontend is different. We understand as a developer you might want to do this your own way or have very specific requirements, so we have made price formatting easy to swap out with your own implementation, but also we provide a suitable default that will suit most use cases.
 
 **Overview**:
 
@@ -8539,23 +8540,23 @@ The project includes example tax drivers and calculators:
 - `CustomTaxDriver.php` - Complete custom tax driver example
 - `StandardTaxCalculator.php` - Standard tax calculator (for use with system driver)
 
-## Storefront Session
+## Frontend Session
 
-This project implements storefront session following the [Lunar Storefront Session documentation](https://docs.lunarphp.com/1.x/storefront-utils/storefront-session):
+This project implements frontend session following the [Lunar Frontend Session documentation](https://docs.lunarphp.com/1.x/frontend-utils/frontend-session):
 
 - **Channel Management**: Initialize, set, and get the current channel
 - **Currency Management**: Initialize, set, and get the current currency
 - **Customer Groups Management**: Initialize, set, and get current customer groups
 - **Customer Management**: Initialize, set, and get the current customer
-- **Session Persistence**: Storefront session state is persisted in the session
+- **Session Persistence**: Frontend session state is persisted in the session
 
 **Overview**:
 
-The storefront session facade helps keep certain resources your storefront needs set, such as channel, customer group, customer, and currency. The session state is automatically initialized via middleware.
+The frontend session facade helps keep certain resources your frontend needs set, such as channel, customer group, customer, and currency. The session state is automatically initialized via middleware.
 
 **Configuration**:
 
-Storefront session is automatically initialized via the `StorefrontSessionMiddleware` registered in `bootstrap/app.php`. The middleware initializes:
+Frontend session is automatically initialized via the `FrontendSessionMiddleware` registered in `bootstrap/app.php`. The middleware initializes:
 - Channel (defaults to 'webstore' if available)
 - Currency (defaults to 'USD' if available)
 - Customer Groups (defaults to default customer groups)
@@ -8564,8 +8565,8 @@ Storefront session is automatically initialized via the `StorefrontSessionMiddle
 **Usage**:
 
 ```php
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
-use Lunar\Facades\StorefrontSession;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
+use Lunar\Facades\FrontendSession;
 use Lunar\Models\Channel;
 use Lunar\Models\Currency;
 use Lunar\Models\Customer;
@@ -8574,109 +8575,109 @@ use Lunar\Models\CustomerGroup;
 // === Channels ===
 
 // Initialize the channel (sets based on session or uses default)
-$channel = StorefrontSessionHelper::initChannel();
+$channel = FrontendSessionHelper::initChannel();
 
 // Set the channel
-StorefrontSessionHelper::setChannel('webstore');
+FrontendSessionHelper::setChannel('webstore');
 // or
 $channel = Channel::where('handle', 'webstore')->first();
-StorefrontSessionHelper::setChannel($channel);
+FrontendSessionHelper::setChannel($channel);
 
 // Get the current channel
-$currentChannel = StorefrontSessionHelper::getChannel();
+$currentChannel = FrontendSessionHelper::getChannel();
 // or directly via facade
-$currentChannel = StorefrontSession::getChannel();
+$currentChannel = FrontendSession::getChannel();
 
 // === Currencies ===
 
 // Initialize the currency (sets based on session or uses default)
-$currency = StorefrontSessionHelper::initCurrency();
+$currency = FrontendSessionHelper::initCurrency();
 
 // Set the currency
-StorefrontSessionHelper::setCurrency('USD');
+FrontendSessionHelper::setCurrency('USD');
 // or
 $currency = Currency::where('code', 'USD')->first();
-StorefrontSessionHelper::setCurrency($currency);
+FrontendSessionHelper::setCurrency($currency);
 
 // Get the current currency
-$currentCurrency = StorefrontSessionHelper::getCurrency();
+$currentCurrency = FrontendSessionHelper::getCurrency();
 // or directly via facade
-$currentCurrency = StorefrontSession::getCurrency();
+$currentCurrency = FrontendSession::getCurrency();
 
 // === Customer Groups ===
 
 // Initialize customer groups (sets based on session or uses default)
-$customerGroups = StorefrontSessionHelper::initCustomerGroups();
+$customerGroups = FrontendSessionHelper::initCustomerGroups();
 
 // Set customer groups (multiple)
 $groups = CustomerGroup::whereIn('handle', ['retail', 'wholesale'])->get();
-StorefrontSessionHelper::setCustomerGroups($groups);
+FrontendSessionHelper::setCustomerGroups($groups);
 // or as array
-StorefrontSessionHelper::setCustomerGroups([$group1, $group2]);
+FrontendSessionHelper::setCustomerGroups([$group1, $group2]);
 // or as collection
-StorefrontSessionHelper::setCustomerGroups(collect([$group1, $group2]));
+FrontendSessionHelper::setCustomerGroups(collect([$group1, $group2]));
 
 // Set a single customer group
 $retailGroup = CustomerGroup::where('handle', 'retail')->first();
-StorefrontSessionHelper::setCustomerGroup($retailGroup);
+FrontendSessionHelper::setCustomerGroup($retailGroup);
 // or directly via facade
-StorefrontSession::setCustomerGroup($retailGroup);
+FrontendSession::setCustomerGroup($retailGroup);
 
 // Get the current customer groups
-$currentGroups = StorefrontSessionHelper::getCustomerGroups();
+$currentGroups = FrontendSessionHelper::getCustomerGroups();
 // or directly via facade
-$currentGroups = StorefrontSession::getCustomerGroups();
+$currentGroups = FrontendSession::getCustomerGroups();
 
 // === Customer ===
 
 // Initialize the customer (sets based on session or retrieves from logged-in user)
-$customer = StorefrontSessionHelper::initCustomer();
+$customer = FrontendSessionHelper::initCustomer();
 
 // Set the customer
 $customer = Customer::find(1);
-StorefrontSessionHelper::setCustomer($customer);
+FrontendSessionHelper::setCustomer($customer);
 // or directly via facade
-StorefrontSession::setCustomer($customer);
+FrontendSession::setCustomer($customer);
 
 // Get the current customer
-$currentCustomer = StorefrontSessionHelper::getCustomer();
+$currentCustomer = FrontendSessionHelper::getCustomer();
 // or directly via facade
-$currentCustomer = StorefrontSession::getCustomer();
+$currentCustomer = FrontendSession::getCustomer();
 
 // === Initialize All ===
 
-// Initialize all storefront session components at once
-$session = StorefrontSessionHelper::initAll();
+// Initialize all frontend session components at once
+$session = FrontendSessionHelper::initAll();
 // Returns: ['channel' => Channel, 'currency' => Currency, 'customerGroups' => Collection, 'customer' => Customer]
 ```
 
 **Direct Facade Usage**:
 
-You can also use the `StorefrontSession` facade directly:
+You can also use the `FrontendSession` facade directly:
 
 ```php
-use Lunar\Facades\StorefrontSession;
+use Lunar\Facades\FrontendSession;
 
 // Channels
-StorefrontSession::initChannel();
-StorefrontSession::setChannel('webstore');
-$channel = StorefrontSession::getChannel();
+FrontendSession::initChannel();
+FrontendSession::setChannel('webstore');
+$channel = FrontendSession::getChannel();
 
 // Currencies
-StorefrontSession::initCurrency();
-StorefrontSession::setCurrency('USD');
-$currency = StorefrontSession::getCurrency();
+FrontendSession::initCurrency();
+FrontendSession::setCurrency('USD');
+$currency = FrontendSession::getCurrency();
 
 // Customer Groups
-StorefrontSession::initCustomerGroups();
-StorefrontSession::setCustomerGroups(collect($groups));
-StorefrontSession::setCustomerGroup($singleGroup);
-$groups = StorefrontSession::getCustomerGroups();
+FrontendSession::initCustomerGroups();
+FrontendSession::setCustomerGroups(collect($groups));
+FrontendSession::setCustomerGroup($singleGroup);
+$groups = FrontendSession::getCustomerGroups();
 
 // Customer
-StorefrontSession::initCustomer();
-StorefrontSession::setCustomer($customer);
-$customer = StorefrontSession::getCustomer();
+FrontendSession::initCustomer();
+FrontendSession::setCustomer($customer);
+$customer = FrontendSession::getCustomer();
 ```
 
 **Initialization Behavior**:
@@ -8688,22 +8689,22 @@ $customer = StorefrontSession::getCustomer();
 
 **Middleware Integration**:
 
-The `StorefrontSessionMiddleware` automatically initializes the storefront session on each request:
+The `FrontendSessionMiddleware` automatically initializes the frontend session on each request:
 
 ```php
 // bootstrap/app.php
 ->withMiddleware(function (Middleware $middleware) {
-    $middleware->append(\App\Http\Middleware\StorefrontSessionMiddleware::class);
+    $middleware->append(\App\Http\Middleware\FrontendSessionMiddleware::class);
 })
 ```
 
 **Session Persistence**:
 
-Storefront session state is automatically persisted in the Laravel session, so settings persist across requests until explicitly changed or the session expires.
+Frontend session state is automatically persisted in the Laravel session, so settings persist across requests until explicitly changed or the session expires.
 
 **Common Use Cases**:
 
-- **Currency Switching**: Allow users to switch currencies on the storefront
+- **Currency Switching**: Allow users to switch currencies on the frontend
 - **Channel Selection**: Switch between different sales channels (webstore, mobile app, etc.)
 - **Customer Group Pricing**: Automatically set customer groups based on user authentication
 - **Multi-tenant Stores**: Switch contexts based on subdomain or other routing logic
@@ -8910,7 +8911,7 @@ $models = CustomModel::channel($channel)->get();
 - **Date Ranges**: Use date ranges for temporary channel availability
 - **Multiple Channels**: Assign models to multiple channels when needed
 - **Query Optimization**: Use channel scopes to filter queries efficiently
-- **Storefront Integration**: Use channels with storefront session for multi-channel stores
+- **Frontend Integration**: Use channels with frontend session for multi-channel stores
 - **Testing**: Test channel availability with different date ranges
 - **Performance**: Consider caching channel assignments for frequently accessed models
 - **Migration**: Ensure channel assignments are included in data migrations
@@ -9101,7 +9102,7 @@ $usd = Currency::create([
 - **ISO 4217 codes**: Use standard ISO 4217 currency codes (e.g., GBP, USD, EUR, JPY)
 - **Decimal places**: Most currencies use 2 decimal places, but some (like JPY) use 0
 - **Default currency**: Only one currency should be marked as default
-- **Enabled status**: Only enabled currencies are typically shown in storefronts
+- **Enabled status**: Only enabled currencies are typically shown in frontends
 
 **Best Practices**:
 
@@ -9111,7 +9112,7 @@ $usd = Currency::create([
 - **Decimal Places**: Set appropriate decimal places for each currency (2 for most, 0 for JPY)
 - **Enabled Status**: Only enable currencies that are actively used
 - **Price Per Currency**: Consider setting prices per currency rather than relying solely on exchange rates
-- **Storefront Integration**: Use currencies with storefront session for multi-currency stores
+- **Frontend Integration**: Use currencies with frontend session for multi-currency stores
 - **Testing**: Test currency conversions with different exchange rates
 - **Performance**: Cache currency data for frequently accessed currencies
 - **Migration**: Ensure currencies are created before creating prices
@@ -10119,3 +10120,4 @@ php artisan test
 ## License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+

@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature\Storefront;
+namespace Tests\Feature\Frontend;
 
-use App\Livewire\Storefront\LanguageSelector;
+use App\Livewire\Frontend\LanguageSelector;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Lunar\Models\Language;
@@ -31,7 +31,7 @@ class LanguageSelectorLivewireTest extends TestCase
     {
         Livewire::test(LanguageSelector::class)
             ->call('switchLanguage', 'ru')
-            ->assertSessionHas('storefront_language', 'ru');
+            ->assertSessionHas('frontend_language', 'ru');
     }
 }
 

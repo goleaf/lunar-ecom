@@ -129,7 +129,7 @@ A comprehensive sorting and filtering system for collection pages with AJAX load
 ```php
 // Collection filtering endpoint
 Route::get('/collections/{collection}/filter', [CollectionFilterController::class, 'index'])
-    ->name('storefront.collections.filter');
+    ->name('frontend.collections.filter');
 ```
 
 ## Usage Examples
@@ -277,4 +277,5 @@ collectionFilters.applyFilters();
    - Filter history
    - Quick filter buttons
    - Filter recommendations
+
 

@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $bundle->name)
 
@@ -14,7 +14,7 @@
                     <img src="{{ $bundle->product->getFirstMedia('images')->getUrl('large') }}" alt="{{ $bundle->name }}" class="w-full rounded-lg">
                 @else
                     <div class="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <span class="text-gray-400">{{ __('storefront.product.no_image') }}</span>
+                        <span class="text-gray-400">{{ __('frontend.product.no_image') }}</span>
                     </div>
                 @endif
             </div>
@@ -33,19 +33,19 @@
                 <div class="bg-gray-50 rounded-lg p-6 mb-6">
                     @if($bundle->show_individual_prices)
                         <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-1">{{ __('storefront.bundles.individual_total') }}</p>
+                            <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.individual_total') }}</p>
                             <p class="text-xl line-through text-gray-500">{{ $currency->formatter($individualTotal) }}</p>
                         </div>
                     @endif
 
                     <div class="mb-4">
-                        <p class="text-sm text-gray-600 mb-1">{{ __('storefront.bundles.bundle_price') }}</p>
+                        <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.bundle_price') }}</p>
                         <p class="text-4xl font-bold text-blue-600">{{ $currency->formatter($bundlePrice) }}</p>
                     </div>
 
                     @if($savings > 0 && $bundle->show_savings)
                         <div class="mb-4">
-                            <p class="text-sm text-gray-600 mb-1">{{ __('storefront.bundles.you_save') }}</p>
+                            <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.you_save') }}</p>
                             <p class="text-2xl font-semibold text-green-600">{{ $currency->formatter($savings) }}</p>
                         </div>
                     @endif
@@ -53,18 +53,18 @@
                     @if($availableStock !== null)
                         <div class="mb-4">
                             @if($availableStock > 0)
-                                <p class="text-sm text-green-600">{{ __('storefront.bundles.in_stock', ['quantity' => $availableStock]) }}</p>
+                                <p class="text-sm text-green-600">{{ __('frontend.bundles.in_stock', ['quantity' => $availableStock]) }}</p>
                             @else
-                                <p class="text-sm text-red-600">{{ __('storefront.bundles.out_of_stock') }}</p>
+                                <p class="text-sm text-red-600">{{ __('frontend.bundles.out_of_stock') }}</p>
                             @endif
                         </div>
                     @endif
 
                     {{-- Add to Cart Form --}}
-                    <form id="addToCartForm" method="POST" action="{{ route('storefront.bundles.add-to-cart', $bundle) }}" class="space-y-4">
+                    <form id="addToCartForm" method="POST" action="{{ route('frontend.bundles.add-to-cart', $bundle) }}" class="space-y-4">
                         @csrf
                         <div>
-                            <label class="block text-sm font-medium mb-2">{{ __('storefront.product.quantity') }}</label>
+                            <label class="block text-sm font-medium mb-2">{{ __('frontend.product.quantity') }}</label>
                             <input type="number" 
                                    name="quantity" 
                                    id="quantity"
@@ -76,7 +76,7 @@
 
                         @if($bundle->allow_customization)
                             <div id="customizationOptions" class="space-y-3">
-                                <p class="font-medium">{{ __('storefront.bundles.customize_items') }}</p>
+                                <p class="font-medium">{{ __('frontend.bundles.customize_items') }}</p>
                                 @foreach($bundle->items as $item)
                                     <div class="border rounded p-3">
                                         <div class="flex items-center justify-between mb-2">
@@ -108,7 +108,7 @@
                         <button type="submit" 
                                 class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold"
                                 @if($availableStock !== null && $availableStock <= 0) disabled @endif>
-                            {{ __('storefront.product.add_to_cart') }}
+                            {{ __('frontend.product.add_to_cart') }}
                         </button>
                     </form>
                 </div>
@@ -117,7 +117,7 @@
 
         {{-- Bundle Items --}}
         <div class="mt-12">
-            <h2 class="text-2xl font-bold mb-6">{{ __('storefront.bundles.bundle_contents') }}</h2>
+            <h2 class="text-2xl font-bold mb-6">{{ __('frontend.bundles.bundle_contents') }}</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($bundle->items as $item)
                     <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -129,16 +129,16 @@
                             @endif
                             <div class="flex-1">
                                 <h3 class="font-semibold mb-1">
-                                    <a href="{{ route('storefront.products.show', $item->product) }}" class="hover:text-blue-600">
+                                    <a href="{{ route('frontend.products.show', $item->product) }}" class="hover:text-blue-600">
                                         {{ $item->product->translateAttribute('name') }}
                                     </a>
                                 </h3>
                                 <p class="text-sm text-gray-600 mb-2">
-                                    {{ __('storefront.bundles.quantity') }}: {{ $item->quantity }}
+                                    {{ __('frontend.bundles.quantity') }}: {{ $item->quantity }}
                                     @if($item->is_required)
-                                        <span class="text-red-600">({{ __('storefront.bundles.required') }})</span>
+                                        <span class="text-red-600">({{ __('frontend.bundles.required') }})</span>
                                     @else
-                                        <span class="text-gray-500">({{ __('storefront.bundles.optional') }})</span>
+                                        <span class="text-gray-500">({{ __('frontend.bundles.optional') }})</span>
                                     @endif
                                 </p>
                                 <p class="text-sm font-medium text-blue-600">
@@ -171,7 +171,7 @@ document.getElementById('addToCartForm')?.addEventListener('submit', async funct
     
     if (response.ok) {
         // Redirect to cart or show success message
-        window.location.href = '{{ route("storefront.cart.index") }}';
+        window.location.href = '{{ route("frontend.cart.index") }}';
     } else {
         alert(data.message || 'Failed to add bundle to cart');
         if (data.errors) {
@@ -182,4 +182,5 @@ document.getElementById('addToCartForm')?.addEventListener('submit', async funct
 </script>
 @endpush
 @endsection
+
 

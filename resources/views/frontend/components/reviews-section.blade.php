@@ -68,12 +68,12 @@
     <div id="reviews-container" class="space-y-6">
         @if($reviews->count() > 0)
             @foreach($reviews as $review)
-                @include('storefront.components.review-item', ['review' => $review])
+                @include('frontend.components.review-item', ['review' => $review])
             @endforeach
             
             @if($aggregateRatings['total_reviews'] > 5)
                 <div class="text-center mt-6">
-                    <a href="{{ route('storefront.reviews.index', $product) }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <a href="{{ route('frontend.reviews.index', $product) }}" class="text-blue-600 hover:text-blue-800 font-medium">
                         View all {{ $aggregateRatings['total_reviews'] }} reviews →
                     </a>
                 </div>
@@ -95,7 +95,8 @@
     {{-- Write Review Section --}}
     @auth
         <div id="write-review" class="mt-12 border-t pt-8">
-            @include('storefront.components.review-form', ['product' => $product])
+            @include('frontend.components.review-form', ['product' => $product])
         </div>
     @endauth
 </div>
+

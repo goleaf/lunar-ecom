@@ -7,9 +7,9 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
 /**
- * Action to preview product on storefront.
+ * Action to preview product on frontend.
  */
-class PreviewStorefrontAction
+class PreviewFrontendAction
 {
     public static function make(): Action
     {
@@ -17,7 +17,7 @@ class PreviewStorefrontAction
             ->label('Preview')
             ->icon('heroicon-o-eye')
             ->color('gray')
-            ->url(fn (Product $record) => route('storefront.products.show', [
+            ->url(fn (Product $record) => route('frontend.products.show', [
                 'product' => $record->slug ?? $record->id,
                 'preview' => true,
             ]))

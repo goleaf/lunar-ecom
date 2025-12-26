@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Storefront;
+namespace App\Livewire\Frontend;
 
 use App\Lunar\Languages\LanguageHelper;
 use App\Models\ReferralProgram;
@@ -31,7 +31,7 @@ class ReferralLandingPage extends Component
         $defaultLanguage = LanguageHelper::getDefault();
 
         if (!$language && $defaultLanguage) {
-            $this->redirectRoute('storefront.referrals.landing', [
+            $this->redirectRoute('frontend.referrals.landing', [
                 'locale' => $defaultLanguage->code,
                 'code' => $this->code,
             ], navigate: true);
@@ -70,32 +70,34 @@ class ReferralLandingPage extends Component
         $this->hreflangs = array_map(function ($lang) {
             return [
                 'hreflang' => $lang['code'],
-                'href' => route('storefront.referrals.landing', ['locale' => $lang['code'], 'code' => $this->referrer?->referral_code ?: $this->code]),
+                'href' => route('frontend.referrals.landing', ['locale' => $lang['code'], 'code' => $this->referrer?->referral_code ?: $this->code]),
             ];
         }, $this->languages);
 
         if ($defaultLanguage) {
             $this->hreflangs[] = [
                 'hreflang' => 'x-default',
-                'href' => route('storefront.referrals.landing', ['locale' => $defaultLanguage->code, 'code' => $this->referrer?->referral_code ?: $this->code]),
+                'href' => route('frontend.referrals.landing', ['locale' => $defaultLanguage->code, 'code' => $this->referrer?->referral_code ?: $this->code]),
             ];
         }
     }
 
     public function render()
     {
-        $pageMeta = new HtmlString(view('storefront.referrals._meta', [
+        $pageMeta = new HtmlString(view('frontend.referrals._meta', [
             'canonical' => $this->canonical ?: request()->url(),
             'hreflangs' => $this->hreflangs,
             'noindex' => true,
         ])->render());
 
-        return view('livewire.storefront.referral-landing-page')
-            ->layout('storefront.layout', [
+        return view('livewire.frontend.referral-landing-page')
+            ->layout('frontend.layout', [
                 'pageTitle' => 'Referral',
                 'pageMeta' => $pageMeta,
             ]);
     }
 }
+
+
 
 

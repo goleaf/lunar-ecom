@@ -1,10 +1,10 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Product Bundles')
 
 @section('content')
 <div class="px-4 py-6">
-    <h1 class="text-3xl font-bold mb-6">{{ __('storefront.bundles.title') }}</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ __('frontend.bundles.title') }}</h1>
 
     @if($bundles->count() > 0)
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -18,7 +18,7 @@
                     
                     <div class="p-4">
                         <h3 class="font-semibold text-lg mb-2">
-                            <a href="{{ route('storefront.bundles.show', $bundle) }}" class="hover:text-blue-600">
+                            <a href="{{ route('frontend.bundles.show', $bundle) }}" class="hover:text-blue-600">
                                 {{ $bundle->name }}
                             </a>
                         </h3>
@@ -52,12 +52,12 @@
                         </div>
 
                         <div class="text-sm text-gray-600 mb-3">
-                            <p>{{ $bundle->items->count() }} {{ __('storefront.bundles.items') }}</p>
+                            <p>{{ $bundle->items->count() }} {{ __('frontend.bundles.items') }}</p>
                         </div>
 
-                        <a href="{{ route('storefront.bundles.show', $bundle) }}" 
+                        <a href="{{ route('frontend.bundles.show', $bundle) }}" 
                            class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                            {{ __('storefront.bundles.view_bundle') }}
+                            {{ __('frontend.bundles.view_bundle') }}
                         </a>
                     </div>
                 </div>
@@ -65,9 +65,10 @@
         </div>
     @else
         <div class="text-center py-12 bg-gray-50 rounded-lg">
-            <p class="text-gray-600">{{ __('storefront.bundles.no_bundles') }}</p>
+            <p class="text-gray-600">{{ __('frontend.bundles.no_bundles') }}</p>
         </div>
     @endif
 </div>
 @endsection
+
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $pageTitle ?? trim($__env->yieldContent('title', 'Lunar E-commerce Store')) }}</title>
+    <title>{{ $pageTitle ?? trim($__env->yieldContent('title', config('app.name', 'E-commerce Store'))) }}</title>
     
     {{-- SEO Meta Tags --}}
     @isset($pageMeta)
@@ -15,8 +15,8 @@
         @else
             @php
                 $defaultMeta = \App\Services\SEOService::getDefaultMetaTags(
-                    'Lunar E-commerce Store',
-                    'Shop the best products at Lunar Store',
+                    config('app.name', 'E-commerce Store'),
+                    'Shop the best products at ' . config('app.name', 'our store'),
                     null,
                     request()->url()
                 );
@@ -38,40 +38,44 @@
         {!! json_encode(\App\Services\SEOService::generateWebsiteStructuredData(), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}
     </script>
     
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @endif
     @livewireStyles
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" data-app="frontend">
     <div id="app" class="min-h-screen bg-gray-50">
         <nav class="bg-white shadow">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex">
-                        <a href="{{ route('storefront.homepage') }}" class="flex items-center px-2 py-2 text-xl font-bold text-gray-900">
-                            Lunar Store
+                        <a href="{{ route('frontend.homepage') }}" class="flex items-center px-2 py-2 text-xl font-bold text-gray-900">
+                            {{ config('app.name', 'Store') }}
                         </a>
                         <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                            <a href="{{ route('storefront.products.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('storefront.nav.products') }}
+                            <a href="{{ route('frontend.products.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                                {{ __('frontend.nav.products') }}
                             </a>
-                            <a href="{{ route('storefront.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('storefront.nav.bundles') }}
+                            <a href="{{ route('frontend.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                                {{ __('frontend.nav.bundles') }}
                             </a>
-                            <a href="{{ route('storefront.collections.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('storefront.nav.collections') }}
+                            <a href="{{ route('frontend.collections.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                                {{ __('frontend.nav.collections') }}
                             </a>
                             <a href="{{ route('categories.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('storefront.categories') }}
+                                {{ __('frontend.categories') }}
                             </a>
-                            <a href="{{ route('storefront.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                            <a href="{{ route('frontend.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                                 Brands
                             </a>
-                            <a href="{{ route('storefront.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('storefront.nav.bundles') }}
+                            <a href="{{ route('frontend.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
+                                {{ __('frontend.nav.bundles') }}
                             </a>
-                            <a href="{{ route('storefront.comparison.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 relative">
-                                {{ __('storefront.nav.comparison') }}
+                            <a href="{{ route('frontend.comparison.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 relative">
+                                {{ __('frontend.nav.comparison') }}
                                 @php
                                     $comparisonService = app(\App\Services\ComparisonService::class);
                                     $comparisonCount = $comparisonService->getComparisonCount();
@@ -88,26 +92,26 @@
                     </div>
                     <div class="flex items-center space-x-4">
                         <div class="mr-4 w-64">
-                            @include('storefront.components.search-autocomplete')
+                            @include('frontend.components.search-autocomplete')
                         </div>
-                        <livewire:storefront.language-selector />
-                        <livewire:storefront.currency-selector />
+                        <livewire:frontend.language-selector />
+                        <livewire:frontend.currency-selector />
                         @auth
-                            <a href="{{ route('storefront.addresses.index') }}" class="text-gray-700 hover:text-gray-900">
+                            <a href="{{ route('frontend.addresses.index') }}" class="text-gray-700 hover:text-gray-900">
                                 Addresses
                             </a>
-                            <a href="{{ route('storefront.downloads.index') }}" class="text-gray-700 hover:text-gray-900">
-                                {{ __('storefront.nav.downloads') }}
+                            <a href="{{ route('frontend.downloads.index') }}" class="text-gray-700 hover:text-gray-900">
+                                {{ __('frontend.nav.downloads') }}
                             </a>
                         @endauth
-                        @include('storefront.components.cart-widget')
+                        @include('frontend.components.cart-widget')
                     </div>
                 </div>
             </div>
         </nav>
 
         {{-- Comparison Bar --}}
-        @include('storefront.components.comparison-bar')
+        @include('frontend.components.comparison-bar')
 
         <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
             @if(session('success'))
@@ -132,7 +136,7 @@
         <footer class="bg-white border-t mt-12">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p class="text-center text-gray-600">&copy; {{ date('Y') }} Lunar Store. All rights reserved.</p>
+                    <p class="text-center text-gray-600">&copy; {{ date('Y') }} {{ config('app.name', 'Store') }}. All rights reserved.</p>
                     <div class="flex gap-4 text-sm">
                         <a href="{{ route('gdpr.privacy-policy.show') }}" class="text-gray-600 hover:text-gray-900">Privacy Policy</a>
                         @auth
@@ -143,10 +147,11 @@
             </div>
         </footer>
 
-        @include('gdpr.cookie-consent-banner')
+        <livewire:frontend.cookie-consent-banner />
 
         @livewireScripts
         @stack('scripts')
     </div>
 </body>
 </html>
+

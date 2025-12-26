@@ -8,15 +8,15 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <span class="font-semibold">
-                    {{ __('storefront.comparison.items_in_comparison', ['count' => $comparisonCount]) }}
+                    {{ __('frontend.comparison.items_in_comparison', ['count' => $comparisonCount]) }}
                 </span>
-                <a href="{{ route('storefront.comparison.index') }}" 
+                <a href="{{ route('frontend.comparison.index') }}" 
                    class="bg-white text-blue-600 px-4 py-2 rounded hover:bg-gray-100 font-medium">
-                    {{ __('storefront.comparison.view_comparison') }}
+                    {{ __('frontend.comparison.view_comparison') }}
                 </a>
             </div>
             <button onclick="clearComparison()" class="text-white hover:text-gray-200 underline">
-                {{ __('storefront.comparison.clear_all') }}
+                {{ __('frontend.comparison.clear_all') }}
             </button>
         </div>
     </div>
@@ -24,7 +24,7 @@
     @push('scripts')
     <script>
     function clearComparison() {
-        if (!confirm('{{ __('storefront.comparison.confirm_clear') }}')) {
+        if (!confirm('{{ __('frontend.comparison.confirm_clear') }}')) {
             return;
         }
         
@@ -47,4 +47,5 @@
     </script>
     @endpush
 @endif
+
 

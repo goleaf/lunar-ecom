@@ -7,7 +7,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
 /**
- * Preview Variant Action - Preview variant on storefront.
+ * Preview Variant Action - Preview variant on frontend.
  */
 class PreviewVariantAction extends Action
 {
@@ -24,7 +24,7 @@ class PreviewVariantAction extends Action
             ->icon('heroicon-o-eye')
             ->color('gray')
             ->url(function (ProductVariant $record) {
-                return route('storefront.variants.show', [
+                return route('frontend.variants.show', [
                     'variant' => $record->id,
                     'preview' => true,
                 ]);
@@ -32,5 +32,6 @@ class PreviewVariantAction extends Action
             ->openUrlInNewTab();
     }
 }
+
 
 

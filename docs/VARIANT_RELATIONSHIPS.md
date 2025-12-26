@@ -392,7 +392,7 @@ $components = $bundleVariant->getBundleComponents();
         <h3>Available in other options:</h3>
         <div class="variant-grid">
             @foreach($crossVariants as $crossVariant)
-                <a href="{{ route('storefront.variants.show', $crossVariant->id) }}">
+                <a href="{{ route('frontend.variants.show', $crossVariant->id) }}">
                     <img src="{{ $crossVariant->getThumbnailUrl() }}" alt="{{ $crossVariant->getDisplayName() }}">
                     <span>{{ $crossVariant->getDisplayName() }}</span>
                 </a>
@@ -416,7 +416,7 @@ $components = $bundleVariant->getBundleComponents();
             <div class="upgrade-card">
                 <h4>{{ $upgrade->getDisplayName() }}</h4>
                 <p>{{ $upgrade->product->translateAttribute('description') }}</p>
-                <a href="{{ route('storefront.variants.show', $upgrade->id) }}" class="btn">
+                <a href="{{ route('frontend.variants.show', $upgrade->id) }}" class="btn">
                     Upgrade Now
                 </a>
             </div>
@@ -442,7 +442,7 @@ $components = $bundleVariant->getBundleComponents();
                     <h4>{{ $accessory->getDisplayName() }}</h4>
                     <p>{{ $accessory->product->translateAttribute('name') }}</p>
                     <div class="price">{{ $accessory->getEffectivePrice()->formatted }}</div>
-                    <a href="{{ route('storefront.variants.show', $accessory->id) }}" class="btn">
+                    <a href="{{ route('frontend.variants.show', $accessory->id) }}" class="btn">
                         Add to Cart
                     </a>
                 </div>
@@ -474,5 +474,6 @@ $components = $bundleVariant->getBundleComponents();
 - **Sort order**: Controls display order within relationship type
 - **Metadata**: Store additional information (JSON)
 - **Auto-generation**: Can auto-generate cross-variants for same product
+
 
 

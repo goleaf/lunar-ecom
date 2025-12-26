@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Storefront;
+namespace App\Livewire\Frontend;
 
 use App\Lunar\Attributes\AttributeFilterHelper;
 use App\Models\Product;
@@ -93,7 +93,7 @@ class ProductIndex extends Component
             request()->url()
         );
 
-        return view('livewire.storefront.product-index', compact(
+        return view('livewire.frontend.product-index', compact(
             'products',
             'brands',
             'filterableAttributes',
@@ -103,3 +103,5 @@ class ProductIndex extends Component
         ));
     }
 }
+
+

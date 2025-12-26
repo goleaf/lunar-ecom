@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('frontend.layout')
 
 @section('title', 'Unsubscribe from Stock Notifications')
 
@@ -32,5 +32,6 @@
     </div>
 </div>
 @endsection
+
 
 

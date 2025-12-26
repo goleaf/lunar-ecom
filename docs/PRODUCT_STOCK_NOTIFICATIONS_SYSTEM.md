@@ -91,7 +91,7 @@ A comprehensive "Notify Me When Available" feature that allows customers to subs
 ## Routes
 
 ```php
-Route::prefix('stock-notifications')->name('storefront.stock-notifications.')->group(function () {
+Route::prefix('stock-notifications')->name('frontend.stock-notifications.')->group(function () {
     Route::post('/products/{product}/subscribe', [StockNotificationController::class, 'subscribe']);
     Route::get('/unsubscribe/{token}', [StockNotificationController::class, 'unsubscribe']);
     Route::get('/products/{product}/check', [StockNotificationController::class, 'check']);
@@ -102,7 +102,7 @@ Route::prefix('stock-notifications')->name('storefront.stock-notifications.')->g
 
 ### Notify Me Button
 - **Location**: `resources/views/storefront/components/notify-me-button.blade.php`
-- **Usage**: `<x-storefront.notify-me-button :product="$product" />`
+- **Usage**: `<x-frontend.notify-me-button :product="$product" />`
 - **Features**:
   - Only shows when product is out of stock
   - Inline subscription form
@@ -255,4 +255,5 @@ php artisan stock:check-notifications --variant=123
    - Track notification open rates
    - Conversion tracking
    - Subscription trends
+
 

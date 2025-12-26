@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Associations\AssociationManager;
@@ -113,5 +113,6 @@ class ProductAssociationController extends Controller
         ]);
     }
 }
+
 
 

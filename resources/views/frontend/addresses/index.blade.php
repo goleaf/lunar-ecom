@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'My Addresses')
 
@@ -6,7 +6,7 @@
 <div class="px-4 py-6">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">My Addresses</h1>
-        <a href="{{ route('storefront.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <a href="{{ route('frontend.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             Add New Address
         </a>
     </div>
@@ -14,7 +14,7 @@
     @if($addresses->isEmpty())
         <div class="bg-white rounded-lg shadow p-6 text-center">
             <p class="text-gray-600 mb-4">You don't have any saved addresses yet.</p>
-            <a href="{{ route('storefront.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block">
+            <a href="{{ route('frontend.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block">
                 Add Your First Address
             </a>
         </div>
@@ -32,12 +32,12 @@
                             @endif
                         </div>
                         <div class="flex space-x-2">
-                            <a href="{{ route('storefront.addresses.edit', $address) }}" class="text-blue-600 hover:text-blue-800">
+                            <a href="{{ route('frontend.addresses.edit', $address) }}" class="text-blue-600 hover:text-blue-800">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                             </a>
-                            <form action="{{ route('storefront.addresses.destroy', $address) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                            <form action="{{ route('frontend.addresses.destroy', $address) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800">
@@ -88,13 +88,13 @@
 
                     <div class="mt-4 pt-4 border-t flex space-x-2">
                         @if(!$address->shipping_default)
-                            <form action="{{ route('storefront.addresses.set-default-shipping', $address) }}" method="POST" class="inline">
+                            <form action="{{ route('frontend.addresses.set-default-shipping', $address) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Set as Shipping Default</button>
                             </form>
                         @endif
                         @if(!$address->billing_default)
-                            <form action="{{ route('storefront.addresses.set-default-billing', $address) }}" method="POST" class="inline">
+                            <form action="{{ route('frontend.addresses.set-default-billing', $address) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Set as Billing Default</button>
                             </form>
@@ -106,4 +106,5 @@
     @endif
 </div>
 @endsection
+
 

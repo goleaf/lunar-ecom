@@ -1,8 +1,8 @@
 <?php
 
-namespace Tests\Feature\Storefront;
+namespace Tests\Feature\Frontend;
 
-use App\Livewire\Storefront\CurrencySelector;
+use App\Livewire\Frontend\CurrencySelector;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Lunar\Models\Currency;
@@ -21,9 +21,6 @@ class CurrencySelectorLivewireTest extends TestCase
             [
                 'name' => 'US Dollar',
                 'exchange_rate' => 1.0000,
-                'format' => '{symbol}{value}',
-                'decimal_point' => '.',
-                'thousand_point' => ',',
                 'decimal_places' => 2,
                 'enabled' => true,
                 'default' => true,
@@ -36,9 +33,6 @@ class CurrencySelectorLivewireTest extends TestCase
             [
                 'name' => 'Euro',
                 'exchange_rate' => 0.9000,
-                'format' => '{symbol}{value}',
-                'decimal_point' => '.',
-                'thousand_point' => ',',
                 'decimal_places' => 2,
                 'enabled' => true,
                 'default' => false,

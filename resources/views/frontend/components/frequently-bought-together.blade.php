@@ -8,14 +8,14 @@
 @if($recommendedProducts->count() > 0)
     <div class="frequently-bought-together mt-8 p-6 bg-gray-50 rounded-lg" 
          data-source-product-id="{{ $product->id }}">
-        <h3 class="text-xl font-semibold mb-4">{{ __('storefront.recommendations.frequently_bought_together') }}</h3>
+        <h3 class="text-xl font-semibold mb-4">{{ __('frontend.recommendations.frequently_bought_together') }}</h3>
         
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($recommendedProducts as $recommendedProduct)
                 <div class="recommended-product flex items-center gap-4 p-4 bg-white rounded border hover:shadow-md transition-shadow"
                      data-product-id="{{ $recommendedProduct->id }}"
                      data-recommendation-type="frequently_bought_together">
-                    <a href="{{ route('storefront.products.show', $recommendedProduct->id) }}" 
+                    <a href="{{ route('frontend.products.show', $recommendedProduct->id) }}" 
                        class="flex items-center gap-4 w-full"
                        onclick="trackRecommendationClick({{ $product->id }}, {{ $recommendedProduct->id }}, 'frequently_bought_together', 'product_page')">
                         @php
@@ -53,7 +53,7 @@
     @push('scripts')
     <script>
         function trackRecommendationClick(sourceProductId, recommendedProductId, type, location) {
-            fetch('{{ route("storefront.recommendations.track-click") }}', {
+            fetch('{{ route("frontend.recommendations.track-click") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -71,4 +71,5 @@
     </script>
     @endpush
 @endif
+
 

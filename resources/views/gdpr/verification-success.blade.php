@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'GDPR Request Verified')
 
@@ -46,11 +46,12 @@
         @endif
 
         <div class="mt-6">
-            <a href="{{ route('storefront.home') }}" class="text-blue-600 hover:underline">
+            <a href="{{ route('frontend.home') }}" class="text-blue-600 hover:underline">
                 Return to Home
             </a>
         </div>
     </div>
 </div>
 @endsection
+
 

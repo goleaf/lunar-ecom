@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -140,3 +140,4 @@ class RecommendationController extends Controller
         return response()->json(['products' => $products]);
     }
 }
+

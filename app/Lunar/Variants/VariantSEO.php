@@ -74,7 +74,7 @@ class VariantSEO
     {
         // If variant has custom URL slug
         if ($variant->url_slug) {
-            return route('storefront.variants.show', $variant->url_slug);
+            return route('frontend.variants.show', $variant->url_slug);
         }
         
         // Fallback to product URL with variant parameter
@@ -82,7 +82,7 @@ class VariantSEO
         $defaultUrl = $product->urls->where('default', true)->first();
         
         if ($defaultUrl) {
-            return route('storefront.products.show', [
+            return route('frontend.products.show', [
                 'slug' => $defaultUrl->slug,
                 'variant' => $variant->id,
             ]);
@@ -121,7 +121,7 @@ class VariantSEO
                 $defaultUrl = $product->urls->where('default', true)->first();
                 
                 if ($defaultUrl) {
-                    return route('storefront.products.show', $defaultUrl->slug);
+                    return route('frontend.products.show', $defaultUrl->slug);
                 }
                 
                 return url('/products/' . $product->id);
@@ -572,3 +572,4 @@ class VariantSEO
         ];
     }
 }
+

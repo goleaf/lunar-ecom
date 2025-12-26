@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $query ? "Search: {$query}" : 'Search')
 
@@ -21,15 +21,15 @@
             @if(isset($facets) && !empty($facets))
                 <aside class="lg:col-span-1">
                     <div class="bg-white p-4 rounded-lg shadow sticky top-4">
-                        <h2 class="text-lg font-semibold mb-4">{{ __('storefront.filters') }}</h2>
+                        <h2 class="text-lg font-semibold mb-4">{{ __('frontend.filters') }}</h2>
                         
-                        <form method="GET" action="{{ route('storefront.search.index') }}">
+                        <form method="GET" action="{{ route('frontend.search.index') }}">
                             <input type="hidden" name="q" value="{{ $query }}">
 
                             {{-- Category Facets --}}
                             @if(isset($facets['categories']) && $facets['categories']->count() > 0)
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium mb-2">{{ __('storefront.categories') }}</label>
+                                    <label class="block text-sm font-medium mb-2">{{ __('frontend.categories') }}</label>
                                     <div class="space-y-1 max-h-48 overflow-y-auto">
                                         @foreach($facets['categories'] as $category)
                                             <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
@@ -49,7 +49,7 @@
                             {{-- Brand Facets --}}
                             @if(isset($facets['brands']) && $facets['brands']->count() > 0)
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium mb-2">{{ __('storefront.brand') }}</label>
+                                    <label class="block text-sm font-medium mb-2">{{ __('frontend.brand') }}</label>
                                     <div class="space-y-1 max-h-48 overflow-y-auto">
                                         @foreach($facets['brands'] as $brand)
                                             <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
@@ -69,7 +69,7 @@
                             {{-- Price Range --}}
                             @if(isset($facets['price_ranges']))
                                 <div class="mb-4">
-                                    <label class="block text-sm font-medium mb-2">{{ __('storefront.price_range') }}</label>
+                                    <label class="block text-sm font-medium mb-2">{{ __('frontend.price_range') }}</label>
                                     <div class="flex items-center space-x-2">
                                         <input type="number" 
                                                name="price_min" 
@@ -92,21 +92,21 @@
 
                             {{-- Sort --}}
                             <div class="mb-4">
-                                <label class="block text-sm font-medium mb-2">{{ __('storefront.sort_by') }}</label>
+                                <label class="block text-sm font-medium mb-2">{{ __('frontend.sort_by') }}</label>
                                 <select name="sort" class="border rounded px-3 py-1 w-full text-sm">
                                     <option value="relevance" {{ request('sort') == 'relevance' ? 'selected' : '' }}>Relevance</option>
-                                    <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('storefront.sort.price_asc') }}</option>
-                                    <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('storefront.sort.price_desc') }}</option>
-                                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('storefront.sort.newest') }}</option>
+                                    <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('frontend.sort.price_asc') }}</option>
+                                    <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('frontend.sort.price_desc') }}</option>
+                                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('frontend.sort.newest') }}</option>
                                 </select>
                             </div>
 
                             <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-2 text-sm">
-                                {{ __('storefront.apply_filters') }}
+                                {{ __('frontend.apply_filters') }}
                             </button>
                             @if(request()->hasAny(['category_id', 'brand_id', 'price_min', 'price_max', 'sort']))
-                                <a href="{{ route('storefront.search.index', ['q' => $query]) }}" class="block text-center text-blue-600 hover:text-blue-800 text-sm">
-                                    {{ __('storefront.clear_filters') }}
+                                <a href="{{ route('frontend.search.index', ['q' => $query]) }}" class="block text-center text-blue-600 hover:text-blue-800 text-sm">
+                                    {{ __('frontend.clear_filters') }}
                                 </a>
                             @endif
                         </form>
@@ -120,7 +120,7 @@
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         @foreach($products as $product)
                             <div x-data="{ trackClick: function() {
-                                fetch('{{ route('storefront.search.track-click') }}', {
+                                fetch('{{ route('frontend.search.track-click') }}', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -132,8 +132,8 @@
                                     })
                                 });
                             }}">
-                                <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" @click="trackClick()">
-                                    @include('storefront.products._product-card', ['product' => $product])
+                                <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" @click="trackClick()">
+                                    @include('frontend.products._product-card', ['product' => $product])
                                 </a>
                             </div>
                         @endforeach
@@ -170,7 +170,7 @@
                     <p class="text-sm text-gray-500 mb-2">Popular Searches:</p>
                     <div class="flex flex-wrap justify-center gap-2">
                         @foreach($popularSearches as $search)
-                            <a href="{{ route('storefront.search.index', ['q' => $search->search_term]) }}" 
+                            <a href="{{ route('frontend.search.index', ['q' => $search->search_term]) }}" 
                                class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm">
                                 {{ $search->search_term }}
                             </a>
@@ -182,5 +182,6 @@
     @endif
 </div>
 @endsection
+
 
 

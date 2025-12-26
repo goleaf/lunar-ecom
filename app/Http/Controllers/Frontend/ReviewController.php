@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -81,7 +81,7 @@ class ReviewController extends Controller
             ]);
         }
 
-        return view('storefront.reviews.index', compact('product', 'reviews'));
+        return view('frontend.reviews.index', compact('product', 'reviews'));
     }
 
     /**
@@ -134,7 +134,7 @@ class ReviewController extends Controller
             }
 
             return redirect()
-                ->route('storefront.products.show', $product->urls->first()?->slug ?? $product->id)
+                ->route('frontend.products.show', $product->urls->first()?->slug ?? $product->id)
                 ->with('success', 'Review submitted successfully. It will be reviewed before publication.');
         } catch (ValidationException $e) {
             if ($request->wantsJson()) {
@@ -220,6 +220,8 @@ class ReviewController extends Controller
             return response()->json($guidelines);
         }
 
-        return view('storefront.reviews.guidelines', compact('guidelines'));
+        return view('frontend.reviews.guidelines', compact('guidelines'));
     }
 }
+
+

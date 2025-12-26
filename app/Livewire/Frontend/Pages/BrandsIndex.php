@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\BrandController;
+use App\Http\Controllers\Frontend\BrandController;
 use Livewire\Component;
 
 class BrandsIndex extends Component

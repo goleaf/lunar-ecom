@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Storefront;
+namespace App\Livewire\Frontend;
 
 use App\Lunar\Products\ProductSEO;
 use App\Models\Product;
@@ -114,7 +114,7 @@ class ProductShow extends Component
         $metaTitle = $this->product->translateAttribute('meta_title');
         $metaDescription = $this->product->translateAttribute('meta_description');
 
-        return view('livewire.storefront.product-show', [
+        return view('livewire.frontend.product-show', [
             'description' => $description,
             'material' => $material,
             'weight' => $weight,
@@ -123,3 +123,5 @@ class ProductShow extends Component
         ]);
     }
 }
+
+

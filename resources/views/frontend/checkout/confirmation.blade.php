@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Order Confirmation')
 
@@ -49,12 +49,13 @@
         </div>
 
         <div class="mt-6 text-center">
-            <a href="{{ route('storefront.home') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
+            <a href="{{ route('frontend.home') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
                 Continue Shopping
             </a>
         </div>
     </div>
 </div>
 @endsection
+
 
 

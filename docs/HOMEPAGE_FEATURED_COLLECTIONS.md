@@ -116,7 +116,7 @@ A comprehensive homepage system displaying featured collections with hero images
 
 ```php
 // Homepage
-Route::get('/', [HomepageController::class, 'index'])->name('storefront.homepage');
+Route::get('/', [HomepageController::class, 'index'])->name('frontend.homepage');
 ```
 
 ## Usage Examples
@@ -279,4 +279,5 @@ Homepage
    - Video hero backgrounds
    - Video banners
    - Product video previews
+
 

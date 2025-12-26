@@ -6,7 +6,7 @@
 @endphp
 
 <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition-shadow">
-    <a href="{{ route('storefront.brands.show', $brand->id) }}" class="block">
+    <a href="{{ route('frontend.brands.show', $brand->id) }}" class="block">
         <div class="p-4">
             @if($logoUrl)
                 <div class="h-24 flex items-center justify-center mb-3">
@@ -27,4 +27,5 @@
         </div>
     </a>
 </div>
+
 

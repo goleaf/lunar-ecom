@@ -236,7 +236,7 @@ $brand = Brand::create([
 ### Filtering Products by Brand
 
 ```blade
-<form method="GET" action="{{ route('storefront.products.index') }}">
+<form method="GET" action="{{ route('frontend.products.index') }}">
     <select name="brand_id" onchange="this.form.submit()">
         <option value="">All Brands</option>
         @foreach($brands as $brand)
@@ -257,4 +257,5 @@ $brand = Brand::create([
 - Brand logos can be stored as media or as URL in attribute_data
 - Product filtering by brand is integrated into the product listing page
 - Brand pages show all published products for that brand
+
 

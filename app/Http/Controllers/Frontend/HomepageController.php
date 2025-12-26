@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
@@ -49,7 +49,7 @@ class HomepageController extends Controller
         // Get promotional banners (could be from database or config)
         $promotionalBanners = $this->getPromotionalBanners();
 
-        return view('storefront.homepage.index', compact(
+        return view('frontend.homepage.index', compact(
             'featuredCollections',
             'bestsellers',
             'newArrivals',
@@ -91,7 +91,7 @@ class HomepageController extends Controller
                     'subtitle' => 'Up to 50% Off',
                     'description' => 'Shop the best deals on summer essentials',
                     'image' => asset('images/banners/summer-sale.jpg'),
-                    'link' => route('storefront.collections.index'),
+                    'link' => route('frontend.collections.index'),
                     'link_text' => 'Shop Now',
                     'position' => 'top',
                     'is_active' => true,
@@ -112,15 +112,17 @@ class HomepageController extends Controller
     {
         if ($banner->link) {
             return match ($banner->link_type) {
-                'collection' => route('storefront.collections.show', $banner->link),
-                'product' => route('storefront.products.show', $banner->link),
-                'category' => route('storefront.categories.show', $banner->link),
+                'collection' => route('frontend.collections.show', $banner->link),
+                'product' => route('frontend.products.show', $banner->link),
+                'category' => route('frontend.categories.show', $banner->link),
                 'url' => $banner->link,
-                default => route('storefront.collections.show', $banner->link),
+                default => route('frontend.collections.show', $banner->link),
             };
         }
 
-        return route('storefront.collections.index');
+        return route('frontend.collections.index');
     }
 }
+
+
 

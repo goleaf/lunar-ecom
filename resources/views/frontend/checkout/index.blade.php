@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Checkout')
 
@@ -6,7 +6,7 @@
 <div class="px-4 py-6">
     <h1 class="text-3xl font-bold mb-6">Checkout</h1>
 
-    <form action="{{ route('storefront.checkout.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <form action="{{ route('frontend.checkout.store') }}" method="POST" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         @csrf
 
         <div class="space-y-6">
@@ -124,5 +124,6 @@
     </form>
 </div>
 @endsection
+
 
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -31,7 +31,7 @@ class ProductQuestionController extends Controller
         $qaCount = $this->questionService->getQaCount($product);
         $similarQuestions = null;
 
-        return view('storefront.products.qa', compact('product', 'questions', 'qaCount', 'similarQuestions'));
+        return view('frontend.products.qa', compact('product', 'questions', 'qaCount', 'similarQuestions'));
     }
 
     /**
@@ -168,5 +168,7 @@ class ProductQuestionController extends Controller
         ]);
     }
 }
+
+
 
 

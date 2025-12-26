@@ -67,7 +67,7 @@ No database models required - uses session storage for comparison items.
 ## Routes
 
 ```php
-Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
+Route::prefix('comparison')->name('frontend.comparison.')->group(function () {
     Route::get('/', [ComparisonController::class, 'index'])->name('index');
     Route::get('/count', [ComparisonController::class, 'count'])->name('count');
     Route::post('/clear', [ComparisonController::class, 'clear'])->name('clear');
@@ -81,7 +81,7 @@ Route::prefix('comparison')->name('storefront.comparison.')->group(function () {
 
 ### Compare Button
 - **Location**: `resources/views/storefront/components/compare-button.blade.php`
-- **Usage**: `<x-storefront.compare-button :product="$product" />`
+- **Usage**: `<x-frontend.compare-button :product="$product" />`
 - **Features**:
   - Toggle add/remove from comparison
   - Visual state indication (green when added)
@@ -249,4 +249,5 @@ Comparison items are stored in session:
    - Suggest products to add based on comparison
    - Show similar products
    - Price alerts for compared products
+
 

@@ -55,7 +55,7 @@ class DigitalProductDelivered extends Notification implements ShouldQueue
     public function toMail($notifiable): MailMessage
     {
         $product = $this->downloadLink->productVariant->product;
-        $downloadUrl = route('storefront.downloads.download', [
+        $downloadUrl = route('frontend.downloads.download', [
             'token' => $this->downloadLink->token,
         ]);
 
@@ -103,8 +103,9 @@ class DigitalProductDelivered extends Notification implements ShouldQueue
             'download_link_id' => $this->downloadLink->id,
             'product_name' => $this->downloadLink->productVariant->product->translateAttribute('name'),
             'order_reference' => $this->downloadLink->order->reference,
-            'download_url' => route('storefront.downloads.download', ['token' => $this->downloadLink->token]),
+            'download_url' => route('frontend.downloads.download', ['token' => $this->downloadLink->token]),
         ];
     }
 }
+
 

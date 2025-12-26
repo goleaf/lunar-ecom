@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Edit Address')
 
@@ -6,7 +6,7 @@
 <div class="px-4 py-6 max-w-2xl mx-auto">
     <h1 class="text-3xl font-bold mb-6">Edit Address</h1>
 
-    <form action="{{ route('storefront.addresses.update', $address) }}" method="POST" class="bg-white rounded-lg shadow p-6">
+    <form action="{{ route('frontend.addresses.update', $address) }}" method="POST" class="bg-white rounded-lg shadow p-6">
         @csrf
         @method('PUT')
 
@@ -133,7 +133,7 @@
                 <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                     Update Address
                 </button>
-                <a href="{{ route('storefront.addresses.index') }}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">
+                <a href="{{ route('frontend.addresses.index') }}" class="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300">
                     Cancel
                 </a>
             </div>
@@ -141,4 +141,5 @@
     </form>
 </div>
 @endsection
+
 

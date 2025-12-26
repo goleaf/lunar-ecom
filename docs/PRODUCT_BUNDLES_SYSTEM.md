@@ -107,7 +107,7 @@ A comprehensive product bundling system that allows customers to purchase multip
 
 ### Storefront
 ```php
-Route::prefix('bundles')->name('storefront.bundles.')->group(function () {
+Route::prefix('bundles')->name('frontend.bundles.')->group(function () {
     Route::get('/', [BundleController::class, 'index'])->name('index');
     Route::get('/{bundle:slug}', [BundleController::class, 'show'])->name('show');
     Route::post('/{bundle}/add-to-cart', [BundleController::class, 'addToCart'])->name('add-to-cart');
@@ -277,4 +277,5 @@ When a bundle is added to cart:
 4. Bundle templates
 5. Seasonal/time-limited bundles
 6. Bundle subscriptions
+
 

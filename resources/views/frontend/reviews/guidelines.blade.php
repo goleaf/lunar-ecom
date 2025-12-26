@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Review Guidelines')
 
@@ -38,4 +38,5 @@
     </div>
 </div>
 @endsection
+
 

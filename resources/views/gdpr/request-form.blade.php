@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'GDPR Request')
 
@@ -74,7 +74,7 @@
             @endif
 
             <div class="flex justify-end gap-4">
-                <a href="{{ route('storefront.home') }}" 
+                <a href="{{ route('frontend.home') }}" 
                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                     Cancel
                 </a>
@@ -91,4 +91,5 @@
     </div>
 </div>
 @endsection
+
 

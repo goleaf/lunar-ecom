@@ -185,8 +185,9 @@ class Download extends Model
      */
     public function getDownloadUrl(): string
     {
-        return route('storefront.downloads.download', ['token' => $this->download_token]);
+        return route('frontend.downloads.download', ['token' => $this->download_token]);
     }
 }
+
 
 

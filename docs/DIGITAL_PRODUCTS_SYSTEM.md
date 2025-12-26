@@ -122,7 +122,7 @@ A comprehensive system for managing digital/downloadable products with secure do
 ## Routes
 
 ```php
-Route::prefix('downloads')->name('storefront.downloads.')->middleware('auth')->group(function () {
+Route::prefix('downloads')->name('frontend.downloads.')->middleware('auth')->group(function () {
     Route::get('/', [DownloadController::class, 'index'])->name('index');
     Route::get('/{token}', [DownloadController::class, 'download'])->name('download');
     Route::post('/{downloadLink}/resend-email', [DownloadController::class, 'resendEmail'])->name('resend-email');
@@ -295,4 +295,5 @@ Digital products are automatically delivered when:
    - Download analytics
    - Conversion tracking
    - Customer behavior analysis
+
 

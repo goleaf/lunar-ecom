@@ -187,10 +187,10 @@ For UI strings (buttons, labels, messages), use Laravel's translation system wit
 
 #### Translation Files
 
-Translation files are located in `resources/lang/{locale}/storefront.php`:
+Translation files are located in `resources/lang/{locale}/frontend.php`:
 
 ```php
-// resources/lang/en/storefront.php
+// resources/lang/en/frontend.php
 return [
     'nav' => [
         'products' => 'Products',
@@ -204,7 +204,7 @@ return [
 ```
 
 ```php
-// resources/lang/fr/storefront.php
+// resources/lang/fr/frontend.php
 return [
     'nav' => [
         'products' => 'Produits',
@@ -221,12 +221,12 @@ return [
 
 ```blade
 {{-- Navigation --}}
-<a href="{{ route('storefront.products.index') }}">
-    {{ __('storefront.nav.products') }}
+<a href="{{ route('frontend.products.index') }}">
+    {{ __('frontend.nav.products') }}
 </a>
 
 {{-- Buttons --}}
-<button>{{ __('storefront.product.add_to_cart') }}</button>
+<button>{{ __('frontend.product.add_to_cart') }}</button>
 ```
 
 ## Language Switcher
@@ -393,13 +393,13 @@ StorefrontSessionHelper::setLanguage('fr');
 
 ```blade
 {{-- Uses current locale automatically --}}
-{{ __('storefront.product.add_to_cart') }}
+{{ __('frontend.product.add_to_cart') }}
 
 {{-- Laravel's trans() helper also works --}}
-{{ trans('storefront.nav.products') }}
+{{ trans('frontend.nav.products') }}
 
 {{-- Translation with parameters --}}
-{{ __('storefront.category_products', ['category' => $categoryName]) }}
+{{ __('frontend.category_products', ['category' => $categoryName]) }}
 ```
 
 ### Translation File Structure
@@ -407,15 +407,15 @@ StorefrontSessionHelper::setLanguage('fr');
 ```
 resources/lang/
 ├── en/
-│   └── storefront.php
+│   └── frontend.php
 ├── es/
-│   └── storefront.php
+│   └── frontend.php
 ├── fr/
-│   └── storefront.php
+│   └── frontend.php
 ├── de/
-│   └── storefront.php
+│   └── frontend.php
 └── zh/
-    └── storefront.php
+    └── frontend.php
 ```
 
 ## Use Cases
@@ -592,7 +592,7 @@ if (LanguageHelper::exists('es')) {
 
 2. **Use fallback wisely**: The automatic fallback to default language ensures users always see content, even if not in their preferred language.
 
-3. **Keep translation files organized**: Use namespaced translation files (e.g., `storefront.*`) to avoid conflicts.
+3. **Keep translation files organized**: Use namespaced translation files (e.g., `frontend.*`) to avoid conflicts.
 
 4. **Test all languages**: When adding new content, test how it displays in all available languages.
 
@@ -626,4 +626,5 @@ if (LanguageHelper::exists('es')) {
 - [Laravel Localization](https://laravel.com/docs/localization)
 - [Attribute System Guide](./PRODUCT_ATTRIBUTES_SYSTEM.md)
 - [Multi-Language Setup](./MULTI_LANGUAGE_SETUP.md)
+
 

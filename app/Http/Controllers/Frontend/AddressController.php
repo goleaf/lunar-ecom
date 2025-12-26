@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Addresses\AddressHelper;
@@ -26,7 +26,7 @@ class AddressController extends Controller
         $defaultShipping = AddressHelper::getDefaultShipping($customer->id);
         $defaultBilling = AddressHelper::getDefaultBilling($customer->id);
 
-        return view('storefront.addresses.index', compact('addresses', 'defaultShipping', 'defaultBilling'));
+        return view('frontend.addresses.index', compact('addresses', 'defaultShipping', 'defaultBilling'));
     }
 
     /**
@@ -44,7 +44,7 @@ class AddressController extends Controller
         $countries = AddressHelper::getCountries();
         $customer = CustomerHelper::getOrCreateCustomerForUser($user);
 
-        return view('storefront.addresses.create', compact('countries', 'customer'));
+        return view('frontend.addresses.create', compact('countries', 'customer'));
     }
 
     /**
@@ -92,7 +92,7 @@ class AddressController extends Controller
             AddressHelper::setDefaultBilling($address);
         }
 
-        return redirect()->route('storefront.addresses.index')
+        return redirect()->route('frontend.addresses.index')
             ->with('success', 'Address added successfully');
     }
 
@@ -115,7 +115,7 @@ class AddressController extends Controller
             ? AddressHelper::getStates($address->country_id) 
             : collect();
 
-        return view('storefront.addresses.edit', compact('address', 'countries', 'states'));
+        return view('frontend.addresses.edit', compact('address', 'countries', 'states'));
     }
 
     /**
@@ -169,7 +169,7 @@ class AddressController extends Controller
             $address->update(['billing_default' => false]);
         }
 
-        return redirect()->route('storefront.addresses.index')
+        return redirect()->route('frontend.addresses.index')
             ->with('success', 'Address updated successfully');
     }
 
@@ -189,7 +189,7 @@ class AddressController extends Controller
 
         $address->delete();
 
-        return redirect()->route('storefront.addresses.index')
+        return redirect()->route('frontend.addresses.index')
             ->with('success', 'Address deleted successfully');
     }
 
@@ -209,7 +209,7 @@ class AddressController extends Controller
 
         AddressHelper::setDefaultShipping($address);
 
-        return redirect()->route('storefront.addresses.index')
+        return redirect()->route('frontend.addresses.index')
             ->with('success', 'Default shipping address updated');
     }
 
@@ -229,8 +229,10 @@ class AddressController extends Controller
 
         AddressHelper::setDefaultBilling($address);
 
-        return redirect()->route('storefront.addresses.index')
+        return redirect()->route('frontend.addresses.index')
             ->with('success', 'Default billing address updated');
     }
 }
+
+
 

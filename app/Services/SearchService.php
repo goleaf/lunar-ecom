@@ -20,6 +20,46 @@ use Illuminate\Support\Facades\Session;
 class SearchService
 {
     /**
+     * Add JSON "LIKE" conditions for the given JSON column and paths in a
+     * database-driver-aware way (works with SQLite json_extract).
+     *
+     * Note: For PostgreSQL we fall back to casting JSON to text and doing ILIKE.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     * @param  string  $column
+     * @param  array<int, string>  $paths  JSON paths (e.g. '$.name', '$.name.en', '$."lt"')
+     * @param  string  $term
+     */
+    protected function whereJsonLike($query, string $column, array $paths, string $term): void
+    {
+        $driver = DB::connection()->getDriverName();
+        $like = '%' . $term . '%';
+
+        if ($driver === 'pgsql') {
+            // Broad fallback: search JSON text representation.
+            $query->whereRaw("{$column}::text ILIKE ?", [$like]);
+            return;
+        }
+
+        $first = true;
+        foreach ($paths as $path) {
+            if ($driver === 'sqlite') {
+                $sql = "json_extract({$column}, ?) LIKE ?";
+            } else {
+                // MySQL/MariaDB (and compatible)
+                $sql = "JSON_UNQUOTE(JSON_EXTRACT({$column}, ?)) LIKE ?";
+            }
+
+            if ($first) {
+                $query->whereRaw($sql, [$path, $like]);
+                $first = false;
+            } else {
+                $query->orWhereRaw($sql, [$path, $like]);
+            }
+        }
+    }
+
+    /**
      * Check if Scout is configured with a search engine (not database).
      *
      * @return bool
@@ -259,10 +299,13 @@ class SearchService
         $cacheKey = "search.suggestions." . md5($query . $limit);
 
         return Cache::remember($cacheKey, 300, function () use ($query, $limit) {
-            // Get product name suggestions using Scout
-            $products = Product::search($query)
-                ->published()
-                ->take($limit)
+            // Apply synonyms for better suggestions.
+            $query = $this->applySynonyms($query);
+
+            // Use the database query builder for suggestions (works with SQLite + no Scout engine required).
+            $products = $this->buildSearchQuery($query, [])
+                ->with(['urls'])
+                ->limit($limit)
                 ->get();
 
             $suggestions = $products->map(function ($product) {
@@ -271,7 +314,7 @@ class SearchService
                     'type' => 'product',
                     'id' => $product->id,
                     'text' => $product->translateAttribute('name'),
-                    'url' => route('storefront.products.show', $slug),
+                    'url' => route('frontend.products.show', $slug),
                 ];
             });
 
@@ -283,7 +326,7 @@ class SearchService
                     $suggestions->push([
                         'type' => 'search',
                         'text' => $searchTerm,
-                        'url' => route('storefront.search.index', ['q' => $searchTerm]),
+                        'url' => route('frontend.search.index', ['q' => $searchTerm]),
                     ]);
                 }
             });
@@ -294,12 +337,106 @@ class SearchService
                 $suggestions->push([
                     'type' => 'search',
                     'text' => $suggestion,
-                    'url' => route('storefront.search.index', ['q' => $suggestion]),
+                    'url' => route('frontend.search.index', ['q' => $suggestion]),
                 ]);
             });
 
             return $suggestions->unique('text')->take($limit);
         });
+    }
+
+    /**
+     * Mega-menu autocomplete suggestions for storefront search (Products + Brands + Categories).
+     *
+     * Returns arrays ready for UI rendering (Livewire).
+     *
+     * @param  string  $query
+     * @param  array{categories?:int,brands?:int,products?:int}  $limits
+     * @return array{categories:array<int,array>,brands:array<int,array>,products:array<int,array>}
+     */
+    public function megaMenuAutocomplete(string $query, array $limits = []): array
+    {
+        $query = trim($query);
+
+        if (mb_strlen($query) < 2) {
+            return [
+                'categories' => [],
+                'brands' => [],
+                'products' => [],
+            ];
+        }
+
+        $query = $this->applySynonyms($query);
+
+        $catLimit = (int) ($limits['categories'] ?? 5);
+        $brandLimit = (int) ($limits['brands'] ?? 5);
+        $productLimit = (int) ($limits['products'] ?? 6);
+
+        $like = '%' . addcslashes($query, "%_\\") . '%';
+
+        $locale = app()->getLocale();
+        $fallbackLocale = config('app.fallback_locale');
+
+        $categories = Category::query()
+            ->active()
+            ->ordered()
+            ->with(['media'])
+            ->where(function ($q) use ($query, $like, $locale, $fallbackLocale) {
+                $q->where('slug', 'LIKE', $like)
+                    ->orWhere(function ($json) use ($query, $locale, $fallbackLocale) {
+                        // Category name is a JSON object keyed by locale (casts to array).
+                        $this->whereJsonLike($json, 'name', [
+                            '$."' . $locale . '"',
+                            '$."' . $fallbackLocale . '"',
+                        ], $query);
+                    });
+            })
+            ->limit($catLimit)
+            ->get();
+
+        $brands = \Lunar\Models\Brand::query()
+            ->with(['media'])
+            ->where('name', 'LIKE', $like)
+            ->limit($brandLimit)
+            ->get();
+
+        $products = $this->buildSearchQuery($query, [])
+            ->with(['media', 'urls', 'brand'])
+            ->limit($productLimit)
+            ->get();
+
+        return [
+            'categories' => $categories->map(function (Category $category) {
+                return [
+                    'key' => 'category:' . $category->id,
+                    'title' => $category->getName(),
+                    'subtitle' => $category->product_count ? ($category->product_count . ' ' . __('frontend.products')) : null,
+                    'image_url' => $category->getImageUrl('small') ?? $category->getImageUrl('thumb'),
+                    'url' => route('categories.show', $category->getFullPath()),
+                ];
+            })->values()->all(),
+            'brands' => $brands->map(function ($brand) {
+                $logo = $brand->getFirstMedia('logo');
+                return [
+                    'key' => 'brand:' . $brand->id,
+                    'title' => $brand->name,
+                    'subtitle' => null,
+                    'image_url' => $logo ? ($logo->getUrl('small') ?? $logo->getUrl('thumb')) : null,
+                    'url' => route('frontend.brands.show', $brand->id),
+                ];
+            })->values()->all(),
+            'products' => $products->map(function (Product $product) {
+                $slug = $product->urls->first()?->slug ?? $product->id;
+                $image = $product->getFirstMedia('images');
+                return [
+                    'key' => 'product:' . $product->id,
+                    'title' => $product->translateAttribute('name'),
+                    'subtitle' => $product->brand?->name,
+                    'image_url' => $image ? $image->getUrl('thumb') : null,
+                    'url' => route('frontend.products.show', $slug),
+                ];
+            })->values()->all(),
+        ];
     }
 
     /**
@@ -465,11 +602,18 @@ class SearchService
                             })
                             // Search in category names (via relationship)
                             ->orWhereHas('categories', function ($catQuery) use ($term) {
-                                // Use database-agnostic JSON search
-                                $catQuery->where(function ($jsonQuery) use ($term) {
-                                    // Try different JSON path syntaxes for compatibility
-                                    $jsonQuery->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(attribute_data, '$.name')) LIKE ?", ["%{$term}%"])
-                                        ->orWhereRaw("attribute_data->>'$.name' LIKE ?", ["%{$term}%"]);
+                                $like = "%{$term}%";
+                                $locale = app()->getLocale();
+                                $fallbackLocale = config('app.fallback_locale');
+
+                                $catQuery->where(function ($catSub) use ($term, $like, $locale, $fallbackLocale) {
+                                    $catSub->where('slug', 'LIKE', $like)
+                                        ->orWhere(function ($nameQuery) use ($term, $locale, $fallbackLocale) {
+                                            $this->whereJsonLike($nameQuery, 'name', [
+                                                '$."' . $locale . '"',
+                                                '$."' . $fallbackLocale . '"',
+                                            ], $term);
+                                        });
                                 });
                             })
                             // Search in variant SKUs
@@ -482,13 +626,22 @@ class SearchService
                             })
                             // Search in product attribute_data JSON (name and description)
                             ->orWhere(function ($jsonQuery) use ($term) {
-                                // MySQL/MariaDB syntax
-                                $jsonQuery->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(attribute_data, '$.name')) LIKE ?", ["%{$term}%"])
-                                    // PostgreSQL syntax (fallback)
-                                    ->orWhereRaw("attribute_data->>'$.name' LIKE ?", ["%{$term}%"])
-                                    // Description search
-                                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(attribute_data, '$.description')) LIKE ?", ["%{$term}%"])
-                                    ->orWhereRaw("attribute_data->>'$.description' LIKE ?", ["%{$term}%"]);
+                                $locale = app()->getLocale();
+                                $fallbackLocale = config('app.fallback_locale');
+
+                                $jsonQuery->where(function ($nameQuery) use ($term, $locale, $fallbackLocale) {
+                                    $this->whereJsonLike($nameQuery, 'attribute_data', [
+                                        '$.name',
+                                        '$.name.' . $locale,
+                                        '$.name.' . $fallbackLocale,
+                                    ], $term);
+                                })->orWhere(function ($descQuery) use ($term, $locale, $fallbackLocale) {
+                                    $this->whereJsonLike($descQuery, 'attribute_data', [
+                                        '$.description',
+                                        '$.description.' . $locale,
+                                        '$.description.' . $fallbackLocale,
+                                    ], $term);
+                                });
                             });
                     });
                 }
@@ -786,3 +939,4 @@ class SearchService
     }
 
 }
+

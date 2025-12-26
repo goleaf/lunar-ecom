@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Frontend\Pages\Homepage;
 use App\Models\Collection;
 use App\Models\PromotionalBanner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class HomepageTest extends TestCase
@@ -26,7 +28,7 @@ class HomepageTest extends TestCase
      */
     public function test_homepage_route_name(): void
     {
-        $response = $this->get(route('storefront.homepage'));
+        $response = $this->get(route('frontend.homepage'));
 
         $response->assertStatus(200);
     }
@@ -34,11 +36,12 @@ class HomepageTest extends TestCase
     /**
      * Test that the homepage view is returned.
      */
-    public function test_homepage_returns_correct_view(): void
+    public function test_homepage_renders_successfully(): void
     {
         $response = $this->get('/');
 
-        $response->assertViewIs('storefront.homepage.index');
+        $response->assertOk();
+        $response->assertSee('homepage', false);
     }
 
     /**
@@ -46,14 +49,11 @@ class HomepageTest extends TestCase
      */
     public function test_homepage_view_receives_required_data(): void
     {
-        $response = $this->get('/');
+        $component = Livewire::test(Homepage::class);
 
-        $response->assertViewHas([
-            'featuredCollections',
-            'bestsellers',
-            'newArrivals',
-            'promotionalBanners',
-        ]);
+        $this->assertNotNull($component->get('featuredCollections'));
+        $this->assertTrue(method_exists($component->get('featuredCollections'), 'count'));
+        $this->assertTrue($component->get('promotionalBanners')->isNotEmpty());
     }
 
     /**
@@ -67,12 +67,8 @@ class HomepageTest extends TestCase
             'homepage_position' => 1,
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('featuredCollections');
-        
-        $featuredCollections = $response->viewData('featuredCollections');
+        $component = Livewire::test(Homepage::class);
+        $featuredCollections = $component->get('featuredCollections');
         $this->assertTrue($featuredCollections->contains($featuredCollection));
     }
 
@@ -86,12 +82,8 @@ class HomepageTest extends TestCase
             'collection_type' => 'bestsellers',
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('bestsellers');
-        
-        $bestsellersData = $response->viewData('bestsellers');
+        $component = Livewire::test(Homepage::class);
+        $bestsellersData = $component->get('bestsellers');
         $this->assertNotNull($bestsellersData);
         $this->assertEquals($bestsellers->id, $bestsellersData->id);
     }
@@ -106,12 +98,8 @@ class HomepageTest extends TestCase
             'collection_type' => 'new_arrivals',
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('newArrivals');
-        
-        $newArrivalsData = $response->viewData('newArrivals');
+        $component = Livewire::test(Homepage::class);
+        $newArrivalsData = $component->get('newArrivals');
         $this->assertNotNull($newArrivalsData);
         $this->assertEquals($newArrivals->id, $newArrivalsData->id);
     }
@@ -130,12 +118,8 @@ class HomepageTest extends TestCase
             'order' => 1,
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('promotionalBanners');
-        
-        $promotionalBanners = $response->viewData('promotionalBanners');
+        $component = Livewire::test(Homepage::class);
+        $promotionalBanners = $component->get('promotionalBanners');
         $this->assertNotEmpty($promotionalBanners);
     }
 
@@ -150,10 +134,8 @@ class HomepageTest extends TestCase
             'starts_at' => now()->addDays(7), // Future start date makes it inactive
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $featuredCollections = $response->viewData('featuredCollections');
+        $component = Livewire::test(Homepage::class);
+        $featuredCollections = $component->get('featuredCollections');
         $this->assertFalse($featuredCollections->contains($inactiveCollection));
     }
 
@@ -162,12 +144,8 @@ class HomepageTest extends TestCase
      */
     public function test_homepage_works_with_no_collections(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('featuredCollections');
-        
-        $featuredCollections = $response->viewData('featuredCollections');
+        $component = Livewire::test(Homepage::class);
+        $featuredCollections = $component->get('featuredCollections');
         $this->assertEmpty($featuredCollections);
     }
 
@@ -176,12 +154,8 @@ class HomepageTest extends TestCase
      */
     public function test_homepage_works_with_no_promotional_banners(): void
     {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $response->assertViewHas('promotionalBanners');
-        
-        $promotionalBanners = $response->viewData('promotionalBanners');
+        $component = Livewire::test(Homepage::class);
+        $promotionalBanners = $component->get('promotionalBanners');
         // Should return fallback banners if none exist
         $this->assertNotEmpty($promotionalBanners);
     }
@@ -207,14 +181,13 @@ class HomepageTest extends TestCase
             'homepage_position' => 2,
         ]);
 
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-        $featuredCollections = $response->viewData('featuredCollections');
+        $component = Livewire::test(Homepage::class);
+        $featuredCollections = $component->get('featuredCollections');
         
         // Check that collections are ordered by homepage_position
         $this->assertEquals($collection2->id, $featuredCollections->first()->id);
         $this->assertEquals($collection1->id, $featuredCollections->last()->id);
     }
 }
+
 

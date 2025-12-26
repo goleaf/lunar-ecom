@@ -474,7 +474,7 @@ class MatrixPricingService
             'price_matrix_id' => $matrixId,
             'old_price' => $oldPrice,
             'new_price' => $newPrice,
-            'currency_code' => Currency::getDefault()->code ?? 'USD',
+            'currency_code' => Currency::getDefault()->code ?? 'EUR',
             'change_type' => $changeType,
             'context' => $context,
             'changed_by' => auth()->id(),

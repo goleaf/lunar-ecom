@@ -45,7 +45,7 @@ class ProductBackInStock extends Notification implements ShouldQueue
     {
         $product = $this->stockNotification->product;
         $variant = $this->stockNotification->getVariant();
-        $productUrl = route('storefront.products.show', $product);
+        $productUrl = route('frontend.products.show', $product);
         
         // Get pricing
         $currency = \Lunar\Facades\Currency::getDefault();
@@ -81,7 +81,7 @@ class ProductBackInStock extends Notification implements ShouldQueue
             ]));
 
         // Add unsubscribe link
-        $unsubscribeUrl = route('storefront.stock-notifications.unsubscribe', [
+        $unsubscribeUrl = route('frontend.stock-notifications.unsubscribe', [
             'token' => $this->stockNotification->token,
         ]);
         $message->line(__('notifications.stock.unsubscribe', [
@@ -102,8 +102,9 @@ class ProductBackInStock extends Notification implements ShouldQueue
         return [
             'product_id' => $this->stockNotification->product_id,
             'product_name' => $this->stockNotification->product->translateAttribute('name'),
-            'product_url' => route('storefront.products.show', $this->stockNotification->product),
+            'product_url' => route('frontend.products.show', $this->stockNotification->product),
         ];
     }
 }
+
 

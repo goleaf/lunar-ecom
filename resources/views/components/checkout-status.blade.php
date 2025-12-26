@@ -37,9 +37,10 @@
     <script>
         function resumeCheckout() {
             // Implement resume checkout logic
-            window.location.href = '{{ route("storefront.checkout.index") }}';
+            window.location.href = '{{ route("frontend.checkout.index") }}';
         }
     </script>
 @endif
+
 
 

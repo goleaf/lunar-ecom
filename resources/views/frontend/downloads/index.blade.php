@@ -1,4 +1,4 @@
-@extends('layouts.storefront')
+@extends('frontend.layout')
 
 @section('title', 'My Downloads')
 
@@ -10,7 +10,7 @@
         @if($downloads->isEmpty())
             <div class="bg-gray-100 rounded-lg p-8 text-center">
                 <p class="text-gray-600 mb-4">You don't have any digital downloads yet.</p>
-                <a href="{{ route('storefront.products.index') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
+                <a href="{{ route('frontend.products.index') }}" class="inline-block bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
                     Browse Products
                 </a>
             </div>
@@ -173,3 +173,4 @@ function copyLicenseKey() {
 }
 </script>
 @endsection
+

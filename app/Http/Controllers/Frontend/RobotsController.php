@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
@@ -55,4 +55,5 @@ ROBOTS;
             ->header('Content-Type', 'text/plain; charset=utf-8');
     }
 }
+
 

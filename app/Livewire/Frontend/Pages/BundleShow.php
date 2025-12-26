@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\BundleController;
+use App\Http\Controllers\Frontend\BundleController;
 use App\Models\Bundle;
 use Livewire\Component;
 

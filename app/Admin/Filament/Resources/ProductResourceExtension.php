@@ -64,7 +64,7 @@ class ProductResourceExtension extends ProductResource
                 Tables\Actions\Action::make('preview')
                     ->label('Preview')
                     ->icon('heroicon-o-eye')
-                    ->url(fn ($record) => route('storefront.products.show', [
+                    ->url(fn ($record) => route('frontend.products.show', [
                         'product' => $record->slug ?? $record->id,
                         'preview' => true,
                     ]))
@@ -83,3 +83,4 @@ class ProductResourceExtension extends ProductResource
             ]);
     }
 }
+

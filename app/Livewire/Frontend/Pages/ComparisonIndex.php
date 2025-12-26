@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\ComparisonController;
+use App\Http\Controllers\Frontend\ComparisonController;
 use Livewire\Component;
 
 class ComparisonIndex extends Component

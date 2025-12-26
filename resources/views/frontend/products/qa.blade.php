@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Questions & Answers - ' . $product->translateAttribute('name'))
 
@@ -64,7 +64,7 @@
                     <div class="font-semibold text-gray-900">{{ $question->question }}</div>
                     <div class="text-xs text-gray-500">Asked {{ $question->asked_at?->format('M j, Y') }} by {{ $question->customer_name ?? 'Customer' }}</div>
                     <div class="flex flex-wrap gap-3 text-xs text-gray-500">
-                        <button type="button" class="mark-helpful text-blue-600" data-url="{{ route('storefront.products.questions.helpful', ['product' => $product->id, 'question' => $question->id]) }}">Helpful ({{ $question->helpful_count }})</button>
+                        <button type="button" class="mark-helpful text-blue-600" data-url="{{ route('frontend.products.questions.helpful', ['product' => $product->id, 'question' => $question->id]) }}">Helpful ({{ $question->helpful_count }})</button>
                         <span>Views: {{ $question->views_count }}</span>
                     </div>
 
@@ -73,14 +73,14 @@
                             <div class="border-l-2 border-blue-200 pl-4">
                                 <div class="text-sm text-gray-800">{{ $answer->answer }}</div>
                                 <div class="text-xs text-gray-500 mt-1">Answered {{ $answer->answered_at?->format('M j, Y') ?? $answer->created_at?->format('M j, Y') }}</div>
-                                <button type="button" class="mark-helpful text-xs text-blue-600" data-url="{{ route('storefront.products.questions.answer.helpful', ['product' => $product->id, 'question' => $question->id, 'answer' => $answer->id]) }}">Helpful ({{ $answer->helpful_count }})</button>
+                                <button type="button" class="mark-helpful text-xs text-blue-600" data-url="{{ route('frontend.products.questions.answer.helpful', ['product' => $product->id, 'question' => $question->id, 'answer' => $answer->id]) }}">Helpful ({{ $answer->helpful_count }})</button>
                             </div>
                         @empty
                             <p class="text-sm text-gray-500">No answers yet.</p>
                         @endforelse
                     </div>
 
-                    <form class="answer-form pt-3 border-t border-gray-200" data-url="{{ route('storefront.products.questions.answer', ['product' => $product->id, 'question' => $question->id]) }}">
+                    <form class="answer-form pt-3 border-t border-gray-200" data-url="{{ route('frontend.products.questions.answer', ['product' => $product->id, 'question' => $question->id]) }}">
                         @csrf
                         <label class="block text-xs text-gray-600 mb-1">Add an answer</label>
                         <textarea name="answer" rows="2" class="w-full rounded border border-gray-300 px-3 py-2 text-sm" required></textarea>
@@ -111,7 +111,7 @@ questionForm?.addEventListener('submit', async (event) => {
     const payload = Object.fromEntries(formData.entries());
 
     try {
-        const response = await fetch('{{ route('storefront.products.questions.store', $product) }}', {
+        const response = await fetch('{{ route('frontend.products.questions.store', $product) }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -179,3 +179,4 @@ document.querySelectorAll('.mark-helpful').forEach((button) => {
 </script>
 @endpush
 @endsection
+

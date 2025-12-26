@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $category->meta_title ?? $category->getName())
 
@@ -36,8 +36,8 @@
         <nav class="mb-4 text-sm" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2 flex-wrap">
                 <li>
-                    <a href="{{ route('storefront.index') }}" class="text-gray-500 hover:text-gray-700">
-                        {{ __('storefront.home') }}
+                    <a href="{{ route('frontend.index') }}" class="text-gray-500 hover:text-gray-700">
+                        {{ __('frontend.home') }}
                     </a>
                 </li>
                 @foreach($breadcrumb as $crumb)
@@ -86,7 +86,7 @@
     {{-- Sub-categories --}}
     @if(isset($children) && $children->count() > 0)
         <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">{{ __('storefront.categories.subcategories') }}</h2>
+            <h2 class="text-xl font-semibold mb-4">{{ __('frontend.categories.subcategories') }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($children as $child)
                     <a href="{{ route('categories.show', $child->getFullPath()) }}" 
@@ -98,7 +98,7 @@
                         @endif
                         <h3 class="font-semibold text-lg mb-1">{{ $child->getName() }}</h3>
                         @if($child->product_count > 0)
-                            <p class="text-sm text-gray-500">{{ $child->product_count }} {{ __('storefront.products') }}</p>
+                            <p class="text-sm text-gray-500">{{ $child->product_count }} {{ __('frontend.products') }}</p>
                         @endif
                     </a>
                 @endforeach
@@ -111,12 +111,12 @@
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
             <aside class="lg:col-span-1">
                 <div class="bg-gray-50 p-4 rounded-lg sticky top-4">
-                    <h3 class="font-semibold mb-3">{{ __('storefront.filters') }}</h3>
+                    <h3 class="font-semibold mb-3">{{ __('frontend.filters') }}</h3>
                     <form method="GET" action="{{ route('categories.show', $category->getFullPath()) }}" class="space-y-4">
                 {{-- Price Range --}}
                 @if(isset($filters['price_range']) && $filters['price_range']['max'] > 0)
                     <div>
-                        <label class="block text-sm font-medium mb-2">{{ __('storefront.price_range') }}</label>
+                        <label class="block text-sm font-medium mb-2">{{ __('frontend.price_range') }}</label>
                         <div class="flex items-center space-x-2">
                             <input type="number" 
                                    name="min_price" 
@@ -140,9 +140,9 @@
                 {{-- Brand Filter --}}
                 @if(isset($filters['brands']) && $filters['brands']->count() > 0)
                     <div>
-                        <label class="block text-sm font-medium mb-2">{{ __('storefront.brand') }}</label>
+                        <label class="block text-sm font-medium mb-2">{{ __('frontend.brand') }}</label>
                         <select name="brand_id" class="border rounded px-3 py-1 w-full">
-                            <option value="">{{ __('storefront.all_brands') }}</option>
+                            <option value="">{{ __('frontend.all_brands') }}</option>
                             @foreach($filters['brands'] as $brand)
                                 <option value="{{ $brand->id }}" {{ request('brand_id') == $brand->id ? 'selected' : '' }}>
                                     {{ $brand->name }}
@@ -154,28 +154,28 @@
 
                 {{-- Sort --}}
                 <div>
-                    <label class="block text-sm font-medium mb-2">{{ __('storefront.sort_by') }}</label>
+                    <label class="block text-sm font-medium mb-2">{{ __('frontend.sort_by') }}</label>
                     <select name="sort" class="border rounded px-3 py-1 w-full">
-                        <option value="default" {{ request('sort') == 'default' ? 'selected' : '' }}>{{ __('storefront.sort.default') }}</option>
-                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('storefront.sort.price_asc') }}</option>
-                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('storefront.sort.price_desc') }}</option>
-                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>{{ __('storefront.sort.name_asc') }}</option>
-                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('storefront.sort.newest') }}</option>
+                        <option value="default" {{ request('sort') == 'default' ? 'selected' : '' }}>{{ __('frontend.sort.default') }}</option>
+                        <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('frontend.sort.price_asc') }}</option>
+                        <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('frontend.sort.price_desc') }}</option>
+                        <option value="name_asc" {{ request('sort') == 'name_asc' ? 'selected' : '' }}>{{ __('frontend.sort.name_asc') }}</option>
+                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('frontend.sort.newest') }}</option>
                     </select>
                 </div>
 
                 <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    {{ __('storefront.apply_filters') }}
+                    {{ __('frontend.apply_filters') }}
                 </button>
                 @if(request()->hasAny(['min_price', 'max_price', 'brand_id', 'sort']))
                     <a href="{{ route('categories.show', $category->getFullPath()) }}" class="ml-2 text-blue-600 hover:text-blue-800">
-                        {{ __('storefront.clear_filters') }}
+                        {{ __('frontend.clear_filters') }}
                     </a>
                         @endif
 
                         {{-- Attribute Filters --}}
                         @if(isset($filters['grouped_attributes']) && $filters['grouped_attributes']->count() > 0)
-                            @include('storefront.components.attribute-filters', [
+                            @include('frontend.components.attribute-filters', [
                                 'groupedAttributes' => $filters['grouped_attributes'],
                                 'activeFilters' => $activeFilters ?? [],
                                 'baseUrl' => route('categories.show', $category->getFullPath())
@@ -189,7 +189,7 @@
             <div class="lg:col-span-3">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-semibold">
-                {{ __('storefront.products') }}
+                {{ __('frontend.products') }}
                 @if($products->total() > 0)
                     <span class="text-gray-500 text-base font-normal">({{ $products->total() }})</span>
                 @endif
@@ -199,7 +199,7 @@
         @if($products->count() > 0)
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($products as $product)
-                    @include('storefront.products._product-card', ['product' => $product])
+                    @include('frontend.products._product-card', ['product' => $product])
                 @endforeach
             </div>
 
@@ -209,10 +209,11 @@
             </div>
         @else
             <div class="text-center py-12 bg-gray-50 rounded-lg">
-                <p class="text-gray-600">{{ __('storefront.no_products') }}</p>
+                <p class="text-gray-600">{{ __('frontend.no_products') }}</p>
             </div>
         @endif
     </div>
 </div>
 @endsection
+
 

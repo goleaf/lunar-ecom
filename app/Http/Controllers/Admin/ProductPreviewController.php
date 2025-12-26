@@ -23,9 +23,10 @@ class ProductPreviewController extends Controller
         // Set preview mode in session
         session(['preview_mode' => true]);
         
-        return redirect()->route('storefront.products.show', [
+        return redirect()->route('frontend.products.show', [
             'product' => $product->slug ?? $product->id,
         ]);
     }
 }
+
 

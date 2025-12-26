@@ -1,3 +1,4 @@
 @props(['collection'])
 
-@include('storefront.collection-card', ['collection' => $collection])
+@include('frontend.collection-card', ['collection' => $collection])
+

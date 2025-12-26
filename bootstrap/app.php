@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\LanguageDetectionMiddleware::class,
-            \App\Http\Middleware\StorefrontSessionMiddleware::class,
+            \App\Http\Middleware\FrontendSessionMiddleware::class,
             \App\Http\Middleware\TrackProductView::class,
             \App\Http\Middleware\TrackReferralLink::class,
         ]);

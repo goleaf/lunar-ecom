@@ -87,7 +87,7 @@
                             <a href="{{ route('admin.bundles.edit', $bundle) }}" class="text-blue-600 hover:underline mr-3">
                                 Edit
                             </a>
-                            <a href="{{ route('storefront.bundles.show', $bundle) }}" class="text-green-600 hover:underline mr-3" target="_blank">
+                            <a href="{{ route('frontend.bundles.show', $bundle) }}" class="text-green-600 hover:underline mr-3" target="_blank">
                                 View
                             </a>
                             <form method="POST" action="{{ route('admin.bundles.destroy', $bundle) }}" class="inline" onsubmit="return confirm('Are you sure?')">
@@ -114,4 +114,5 @@
     </div>
 </div>
 @endsection
+
 

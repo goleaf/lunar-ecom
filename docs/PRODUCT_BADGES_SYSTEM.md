@@ -149,7 +149,7 @@ Route::prefix('admin/products/{product}/badges')->name('admin.products.product-b
 
 ### Product Badges Component
 - **Location**: `resources/views/storefront/components/product-badges.blade.php`
-- **Usage**: `<x-storefront.product-badges :product="$product" :limit="3" />`
+- **Usage**: `<x-frontend.product-badges :product="$product" :limit="3" />`
 - **Features**:
   - Displays badges with custom styling
   - Position-based rendering
@@ -352,4 +352,5 @@ This command:
    - Category-based rules
    - Category templates
    - Bulk operations
+
 

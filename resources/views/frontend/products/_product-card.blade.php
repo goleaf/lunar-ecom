@@ -5,7 +5,7 @@
 
     @if($firstMedia)
         <div class="relative">
-            @include('storefront.components.responsive-image', [
+            @include('frontend.components.responsive-image', [
                 'media' => $firstMedia,
                 'model' => $product,
                 'collectionName' => 'images',
@@ -15,18 +15,18 @@
                 'class' => 'w-full h-48 object-cover',
                 'loading' => 'lazy'
             ])
-            <x-storefront.product-badges :product="$product" :limit="3" />
+            <x-frontend.product-badges :product="$product" :limit="3" />
         </div>
     @else
         <div class="relative w-full h-48 bg-gray-200 flex items-center justify-center">
-            <span class="text-gray-400">{{ __('storefront.product.no_image') }}</span>
-            <x-storefront.product-badges :product="$product" :limit="3" />
+            <span class="text-gray-400">{{ __('frontend.product.no_image') }}</span>
+            <x-frontend.product-badges :product="$product" :limit="3" />
         </div>
     @endif
     <div class="p-4">
         <div class="flex items-start justify-between mb-2">
             <h3 class="text-lg font-semibold flex-1">
-                <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="text-gray-900 hover:text-gray-600">
+                <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" class="text-gray-900 hover:text-gray-600">
                     {{ $product->translateAttribute('name') }}
                 </a>
             </h3>
@@ -40,7 +40,7 @@
             @endif
         </div>
         @php
-            // Get pricing using Lunar Pricing facade
+            // Get pricing using the Pricing facade
             // See: https://docs.lunarphp.com/1.x/reference/products#fetching-the-price
             $variant = $product->variants->first();
             if ($variant) {
@@ -54,11 +54,12 @@
             </p>
         @endif
         <div class="flex gap-2">
-            <a href="{{ route('storefront.products.show', $product->urls->first()->slug ?? $product->id) }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                {{ __('storefront.product.view_details') }}
+            <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                {{ __('frontend.product.view_details') }}
             </a>
-            <x-storefront.compare-button :product="$product" />
+            <x-frontend.compare-button :product="$product" />
         </div>
     </div>
 </div>
+
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Frontend\CheckoutController;
 use Livewire\Component;
 use Lunar\Models\Order;
 

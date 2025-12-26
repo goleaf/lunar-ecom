@@ -42,7 +42,7 @@ class ProductComingSoonAvailable extends Notification implements ShouldQueue
     {
         $product = $this->notification->product;
         $productName = $product->translateAttribute('name') ?? 'Product';
-        $productUrl = route('storefront.products.show', $product->id);
+        $productUrl = route('frontend.products.show', $product->id);
 
         return (new MailMessage)
             ->subject("Great News! {$productName} is Now Available!")
@@ -54,5 +54,6 @@ class ProductComingSoonAvailable extends Notification implements ShouldQueue
             ->line('If you no longer wish to receive these notifications, you can unsubscribe using the link below.');
     }
 }
+
 
 

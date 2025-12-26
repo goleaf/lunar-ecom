@@ -28,7 +28,7 @@ class ProductSEO
         
         $defaultUrl = $product->urls->where('default', true)->first();
         $canonicalUrl = $defaultUrl 
-            ? route('storefront.products.show', $defaultUrl->slug)
+            ? route('frontend.products.show', $defaultUrl->slug)
             : url('/products/' . $product->id);
 
         // Get locale-specific meta fields
@@ -216,7 +216,7 @@ class ProductSEO
         
         $defaultUrl = $product->urls->where('default', true)->first();
         $productUrl = $defaultUrl 
-            ? route('storefront.products.show', $defaultUrl->slug)
+            ? route('frontend.products.show', $defaultUrl->slug)
             : url('/products/' . $product->id);
 
         // Get pricing
@@ -335,7 +335,7 @@ class ProductSEO
     {
         $defaultUrl = $product->urls->where('default', true)->first();
         $url = $defaultUrl 
-            ? route('storefront.products.show', $defaultUrl->slug)
+            ? route('frontend.products.show', $defaultUrl->slug)
             : url('/products/' . $product->id);
 
         return [
@@ -361,3 +361,4 @@ class ProductSEO
         return 'index, follow';
     }
 }
+

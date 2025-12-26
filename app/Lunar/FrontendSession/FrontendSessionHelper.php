@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Lunar\StorefrontSession;
+namespace App\Lunar\FrontendSession;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -12,13 +12,12 @@ use Lunar\Models\CustomerGroup;
 use Lunar\Models\Language;
 
 /**
- * Helper class for working with Lunar Storefront Session.
- * 
- * Provides convenience methods for managing storefront session state
- * (channel, currency, customer groups, and customer).
- * See: https://docs.lunarphp.com/1.x/storefront-utils/storefront-session
+ * Helper class for working with the frontend session.
+ *
+ * Wraps Lunar's session utilities (channel, currency, customer groups, customer, language)
+ * behind project naming that avoids "Storefront" terminology.
  */
-class StorefrontSessionHelper
+class FrontendSessionHelper
 {
     /**
      * Initialize the channel.
@@ -193,7 +192,7 @@ class StorefrontSessionHelper
      */
     public static function initLanguage(): ?Language
     {
-        $languageCode = session('storefront_language');
+        $languageCode = session('frontend_language');
         
         if ($languageCode) {
             $language = Language::where('code', $languageCode)->first();
@@ -207,7 +206,7 @@ class StorefrontSessionHelper
         $defaultLanguage = Language::getDefault();
         if ($defaultLanguage) {
             App::setLocale($defaultLanguage->code);
-            session(['storefront_language' => $defaultLanguage->code]);
+            session(['frontend_language' => $defaultLanguage->code]);
             return $defaultLanguage;
         }
 
@@ -231,7 +230,7 @@ class StorefrontSessionHelper
             }
         }
 
-        session(['storefront_language' => $language->code]);
+        session(['frontend_language' => $language->code]);
         App::setLocale($language->code);
     }
 
@@ -242,7 +241,7 @@ class StorefrontSessionHelper
      */
     public static function getLanguage(): ?Language
     {
-        $languageCode = session('storefront_language');
+        $languageCode = session('frontend_language');
         
         if ($languageCode) {
             return Language::where('code', $languageCode)->first();
@@ -252,11 +251,10 @@ class StorefrontSessionHelper
     }
 
     /**
-     * Initialize all storefront session components.
-     * 
+     * Initialize all frontend session components.
+     *
      * This initializes channel, currency, customer groups, customer, and language.
-     * Useful for setting up the entire storefront session at once.
-     * 
+     *
      * @return array Array containing initialized components
      */
     public static function initAll(): array

@@ -361,7 +361,7 @@ public function index()
     // Or get navigation menu
     $navigation = CategoryHelper::getNavigation(3);
     
-    return view('storefront.categories.index', [
+    return view('frontend.categories.index', [
         'categoryTree' => $categoryTree,
         'navigation' => $navigation,
     ]);
@@ -384,7 +384,7 @@ public function index()
             
             @if($category->children->count() > 0)
                 <ul class="subcategories">
-                    @include('storefront.components.category-tree', [
+                    @include('frontend.components.category-tree', [
                         'categories' => $category->children
                     ])
                 </ul>
@@ -588,7 +588,7 @@ class CategoryController extends Controller
         
         $products = $query->paginate(20);
         
-        return view('storefront.categories.show', [
+        return view('frontend.categories.show', [
             'category' => $category,
             'products' => $products,
             'breadcrumb' => $category->getBreadcrumb(),
@@ -818,4 +818,5 @@ You now have everything you need to work with Lunar's nested set category system
 - ✅ Move and reorder categories easily
 
 Happy coding! 🚀
+
 

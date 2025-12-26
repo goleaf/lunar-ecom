@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\ComingSoonNotification;
@@ -80,10 +80,12 @@ class ComingSoonController extends Controller
         $notification = ComingSoonNotification::where('token', $token)->firstOrFail();
         $notification->delete();
 
-        return view('storefront.coming-soon.unsubscribed', [
+        return view('frontend.coming-soon.unsubscribed', [
             'product' => $notification->product,
         ]);
     }
 }
+
+
 
 

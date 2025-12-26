@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\CartController;
+use App\Http\Controllers\Frontend\CartController;
 use Livewire\Component;
 
 class CartIndex extends Component

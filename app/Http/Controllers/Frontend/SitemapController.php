@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Response;
@@ -144,7 +144,7 @@ class SitemapController extends Controller
         $urls = $collections->map(function ($collection) {
             $defaultUrl = $collection->urls->where('default', true)->first();
             $url = $defaultUrl 
-                ? route('storefront.collections.show', $defaultUrl->slug)
+                ? route('frontend.collections.show', $defaultUrl->slug)
                 : url('/collections/' . $collection->id);
 
             return [
@@ -178,13 +178,13 @@ class SitemapController extends Controller
                 'priority' => 1.0,
             ],
             [
-                'url' => route('storefront.products.index'),
+                'url' => route('frontend.products.index'),
                 'lastmod' => now()->toIso8601String(),
                 'changefreq' => 'daily',
                 'priority' => 0.9,
             ],
             [
-                'url' => route('storefront.collections.index'),
+                'url' => route('frontend.collections.index'),
                 'lastmod' => now()->toIso8601String(),
                 'changefreq' => 'weekly',
                 'priority' => 0.8,
@@ -196,7 +196,7 @@ class SitemapController extends Controller
                 'priority' => 0.8,
             ],
             [
-                'url' => route('storefront.brands.index'),
+                'url' => route('frontend.brands.index'),
                 'lastmod' => now()->toIso8601String(),
                 'changefreq' => 'weekly',
                 'priority' => 0.7,
@@ -209,3 +209,5 @@ class SitemapController extends Controller
             ->header('Content-Type', 'application/xml; charset=utf-8');
     }
 }
+
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components\Storefront;
+namespace App\View\Components\Frontend;
 
 use Illuminate\View\Component;
 
@@ -21,8 +21,10 @@ class CollectionCard extends Component
      */
     public function render()
     {
-        return view('storefront.collection-card');
+        return view('frontend.collection-card');
     }
 }
+
+
 
 

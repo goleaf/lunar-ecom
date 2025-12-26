@@ -1,6 +1,7 @@
 @props(['product', 'limit' => 5])
 
-@include('storefront.components.frequently-bought-together', [
+@include('frontend.components.frequently-bought-together', [
     'product' => $product,
     'limit' => $limit,
 ])
+

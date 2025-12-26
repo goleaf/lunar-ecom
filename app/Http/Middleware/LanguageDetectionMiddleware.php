@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Lunar\Languages\LanguageHelper;
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -65,8 +65,8 @@ class LanguageDetectionMiddleware
         }
 
         // 4) Session (storefront_language)
-        if (!$detectedLanguage && session()->has('storefront_language')) {
-            $sessionLocale = (string) session('storefront_language');
+        if (!$detectedLanguage && session()->has('frontend_language')) {
+            $sessionLocale = (string) session('frontend_language');
             if ($sessionLocale !== '') {
                 $detectedLanguage = LanguageHelper::findByCode(strtolower($sessionLocale));
             }
@@ -83,7 +83,7 @@ class LanguageDetectionMiddleware
         }
 
         if ($detectedLanguage) {
-            StorefrontSessionHelper::setLanguage($detectedLanguage);
+            FrontendSessionHelper::setLanguage($detectedLanguage);
 
             // Persist preference cookie so future visits are deterministic.
             Cookie::queue(Cookie::make(
@@ -143,4 +143,6 @@ class LanguageDetectionMiddleware
         return null;
     }
 }
+
+
 

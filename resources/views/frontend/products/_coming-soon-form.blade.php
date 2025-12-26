@@ -43,7 +43,7 @@
             const messageDiv = document.getElementById('comingSoonMessage');
 
             try {
-                const response = await fetch('{{ route("storefront.coming-soon.subscribe", $product->id) }}', {
+                const response = await fetch('{{ route("frontend.coming-soon.subscribe", $product->id) }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -65,5 +65,6 @@
         });
     </script>
 @endif
+
 
 

@@ -190,10 +190,10 @@ $query = $filterService->applyFilters($query, $activeFilters, 'and');
 
 ```blade
 {{-- Include attribute filters component --}}
-@include('storefront.components.attribute-filters', [
+@include('frontend.components.attribute-filters', [
     'groupedAttributes' => $groupedAttributes,
     'activeFilters' => $activeFilters,
-    'baseUrl' => route('storefront.products.index')
+    'baseUrl' => route('frontend.products.index')
 ])
 ```
 
@@ -445,7 +445,7 @@ $attributeService = app(AttributeService::class);
 $groupedAttributes = AttributeFilterHelper::getGroupedFilterableAttributes();
 $activeFilters = AttributeFilterHelper::getActiveFilters($request);
 
-return view('storefront.products.index', [
+return view('frontend.products.index', [
     'groupedAttributes' => $groupedAttributes,
     'activeFilters' => $activeFilters,
 ]);
@@ -453,9 +453,10 @@ return view('storefront.products.index', [
 
 ```blade
 {{-- In view --}}
-@include('storefront.components.attribute-filters', [
+@include('frontend.components.attribute-filters', [
     'groupedAttributes' => $groupedAttributes,
     'activeFilters' => $activeFilters,
 ])
 ```
+
 

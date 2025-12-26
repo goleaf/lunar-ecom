@@ -40,7 +40,7 @@ class QuestionAnsweredNotification extends Notification implements ShouldQueue
     {
         $product = $this->question->product;
         $productName = $product->translateAttribute('name') ?? 'Product';
-        $productUrl = route('storefront.products.show', $product->id);
+        $productUrl = route('frontend.products.show', $product->id);
 
         $message = (new MailMessage)
             ->subject("Your question about {$productName} has been answered!")
@@ -74,5 +74,6 @@ class QuestionAnsweredNotification extends Notification implements ShouldQueue
         ];
     }
 }
+
 
 

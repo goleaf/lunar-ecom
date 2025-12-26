@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $metaTags['title'] ?? $brand->name)
 
@@ -40,9 +40,9 @@
 @section('content')
 <div class="px-4 py-6">
     <nav class="text-sm text-gray-500 mb-6">
-        <a href="{{ route('storefront.homepage') }}" class="hover:text-gray-700">Home</a>
+        <a href="{{ route('frontend.homepage') }}" class="hover:text-gray-700">Home</a>
         <span class="mx-2">/</span>
-        <a href="{{ route('storefront.brands.index') }}" class="hover:text-gray-700">Brands</a>
+        <a href="{{ route('frontend.brands.index') }}" class="hover:text-gray-700">Brands</a>
         <span class="mx-2">/</span>
         <span class="text-gray-900">{{ $brand->name }}</span>
     </nav>
@@ -87,7 +87,7 @@
                                 Visit Website
                             </a>
                         @endif
-                        <a href="{{ route('storefront.products.index', ['brand_id' => $brand->id]) }}"
+                        <a href="{{ route('frontend.products.index', ['brand_id' => $brand->id]) }}"
                            class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:border-gray-400 hover:text-gray-900">
                             View All Products
                         </a>
@@ -118,7 +118,7 @@
     @if($products->count() > 0)
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @foreach($products as $product)
-                @include('storefront.products._product-card', ['product' => $product])
+                @include('frontend.products._product-card', ['product' => $product])
             @endforeach
         </div>
 
@@ -128,16 +128,17 @@
     @else
         <div class="bg-white rounded-lg shadow p-12 text-center">
             <p class="text-gray-600">No products available for this brand.</p>
-            <a href="{{ route('storefront.products.index') }}" class="text-blue-600 hover:text-blue-800 mt-4 inline-block">
+            <a href="{{ route('frontend.products.index') }}" class="text-blue-600 hover:text-blue-800 mt-4 inline-block">
                 Browse All Products
             </a>
         </div>
     @endif
 
     <div class="mt-8">
-        <a href="{{ route('storefront.brands.index') }}" class="text-blue-600 hover:text-blue-800">
+        <a href="{{ route('frontend.brands.index') }}" class="text-blue-600 hover:text-blue-800">
             Back to Brand Directory
         </a>
     </div>
 </div>
 @endsection
+

@@ -160,7 +160,7 @@ class RedirectService
         $redirect->recordHit();
 
         // Determine redirect URL
-        $redirectUrl = $redirect->new_path ?? route('storefront.products.show', $redirect->new_slug);
+        $redirectUrl = $redirect->new_path ?? route('frontend.products.show', $redirect->new_slug);
         
         // If we have a query string, preserve it
         if ($request->getQueryString()) {
@@ -235,4 +235,5 @@ class RedirectService
         ];
     }
 }
+
 

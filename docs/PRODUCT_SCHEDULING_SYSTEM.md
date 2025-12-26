@@ -124,7 +124,7 @@ Route::prefix('admin/schedules')->name('admin.schedules.')->group(function () {
 
 ### Flash Sale Badge
 - **Location**: `resources/views/storefront/components/flash-sale-badge.blade.php`
-- **Usage**: `<x-storefront.flash-sale-badge :product="$product" />`
+- **Usage**: `<x-frontend.flash-sale-badge :product="$product" />`
 - **Features**: Shows flash sale badge with countdown
 
 ### Admin Schedules Page
@@ -281,4 +281,5 @@ When a flash sale expires:
    - Real-time countdown timers
    - Progress bars
    - Urgency indicators
+
 

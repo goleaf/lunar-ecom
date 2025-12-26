@@ -81,7 +81,7 @@ class CategoryController extends Controller
         }
 
         // Return view for web requests
-        return view('storefront.categories.show', $data);
+        return view('frontend.categories.show', $data);
     }
 
     /**
@@ -256,3 +256,4 @@ class CategoryController extends Controller
         ]);
     }
 }
+

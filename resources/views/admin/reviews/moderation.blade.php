@@ -81,7 +81,7 @@
                                 <span> • </span>
                                 <span>{{ $review->created_at->format('M d, Y H:i') }}</span>
                                 <span> • </span>
-                                <a href="{{ route('storefront.products.show', $review->product->id) }}" 
+                                <a href="{{ route('frontend.products.show', $review->product->id) }}" 
                                    class="text-blue-600 hover:underline">
                                     {{ $review->product->translateAttribute('name') }}
                                 </a>
@@ -324,4 +324,5 @@ document.getElementById('responseForm')?.addEventListener('submit', async functi
 });
 </script>
 @endsection
+
 

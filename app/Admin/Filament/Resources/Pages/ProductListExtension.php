@@ -22,7 +22,7 @@ class ProductListExtension extends ListProducts
             Tables\Actions\Action::make('preview')
                 ->label('Preview')
                 ->icon('heroicon-o-eye')
-                ->url(fn ($record) => route('storefront.products.show', [
+                ->url(fn ($record) => route('frontend.products.show', [
                     'product' => $record->slug ?? $record->id,
                     'preview' => true,
                 ]))
@@ -84,3 +84,4 @@ class ProductListExtension extends ListProducts
         ];
     }
 }
+

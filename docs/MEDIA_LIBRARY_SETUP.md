@@ -143,7 +143,7 @@ MediaHelper::addMultipleImages($product, $request->file('images'));
     $firstMedia = $product->getFirstMedia('images');
 @endphp
 
-@include('storefront.components.responsive-image', [
+@include('frontend.components.responsive-image', [
     'media' => $firstMedia,
     'model' => $product,
     'collectionName' => 'images',
@@ -177,7 +177,7 @@ MediaHelper::addMultipleImages($product, $request->file('images'));
 Include the uploader component in your views:
 
 ```blade
-@include('storefront.components.image-uploader', [
+@include('frontend.components.image-uploader', [
     'modelId' => $product->id,
     'modelType' => 'product',
     'collectionName' => 'images'
@@ -390,4 +390,5 @@ Add custom size types in `config/lunar/media.php`:
 2. Verify CSRF token is included
 3. Check disk space availability
 4. Review validation rules in MediaController
+
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Storefront;
+namespace App\Livewire\Frontend;
 
 use App\Lunar\Currencies\CurrencyHelper;
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
 use Livewire\Component;
 use Lunar\Models\Currency;
 
@@ -14,7 +14,7 @@ class CurrencySelector extends Component
      */
     public array $currencies = [];
 
-    public string $currentCode = 'USD';
+    public string $currentCode = 'EUR';
 
     public function mount(): void
     {
@@ -27,7 +27,7 @@ class CurrencySelector extends Component
             ->values()
             ->all();
 
-        $current = StorefrontSessionHelper::getCurrency();
+        $current = FrontendSessionHelper::getCurrency();
         if ($current) {
             $this->currentCode = $current->code;
             return;
@@ -50,7 +50,7 @@ class CurrencySelector extends Component
             return;
         }
 
-        StorefrontSessionHelper::setCurrency($currency);
+        FrontendSessionHelper::setCurrency($currency);
         $this->currentCode = $currency->code;
 
         // Reload current URL so prices update everywhere.
@@ -59,8 +59,12 @@ class CurrencySelector extends Component
 
     public function render()
     {
-        return view('livewire.storefront.currency-selector');
+        return view('livewire.frontend.currency-selector');
     }
 }
+
+
+
+
 
 

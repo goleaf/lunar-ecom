@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Product Comparison')
 
@@ -6,13 +6,13 @@
 <div class="px-4 py-6">
     <div class="max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">{{ __('storefront.comparison.title') }}</h1>
+            <h1 class="text-3xl font-bold">{{ __('frontend.comparison.title') }}</h1>
             <div class="flex gap-2">
                 <button onclick="clearComparison()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
-                    {{ __('storefront.comparison.clear_all') }}
+                    {{ __('frontend.comparison.clear_all') }}
                 </button>
-                <a href="{{ route('storefront.products.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    {{ __('storefront.comparison.add_more') }}
+                <a href="{{ route('frontend.products.index') }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    {{ __('frontend.comparison.add_more') }}
                 </a>
             </div>
         </div>
@@ -24,7 +24,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase sticky left-0 bg-gray-50 z-10">
-                                    {{ __('storefront.comparison.specification') }}
+                                    {{ __('frontend.comparison.specification') }}
                                 </th>
                                 @foreach($products as $product)
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase min-w-[200px]">
@@ -37,7 +37,7 @@
                                             <h3 class="font-semibold text-sm mb-1">{{ $product->translateAttribute('name') }}</h3>
                                             <button onclick="removeFromComparison({{ $product->id }})" 
                                                     class="text-red-600 hover:text-red-800 text-xs mt-1">
-                                                {{ __('storefront.comparison.remove') }}
+                                                {{ __('frontend.comparison.remove') }}
                                             </button>
                                         </div>
                                     </th>
@@ -48,7 +48,7 @@
                             {{-- Price --}}
                             <tr class="bg-gray-50">
                                 <td class="px-4 py-3 font-medium sticky left-0 bg-gray-50 z-10">
-                                    {{ __('storefront.product.price') }}
+                                    {{ __('frontend.product.price') }}
                                 </td>
                                 @foreach($products as $product)
                                     <td class="px-4 py-3">
@@ -68,7 +68,7 @@
                                                 {{ $currency->formatter($price) }}
                                             </span>
                                         @else
-                                            <span class="text-gray-400">{{ __('storefront.comparison.not_available') }}</span>
+                                            <span class="text-gray-400">{{ __('frontend.comparison.not_available') }}</span>
                                         @endif
                                     </td>
                                 @endforeach
@@ -78,11 +78,11 @@
                             @if($products->pluck('brand')->filter()->isNotEmpty())
                                 <tr>
                                     <td class="px-4 py-3 font-medium sticky left-0 bg-white z-10">
-                                        {{ __('storefront.brand') }}
+                                        {{ __('frontend.brand') }}
                                     </td>
                                     @foreach($products as $product)
                                         <td class="px-4 py-3">
-                                            {{ $product->brand?->name ?? __('storefront.comparison.not_available') }}
+                                            {{ $product->brand?->name ?? __('frontend.comparison.not_available') }}
                                         </td>
                                     @endforeach
                                 </tr>
@@ -91,7 +91,7 @@
                             {{-- Rating --}}
                             <tr>
                                 <td class="px-4 py-3 font-medium sticky left-0 bg-white z-10">
-                                    {{ __('storefront.comparison.rating') }}
+                                    {{ __('frontend.comparison.rating') }}
                                 </td>
                                 @foreach($products as $product)
                                     <td class="px-4 py-3">
@@ -107,7 +107,7 @@
                                                 </span>
                                             </div>
                                         @else
-                                            <span class="text-gray-400">{{ __('storefront.comparison.no_ratings') }}</span>
+                                            <span class="text-gray-400">{{ __('frontend.comparison.no_ratings') }}</span>
                                         @endif
                                     </td>
                                 @endforeach
@@ -116,7 +116,7 @@
                             {{-- Stock Status --}}
                             <tr>
                                 <td class="px-4 py-3 font-medium sticky left-0 bg-white z-10">
-                                    {{ __('storefront.comparison.availability') }}
+                                    {{ __('frontend.comparison.availability') }}
                                 </td>
                                 @foreach($products as $product)
                                     <td class="px-4 py-3">
@@ -125,9 +125,9 @@
                                             $inStock = $variant && $variant->stock > 0;
                                         @endphp
                                         @if($inStock)
-                                            <span class="text-green-600 font-medium">{{ __('storefront.comparison.in_stock') }}</span>
+                                            <span class="text-green-600 font-medium">{{ __('frontend.comparison.in_stock') }}</span>
                                         @else
-                                            <span class="text-red-600 font-medium">{{ __('storefront.comparison.out_of_stock') }}</span>
+                                            <span class="text-red-600 font-medium">{{ __('frontend.comparison.out_of_stock') }}</span>
                                         @endif
                                     </td>
                                 @endforeach
@@ -136,7 +136,7 @@
                             {{-- Description --}}
                             <tr>
                                 <td class="px-4 py-3 font-medium sticky left-0 bg-white z-10">
-                                    {{ __('storefront.comparison.description') }}
+                                    {{ __('frontend.comparison.description') }}
                                 </td>
                                 @foreach($products as $product)
                                     <td class="px-4 py-3 text-sm">
@@ -164,7 +164,7 @@
                                                         $value = $value . ' months';
                                                     }
                                                 @endphp
-                                                {{ $value ?? __('storefront.comparison.not_available') }}
+                                                {{ $value ?? __('frontend.comparison.not_available') }}
                                             </td>
                                         @endforeach
                                     </tr>
@@ -187,7 +187,7 @@
                                             @if($attributeValue)
                                                 {{ $attributeValue->getDisplayValue() }}
                                             @else
-                                                <span class="text-gray-400">{{ __('storefront.comparison.not_available') }}</span>
+                                                <span class="text-gray-400">{{ __('frontend.comparison.not_available') }}</span>
                                             @endif
                                         </td>
                                     @endforeach
@@ -197,22 +197,22 @@
                             {{-- Actions --}}
                             <tr class="bg-gray-50">
                                 <td class="px-4 py-3 font-medium sticky left-0 bg-gray-50 z-10">
-                                    {{ __('storefront.comparison.actions') }}
+                                    {{ __('frontend.comparison.actions') }}
                                 </td>
                                 @foreach($products as $product)
                                     <td class="px-4 py-3">
                                         <div class="flex flex-col gap-2">
-                                            <a href="{{ route('storefront.products.show', $product) }}" 
+                                            <a href="{{ route('frontend.products.show', $product) }}" 
                                                class="text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                                                {{ __('storefront.product.view_details') }}
+                                                {{ __('frontend.product.view_details') }}
                                             </a>
-                                            <form method="POST" action="{{ route('storefront.cart.add') }}" class="inline">
+                                            <form method="POST" action="{{ route('frontend.cart.add') }}" class="inline">
                                                 @csrf
                                                 <input type="hidden" name="purchasable_type" value="Lunar\Models\ProductVariant">
                                                 <input type="hidden" name="purchasable_id" value="{{ $product->variants->first()?->id }}">
                                                 <input type="hidden" name="quantity" value="1">
                                                 <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm">
-                                                    {{ __('storefront.product.add_to_cart') }}
+                                                    {{ __('frontend.product.add_to_cart') }}
                                                 </button>
                                             </form>
                                         </div>
@@ -225,9 +225,9 @@
             </div>
         @else
             <div class="bg-white rounded-lg shadow p-12 text-center">
-                <p class="text-gray-600 mb-4">{{ __('storefront.comparison.empty') }}</p>
-                <a href="{{ route('storefront.products.index') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
-                    {{ __('storefront.comparison.browse_products') }}
+                <p class="text-gray-600 mb-4">{{ __('frontend.comparison.empty') }}</p>
+                <a href="{{ route('frontend.products.index') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
+                    {{ __('frontend.comparison.browse_products') }}
                 </a>
             </div>
         @endif
@@ -254,7 +254,7 @@ function removeFromComparison(productId) {
 }
 
 function clearComparison() {
-    if (!confirm('{{ __('storefront.comparison.confirm_clear') }}')) {
+    if (!confirm('{{ __('frontend.comparison.confirm_clear') }}')) {
         return;
     }
     
@@ -276,3 +276,4 @@ function clearComparison() {
 </script>
 @endpush
 @endsection
+

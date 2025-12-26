@@ -60,7 +60,7 @@ class OrderStatusUpdatedNotification extends Notification implements ShouldQueue
                 break;
         }
 
-        $message->action('View Order', route('storefront.account.orders.show', $this->order->id))
+        $message->action('View Order', route('frontend.account.orders.show', $this->order->id))
             ->line('Thank you for shopping with us!')
             ->salutation('Best regards,');
 
@@ -82,4 +82,5 @@ class OrderStatusUpdatedNotification extends Notification implements ShouldQueue
         ];
     }
 }
+
 

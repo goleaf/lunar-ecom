@@ -75,9 +75,9 @@ $languages = LanguageHelper::getAll();
 #### Using Translations in Views
 
 ```blade
-{{ __('storefront.nav.products') }}
-{{ __('storefront.cart.title') }}
-{{ __('storefront.product.add_to_cart') }}
+{{ __('frontend.nav.products') }}
+{{ __('frontend.cart.title') }}
+{{ __('frontend.product.add_to_cart') }}
 ```
 
 #### Product/Collection Translations
@@ -149,32 +149,32 @@ Content-Type: application/json
 
 ## Translation Files
 
-Translation files are located in `resources/lang/{locale}/storefront.php`:
+Translation files are located in `resources/lang/{locale}/frontend.php`:
 
-- `resources/lang/en/storefront.php` - English
-- `resources/lang/es/storefront.php` - Spanish
-- `resources/lang/fr/storefront.php` - French
-- `resources/lang/de/storefront.php` - German
-- `resources/lang/zh/storefront.php` - Chinese
+- `resources/lang/en/frontend.php` - English
+- `resources/lang/es/frontend.php` - Spanish
+- `resources/lang/fr/frontend.php` - French
+- `resources/lang/de/frontend.php` - German
+- `resources/lang/zh/frontend.php` - Chinese
 
 ### Adding New Translations
 
 To add a new translation key:
 
-1. Add the key to all language files in `resources/lang/{locale}/storefront.php`
-2. Use it in views: `{{ __('storefront.your.key') }}`
+1. Add the key to all language files in `resources/lang/{locale}/frontend.php`
+2. Use it in views: `{{ __('frontend.your.key') }}`
 
 Example:
 
 ```php
-// resources/lang/en/storefront.php
+// resources/lang/en/frontend.php
 return [
     'your' => [
         'key' => 'Your English Text',
     ],
 ];
 
-// resources/lang/fr/storefront.php
+// resources/lang/fr/frontend.php
 return [
     'your' => [
         'key' => 'Votre Texte Français',
@@ -225,7 +225,7 @@ When displaying, use `translateAttribute()` which automatically uses the current
 - `app/Http/Controllers/Storefront/LanguageController.php` - Language API controller
 - `app/Http/Middleware/LanguageDetectionMiddleware.php` - Language detection middleware
 - `resources/views/storefront/components/language-selector.blade.php` - Frontend language selector
-- `resources/lang/{locale}/storefront.php` - Translation files for 5 languages
+- `resources/lang/{locale}/frontend.php` - Translation files for 5 languages
 - `app/Console/Commands/SeedLanguages.php` - Artisan command for seeding languages
 
 ### Modified Files
@@ -253,4 +253,5 @@ The language detection middleware checks in this order:
 - The language selector uses Alpine.js for interactivity
 - Language changes persist in the session across requests
 - The locale is automatically set via `App::setLocale()` when language is switched
+
 

@@ -3,6 +3,7 @@
 namespace App\Lunar\Currencies;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 use Lunar\Models\Currency;
 
 /**
@@ -90,17 +91,29 @@ class CurrencyHelper
         ?string $decimalPoint = null,
         ?string $thousandPoint = null
     ): Currency {
-        return Currency::create([
+        $attributes = [
             'code' => $code,
             'name' => $name,
             'exchange_rate' => $exchangeRate,
             'decimal_places' => $decimalPlaces,
             'enabled' => $enabled,
             'default' => $default,
-            'format' => $format ?? '{symbol}{value}',
-            'decimal_point' => $decimalPoint ?? '.',
-            'thousand_point' => $thousandPoint ?? ',',
-        ]);
+        ];
+
+        // This project removes currency formatting columns (see 2022_03_11_100000_* migration),
+        // but keep compatibility if they're present in some environments.
+        $table = config('lunar.database.table_prefix', 'lunar_') . 'currencies';
+        if (Schema::hasColumn($table, 'format')) {
+            $attributes['format'] = $format ?? '{symbol}{value}';
+        }
+        if (Schema::hasColumn($table, 'decimal_point')) {
+            $attributes['decimal_point'] = $decimalPoint ?? '.';
+        }
+        if (Schema::hasColumn($table, 'thousand_point')) {
+            $attributes['thousand_point'] = $thousandPoint ?? ',';
+        }
+
+        return Currency::create($attributes);
     }
 
     /**

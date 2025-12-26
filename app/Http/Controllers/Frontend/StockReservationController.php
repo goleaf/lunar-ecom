@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\InventoryService;
@@ -75,3 +75,4 @@ class StockReservationController extends Controller
         ]);
     }
 }
+

@@ -10,14 +10,12 @@ use Lunar\Models\Currency;
 use Lunar\Models\CustomerGroup;
 use Symfony\Component\HttpFoundation\Response;
 
-class StorefrontSessionMiddleware
+class FrontendSessionMiddleware
 {
     /**
      * Handle an incoming request.
      *
-     * Initialize the storefront session with channel, currency, customer groups, and customer.
-     * 
-     * See: https://docs.lunarphp.com/1.x/storefront-utils/storefront-session
+     * Initialize the frontend session with channel, currency, customer groups, and customer.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -43,7 +41,7 @@ class StorefrontSessionMiddleware
         StorefrontSession::initCustomer();
 
         // Initialize language (sets based on session or uses default)
-        \App\Lunar\StorefrontSession\StorefrontSessionHelper::initLanguage();
+        \App\Lunar\FrontendSession\FrontendSessionHelper::initLanguage();
 
         return $next($request);
     }
@@ -94,8 +92,8 @@ class StorefrontSessionMiddleware
             } else {
                 // Create a default currency if none exists
                 Currency::create([
-                    'code' => 'USD',
-                    'name' => 'US Dollar',
+                    'code' => 'EUR',
+                    'name' => 'Euro',
                     'exchange_rate' => 1.0000,
                     'decimal_places' => 2,
                     'enabled' => true,

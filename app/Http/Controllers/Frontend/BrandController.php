@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Brands\BrandHelper;
@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Lunar\Models\Brand;
 
 /**
- * Controller for handling brand pages in the storefront.
+ * Controller for handling brand pages in the frontend.
  */
 class BrandController extends Controller
 {
@@ -42,7 +42,7 @@ class BrandController extends Controller
             request()->url()
         );
 
-        return view('storefront.brands.index', compact(
+        return view('frontend.brands.index', compact(
             'groupedBrands',
             'availableLetters',
             'allBrands',
@@ -82,7 +82,7 @@ class BrandController extends Controller
         $productCount = $products->total();
 
         // Get SEO data
-        $canonicalUrl = route('storefront.brands.show', $brand->id);
+        $canonicalUrl = route('frontend.brands.show', $brand->id);
         $metaDescription = $description 
             ? mb_substr(strip_tags($description), 0, 160)
             : "Browse {$productCount} products from {$brand->name}. High quality products with fast shipping.";
@@ -98,7 +98,7 @@ class BrandController extends Controller
             'canonical' => $canonicalUrl,
         ];
 
-        return view('storefront.brands.show', compact(
+        return view('frontend.brands.show', compact(
             'brand',
             'products',
             'logoUrl',
@@ -129,3 +129,5 @@ class BrandController extends Controller
         return response()->json(['brands' => $brands]);
     }
 }
+
+

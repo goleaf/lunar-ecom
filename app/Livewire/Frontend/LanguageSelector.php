@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Storefront;
+namespace App\Livewire\Frontend;
 
 use App\Lunar\Languages\LanguageHelper;
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
 use Illuminate\Support\Facades\Cookie;
 use Livewire\Component;
 
@@ -27,7 +27,7 @@ class LanguageSelector extends Component
             ->values()
             ->all();
 
-        $current = StorefrontSessionHelper::getLanguage();
+        $current = FrontendSessionHelper::getLanguage();
         if ($current) {
             $this->currentCode = $current->code;
             return;
@@ -48,7 +48,7 @@ class LanguageSelector extends Component
             return;
         }
 
-        StorefrontSessionHelper::setLanguage($language);
+        FrontendSessionHelper::setLanguage($language);
         $this->currentCode = $language->code;
 
         Cookie::queue(Cookie::make(
@@ -81,8 +81,12 @@ class LanguageSelector extends Component
 
     public function render()
     {
-        return view('livewire.storefront.language-selector');
+        return view('livewire.frontend.language-selector');
     }
 }
+
+
+
+
 
 

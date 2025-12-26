@@ -104,7 +104,7 @@ Reorder variants via drag and drop.
 
 ### PreviewVariantAction
 
-Preview variant on storefront.
+Preview variant on frontend.
 
 **Usage:**
 
@@ -314,5 +314,6 @@ public static function table(Table $table): Table
 - **Preview**: See variant as customers will see it
 - **Clone**: Quick way to create similar variants
 - **Change history**: Audit trail for compliance
+
 
 

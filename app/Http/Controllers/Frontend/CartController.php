@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Contracts\CartManagerInterface;
 use App\Http\Controllers\Controller;
@@ -39,7 +39,7 @@ class CartController extends Controller
         $transparencyService = app(\App\Services\CartTransparencyService::class);
         $cartBreakdown = $transparencyService->getCartBreakdown($cart);
 
-        return view('storefront.cart.index', compact('cart', 'cartBreakdown'));
+        return view('frontend.cart.index', compact('cart', 'cartBreakdown'));
     }
 
     /**
@@ -90,7 +90,7 @@ class CartController extends Controller
                 ]);
             }
 
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('success', 'Item added to cart');
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
@@ -147,7 +147,7 @@ class CartController extends Controller
                 ]);
             }
 
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('success', 'Cart updated');
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
@@ -196,7 +196,7 @@ class CartController extends Controller
                 ]);
             }
 
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('success', 'Item removed from cart');
         } catch (\Lunar\Exceptions\Carts\CartException $e) {
             if ($request->expectsJson()) {
@@ -232,7 +232,7 @@ class CartController extends Controller
             ]);
         }
 
-        return redirect()->route('storefront.cart.index')
+        return redirect()->route('frontend.cart.index')
             ->with('success', 'Cart cleared');
     }
 
@@ -277,7 +277,7 @@ class CartController extends Controller
                 ]);
             }
 
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('success', 'Discount applied successfully');
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
@@ -327,7 +327,7 @@ class CartController extends Controller
                 ]);
             }
 
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('success', 'Discount removed');
         } catch (\RuntimeException $e) {
             if ($request->expectsJson()) {
@@ -432,4 +432,6 @@ class CartController extends Controller
         ]);
     }
 }
+
+
 

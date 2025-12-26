@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Currencies\CurrencyHelper;
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Lunar\Models\Currency;
 
 /**
- * Controller for handling currency switching in the storefront.
+ * Controller for handling currency switching in the frontend.
  */
 class CurrencyController extends Controller
 {
@@ -71,7 +71,7 @@ class CurrencyController extends Controller
         }
 
         // Set the currency in the storefront session
-        StorefrontSessionHelper::setCurrency($currency);
+        FrontendSessionHelper::setCurrency($currency);
 
         return response()->json([
             'success' => true,
@@ -99,7 +99,7 @@ class CurrencyController extends Controller
      */
     protected function getCurrentCurrencyData(): ?array
     {
-        $currency = StorefrontSessionHelper::getCurrency();
+        $currency = FrontendSessionHelper::getCurrency();
         
         if (!$currency) {
             return null;
@@ -118,4 +118,8 @@ class CurrencyController extends Controller
         ];
     }
 }
+
+
+
+
 

@@ -3,7 +3,7 @@
 <div class="bg-gray-50 p-6 rounded-lg">
     <h3 class="text-xl font-bold mb-4">Write a Review</h3>
     
-    <form id="review-form" action="{{ route('storefront.reviews.store', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+    <form id="review-form" action="{{ route('frontend.reviews.store', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
         @csrf
         
         {{-- Rating --}}
@@ -118,7 +118,7 @@
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
                 Submit Review
             </button>
-            <a href="{{ route('storefront.reviews.guidelines') }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm self-center">
+            <a href="{{ route('frontend.reviews.guidelines') }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm self-center">
                 Review Guidelines
             </a>
         </div>
@@ -175,4 +175,5 @@ document.getElementById('review-form').addEventListener('submit', function(e) {
     }
 });
 </script>
+
 

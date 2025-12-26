@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bundle;
@@ -34,7 +34,7 @@ class BundleController extends Controller
             return response()->json($bundles);
         }
 
-        return view('storefront.bundles.index', compact('bundles'));
+        return view('frontend.bundles.index', compact('bundles'));
     }
 
     /**
@@ -83,7 +83,7 @@ class BundleController extends Controller
             ]);
         }
 
-        return view('storefront.bundles.show', compact(
+        return view('frontend.bundles.show', compact(
             'bundle',
             'currency',
             'individualTotal',
@@ -260,3 +260,5 @@ class BundleController extends Controller
                 && isset($selectedItems[0]['product_id']));
     }
 }
+
+

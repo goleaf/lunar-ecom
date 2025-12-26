@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,11 +14,13 @@ class ReferralLandingController extends Controller
     {
         $locale = app()->getLocale();
 
-        return redirect()->route('storefront.referrals.landing', [
+        return redirect()->route('frontend.referrals.landing', [
             'locale' => $locale,
             'code' => $code,
         ] + $request->query());
     }
 }
+
+
 
 

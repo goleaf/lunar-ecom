@@ -1,11 +1,11 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Reviews for ' . $product->translateAttribute('name'))
 
 @section('content')
 <div class="px-4 py-6">
     <div class="mb-6">
-        <a href="{{ route('storefront.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="text-blue-600 hover:text-blue-800 mb-2 inline-block">
+        <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="text-blue-600 hover:text-blue-800 mb-2 inline-block">
             ← Back to Product
         </a>
         <h1 class="text-3xl font-bold">Reviews for {{ $product->translateAttribute('name') }}</h1>
@@ -16,7 +16,7 @@
         <aside class="lg:col-span-1">
             <div class="bg-gray-50 p-4 rounded-lg sticky top-4">
                 <h3 class="font-semibold mb-3">Filter Reviews</h3>
-                <form method="GET" action="{{ route('storefront.reviews.index', $product) }}" class="space-y-4">
+                <form method="GET" action="{{ route('frontend.reviews.index', $product) }}" class="space-y-4">
                     {{-- Sort Filter --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
@@ -54,7 +54,7 @@
             <div id="reviews-container" class="space-y-6">
                 @if(isset($reviews) && $reviews->count() > 0)
                     @foreach($reviews as $review)
-                        @include('storefront.components.review-item', ['review' => $review])
+                        @include('frontend.components.review-item', ['review' => $review])
                     @endforeach
 
                     {{-- Pagination --}}
@@ -71,4 +71,5 @@
     </div>
 </div>
 @endsection
+
 

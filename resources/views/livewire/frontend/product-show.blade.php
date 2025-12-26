@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', $metaTags['title'] ?? $product->translateAttribute('name'))
 
@@ -52,7 +52,7 @@
                     <div class="space-y-4 relative">
                         @if($firstMedia)
                             <div class="relative">
-                                @include('storefront.components.responsive-image', [
+                                @include('frontend.components.responsive-image', [
                                     'media' => $firstMedia,
                                     'model' => $product,
                                     'collectionName' => 'images',
@@ -63,7 +63,7 @@
                                     'id' => 'main-product-image',
                                     'loading' => 'eager'
                                 ])
-                                <x-storefront.product-badges :product="$product" />
+                                <x-frontend.product-badges :product="$product" />
                             </div>
                         @endif
 
@@ -81,7 +81,7 @@
                     </div>
                 @else
                     <div class="w-full h-96 bg-gray-200 flex items-center justify-center rounded">
-                        <span class="text-gray-400">{{ __('storefront.product.no_image') }}</span>
+                        <span class="text-gray-400">{{ __('frontend.product.no_image') }}</span>
                     </div>
                 @endif
             </div>
@@ -161,11 +161,11 @@
                     <form wire:submit.prevent="addToCart" class="mb-6">
                         <input type="hidden" wire:model="variantId">
                         <div class="mb-4">
-                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">{{ __('storefront.product.quantity') }}</label>
+                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">{{ __('frontend.product.quantity') }}</label>
                             <input type="number" wire:model.defer="quantity" id="quantity" min="1" max="999" class="border rounded px-3 py-2 w-24">
                         </div>
                         <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">
-                            {{ __('storefront.product.add_to_cart') }}
+                            {{ __('frontend.product.add_to_cart') }}
                         </button>
                     </form>
 
@@ -181,12 +181,12 @@
                     @endphp
                     @if($isOutOfStock)
                         <div class="mt-4">
-                            <x-storefront.notify-me-button :product="$product" :variant="$variant" />
+                            <x-frontend.notify-me-button :product="$product" :variant="$variant" />
                         </div>
                     @endif
 
                     <div class="mt-4">
-                        <x-storefront.compare-button :product="$product" />
+                        <x-frontend.compare-button :product="$product" />
                     </div>
                 @endif
 
@@ -213,7 +213,7 @@
                     <h3 class="text-xl font-semibold mb-4">You May Also Like</h3>
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach($crossSell as $relatedProduct)
-                            @include('storefront.products._product-card', ['product' => $relatedProduct])
+                            @include('frontend.products._product-card', ['product' => $relatedProduct])
                         @endforeach
                     </div>
                 </div>
@@ -224,7 +224,7 @@
                     <h3 class="text-xl font-semibold mb-4">Upgrade Options</h3>
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach($upSell as $relatedProduct)
-                            @include('storefront.products._product-card', ['product' => $relatedProduct])
+                            @include('frontend.products._product-card', ['product' => $relatedProduct])
                         @endforeach
                     </div>
                 </div>
@@ -235,7 +235,7 @@
                     <h3 class="text-xl font-semibold mb-4">Alternatives</h3>
                     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                         @foreach($alternate as $relatedProduct)
-                            @include('storefront.products._product-card', ['product' => $relatedProduct])
+                            @include('frontend.products._product-card', ['product' => $relatedProduct])
                         @endforeach
                     </div>
                 </div>
@@ -244,23 +244,24 @@
     @endif
 
     {{-- Reviews Section --}}
-    @include('storefront.components.reviews-section', ['product' => $product])
+    @include('frontend.components.reviews-section', ['product' => $product])
 
     {{-- Product Recommendations --}}
     <div class="mt-12">
-        <x-storefront.product-recommendations
+        <x-frontend.product-recommendations
             :product="$product"
             type="related"
             :limit="8"
             location="product_page" />
 
-        <x-storefront.frequently-bought-together
+        <x-frontend.frequently-bought-together
             :product="$product"
             :limit="5" />
 
-        <x-storefront.customers-also-viewed
+        <x-frontend.customers-also-viewed
             :product="$product"
             :limit="8" />
     </div>
 </div>
 @endsection
+

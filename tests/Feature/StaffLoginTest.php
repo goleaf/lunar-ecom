@@ -120,7 +120,7 @@ class StaffLoginTest extends TestCase
         $this->actingAs($staff, 'staff');
 
         // Try to access admin panel
-        $response = $this->get('/lunar');
+        $response = $this->get('/admin');
 
         // Should be able to access (status 200 or redirect to dashboard)
         $this->assertContains($response->status(), [200, 302]);

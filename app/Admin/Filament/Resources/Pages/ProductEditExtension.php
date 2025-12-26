@@ -23,7 +23,7 @@ class ProductEditExtension extends EditProduct
     {
         return [
             ...parent::getHeaderActions(),
-            \App\Admin\Actions\PreviewStorefrontAction::make(),
+            \App\Admin\Actions\PreviewFrontendAction::make(),
             \App\Admin\Actions\CloneProductAction::make(),
         ];
     }

@@ -17,9 +17,9 @@
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300') }}">
     <span id="compare-text-{{ $product->id }}">
         @if($isInComparison)
-            {{ __('storefront.comparison.remove_from_comparison') }}
+            {{ __('frontend.comparison.remove_from_comparison') }}
         @else
-            {{ __('storefront.comparison.add_to_comparison') }}
+            {{ __('frontend.comparison.add_to_comparison') }}
         @endif
     </span>
 </button>
@@ -31,7 +31,7 @@ function toggleComparison(productId) {
     const text = document.getElementById(`compare-text-${productId}`);
     
     if (btn.classList.contains('cursor-not-allowed')) {
-        alert('{{ __('storefront.comparison.max_items_reached') }}');
+        alert('{{ __('frontend.comparison.max_items_reached') }}');
         return;
     }
     
@@ -55,11 +55,11 @@ function toggleComparison(productId) {
             if (isInComparison) {
                 btn.classList.remove('bg-green-600', 'text-white', 'hover:bg-green-700');
                 btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                text.textContent = '{{ __('storefront.comparison.add_to_comparison') }}';
+                text.textContent = '{{ __('frontend.comparison.add_to_comparison') }}';
             } else {
                 btn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
                 btn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700');
-                text.textContent = '{{ __('storefront.comparison.remove_from_comparison') }}';
+                text.textContent = '{{ __('frontend.comparison.remove_from_comparison') }}';
             }
             
             // Update comparison count in navigation
@@ -87,4 +87,5 @@ function updateComparisonCount(count) {
 }
 </script>
 @endpush
+
 

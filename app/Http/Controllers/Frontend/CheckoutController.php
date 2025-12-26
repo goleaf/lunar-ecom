@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Events\CartAddressChanged;
 use App\Http\Controllers\Controller;
@@ -26,13 +26,13 @@ class CheckoutController extends Controller
         $cart = CartSession::current();
 
         if (!$cart || $cart->lines->isEmpty()) {
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('error', 'Your cart is empty');
         }
 
         // Check if cart is locked
         if ($this->checkoutService->isCartLocked($cart)) {
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('error', 'Your cart is currently being checked out. Please wait or try again.');
         }
 
@@ -43,7 +43,7 @@ class CheckoutController extends Controller
         // See: https://docs.lunarphp.com/1.x/reference/carts#hydrating-the-cart-totals
         $cart->calculate();
 
-        return view('storefront.checkout.index', compact('cart', 'lock'));
+        return view('frontend.checkout.index', compact('cart', 'lock'));
     }
 
     /**
@@ -55,7 +55,7 @@ class CheckoutController extends Controller
         $cart = CartSession::current();
 
         if (!$cart || $cart->lines->isEmpty()) {
-            return redirect()->route('storefront.cart.index')
+            return redirect()->route('frontend.cart.index')
                 ->with('error', 'Your cart is empty');
         }
 
@@ -105,14 +105,14 @@ class CheckoutController extends Controller
 
             $order = $this->checkoutService->processCheckout($lock, $paymentData);
 
-            return redirect()->route('storefront.checkout.confirmation', $order)
+            return redirect()->route('frontend.checkout.confirmation', $order)
                 ->with('success', 'Order placed successfully');
 
         } catch (\Exception $e) {
             // Release checkout lock on failure
             $this->checkoutService->releaseCheckout($lock);
 
-            return redirect()->route('storefront.checkout.index')
+            return redirect()->route('frontend.checkout.index')
                 ->with('error', 'Checkout failed: ' . $e->getMessage())
                 ->withInput();
         }
@@ -126,7 +126,9 @@ class CheckoutController extends Controller
         // Ensure user can view this order (owns the order)
         $this->authorize('view', $order);
         
-        return view('storefront.checkout.confirmation', compact('order'));
+        return view('frontend.checkout.confirmation', compact('order'));
     }
 }
+
+
 

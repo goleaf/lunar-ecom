@@ -39,7 +39,7 @@ class ReviewRequestNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $productName = $this->product->translateAttribute('name');
-        $reviewUrl = route('storefront.products.show', $this->product->slug ?? $this->product->id) . '#reviews';
+        $reviewUrl = route('frontend.products.show', $this->product->slug ?? $this->product->id) . '#reviews';
 
         return (new MailMessage)
             ->subject("How was your experience with {$productName}?")
@@ -65,3 +65,4 @@ class ReviewRequestNotification extends Notification implements ShouldQueue
         ];
     }
 }
+

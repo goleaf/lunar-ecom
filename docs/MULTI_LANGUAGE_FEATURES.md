@@ -13,14 +13,14 @@ Complete overview of Lunar's multi-language support implementation.
 - Automatic translation via `translateAttribute()` method
 
 **UI Translations:**
-- Laravel translation files in `resources/lang/{locale}/storefront.php`
+- Laravel translation files in `resources/lang/{locale}/frontend.php`
 - Support for 5 languages: English, Spanish, French, German, Chinese
 - Uses Laravel's `__()` helper function
 
 **Files:**
 - `app/Lunar/Attributes/AttributeHelper.php` - Helper for creating translated attributes
 - `app/Services/TranslationService.php` - Advanced translation utilities with fallback support
-- Translation files: `resources/lang/{en,es,fr,de,zh}/storefront.php`
+- Translation files: `resources/lang/{en,es,fr,de,zh}/frontend.php`
 
 ### 2. Language Switcher ✅
 
@@ -102,11 +102,11 @@ database/
 
 resources/
 ├── lang/
-│   ├── en/storefront.php                       # English translations
-│   ├── es/storefront.php                       # Spanish translations
-│   ├── fr/storefront.php                       # French translations
-│   ├── de/storefront.php                       # German translations
-│   └── zh/storefront.php                       # Chinese translations
+│   ├── en/frontend.php                       # English translations
+│   ├── es/frontend.php                       # Spanish translations
+│   ├── fr/frontend.php                       # French translations
+│   ├── de/frontend.php                       # German translations
+│   └── zh/frontend.php                       # Chinese translations
 └── views/
     └── storefront/
         └── components/
@@ -135,7 +135,7 @@ php artisan languages:seed
 {{ $collection->translateAttribute('name') }}
 
 {{-- UI translations --}}
-{{ __('storefront.product.add_to_cart') }}
+{{ __('frontend.product.add_to_cart') }}
 ```
 
 ### 3. Switch Language Programmatically
@@ -291,4 +291,5 @@ Test the multi-language features:
 **🎉 Your Lunar store now has full multi-language support!**
 
 All features are implemented and ready to use. See the guides above for detailed documentation and examples.
+
 

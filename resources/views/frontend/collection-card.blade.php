@@ -9,10 +9,10 @@
 @endphp
 
 <div class="collection-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-    <a href="{{ route('storefront.collections.show', $url) }}" class="block">
+    <a href="{{ route('frontend.collections.show', $url) }}" class="block">
         <div class="relative h-64 overflow-hidden">
             @if($collectionImage)
-                @include('storefront.components.responsive-image', [
+                @include('frontend.components.responsive-image', [
                     'media' => $collectionImage,
                     'model' => $collection,
                     'collectionName' => 'images',
@@ -59,5 +59,6 @@
         </div>
     </a>
 </div>
+
 
 

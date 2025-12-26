@@ -11,8 +11,6 @@ use App\Observers\UserObserver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
-use Lunar\Admin\Support\Facades\AttributeData;
-use Lunar\Admin\Support\Facades\LunarPanel;
 use Lunar\Facades\Discounts;
 use Lunar\Models\Cart;
 use Lunar\Models\CartLine;
@@ -24,95 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register admin panel with custom configuration
-        // See: https://docs.lunarphp.com/1.x/admin/extending/panel
-        LunarPanel::panel(function ($panel) {
-            return $panel
-                // Customize panel path (default is '/lunar')
-                // ->path('admin')
-                
-                // Register standalone Filament Pages
-                // ->pages([
-                //     \App\Admin\Pages\SalesReport::class,
-                //     \App\Admin\Pages\RevenueReport::class,
-                // ])
-                
-                // Register new Filament Resources
-                // ->resources([
-                //     \App\Admin\Resources\OpeningTimeResource::class,
-                //     \App\Admin\Resources\BannerResource::class,
-                // ])
-                
-                // Register Livewire components
-                // ->livewireComponents([
-                //     \App\Admin\Livewire\OrdersSalesChart::class,
-                // ])
-                
-                // Register Filament plugins
-                // ->plugin(new \App\Admin\Plugins\ExamplePlugin())
-                
-                // Customize navigation groups
-                // ->navigationGroups([
-                //     'Catalog',
-                //     'Sales',
-                //     'CMS',
-                //     'Reports',
-                //     'Shipping',
-                //     'Settings',
-                // ])
-            ;
-        })
-            // Register admin panel extensions (pages, resources, relation managers, and order management)
-            // See: https://docs.lunarphp.com/1.x/admin/extending/pages
-            // See: https://docs.lunarphp.com/1.x/admin/extending/resources
-            // See: https://docs.lunarphp.com/1.x/admin/extending/relation-managers
-            // See: https://docs.lunarphp.com/1.x/admin/extending/order-management
-            ->extensions([
-                // Resource extensions
-                \Lunar\Admin\Filament\Resources\ProductResource::class =>
-                    \App\Admin\Extensions\Resources\ProductResourceExtension::class,
-                \Lunar\Admin\Filament\Resources\CustomerGroupResource::class =>
-                    \App\Admin\Extensions\Resources\CustomerGroupResourceExtension::class,
-                \Lunar\Admin\Filament\Resources\CollectionGroupResource::class =>
-                    \App\Admin\Extensions\Resources\CollectionGroupResourceExtension::class,
-
-                // Page extensions
-                \Lunar\Admin\Filament\Resources\CollectionGroupResource\Pages\ListCollectionGroups::class =>
-                    \App\Admin\Extensions\Pages\CollectionGroupListPageExtension::class,
-                //
-                //     // Relation manager extensions
-                //     \Lunar\Admin\Filament\Resources\ProductResource\RelationManagers\CustomerGroupPricingRelationManager::class => 
-                //         \App\Admin\Extensions\RelationManagers\ExampleCustomerGroupPricingRelationManagerExtension::class,
-                //
-                //     // Create page extensions
-                //     \Lunar\Admin\Filament\Resources\CustomerGroupResource\Pages\CreateCustomerGroup::class => 
-                //         \App\Admin\Extensions\Pages\ExampleCreatePageExtension::class,
-                //
-                //     // Edit page extensions
-                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\EditProduct::class => 
-                //         \App\Admin\Extensions\Pages\ExampleEditPageExtension::class,
-                //
-                //     // List page extensions
-                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ListProducts::class => 
-                //         \App\Admin\Extensions\Pages\ExampleListPageExtension::class,
-                //
-                //     // View page extensions
-                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
-                //         \App\Admin\Extensions\Pages\ExampleViewPageExtension::class,
-                //
-                //     // Order management extensions
-                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\ManageOrder::class => 
-                //         \App\Admin\Extensions\OrderManagement\ExampleManageOrderExtension::class,
-                //
-                //     // Order items table extensions
-                //     \Lunar\Admin\Filament\Resources\OrderResource\Pages\Components\OrderItemsTable::class => 
-                //         \App\Admin\Extensions\OrderManagement\ExampleOrderItemsTableExtension::class,
-                //
-                //     // Relation page extensions
-                //     \Lunar\Panel\Filament\Resources\ProductResource\Pages\ManageProductMedia::class => 
-                //         \App\Admin\Extensions\Pages\ExampleRelationPageExtension::class,
-            ])
-            ->register();
+        // NOTE: We intentionally do NOT register the package-provided Filament panel here.
+        // This project uses its own Filament panel at `/admin` (see `App\Providers\Filament\AdminPanelProvider`).
 
         // Register custom attribute field types
         // See: https://docs.lunarphp.com/1.x/admin/extending/attributes#register-the-field

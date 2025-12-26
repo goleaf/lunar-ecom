@@ -1,3 +1,4 @@
 @props(['product'])
 
-@include('storefront.components.compare-button', ['product' => $product])
+@include('frontend.components.compare-button', ['product' => $product])
+

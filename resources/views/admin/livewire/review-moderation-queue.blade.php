@@ -62,7 +62,7 @@
                             <span> • </span>
                             <span>{{ $review->created_at->format('M d, Y') }}</span>
                             <span> • </span>
-                            <a href="{{ route('storefront.products.show', $review->product->id) }}" class="text-blue-600">
+                            <a href="{{ route('frontend.products.show', $review->product->id) }}" class="text-blue-600">
                                 {{ $review->product->translateAttribute('name') }}
                             </a>
                         </div>
@@ -161,5 +161,6 @@
         </div>
     @endif
 </div>
+
 
 

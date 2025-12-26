@@ -76,7 +76,7 @@ The Lunar PHP Cart has been **fully integrated** into your Laravel application w
 
 #### Via Form (Traditional)
 ```blade
-<form action="{{ route('storefront.cart.add') }}" method="POST">
+<form action="{{ route('frontend.cart.add') }}" method="POST">
     @csrf
     <input type="hidden" name="variant_id" value="{{ $variant->id }}">
     <input type="number" name="quantity" value="1" min="1">
@@ -90,7 +90,7 @@ The product page already includes AJAX support. Just use the form and it will au
 ### Updating Cart Quantities
 
 ```blade
-<form action="{{ route('storefront.cart.update', $lineId) }}" method="POST" class="cart-update-form">
+<form action="{{ route('frontend.cart.update', $lineId) }}" method="POST" class="cart-update-form">
     @csrf
     @method('PUT')
     <input type="number" name="quantity" value="{{ $quantity }}" min="0" max="999">
@@ -101,7 +101,7 @@ The product page already includes AJAX support. Just use the form and it will au
 ### Applying Discount Codes
 
 ```blade
-<form action="{{ route('storefront.cart.discount.apply') }}" method="POST" class="discount-form">
+<form action="{{ route('frontend.cart.discount.apply') }}" method="POST" class="discount-form">
     @csrf
     <input type="text" name="coupon_code" placeholder="Enter coupon code" required>
     <button type="submit">Apply</button>
@@ -111,7 +111,7 @@ The product page already includes AJAX support. Just use the form and it will au
 ### Removing Discounts
 
 ```blade
-<form action="{{ route('storefront.cart.discount.remove') }}" method="POST">
+<form action="{{ route('frontend.cart.discount.remove') }}" method="POST">
     @csrf
     <button type="submit">Remove Discount</button>
 </form>
@@ -120,7 +120,7 @@ The product page already includes AJAX support. Just use the form and it will au
 ### Getting Cart Summary (AJAX)
 
 ```javascript
-fetch('{{ route("storefront.cart.summary") }}', {
+fetch('{{ route("frontend.cart.summary") }}', {
     headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
@@ -316,4 +316,5 @@ Consider implementing:
 **Integration completed successfully!** 🎉
 
 Your Lunar cart is now fully functional with all the features you need for a robust e-commerce experience.
+
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Helpers\CheckoutHelper;
 use App\Http\Controllers\Controller;
@@ -82,4 +82,5 @@ class CheckoutStatusController extends Controller
         }
     }
 }
+
 

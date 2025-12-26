@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
@@ -47,14 +47,14 @@ class CollectionFilterController extends Controller
                     'total' => $products->total(),
                 ],
                 'filter_options' => $filterOptions,
-                'html' => view('storefront.collections._product-grid', [
+                'html' => view('frontend.collections._product-grid', [
                     'products' => $products,
                     'collection' => $collection,
                 ])->render(),
             ]);
         }
 
-        return view('storefront.collections.show', [
+        return view('frontend.collections.show', [
             'collection' => $collection,
             'products' => $products,
             'filterOptions' => $filterOptions,
@@ -463,3 +463,5 @@ class CollectionFilterController extends Controller
         ];
     }
 }
+
+

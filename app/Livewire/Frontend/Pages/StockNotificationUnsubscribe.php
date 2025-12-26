@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\StockNotificationController;
+use App\Http\Controllers\Frontend\StockNotificationController;
 use Livewire\Component;
 
 class StockNotificationUnsubscribe extends Component

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\ReviewController;
+use App\Http\Controllers\Frontend\ReviewController;
 use App\Models\Product;
 use Livewire\Component;
 

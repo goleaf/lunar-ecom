@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Categories\CategoryHelper;
@@ -37,7 +37,7 @@ class CategoryController extends Controller
             return response()->json(['data' => $data]);
         }
 
-        return view('storefront.categories.index', $data);
+        return view('frontend.categories.index', $data);
     }
 
     /**
@@ -104,7 +104,7 @@ class CategoryController extends Controller
             return response()->json(['data' => $data]);
         }
 
-        return view('storefront.categories.show', $data);
+        return view('frontend.categories.show', $data);
     }
 
     /**
@@ -197,3 +197,5 @@ class CategoryController extends Controller
         ];
     }
 }
+
+

@@ -26,6 +26,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            // Use the staff guard for admin authentication.
+            ->authGuard('staff')
             ->login()
             ->colors([
                 'primary' => Color::Amber,

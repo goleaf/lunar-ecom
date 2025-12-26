@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Lunar\Languages\LanguageHelper;
-use App\Lunar\StorefrontSession\StorefrontSessionHelper;
+use App\Lunar\FrontendSession\FrontendSessionHelper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Lunar\Models\Language;
 
 /**
- * Controller for handling language switching in the storefront.
+ * Controller for handling language switching in the frontend.
  */
 class LanguageController extends Controller
 {
@@ -60,7 +60,7 @@ class LanguageController extends Controller
         }
 
         // Set the language in the storefront session
-        StorefrontSessionHelper::setLanguage($language);
+        FrontendSessionHelper::setLanguage($language);
 
         // Persist cookie preference (used by deterministic locale resolution).
         Cookie::queue(Cookie::make(
@@ -95,7 +95,7 @@ class LanguageController extends Controller
      */
     protected function getCurrentLanguageData(): ?array
     {
-        $language = StorefrontSessionHelper::getLanguage();
+        $language = FrontendSessionHelper::getLanguage();
         
         if (!$language) {
             return null;
@@ -109,4 +109,8 @@ class LanguageController extends Controller
         ];
     }
 }
+
+
+
+
 

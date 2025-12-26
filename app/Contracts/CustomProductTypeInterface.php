@@ -80,11 +80,12 @@ interface CustomProductTypeInterface
     public function onDelete(Product $product): void;
 
     /**
-     * Get custom display data for storefront.
+     * Get custom display data for frontend.
      *
      * @param  Product  $product
      * @return array
      */
     public function getStorefrontData(Product $product): array;
 }
+
 

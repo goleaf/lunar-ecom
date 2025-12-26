@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\DigitalProductService;
@@ -36,7 +36,7 @@ class DownloadController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return view('storefront.downloads.index', [
+        return view('frontend.downloads.index', [
             'downloads' => $downloads,
         ]);
     }
@@ -148,3 +148,5 @@ class DownloadController extends Controller
         ]);
     }
 }
+
+

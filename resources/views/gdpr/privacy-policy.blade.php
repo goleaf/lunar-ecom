@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Privacy Policy')
 
@@ -34,4 +34,5 @@
     </div>
 </div>
 @endsection
+
 

@@ -6,15 +6,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Portal')</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <script src="https://cdn.tailwindcss.com"></script>
+    @endif
     @stack('styles')
     @livewireStyles
 </head>
-<body class="bg-slate-100 text-slate-900">
+<body class="bg-slate-100 text-slate-900" data-app="admin">
 <div class="min-h-screen flex">
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col">
         <div class="p-6 border-b border-slate-800">
-            <a href="{{ route('admin.bundles.index') }}" class="text-xl font-semibold">Lunar Admin</a>
+            <a href="{{ route('admin.bundles.index') }}" class="text-xl font-semibold">{{ config('app.name', 'Store') }} Admin</a>
             <p class="text-xs text-slate-400 mt-1">Commerce operations</p>
         </div>
         <nav class="flex-1 px-4 py-4 space-y-1 text-sm">
@@ -59,7 +63,7 @@
                     @endif
                 </div>
                 <div class="flex items-center gap-3 text-sm">
-                    <a href="{{ route('storefront.homepage') }}" class="text-blue-600 hover:text-blue-700">View storefront</a>
+                    <a href="{{ route('frontend.homepage') }}" class="text-blue-600 hover:text-blue-700">View frontend</a>
                 </div>
             </div>
         </header>
@@ -86,3 +90,4 @@
 @stack('scripts')
 </body>
 </html>
+

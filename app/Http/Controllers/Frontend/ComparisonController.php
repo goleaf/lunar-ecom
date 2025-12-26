@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\ComparisonService;
@@ -35,7 +35,7 @@ class ComparisonController extends Controller
         $attributes = $this->comparisonService->getComparisonAttributes($selectedAttributes);
         $allAttributes = $this->comparisonService->getComparisonAttributes(); // All available attributes
 
-        return view('storefront.comparison.index', compact(
+        return view('frontend.comparison.index', compact(
             'comparisonTable',
             'attributes',
             'allAttributes',
@@ -165,7 +165,7 @@ class ComparisonController extends Controller
 
         // Use dompdf to generate PDF (requires barryvdh/laravel-dompdf package)
         try {
-            $html = view('storefront.comparison.pdf', compact('comparisonTable'))->render();
+            $html = view('frontend.comparison.pdf', compact('comparisonTable'))->render();
             
             if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
                 $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html);
@@ -182,8 +182,10 @@ class ComparisonController extends Controller
             }
             
             // Fallback to HTML
-            $html = view('storefront.comparison.pdf', compact('comparisonTable'))->render();
+            $html = view('frontend.comparison.pdf', compact('comparisonTable'))->render();
             return response($html)->header('Content-Type', 'text/html');
         }
     }
 }
+
+

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\CategoryController;
+use App\Http\Controllers\Frontend\CategoryController;
 use Livewire\Component;
 
 class CategoryShow extends Component

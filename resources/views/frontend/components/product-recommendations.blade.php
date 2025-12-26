@@ -15,11 +15,11 @@
     };
     
     $displayTitle = $title ?? match($type) {
-        'related' => __('storefront.recommendations.related_products'),
-        'frequently_bought_together' => __('storefront.recommendations.frequently_bought_together'),
-        'customers_also_viewed' => __('storefront.recommendations.customers_also_viewed'),
-        'personalized' => __('storefront.recommendations.personalized_for_you'),
-        default => __('storefront.recommendations.you_may_also_like'),
+        'related' => __('frontend.recommendations.related_products'),
+        'frequently_bought_together' => __('frontend.recommendations.frequently_bought_together'),
+        'customers_also_viewed' => __('frontend.recommendations.customers_also_viewed'),
+        'personalized' => __('frontend.recommendations.personalized_for_you'),
+        default => __('frontend.recommendations.you_may_also_like'),
     };
 @endphp
 
@@ -35,7 +35,7 @@
                 <div class="recommended-product" 
                      data-product-id="{{ $recommendedProduct->id }}"
                      data-recommendation-type="{{ $type }}">
-                    @include('storefront.products._product-card', ['product' => $recommendedProduct])
+                    @include('frontend.products._product-card', ['product' => $recommendedProduct])
                 </div>
             @endforeach
         </div>
@@ -57,7 +57,7 @@
                         const recommendedProductId = productCard.dataset.productId;
                         
                         // Track click via API
-                        fetch('{{ route("storefront.recommendations.track-click") }}', {
+                        fetch('{{ route("frontend.recommendations.track-click") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -78,4 +78,5 @@
     </script>
     @endpush
 @endif
+
 

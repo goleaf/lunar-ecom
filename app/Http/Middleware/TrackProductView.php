@@ -27,7 +27,7 @@ class TrackProductView
         $response = $next($request);
 
         // Only track on product show pages
-        if ($request->routeIs('storefront.products.show') && $request->route('product')) {
+        if ($request->routeIs('frontend.products.show') && $request->route('product')) {
             $product = $request->route('product');
             
             if ($product instanceof Product) {
@@ -44,4 +44,5 @@ class TrackProductView
         return $response;
     }
 }
+
 

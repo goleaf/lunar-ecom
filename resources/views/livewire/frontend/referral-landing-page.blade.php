@@ -1,20 +1,3 @@
-<script>
-    // Provide a locale-aware URL builder so the global language selector can switch locale
-    // while preserving referral code + query params.
-    window.__localeSwitchUrlFor = function(languageCode) {
-        try {
-            const url = new URL(window.location.href);
-            const parts = url.pathname.split('/').filter(Boolean); // [locale, 'r', code]
-            if (parts.length >= 3 && parts[1] === 'r') {
-                parts[0] = (languageCode || '').toLowerCase();
-                url.pathname = '/' + parts.join('/');
-                return url.toString();
-            }
-        } catch (e) {}
-        return null;
-    };
-</script>
-
 <div class="max-w-3xl mx-auto">
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-start justify-between gap-4">
@@ -33,7 +16,7 @@
         </div>
 
         <div class="mt-6 flex flex-col sm:flex-row gap-3">
-            <a href="{{ route('storefront.homepage', ['ref' => strtoupper($referrer?->referral_code ?: $code)]) }}"
+            <a href="{{ route('frontend.homepage', ['ref' => strtoupper($referrer?->referral_code ?: $code)]) }}"
                class="inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                 Start shopping
             </a>
@@ -51,7 +34,7 @@
                 <div class="mt-2 flex flex-wrap gap-2">
                     @foreach ($languages as $lang)
                         <a
-                            href="{{ route('storefront.referrals.landing', ['locale' => $lang['code'], 'code' => strtoupper($referrer?->referral_code ?: $code)]) . (request()->getQueryString() ? '?' . request()->getQueryString() : '') }}"
+                            href="{{ route('frontend.referrals.landing', ['locale' => $lang['code'], 'code' => strtoupper($referrer?->referral_code ?: $code)]) . (request()->getQueryString() ? '?' . request()->getQueryString() : '') }}"
                             class="px-3 py-1 rounded border text-sm {{ $lang['code'] === app()->getLocale() ? 'bg-blue-50 border-blue-200 text-blue-700' : 'border-gray-200 text-gray-700 hover:bg-gray-50' }}">
                             {{ strtoupper($lang['code']) }}
                         </a>
@@ -67,5 +50,6 @@
         @endif
     </div>
 </div>
+
 
 

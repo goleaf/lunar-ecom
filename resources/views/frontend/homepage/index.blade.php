@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', config('app.name') . ' - Home')
 
@@ -21,7 +21,7 @@
                 @if($heroImage)
                     <div class="hero-slide {{ $index === 0 ? 'active' : '' }}" data-slide-index="{{ $index }}">
                         <div class="absolute inset-0">
-                            @include('storefront.components.responsive-image', [
+                            @include('frontend.components.responsive-image', [
                                 'media' => $heroImage,
                                 'model' => $collection,
                                 'collectionName' => 'hero',
@@ -43,7 +43,7 @@
                                         {{ Str::limit($collection->translateAttribute('description'), 150) }}
                                     </p>
                                 @endif
-                                <a href="{{ route('storefront.collections.show', $collection->urls->first()->slug ?? $collection->id) }}" 
+                                <a href="{{ route('frontend.collections.show', $collection->urls->first()->slug ?? $collection->id) }}" 
                                    class="inline-block bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors animate-fade-in-delay-2">
                                     Explore Collection
                                 </a>
@@ -124,7 +124,7 @@
                 <h2 class="text-3xl md:text-4xl font-bold text-center mb-8">Featured Collections</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($featuredCollections as $collection)
-                        <x-storefront.collection-card :collection="$collection" />
+                        <x-frontend.collection-card :collection="$collection" />
                     @endforeach
                 </div>
             </div>
@@ -138,7 +138,7 @@
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl md:text-4xl font-bold">Bestsellers</h2>
                     @if($bestsellers->urls->first())
-                        <a href="{{ route('storefront.collections.show', $bestsellers->urls->first()->slug) }}" 
+                        <a href="{{ route('frontend.collections.show', $bestsellers->urls->first()->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
                             View All →
                         </a>
@@ -146,7 +146,7 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     @foreach($bestsellers->products->take(8) as $product)
-                        <x-storefront.product-card :product="$product" />
+                        <x-frontend.product-card :product="$product" />
                     @endforeach
                 </div>
             </div>
@@ -195,7 +195,7 @@
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl md:text-4xl font-bold">New Arrivals</h2>
                     @if($newArrivals->urls->first())
-                        <a href="{{ route('storefront.collections.show', $newArrivals->urls->first()->slug) }}" 
+                        <a href="{{ route('frontend.collections.show', $newArrivals->urls->first()->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
                             View All →
                         </a>
@@ -203,7 +203,7 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     @foreach($newArrivals->products->take(8) as $product)
-                        <x-storefront.product-card :product="$product" />
+                        <x-frontend.product-card :product="$product" />
                     @endforeach
                 </div>
             </div>
@@ -219,4 +219,5 @@
 @push('scripts')
 <script src="{{ asset('js/homepage.js') }}"></script>
 @endpush
+
 

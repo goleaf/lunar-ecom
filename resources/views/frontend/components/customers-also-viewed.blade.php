@@ -17,14 +17,14 @@
 @if($recommendedProducts->count() > 0)
     <div class="customers-also-viewed mt-12" 
          data-source-product-id="{{ $product->id }}">
-        <h2 class="text-2xl font-bold mb-6">{{ __('storefront.recommendations.customers_also_viewed') }}</h2>
+        <h2 class="text-2xl font-bold mb-6">{{ __('frontend.recommendations.customers_also_viewed') }}</h2>
         
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             @foreach($recommendedProducts as $recommendedProduct)
                 <div class="recommended-product" 
                      data-product-id="{{ $recommendedProduct->id }}"
                      data-recommendation-type="customers_also_viewed">
-                    @include('storefront.products._product-card', ['product' => $recommendedProduct])
+                    @include('frontend.products._product-card', ['product' => $recommendedProduct])
                 </div>
             @endforeach
         </div>
@@ -42,7 +42,7 @@
                     if (productCard) {
                         const recommendedProductId = productCard.dataset.productId;
                         
-                        fetch('{{ route("storefront.recommendations.track-click") }}', {
+                        fetch('{{ route("frontend.recommendations.track-click") }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -63,4 +63,5 @@
     </script>
     @endpush
 @endif
+
 

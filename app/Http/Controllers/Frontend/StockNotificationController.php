@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\StockNotificationService;
@@ -69,7 +69,7 @@ class StockNotificationController extends Controller
             ]);
         }
 
-        return view('storefront.stock-notifications.unsubscribe', [
+        return view('frontend.stock-notifications.unsubscribe', [
             'success' => $success,
         ]);
     }
@@ -97,3 +97,5 @@ class StockNotificationController extends Controller
         ]);
     }
 }
+
+

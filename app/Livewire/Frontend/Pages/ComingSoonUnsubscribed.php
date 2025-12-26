@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\ComingSoonController;
+use App\Http\Controllers\Frontend\ComingSoonController;
 use Livewire\Component;
 
 class ComingSoonUnsubscribed extends Component

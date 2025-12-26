@@ -259,7 +259,7 @@ use App\Lunar\Categories\CategoryHelper;
 $navigation = CategoryHelper::getNavigation(3);
 
 // In Blade template
-@include('storefront.components.category-tree', ['maxDepth' => 3])
+@include('frontend.components.category-tree', ['maxDepth' => 3])
 ```
 
 ## Breadcrumbs
@@ -411,7 +411,7 @@ The category show page (`resources/views/storefront/categories.show.blade.php`) 
 ### Category Tree Component
 
 ```blade
-@include('storefront.components.category-tree', ['maxDepth' => 3])
+@include('frontend.components.category-tree', ['maxDepth' => 3])
 ```
 
 ## Caching
@@ -541,10 +541,11 @@ $category = CategoryHelper::findByPath('electronics/phones/smartphones');
 $products = $category->getAllProducts();
 $breadcrumb = $category->getBreadcrumb();
 
-return view('storefront.categories.show', [
+return view('frontend.categories.show', [
     'category' => $category,
     'products' => $products,
     'breadcrumb' => $breadcrumb,
 ]);
 ```
+
 

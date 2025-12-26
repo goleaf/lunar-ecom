@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\AddressController;
+use App\Http\Controllers\Frontend\AddressController;
 use Livewire\Component;
 
 class AddressesIndex extends Component

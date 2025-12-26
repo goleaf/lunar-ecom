@@ -12,7 +12,7 @@ use Lunar\Models\Currency;
  * Seeder for multi-currency configuration.
  * 
  * Creates and configures 5 currencies: USD, EUR, GBP, JPY, AUD
- * Sets up exchange rates, default currency (USD), and currency formatting.
+ * Sets up exchange rates, default currency (EUR), and currency formatting.
  */
 class CurrencySeeder extends Seeder
 {
@@ -24,32 +24,32 @@ class CurrencySeeder extends Seeder
         $this->command->info('💰 Setting up multi-currency configuration...');
 
         // Currency configurations with exchange rates (as of typical rates)
-        // Exchange rates are relative to USD (default currency)
+        // Exchange rates are relative to EUR (default currency)
         $currencies = [
-            [
-                'code' => 'USD',
-                'name' => 'US Dollar',
-                'exchange_rate' => 1.0000, // Default currency
-                'decimal_places' => 2,
-                'format' => '{symbol}{value}',
-                'decimal_point' => '.',
-                'thousand_point' => ',',
-                'default' => true,
-            ],
             [
                 'code' => 'EUR',
                 'name' => 'Euro',
-                'exchange_rate' => 0.9200, // 1 USD = 0.92 EUR (approx)
+                'exchange_rate' => 1.0000, // Default currency
                 'decimal_places' => 2,
                 'format' => '{value} {symbol}',
                 'decimal_point' => ',',
                 'thousand_point' => '.',
+                'default' => true,
+            ],
+            [
+                'code' => 'USD',
+                'name' => 'US Dollar',
+                'exchange_rate' => 1.0900, // 1 EUR = 1.09 USD (approx)
+                'decimal_places' => 2,
+                'format' => '{symbol}{value}',
+                'decimal_point' => '.',
+                'thousand_point' => ',',
                 'default' => false,
             ],
             [
                 'code' => 'GBP',
                 'name' => 'British Pound',
-                'exchange_rate' => 0.7900, // 1 USD = 0.79 GBP (approx)
+                'exchange_rate' => 0.8600, // 1 EUR = 0.86 GBP (approx)
                 'decimal_places' => 2,
                 'format' => '{symbol}{value}',
                 'decimal_point' => '.',
@@ -59,7 +59,7 @@ class CurrencySeeder extends Seeder
             [
                 'code' => 'JPY',
                 'name' => 'Japanese Yen',
-                'exchange_rate' => 150.0000, // 1 USD = 150 JPY (approx)
+                'exchange_rate' => 165.0000, // 1 EUR = 165 JPY (approx)
                 'decimal_places' => 0, // JPY typically has no decimal places
                 'format' => '{symbol}{value}',
                 'decimal_point' => '.',
@@ -69,7 +69,7 @@ class CurrencySeeder extends Seeder
             [
                 'code' => 'AUD',
                 'name' => 'Australian Dollar',
-                'exchange_rate' => 1.5200, // 1 USD = 1.52 AUD (approx)
+                'exchange_rate' => 1.6500, // 1 EUR = 1.65 AUD (approx)
                 'decimal_places' => 2,
                 'format' => '{symbol}{value}',
                 'decimal_point' => '.',
@@ -133,7 +133,7 @@ class CurrencySeeder extends Seeder
         }
 
         $this->command->info('✅ Multi-currency configuration completed!');
-        $this->command->info('   Default currency: USD');
+        $this->command->info('   Default currency: EUR');
         $this->command->info('   Enabled currencies: USD, EUR, GBP, JPY, AUD');
     }
 }

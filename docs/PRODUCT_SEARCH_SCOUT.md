@@ -346,7 +346,7 @@ $searchService->configureMeilisearchIndex();
 The search autocomplete component is included in the layout:
 
 ```blade
-@include('storefront.components.search-autocomplete')
+@include('frontend.components.search-autocomplete')
 ```
 
 Features:
@@ -490,13 +490,13 @@ $stats = \App\Lunar\Search\SearchAnalyticsHelper::getStatistics('week');
 
 ```blade
 {{-- In layout --}}
-@include('storefront.components.search-autocomplete')
+@include('frontend.components.search-autocomplete')
 
 {{-- In search results --}}
 @foreach($products as $product)
-    <a href="{{ route('storefront.products.show', $product->slug) }}" 
+    <a href="{{ route('frontend.products.show', $product->slug) }}" 
        x-data="{ trackClick: function() {
-           fetch('{{ route('storefront.search.track-click') }}', {
+           fetch('{{ route('frontend.search.track-click') }}', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
                body: JSON.stringify({ query: '{{ $query }}', product_id: {{ $product->id }} })
@@ -542,4 +542,5 @@ $stats = \App\Lunar\Search\SearchAnalyticsHelper::getStatistics('week');
 2. Use caching for suggestions
 3. Optimize `makeAllSearchableUsing()` eager loading
 4. Consider using queue for indexing
+
 

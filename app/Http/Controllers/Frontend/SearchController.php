@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\SearchService;
@@ -23,7 +23,7 @@ class SearchController extends Controller
         $query = $request->get('q', '');
         
         if (empty($query)) {
-            return view('storefront.search.index', [
+            return view('frontend.search.index', [
                 'products' => collect(),
                 'query' => '',
                 'facets' => [],
@@ -40,7 +40,7 @@ class SearchController extends Controller
             'sort' => $request->get('sort', 'relevance'),
         ]);
 
-        return view('storefront.search.index', [
+        return view('frontend.search.index', [
             'products' => $result['results'],
             'query' => $query,
             'facets' => $result['facets'],
@@ -161,4 +161,6 @@ class SearchController extends Controller
         return $filters;
     }
 }
+
+
 

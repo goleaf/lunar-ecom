@@ -14,7 +14,7 @@ Quick reference guide for using Lunar's multi-language features.
 {{ $product->translateAttribute('name', 'fr') }}
 
 {{-- UI strings --}}
-{{ __('storefront.product.add_to_cart') }}
+{{ __('frontend.product.add_to_cart') }}
 ```
 
 ### Switch Language
@@ -197,4 +197,5 @@ foreach ($products as $product) {
     }
 }
 ```
+
 

@@ -69,7 +69,7 @@ class OrderShippedNotification extends Notification implements ShouldQueue
         }
 
         $message->line('You can track your order and view more details in your account.')
-            ->action('Track Order', route('storefront.account.orders.show', $this->order->id))
+            ->action('Track Order', route('frontend.account.orders.show', $this->order->id))
             ->line('We hope you love your purchase!')
             ->salutation('Best regards,');
 
@@ -92,4 +92,5 @@ class OrderShippedNotification extends Notification implements ShouldQueue
         ];
     }
 }
+
 

@@ -112,13 +112,13 @@ A comprehensive product recommendation engine that provides multiple types of re
 
 ```php
 // Product Recommendations
-Route::prefix('products/{product}/recommendations')->name('storefront.recommendations.')->group(function () {
+Route::prefix('products/{product}/recommendations')->name('frontend.recommendations.')->group(function () {
     Route::get('/', [RecommendationController::class, 'index'])->name('index');
     Route::post('/track-view', [RecommendationController::class, 'trackView'])->name('track-view');
     Route::get('/frequently-bought-together', [RecommendationController::class, 'frequentlyBoughtTogether'])->name('frequently-bought-together');
 });
 
-Route::prefix('recommendations')->name('storefront.recommendations.')->group(function () {
+Route::prefix('recommendations')->name('frontend.recommendations.')->group(function () {
     Route::post('/track-click', [RecommendationController::class, 'trackClick'])->name('track-click');
     Route::get('/personalized', [RecommendationController::class, 'personalized'])->name('personalized');
 });
@@ -130,19 +130,19 @@ Route::prefix('recommendations')->name('storefront.recommendations.')->group(fun
 
 ```blade
 {{-- Related Products --}}
-<x-storefront.product-recommendations 
+<x-frontend.product-recommendations 
     :product="$product" 
     type="related" 
     :limit="8" 
     location="product_page" />
 
 {{-- Frequently Bought Together --}}
-<x-storefront.frequently-bought-together 
+<x-frontend.frequently-bought-together 
     :product="$product" 
     :limit="5" />
 
 {{-- Customers Also Viewed --}}
-<x-storefront.customers-also-viewed 
+<x-frontend.customers-also-viewed 
     :product="$product" 
     :limit="8" />
 ```
@@ -207,4 +207,5 @@ The system supports A/B testing of recommendation algorithms:
 3. More sophisticated collaborative filtering
 4. Seasonal and trending product recommendations
 5. Recommendation analytics dashboard
+
 

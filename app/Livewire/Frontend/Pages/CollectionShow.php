@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\CollectionController;
+use App\Http\Controllers\Frontend\CollectionController;
 use Livewire\Component;
 
 class CollectionShow extends Component

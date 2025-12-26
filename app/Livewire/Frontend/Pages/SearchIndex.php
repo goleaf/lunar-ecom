@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Livewire\Storefront\Pages;
+namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Storefront\SearchController;
+use App\Http\Controllers\Frontend\SearchController;
 use Livewire\Component;
 
 class SearchIndex extends Component

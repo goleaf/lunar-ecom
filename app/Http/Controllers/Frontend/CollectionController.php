@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Storefront;
+namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -29,7 +29,7 @@ class CollectionController extends Controller
             request()->url()
         );
 
-        return view('storefront.collections.index', compact('collections', 'metaTags'));
+        return view('frontend.collections.index', compact('collections', 'metaTags'));
     }
 
     /**
@@ -80,7 +80,7 @@ class CollectionController extends Controller
         // Get SEO data
         $defaultUrl = $collection->urls->where('default', true)->first();
         $canonicalUrl = $defaultUrl 
-            ? route('storefront.collections.show', $defaultUrl->slug)
+            ? route('frontend.collections.show', $defaultUrl->slug)
             : url('/collections/' . $collection->id);
 
         $metaTags = [
@@ -106,7 +106,7 @@ class CollectionController extends Controller
         $filterController = new \App\Http\Controllers\Storefront\CollectionFilterController();
         $filterOptions = $filterController->getFilterOptions($collection, $request);
 
-        return view('storefront.collections.show', compact(
+        return view('frontend.collections.show', compact(
             'collection', 
             'products', 
             'breadcrumb',
@@ -166,3 +166,5 @@ class CollectionController extends Controller
         ];
     }
 }
+
+

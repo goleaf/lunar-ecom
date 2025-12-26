@@ -5,7 +5,7 @@
 @endphp
 
 <a 
-    href="{{ route('storefront.cart.index') }}" 
+    href="{{ route('frontend.cart.index') }}" 
     class="relative inline-flex items-center text-gray-700 hover:text-gray-900 transition-colors"
     id="cart-widget"
 >
@@ -20,14 +20,14 @@
             {{ $itemCount > 99 ? '99+' : $itemCount }}
         </span>
     @endif
-    <span class="ml-2 hidden sm:inline">{{ __('storefront.nav.cart') ?? 'Cart' }}</span>
+    <span class="ml-2 hidden sm:inline">{{ __('frontend.nav.cart') ?? 'Cart' }}</span>
 </a>
 
 @push('scripts')
 <script>
     // Update cart count via AJAX
     function updateCartCount() {
-        fetch('{{ route('storefront.cart.summary') }}', {
+        fetch('{{ route('frontend.cart.summary') }}', {
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -65,4 +65,5 @@
     document.addEventListener('cartUpdated', updateCartCount);
 </script>
 @endpush
+
 

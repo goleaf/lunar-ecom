@@ -1,4 +1,4 @@
-@extends('storefront.layout')
+@extends('frontend.layout')
 
 @section('title', 'Categories')
 
@@ -34,10 +34,10 @@
                         <p class="text-gray-600 mb-4 line-clamp-2">{{ Str::limit($category->getDescription(), 100) }}</p>
                     @endif
                     @if($category->product_count > 0)
-                        <p class="text-sm text-gray-500 mb-2">{{ $category->product_count }} {{ __('storefront.products') }}</p>
+                        <p class="text-sm text-gray-500 mb-2">{{ $category->product_count }} {{ __('frontend.products') }}</p>
                     @endif
                     @if($category->getChildren()->count() > 0)
-                        <p class="text-sm text-gray-500">{{ $category->getChildren()->count() }} {{ __('storefront.subcategories') }}</p>
+                        <p class="text-sm text-gray-500">{{ $category->getChildren()->count() }} {{ __('frontend.subcategories') }}</p>
                     @endif
                 </div>
             </a>
@@ -49,4 +49,5 @@
     </div>
 </div>
 @endsection
+
 

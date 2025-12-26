@@ -295,6 +295,74 @@ class ProductVariant extends LunarProductVariant
     }
 
     /**
+     * Generate a reasonable variant title from option values / attribute data.
+     *
+     * This is used by the model boot hook when neither `title` nor `variant_name` is provided.
+     */
+    public function generateTitle(): string
+    {
+        try {
+            // Prefer option values (size/color/etc) if present.
+            $values = $this->variantOptions()
+                ->with('option')
+                ->get()
+                ->map(function ($value) {
+                    // Try translated name first, then fall back to raw.
+                    return $value->translateAttribute('name') ?? $value->name ?? null;
+                })
+                ->filter()
+                ->values()
+                ->all();
+
+            if (!empty($values)) {
+                return implode(' / ', $values);
+            }
+        } catch (\Throwable $e) {
+            // Ignore and fall back to attribute_data below.
+        }
+
+        // Fallback to attribute_data if present (factory uses FieldTypes).
+        $attr = $this->attribute_data;
+        if ($attr instanceof \Illuminate\Support\Collection) {
+            $parts = [];
+            foreach (['color', 'size', 'material'] as $key) {
+                if (isset($attr[$key])) {
+                    $val = $attr[$key];
+                    $parts[] = is_object($val) && method_exists($val, 'getValue') ? (string) $val->getValue() : (string) $val;
+                }
+            }
+            $parts = array_values(array_filter(array_map('trim', $parts)));
+            if (!empty($parts)) {
+                return implode(' / ', $parts);
+            }
+        }
+
+        return $this->sku ? "Variant {$this->sku}" : 'Variant';
+    }
+
+    /**
+     * Generate a SKU when missing.
+     *
+     * This is used by the model boot hook during creation if `sku` is empty.
+     */
+    public function generateSKU(): string
+    {
+        $productSku = null;
+        try {
+            $productSku = $this->product?->sku;
+        } catch (\Throwable $e) {
+            $productSku = null;
+        }
+
+        $base = $productSku ?: "PROD-{$this->product_id}";
+        $base = strtoupper((string) $base);
+        $base = preg_replace('/[^A-Z0-9\\-]/', '-', $base) ?: "PROD-{$this->product_id}";
+        $base = trim($base, '-');
+
+        return \Illuminate\Support\Str::limit("{$base}-V" . strtoupper(\Illuminate\Support\Str::random(6)), 60, '');
+    }
+
+    /**
      * Get the variant options relationship.
      * This uses the existing ProductOptionValue relationship.
      * 

@@ -87,5 +87,13 @@ class FixedAmountDiscount extends AbstractDiscountType implements LunarPanelDisc
     {
         return $data;
     }
+
+    /**
+     * Define any relation managers you want to add to the admin form.
+     */
+    public function lunarPanelRelationManagers(): array
+    {
+        return [];
+    }
 }
 

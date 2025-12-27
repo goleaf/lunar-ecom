@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'rate.limit.checkout' => \App\Http\Middleware\RateLimitCheckout::class,
             'idempotent' => \App\Http\Middleware\IdempotentRequest::class,
             'http.cache' => \App\Http\Middleware\HttpCache::class,
+            'canonical.product-slug' => \App\Http\Middleware\CanonicalProductSlugRedirect::class,
+            'canonical.collection-slug' => \App\Http\Middleware\CanonicalCollectionSlugRedirect::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

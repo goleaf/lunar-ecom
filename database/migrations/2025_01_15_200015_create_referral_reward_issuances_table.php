@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('referral_attribution_id')->constrained('referral_attributions')->onDelete('cascade');
             $table->foreignId('referee_user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('referrer_user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
             $table->string('referee_reward_type')->nullable();
             $table->decimal('referee_reward_value', 10, 2)->nullable();
             $table->string('referrer_reward_type')->nullable();

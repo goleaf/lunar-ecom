@@ -102,7 +102,7 @@ class ReviewController extends Controller
             'cons' => 'nullable|array',
             'cons.*' => 'string|max:255',
             'recommended' => 'boolean',
-            'order_id' => 'nullable|exists:lunar_orders,id',
+            'order_id' => 'nullable|exists:orders,id',
             'images' => 'nullable|array|max:5',
             'images.*' => 'image|mimes:jpeg,png,webp|max:2048',
         ]);

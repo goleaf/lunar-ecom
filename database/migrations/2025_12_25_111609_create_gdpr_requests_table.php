@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('type'); // 'export', 'deletion', 'anonymization', 'rectification'
             $table->string('status')->default('pending'); // 'pending', 'processing', 'completed', 'rejected', 'failed'
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('customer_id')->nullable()->constrained('lunar_customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade');
             $table->string('email');
             $table->string('verification_token')->unique()->nullable();
             $table->timestamp('verified_at')->nullable();

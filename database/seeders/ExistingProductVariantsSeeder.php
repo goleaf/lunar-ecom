@@ -185,7 +185,7 @@ class ExistingProductVariantsSeeder extends Seeder
         $exists = Price::query()
             ->where('currency_id', $currencyId)
             ->where('customer_group_id', $customerGroupId)
-            ->where('priceable_type', ProductVariant::class)
+            ->where('priceable_type', ProductVariant::morphName())
             ->where('priceable_id', $variantId)
             ->exists();
 

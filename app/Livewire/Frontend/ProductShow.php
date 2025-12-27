@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\HtmlString;
 use Livewire\Component;
 use Lunar\Facades\CartSession;
+use Lunar\Models\Language;
 use Lunar\Models\Url;
 
 class ProductShow extends Component
@@ -49,8 +50,28 @@ class ProductShow extends Component
     public function mount(string $slug): void
     {
         $url = Url::where('slug', $slug)
-            ->where('element_type', Product::class)
-            ->firstOrFail();
+            ->whereIn('element_type', [Product::morphName(), Product::class])
+            ->first();
+
+        $productId = $url?->element_id;
+
+        if (! $productId && ctype_digit($slug)) {
+            $productId = (int) $slug;
+            $canonicalSlug = $this->resolveCanonicalSlug($productId);
+
+            if ($canonicalSlug && $canonicalSlug !== $slug) {
+                $this->redirectRoute(
+                    'frontend.products.show',
+                    array_merge(['slug' => $canonicalSlug], request()->query()),
+                    navigate: true
+                );
+                return;
+            }
+        }
+
+        if (! $productId) {
+            abort(404);
+        }
 
         $this->product = Product::with([
             'variants.prices',
@@ -61,7 +82,7 @@ class ProductShow extends Component
             'urls',
             'reviews.customer',
             'digitalProduct',
-        ])->findOrFail($url->element_id);
+        ])->findOrFail($productId);
 
         $this->authorize('view', $this->product);
 
@@ -86,7 +107,7 @@ class ProductShow extends Component
         $this->messageType = 'success';
 
         $this->validate([
-            'variantId' => ['required', 'exists:lunar_product_variants,id'],
+            'variantId' => ['required', 'exists:product_variants,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:999'],
         ]);
 
@@ -132,6 +153,28 @@ class ProductShow extends Component
             'pageMeta' => $pageMeta,
         ]);
     }
+
+    private function resolveCanonicalSlug(int $productId): ?string
+    {
+        $language = Language::where('code', app()->getLocale())->first()
+            ?? Language::getDefault();
+
+        $query = Url::whereIn('element_type', [Product::morphName(), Product::class])
+            ->where('element_id', $productId);
+
+        if ($language) {
+            $query->where('language_id', $language->id);
+        }
+
+        $url = $query->orderByDesc('default')->first();
+
+        if (! $url && $language) {
+            $url = Url::whereIn('element_type', [Product::morphName(), Product::class])
+                ->where('element_id', $productId)
+                ->orderByDesc('default')
+                ->first();
+        }
+
+        return $url?->slug;
+    }
 }
-
-

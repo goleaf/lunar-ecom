@@ -32,7 +32,7 @@ class ProductBadgeAssignmentController extends Controller
     public function assign(Request $request, Product $product): JsonResponse
     {
         $validated = $request->validate([
-            'badge_id' => 'required|exists:lunar_product_badges,id',
+            'badge_id' => 'required|exists:product_badges,id',
             'priority' => 'nullable|integer|min:0|max:100',
             'display_position' => 'nullable|in:top-left,top-right,bottom-left,bottom-right,center',
             'visibility_rules' => 'nullable|array',

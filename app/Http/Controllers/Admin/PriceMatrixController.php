@@ -38,7 +38,7 @@ class PriceMatrixController extends Controller
     public function store(Request $request, Product $product): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
             'name' => 'nullable|string|max:255',
             'matrix_type' => 'required|in:quantity,customer_group,region,mixed,rule_based',
             'description' => 'nullable|string',

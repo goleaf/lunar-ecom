@@ -18,7 +18,7 @@ class ContractPurchaseOrder extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_purchase_orders';
+    protected $table = 'contract_purchase_orders';
 
     protected $fillable = [
         'contract_id',

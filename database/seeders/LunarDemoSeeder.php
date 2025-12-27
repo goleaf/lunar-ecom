@@ -407,7 +407,7 @@ class LunarDemoSeeder extends Seeder
 
         // Attach attributes to product type if not already attached
         $attributeIds = collect($attributes)->pluck('id')->toArray();
-        $existingIds = $productType->mappedAttributes()->pluck('lunar_attributes.id')->toArray();
+        $existingIds = $productType->mappedAttributes()->pluck('attributes.id')->toArray();
         $newIds = array_diff($attributeIds, $existingIds);
         
         if (!empty($newIds)) {

@@ -36,7 +36,7 @@ class CollectionController extends Controller
         $this->authorize('create', Collection::class);
         
         $validated = $request->validate([
-            'collection_group_id' => 'required|exists:lunar_collection_groups,id',
+            'collection_group_id' => 'required|exists:collection_groups,id',
             'sort' => 'integer|min:0',
             'attributes' => 'array',
             'attributes.*' => 'string',
@@ -70,7 +70,7 @@ class CollectionController extends Controller
         $this->authorize('update', $collection);
         
         $validated = $request->validate([
-            'collection_group_id' => 'exists:lunar_collection_groups,id',
+            'collection_group_id' => 'exists:collection_groups,id',
             'sort' => 'integer|min:0',
             'attributes' => 'array',
             'attributes.*' => 'string',
@@ -112,7 +112,7 @@ class CollectionController extends Controller
         
         $validated = $request->validate([
             'product_ids' => 'required|array',
-            'product_ids.*' => 'exists:lunar_products,id',
+            'product_ids.*' => 'exists:products,id',
         ]);
 
         $updatedCollection = $this->collectionService->addProducts($collection, $validated['product_ids']);
@@ -132,7 +132,7 @@ class CollectionController extends Controller
         
         $validated = $request->validate([
             'product_ids' => 'required|array',
-            'product_ids.*' => 'exists:lunar_products,id',
+            'product_ids.*' => 'exists:products,id',
         ]);
 
         $updatedCollection = $this->collectionService->removeProducts($collection, $validated['product_ids']);

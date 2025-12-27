@@ -271,11 +271,11 @@ class ComprehensiveCollectionService
     {
         switch ($sortBy) {
             case 'price':
-                $query->join('lunar_product_variants', 'lunar_products.id', '=', 'lunar_product_variants.product_id')
-                    ->join('lunar_prices', 'lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
-                    ->where('lunar_prices.priceable_type', 'Lunar\Models\ProductVariant')
-                    ->orderBy('lunar_prices.price', $sortDirection)
-                    ->select('lunar_products.*');
+                $query->join('product_variants', 'products.id', '=', 'product_variants.product_id')
+                    ->join('prices', 'product_variants.id', '=', 'prices.priceable_id')
+                    ->where('prices.priceable_type', \App\Models\ProductVariant::morphName())
+                    ->orderBy('prices.price', $sortDirection)
+                    ->select('products.*');
                 break;
 
             case 'name':
@@ -473,5 +473,4 @@ class ComprehensiveCollectionService
         ];
     }
 }
-
 

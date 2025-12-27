@@ -71,8 +71,8 @@ class InventoryController extends Controller
         }
 
         $validated = $request->validate([
-            'product_variant_id' => 'required|exists:lunar_product_variants,id',
-            'warehouse_id' => 'required|exists:lunar_warehouses,id',
+            'product_variant_id' => 'required|exists:product_variants,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
             'quantity' => 'required|integer',
             'note' => 'nullable|string|max:500',
         ]);
@@ -107,9 +107,9 @@ class InventoryController extends Controller
         }
 
         $validated = $request->validate([
-            'product_variant_id' => 'required|exists:lunar_product_variants,id',
-            'from_warehouse_id' => 'required|exists:lunar_warehouses,id',
-            'to_warehouse_id' => 'required|exists:lunar_warehouses,id|different:from_warehouse_id',
+            'product_variant_id' => 'required|exists:product_variants,id',
+            'from_warehouse_id' => 'required|exists:warehouses,id',
+            'to_warehouse_id' => 'required|exists:warehouses,id|different:from_warehouse_id',
             'quantity' => 'required|integer|min:1',
             'note' => 'nullable|string|max:500',
         ]);
@@ -169,9 +169,9 @@ class InventoryController extends Controller
     public function checkAvailability(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => 'required|exists:lunar_product_variants,id',
+            'product_variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
-            'warehouse_id' => 'nullable|exists:lunar_warehouses,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
         ]);
 
         $variant = ProductVariant::findOrFail($validated['product_variant_id']);

@@ -61,8 +61,8 @@ class RecommendationRuleController extends Controller
         }
 
         $validated = $request->validate([
-            'source_product_id' => 'nullable|exists:lunar_products,id',
-            'recommended_product_id' => 'required|exists:lunar_products,id',
+            'source_product_id' => 'nullable|exists:products,id',
+            'recommended_product_id' => 'required|exists:products,id',
             'rule_type' => 'required|string|in:manual,category,attribute',
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -95,8 +95,8 @@ class RecommendationRuleController extends Controller
         }
 
         $validated = $request->validate([
-            'source_product_id' => 'nullable|exists:lunar_products,id',
-            'recommended_product_id' => 'exists:lunar_products,id',
+            'source_product_id' => 'nullable|exists:products,id',
+            'recommended_product_id' => 'exists:products,id',
             'rule_type' => 'string|in:manual,category,attribute',
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',

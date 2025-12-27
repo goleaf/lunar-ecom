@@ -50,12 +50,22 @@ class CollectionController extends Controller
         // Find collection by URL slug
         // See: https://docs.lunarphp.com/1.x/reference/urls
         $url = Url::where('slug', $slug)
-            ->where('element_type', Collection::morphName())
-            ->firstOrFail();
+            ->whereIn('element_type', [Collection::morphName(), Collection::class])
+            ->first();
+
+        $collectionId = $url?->element_id;
+
+        if (! $collectionId && ctype_digit($slug)) {
+            $collectionId = (int) $slug;
+        }
+
+        if (! $collectionId) {
+            abort(404);
+        }
 
         // Load collection with media eager loaded
         // See: https://docs.lunarphp.com/1.x/reference/media
-        $collection = Collection::with(['group', 'children', 'media', 'urls'])->findOrFail($url->element_id);
+        $collection = Collection::with(['group', 'children', 'media', 'urls'])->findOrFail($collectionId);
 
         // Check if user can view this collection
         $this->authorize('view', $collection);
@@ -127,21 +137,21 @@ class CollectionController extends Controller
         $priceRange = ['min' => 0, 'max' => 0];
         
         if ($productIds->isNotEmpty()) {
-            $minPrice = \DB::table('lunar_product_variants')
-                ->join('lunar_prices', function($join) {
-                    $join->on('lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
-                         ->where('lunar_prices.priceable_type', '=', \Lunar\Models\ProductVariant::class);
+            $minPrice = \DB::table('product_variants')
+                ->join('prices', function($join) {
+                    $join->on('product_variants.id', '=', 'prices.priceable_id')
+                         ->where('prices.priceable_type', '=', \App\Models\ProductVariant::morphName());
                 })
-                ->whereIn('lunar_product_variants.product_id', $productIds)
-                ->min('lunar_prices.price');
+                ->whereIn('product_variants.product_id', $productIds)
+                ->min('prices.price');
             
-            $maxPrice = \DB::table('lunar_product_variants')
-                ->join('lunar_prices', function($join) {
-                    $join->on('lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
-                         ->where('lunar_prices.priceable_type', '=', \Lunar\Models\ProductVariant::class);
+            $maxPrice = \DB::table('product_variants')
+                ->join('prices', function($join) {
+                    $join->on('product_variants.id', '=', 'prices.priceable_id')
+                         ->where('prices.priceable_type', '=', \App\Models\ProductVariant::morphName());
                 })
-                ->whereIn('lunar_product_variants.product_id', $productIds)
-                ->max('lunar_prices.price');
+                ->whereIn('product_variants.product_id', $productIds)
+                ->max('prices.price');
             
             $priceRange = [
                 'min' => $minPrice ? ($minPrice / 100) : 0,

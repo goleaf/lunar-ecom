@@ -158,7 +158,7 @@ class ImportPricingMatrix extends Command
     protected function validateRow(array $row): bool
     {
         $validator = Validator::make($row, [
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
             'matrix_type' => 'required|in:quantity,customer_group,region,mixed',
             'rules' => 'required',
             'is_active' => 'sometimes|boolean',

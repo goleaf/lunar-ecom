@@ -15,7 +15,7 @@ class PricingApproval extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_pricing_approvals';
+    protected $table = 'pricing_approvals';
 
     protected $fillable = [
         'price_matrix_id',

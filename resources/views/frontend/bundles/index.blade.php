@@ -28,7 +28,7 @@
                         @endif
 
                         @php
-                            $currency = \Lunar\Facades\Currency::getDefault();
+                            $currency = \Lunar\Models\Currency::getDefault();
                             $customerGroupId = \Lunar\Facades\StorefrontSession::getCustomerGroup()?->id;
                             $individualTotal = $bundle->calculateIndividualTotal($currency, $customerGroupId);
                             $bundlePrice = $bundle->calculatePrice($currency, $customerGroupId);

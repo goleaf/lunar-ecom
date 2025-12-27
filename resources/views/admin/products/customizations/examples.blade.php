@@ -67,35 +67,5 @@
 </div>
 
 @push('scripts')
-<script>
-const exampleForm = document.getElementById('example-form');
-const exampleMessage = document.getElementById('example-message');
-
-exampleForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    exampleMessage.textContent = 'Uploading...';
-
-    const formData = new FormData(exampleForm);
-
-    try {
-        const response = await fetch(exampleForm.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        });
-
-        const data = await response.json();
-        exampleMessage.textContent = data.message || 'Example saved.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    } catch (error) {
-        exampleMessage.textContent = 'Failed to save example.';
-    }
-});
-</script>
 @endpush
 @endsection

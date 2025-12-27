@@ -5,14 +5,21 @@
 @endpush
 
 @php
-    $badges = app(\App\Services\ProductBadgeService::class)->getProductBadges($product, $limit);
+    $assignments = app(\App\Services\BadgeService::class)->getProductBadges($product);
+    if ($limit) {
+        $assignments = $assignments->take($limit);
+    }
 @endphp
 
-@if($badges->count() > 0)
+@if($assignments->count() > 0)
     <div class="product-badges">
-        @foreach($badges as $badge)
+        @foreach($assignments as $assignment)
             @php
-                $position = $badge->pivot->position ?? $badge->position;
+                $badge = $assignment->badge;
+            @endphp
+            @continue(!$badge)
+            @php
+                $position = $assignment->display_position ?? $badge->position;
                 $positionClasses = match($position) {
                     'top-left' => 'top-2 left-2',
                     'top-right' => 'top-2 right-2',

@@ -5,7 +5,7 @@
         ?? $collection->getFirstMedia('hero')
         ?? $collection->products->first()?->getFirstMedia('images');
     $productCount = $collection->products()->count();
-    $url = $collection->urls->first()->slug ?? $collection->id;
+    $url = $collection->urls->first()?->slug ?? $collection->id;
 @endphp
 
 <div class="collection-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">

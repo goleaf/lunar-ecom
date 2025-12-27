@@ -11,7 +11,7 @@
 
     <div class="bg-white rounded-lg shadow p-6 space-y-4">
         <h3 class="text-lg font-semibold">Add customization</h3>
-        <form id="customization-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="customization-form" class="grid grid-cols-1 md:grid-cols-4 gap-4" data-url="{{ route('admin.products.customizations.store', $product) }}">
             @csrf
             <div>
                 <label class="block text-xs text-slate-600 mb-1">Type</label>
@@ -108,59 +108,5 @@
 </div>
 
 @push('scripts')
-<script>
-const customizationForm = document.getElementById('customization-form');
-const customizationMessage = document.getElementById('customization-message');
-
-customizationForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    customizationMessage.textContent = 'Saving...';
-
-    const formData = new FormData(customizationForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch('{{ route('admin.products.customizations.store', $product) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        customizationMessage.textContent = data.message || 'Customization saved.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 700);
-        }
-    } catch (error) {
-        customizationMessage.textContent = 'Failed to save customization.';
-    }
-});
-
-document.querySelectorAll('.customization-delete').forEach((button) => {
-    button.addEventListener('click', async () => {
-        if (!confirm('Delete this customization?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(button.dataset.url, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            if (response.ok) {
-                window.location.reload();
-            }
-        } catch (error) {
-            alert('Failed to delete customization.');
-        }
-    });
-});
-</script>
 @endpush
 @endsection

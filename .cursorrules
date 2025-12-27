@@ -37,3 +37,5 @@ When making refactors:
 - Prefer `git mv` for moves/renames to preserve history.
 - After large renames, run a search to ensure no legacy "storefront" references remain (excluding vendor URLs if present).
 
+
+

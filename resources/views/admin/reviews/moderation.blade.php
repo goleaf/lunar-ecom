@@ -23,7 +23,7 @@
     </div>
 
     {{-- Bulk Actions --}}
-    <form id="bulkActionsForm" method="POST" action="">
+    <form id="bulkActionsForm" method="POST" action="" data-bulk-approve-url="{{ route('admin.reviews.bulk-approve') }}" data-bulk-reject-url="{{ route('admin.reviews.bulk-reject') }}">
         @csrf
         <div class="mb-4 flex items-center gap-4">
             <button type="button" 
@@ -207,7 +207,7 @@
     <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
         <h3 class="text-lg font-semibold mb-4">Add Admin Response</h3>
         
-        <form id="responseForm" method="POST" action="">
+        <form id="responseForm" method="POST" action="" data-action-template="{{ route('admin.reviews.add-response', ['review' => '__REVIEW__']) }}">
             @csrf
             <textarea id="responseText" 
                       name="response" 
@@ -231,98 +231,6 @@
     </div>
 </div>
 
-<script>
-function selectAll() {
-    document.querySelectorAll('.review-checkbox').forEach(cb => cb.checked = true);
-}
-
-function deselectAll() {
-    document.querySelectorAll('.review-checkbox').forEach(cb => cb.checked = false);
-}
-
-function bulkApprove() {
-    const form = document.getElementById('bulkActionsForm');
-    const selected = Array.from(document.querySelectorAll('.review-checkbox:checked')).map(cb => cb.value);
-    
-    if (selected.length === 0) {
-        alert('Please select at least one review.');
-        return;
-    }
-    
-    if (!confirm(`Approve ${selected.length} review(s)?`)) {
-        return;
-    }
-    
-    form.action = '{{ route("admin.reviews.bulk-approve") }}';
-    form.method = 'POST';
-    form.innerHTML += '<input type="hidden" name="review_ids[]" value="' + selected.join('"><input type="hidden" name="review_ids[]" value="') + '">';
-    form.innerHTML += '@csrf';
-    form.submit();
-}
-
-function bulkReject() {
-    const form = document.getElementById('bulkActionsForm');
-    const selected = Array.from(document.querySelectorAll('.review-checkbox:checked')).map(cb => cb.value);
-    
-    if (selected.length === 0) {
-        alert('Please select at least one review.');
-        return;
-    }
-    
-    if (!confirm(`Reject ${selected.length} review(s)?`)) {
-        return;
-    }
-    
-    form.action = '{{ route("admin.reviews.bulk-reject") }}';
-    form.method = 'POST';
-    form.innerHTML += '<input type="hidden" name="review_ids[]" value="' + selected.join('"><input type="hidden" name="review_ids[]" value="') + '">';
-    form.innerHTML += '@csrf';
-    form.submit();
-}
-
-function openResponseModal(reviewId, currentResponse = '') {
-    const modal = document.getElementById('responseModal');
-    const form = document.getElementById('responseForm');
-    const textarea = document.getElementById('responseText');
-    
-    form.action = '{{ route("admin.reviews.add-response", ":id") }}'.replace(':id', reviewId);
-    textarea.value = currentResponse;
-    modal.classList.remove('hidden');
-}
-
-function closeResponseModal() {
-    const modal = document.getElementById('responseModal');
-    modal.classList.add('hidden');
-    document.getElementById('responseText').value = '';
-    document.getElementById('responseError').classList.add('hidden');
-}
-
-// Handle form submission
-document.getElementById('responseForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const form = this;
-    const formData = new FormData(form);
-    const response = await fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        }
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok) {
-        closeResponseModal();
-        location.reload();
-    } else {
-        const errorDiv = document.getElementById('responseError');
-        errorDiv.textContent = data.message || 'An error occurred';
-        errorDiv.classList.remove('hidden');
-    }
-});
-</script>
 @endsection
 
 

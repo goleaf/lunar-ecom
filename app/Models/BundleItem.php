@@ -114,7 +114,7 @@ class BundleItem extends Model
      */
     public function getPrice(?\Lunar\Models\Currency $currency = null, ?int $customerGroupId = null): int
     {
-        $currency = $currency ?? \Lunar\Facades\Currency::getDefault();
+        $currency = $currency ?? \Lunar\Models\Currency::getDefault();
         $variant = $this->getVariant();
 
         if (!$variant) {

@@ -20,22 +20,48 @@ class PricingMetricsService
 {
     protected string $prefix = 'metrics:pricing';
 
+    protected function enabled(): bool
+    {
+        if (app()->environment('testing')) {
+            return false;
+        }
+
+        return (bool) config('pricing_cache.observability.enabled', true);
+    }
+
+    protected function safeRedis(callable $fn, $default = null)
+    {
+        if (!$this->enabled()) {
+            return $default;
+        }
+
+        try {
+            return $fn();
+        } catch (\Throwable) {
+            return $default;
+        }
+    }
+
     /**
      * Record price calculation timing.
      */
     public function recordPriceCalculation(string $operation, float $durationMs, bool $fromCache = false): void
     {
+        if (!$this->enabled()) {
+            return;
+        }
+
         $key = "{$this->prefix}:timing:{$operation}";
         
         // Store timing data
-        Redis::lpush("{$key}:durations", $durationMs);
-        Redis::ltrim("{$key}:durations", 0, 999); // Keep last 1000 measurements
+        $this->safeRedis(fn () => Redis::lpush("{$key}:durations", $durationMs));
+        $this->safeRedis(fn () => Redis::ltrim("{$key}:durations", 0, 999)); // Keep last 1000 measurements
         
         // Track cache hits/misses
         if ($fromCache) {
-            Redis::incr("{$key}:cache_hits");
+            $this->safeRedis(fn () => Redis::incr("{$key}:cache_hits"));
         } else {
-            Redis::incr("{$key}:cache_misses");
+            $this->safeRedis(fn () => Redis::incr("{$key}:cache_misses"));
         }
 
         // Log slow operations (> 500ms)
@@ -53,8 +79,8 @@ class PricingMetricsService
      */
     public function recordCacheHit(string $cacheType): void
     {
-        Redis::incr("{$this->prefix}:cache:hits:{$cacheType}");
-        Redis::incr("{$this->prefix}:cache:hits:total");
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:cache:hits:{$cacheType}"));
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:cache:hits:total"));
     }
 
     /**
@@ -62,8 +88,8 @@ class PricingMetricsService
      */
     public function recordCacheMiss(string $cacheType): void
     {
-        Redis::incr("{$this->prefix}:cache:misses:{$cacheType}");
-        Redis::incr("{$this->prefix}:cache:misses:total");
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:cache:misses:{$cacheType}"));
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:cache:misses:total"));
     }
 
     /**
@@ -71,8 +97,8 @@ class PricingMetricsService
      */
     public function recordCheckoutFailure(string $reason, ?int $cartId = null): void
     {
-        Redis::incr("{$this->prefix}:checkout:failures:{$reason}");
-        Redis::incr("{$this->prefix}:checkout:failures:total");
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:checkout:failures:{$reason}"));
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:checkout:failures:total"));
 
         Log::error('Checkout failure recorded', [
             'reason' => $reason,
@@ -85,8 +111,8 @@ class PricingMetricsService
      */
     public function recordStockContention(int $variantId, string $operation): void
     {
-        Redis::incr("{$this->prefix}:stock:contention:{$variantId}:{$operation}");
-        Redis::incr("{$this->prefix}:stock:contention:total");
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:stock:contention:{$variantId}:{$operation}"));
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:stock:contention:total"));
 
         Log::warning('Stock contention detected', [
             'variant_id' => $variantId,
@@ -99,9 +125,9 @@ class PricingMetricsService
      */
     public function recordPromotionUsage(int $promotionId, float $discountAmount): void
     {
-        Redis::incr("{$this->prefix}:promotions:usage:{$promotionId}");
-        Redis::incr("{$this->prefix}:promotions:usage:total");
-        Redis::incrbyfloat("{$this->prefix}:promotions:discount_total", $discountAmount);
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:promotions:usage:{$promotionId}"));
+        $this->safeRedis(fn () => Redis::incr("{$this->prefix}:promotions:usage:total"));
+        $this->safeRedis(fn () => Redis::incrbyfloat("{$this->prefix}:promotions:discount_total", $discountAmount));
     }
 
     /**
@@ -109,8 +135,8 @@ class PricingMetricsService
      */
     public function getCacheHitRatio(string $cacheType = 'total'): float
     {
-        $hits = (int) Redis::get("{$this->prefix}:cache:hits:{$cacheType}") ?? 0;
-        $misses = (int) Redis::get("{$this->prefix}:cache:misses:{$cacheType}") ?? 0;
+        $hits = (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:cache:hits:{$cacheType}"), 0) ?? 0);
+        $misses = (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:cache:misses:{$cacheType}"), 0) ?? 0);
         
         $total = $hits + $misses;
         
@@ -127,7 +153,7 @@ class PricingMetricsService
     public function getAverageCalculationTime(string $operation): float
     {
         $key = "{$this->prefix}:timing:{$operation}:durations";
-        $durations = Redis::lrange($key, 0, -1);
+        $durations = $this->safeRedis(fn () => Redis::lrange($key, 0, -1), []);
         
         if (empty($durations)) {
             return 0.0;
@@ -145,18 +171,18 @@ class PricingMetricsService
         return [
             'cache' => [
                 'hit_ratio' => $this->getCacheHitRatio(),
-                'hits' => (int) Redis::get("{$this->prefix}:cache:hits:total") ?? 0,
-                'misses' => (int) Redis::get("{$this->prefix}:cache:misses:total") ?? 0,
+                'hits' => (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:cache:hits:total"), 0) ?? 0),
+                'misses' => (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:cache:misses:total"), 0) ?? 0),
             ],
             'checkout' => [
-                'failures' => (int) Redis::get("{$this->prefix}:checkout:failures:total") ?? 0,
+                'failures' => (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:checkout:failures:total"), 0) ?? 0),
             ],
             'stock' => [
-                'contention' => (int) Redis::get("{$this->prefix}:stock:contention:total") ?? 0,
+                'contention' => (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:stock:contention:total"), 0) ?? 0),
             ],
             'promotions' => [
-                'usage_count' => (int) Redis::get("{$this->prefix}:promotions:usage:total") ?? 0,
-                'discount_total' => (float) Redis::get("{$this->prefix}:promotions:discount_total") ?? 0.0,
+                'usage_count' => (int) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:promotions:usage:total"), 0) ?? 0),
+                'discount_total' => (float) ($this->safeRedis(fn () => Redis::get("{$this->prefix}:promotions:discount_total"), 0.0) ?? 0.0),
             ],
             'timing' => [
                 'price_calculation' => $this->getAverageCalculationTime('price_calculation'),
@@ -170,10 +196,12 @@ class PricingMetricsService
      */
     public function resetMetrics(): void
     {
-        $keys = Redis::keys("{$this->prefix}:*");
-        if (!empty($keys)) {
-            Redis::del($keys);
-        }
+        $this->safeRedis(function () {
+            $keys = Redis::keys("{$this->prefix}:*");
+            if (!empty($keys)) {
+                Redis::del($keys);
+            }
+        });
     }
 }
 

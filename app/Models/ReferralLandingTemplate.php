@@ -46,3 +46,5 @@ class ReferralLandingTemplate extends Model
 }
 
 
+
+

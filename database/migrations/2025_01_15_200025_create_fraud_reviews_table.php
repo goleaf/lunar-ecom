@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('fraud_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('referral_attribution_id')->constrained('referral_attributions')->onDelete('cascade');
-            $table->foreignId('order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
             $table->foreignId('reviewed_by_user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('status', ['pending', 'approved', 'rejected', 'escalated'])->default('pending');
             $table->integer('risk_score')->default(0); // 0-100

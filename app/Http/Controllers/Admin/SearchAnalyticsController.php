@@ -144,7 +144,7 @@ class SearchAnalyticsController extends Controller
         }
 
         $validated = $request->validate([
-            'term' => 'required|string|max:255|unique:lunar_search_synonyms,term',
+            'term' => 'required|string|max:255|unique:search_synonyms,term',
             'synonyms' => 'required|array|min:1',
             'synonyms.*' => 'required|string|max:255',
             'priority' => 'integer|min:0|max:100',
@@ -183,7 +183,7 @@ class SearchAnalyticsController extends Controller
         }
 
         $validated = $request->validate([
-            'term' => 'required|string|max:255|unique:lunar_search_synonyms,term,' . $synonym->id,
+            'term' => 'required|string|max:255|unique:search_synonyms,term,' . $synonym->id,
             'synonyms' => 'required|array|min:1',
             'synonyms.*' => 'required|string|max:255',
             'priority' => 'integer|min:0|max:100',

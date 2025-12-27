@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Lunar\Facades\Discounts;
-use Lunar\Models\Cart;
-use Lunar\Models\CartLine;
+use App\Models\Cart;
+use App\Models\CartLine;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -79,6 +79,10 @@ class AppServiceProvider extends ServiceProvider
         \Lunar\Facades\ModelManifest::replace(
             \Lunar\Models\Contracts\Cart::class,
             \App\Models\Cart::class,
+        );
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\CartLine::class,
+            \App\Models\CartLine::class,
         );
         \Lunar\Facades\ModelManifest::replace(
             \Lunar\Models\Contracts\Attribute::class,

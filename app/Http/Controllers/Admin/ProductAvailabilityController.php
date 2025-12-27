@@ -52,7 +52,7 @@ class ProductAvailabilityController extends Controller
     public function store(Request $request, Product $product): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
             'availability_type' => 'required|in:date_range,specific_dates,recurring,always_available',
             'start_date' => 'nullable|date|required_if:availability_type,date_range',
             'end_date' => 'nullable|date|after:start_date',

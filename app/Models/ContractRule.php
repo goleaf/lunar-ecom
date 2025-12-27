@@ -17,7 +17,7 @@ class ContractRule extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_rules';
+    protected $table = 'contract_rules';
 
     protected $fillable = [
         'contract_id',

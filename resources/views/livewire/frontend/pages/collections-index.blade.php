@@ -6,7 +6,7 @@
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="p-6">
                     <h3 class="text-xl font-semibold mb-2">
-                        <a href="{{ route('frontend.collections.show', $collection->urls->first()->slug ?? $collection->id) }}"
+                        <a href="{{ route('frontend.collections.show', $collection->urls->first()?->slug ?? $collection->id) }}"
                            class="text-gray-900 hover:text-gray-600">
                             {{ $collection->translateAttribute('name') }}
                         </a>
@@ -14,7 +14,7 @@
                     @if($collection->translateAttribute('description'))
                         <p class="text-gray-600 mb-4">{{ $collection->translateAttribute('description') }}</p>
                     @endif
-                    <a href="{{ route('frontend.collections.show', $collection->urls->first()->slug ?? $collection->id) }}"
+                    <a href="{{ route('frontend.collections.show', $collection->urls->first()?->slug ?? $collection->id) }}"
                        class="text-blue-600 hover:text-blue-800">
                         View Collection →
                     </a>
@@ -31,5 +31,7 @@
         {{ $collections->links() }}
     </div>
 </div>
+
+
 
 

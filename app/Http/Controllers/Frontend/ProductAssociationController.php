@@ -30,7 +30,7 @@ class ProductAssociationController extends Controller
         $this->authorize('update', $product);
         
         $request->validate([
-            'target_product_id' => 'required|exists:lunar_products,id',
+            'target_product_id' => 'required|exists:products,id',
             'type' => 'required|in:cross-sell,up-sell,alternate',
         ]);
 

@@ -80,7 +80,7 @@ class SizeGuideController extends Controller
     public function submitFitReview(Product $product, Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'product_variant_id' => 'nullable|exists:product_variants,id',
             'purchased_size' => 'required|string|max:50',
             'recommended_size' => 'nullable|string|max:50',
             'height_cm' => 'nullable|integer|min:0|max:300',
@@ -90,7 +90,7 @@ class SizeGuideController extends Controller
             'would_recommend_size' => 'boolean',
             'fit_notes' => 'nullable|string|max:1000',
             'fit_by_area' => 'nullable|array',
-            'order_id' => 'nullable|exists:lunar_orders,id',
+            'order_id' => 'nullable|exists:orders,id',
         ]);
 
         $review = $this->sizeGuideService->recordFitReview($product, array_merge($validated, [

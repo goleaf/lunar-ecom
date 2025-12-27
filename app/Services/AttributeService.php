@@ -140,7 +140,9 @@ class AttributeService
                 'is_boolean' => method_exists($attribute, 'isBoolean') ? $attribute->isBoolean() : false,
                 'options' => $this->formatFilterOptions($attribute, $valueCounts),
             ];
-        });
+        })->filter(function (array $attribute) {
+            return !empty($attribute['options']);
+        })->values();
     }
 
     /**
@@ -160,6 +162,10 @@ class AttributeService
             ? $attribute->isColor()
             : ($typeName === 'Color' || str_contains(strtolower($attribute->handle ?? ''), 'color'));
         $isBoolean = method_exists($attribute, 'isBoolean') ? $attribute->isBoolean() : $typeName === 'Boolean';
+
+        if ($valueCounts->isEmpty()) {
+            return [];
+        }
 
         if ($isNumeric) {
             $values = $valueCounts->keys()->sort()->values();
@@ -182,16 +188,23 @@ class AttributeService
         }
 
         if ($isBoolean) {
+            $trueCount = $valueCounts->get('1') ?? $valueCounts->get('true') ?? 0;
+            $falseCount = $valueCounts->get('0') ?? $valueCounts->get('false') ?? 0;
+
+            if (($trueCount + $falseCount) === 0) {
+                return [];
+            }
+
             return [
                 [
                     'value' => true,
                     'label' => 'Yes',
-                    'count' => $valueCounts->get('1') ?? $valueCounts->get('true') ?? 0,
+                    'count' => $trueCount,
                 ],
                 [
                     'value' => false,
                     'label' => 'No',
-                    'count' => $valueCounts->get('0') ?? $valueCounts->get('false') ?? 0,
+                    'count' => $falseCount,
                 ],
             ];
         }

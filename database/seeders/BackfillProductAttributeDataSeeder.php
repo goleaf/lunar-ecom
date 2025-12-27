@@ -18,7 +18,7 @@ use Lunar\Models\Language;
  *
  * - Does NOT overwrite existing values.
  * - For translated fields, copies the default locale value into missing locales.
- * - Optionally syncs values into lunar_product_attribute_values for filtering.
+ * - Optionally syncs values into product_attribute_values for filtering.
  */
 class BackfillProductAttributeDataSeeder extends Seeder
 {
@@ -205,6 +205,7 @@ class BackfillProductAttributeDataSeeder extends Seeder
                 foreach ($locales as $locale) {
                     $v = $translations->get($locale);
                     $raw = $v instanceof FieldType ? $v->getValue() : null;
+                    $value = $this->normalizeJsonValue($raw);
 
                     ProductAttributeValue::query()->updateOrCreate(
                         [
@@ -213,13 +214,16 @@ class BackfillProductAttributeDataSeeder extends Seeder
                             'locale' => $locale,
                         ],
                         [
-                            'value' => is_array($raw) ? $raw : (string) ($raw ?? ''),
+                            // `value` is a NOT NULL JSON column. Always write valid JSON payloads (arrays),
+                            // never null or raw strings (MySQL JSON would reject those).
+                            'value' => $value,
                             'is_override' => false,
                         ]
                     );
                 }
             } else {
                 $raw = $field->getValue();
+                $value = $this->normalizeJsonValue($raw);
 
                 ProductAttributeValue::query()->updateOrCreate(
                     [
@@ -228,12 +232,37 @@ class BackfillProductAttributeDataSeeder extends Seeder
                         'locale' => $defaultLocale,
                     ],
                     [
-                        'value' => $raw,
+                        'value' => $value,
                         'is_override' => false,
                     ]
                 );
             }
         }
+    }
+
+    /**
+     * Normalize arbitrary field type values into a JSON payload that's:
+     * - Never null (DB constraint)
+     * - Always valid JSON when persisted (MySQL JSON compatibility)
+     */
+    protected function normalizeJsonValue(mixed $raw): array
+    {
+        if ($raw instanceof Collection) {
+            $raw = $raw->all();
+        }
+
+        // Keep arrays as-is (already valid JSON payload).
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        // Never write NULL into NOT NULL JSON column; use empty string payload.
+        if ($raw === null) {
+            $raw = '';
+        }
+
+        // Wrap scalars/objects into a stable structure so we always persist JSON objects.
+        return ['value' => $raw];
     }
 }
 

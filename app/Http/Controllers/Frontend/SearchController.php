@@ -82,7 +82,7 @@ class SearchController extends Controller
     {
         $validated = $request->validate([
             'query' => 'required|string',
-            'product_id' => 'required|integer|exists:lunar_products,id',
+            'product_id' => 'required|integer|exists:products,id',
         ]);
 
         $this->searchService->trackClick($validated['query'], $validated['product_id']);

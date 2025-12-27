@@ -19,18 +19,18 @@ return new class extends Migration
             
             // Participants
             $table->foreignId('referrer_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('referrer_customer_id')->nullable()->constrained('lunar_customers')->onDelete('set null');
+            $table->foreignId('referrer_customer_id')->nullable()->constrained('customers')->onDelete('set null');
             $table->foreignId('referee_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('referee_customer_id')->nullable()->constrained('lunar_customers')->onDelete('set null');
+            $table->foreignId('referee_customer_id')->nullable()->constrained('customers')->onDelete('set null');
             
             // Related entities
-            $table->foreignId('order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
             $table->string('order_reference')->nullable();
             
             // Reward details
             $table->json('reward_config')->nullable(); // The reward configuration that triggered
             $table->decimal('reward_value', 15, 2)->nullable();
-            $table->foreignId('reward_currency_id')->nullable()->constrained('lunar_currencies')->onDelete('set null');
+            $table->foreignId('reward_currency_id')->nullable()->constrained('currencies')->onDelete('set null');
             $table->string('reward_type')->nullable(); // discount, credit, percentage, etc.
             
             // Processing

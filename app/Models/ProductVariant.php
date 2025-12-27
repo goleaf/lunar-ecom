@@ -127,6 +127,12 @@ class ProductVariant extends LunarProductVariant
         'price_locked',
         'discount_override',
         'pricing_hook',
+        // Lunar core purchasable/inventory fields
+        'purchasable', // always|in_stock|never
+        'shippable',
+        'stock',
+        'backorder',
+        'tax_class_id',
         'min_order_quantity',
         'max_order_quantity',
         'backorder_allowed',
@@ -192,6 +198,10 @@ class ProductVariant extends LunarProductVariant
         'map_price' => 'integer',
         'price_locked' => 'boolean',
         'discount_override' => 'array',
+        'purchasable' => 'string',
+        'shippable' => 'boolean',
+        'stock' => 'integer',
+        'backorder' => 'integer',
         'min_order_quantity' => 'integer',
         'max_order_quantity' => 'integer',
         'backorder_limit' => 'integer',
@@ -565,7 +575,8 @@ class ProductVariant extends LunarProductVariant
             return;
         }
 
-        $optionValueIds = $this->variantOptions()->pluck('product_option_values.id')->sort()->values()->toArray();
+        $optionValueTable = $this->variantOptions()->getModel()->getTable();
+        $optionValueIds = $this->variantOptions()->pluck("{$optionValueTable}.id")->sort()->values()->toArray();
         
         if (empty($optionValueIds)) {
             return;
@@ -575,10 +586,12 @@ class ProductVariant extends LunarProductVariant
         $existing = static::where('product_id', $this->product_id)
             ->where('id', '!=', $this->id)
             ->whereHas('variantOptions', function ($query) use ($optionValueIds) {
-                $query->whereIn('product_option_values.id', $optionValueIds);
+                $table = $query->getModel()->getTable();
+                $query->whereIn("{$table}.id", $optionValueIds);
             })
             ->withCount(['variantOptions' => function ($query) use ($optionValueIds) {
-                $query->whereIn('product_option_values.id', $optionValueIds);
+                $table = $query->getModel()->getTable();
+                $query->whereIn("{$table}.id", $optionValueIds);
             }])
             ->having('variant_options_count', '=', count($optionValueIds))
             ->first();
@@ -1463,7 +1476,8 @@ class ProductVariant extends LunarProductVariant
     public function scopeWithOptionValues($query, array $optionValueIds)
     {
         return $query->whereHas('variantOptions', function ($q) use ($optionValueIds) {
-            $q->whereIn('product_option_values.id', $optionValueIds);
+            $table = $q->getModel()->getTable();
+            $q->whereIn("{$table}.id", $optionValueIds);
         });
     }
 

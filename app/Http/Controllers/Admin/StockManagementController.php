@@ -92,7 +92,7 @@ class StockManagementController extends Controller
     public function adjustStock(Request $request, ProductVariant $variant): JsonResponse
     {
         $validated = $request->validate([
-            'warehouse_id' => 'required|exists:lunar_warehouses,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
             'quantity' => 'required|integer',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
@@ -122,8 +122,8 @@ class StockManagementController extends Controller
     public function transferStock(Request $request, ProductVariant $variant): JsonResponse
     {
         $validated = $request->validate([
-            'from_warehouse_id' => 'required|exists:lunar_warehouses,id',
-            'to_warehouse_id' => 'required|exists:lunar_warehouses,id|different:from_warehouse_id',
+            'from_warehouse_id' => 'required|exists:warehouses,id',
+            'to_warehouse_id' => 'required|exists:warehouses,id|different:from_warehouse_id',
             'quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:1000',
         ]);

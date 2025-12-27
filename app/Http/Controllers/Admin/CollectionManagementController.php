@@ -102,7 +102,7 @@ class CollectionManagementController extends Controller
     public function addProduct(Request $request, Collection $collection): JsonResponse
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
             'position' => 'nullable|integer',
             'expires_at' => 'nullable|date',
         ]);
@@ -130,7 +130,7 @@ class CollectionManagementController extends Controller
     public function removeProduct(Request $request, Collection $collection): JsonResponse
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
@@ -154,7 +154,7 @@ class CollectionManagementController extends Controller
     {
         $validated = $request->validate([
             'product_ids' => 'required|array',
-            'product_ids.*' => 'exists:lunar_products,id',
+            'product_ids.*' => 'exists:products,id',
         ]);
 
         $this->collectionService->reorderProducts($collection, $validated['product_ids']);

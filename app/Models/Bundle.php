@@ -160,7 +160,7 @@ class Bundle extends Model
      */
     public function calculateIndividualTotal(?\Lunar\Models\Currency $currency = null, ?int $customerGroupId = null): int
     {
-        $currency = $currency ?? \Lunar\Facades\Currency::getDefault();
+        $currency = $currency ?? \Lunar\Models\Currency::getDefault();
         $total = 0;
 
         foreach ($this->items as $item) {
@@ -194,7 +194,7 @@ class Bundle extends Model
      */
     public function calculatePrice(?\Lunar\Models\Currency $currency = null, ?int $customerGroupId = null, int $quantity = 1): int
     {
-        $currency = $currency ?? \Lunar\Facades\Currency::getDefault();
+        $currency = $currency ?? \Lunar\Models\Currency::getDefault();
 
         // Check for fixed bundle price
         if ($this->pricing_type === 'fixed' && $this->bundle_price) {
@@ -241,7 +241,7 @@ class Bundle extends Model
      */
     public function calculateSavings(?\Lunar\Models\Currency $currency = null, ?int $customerGroupId = null): int
     {
-        $currency = $currency ?? \Lunar\Facades\Currency::getDefault();
+        $currency = $currency ?? \Lunar\Models\Currency::getDefault();
         $individualTotal = $this->calculateIndividualTotal($currency, $customerGroupId);
         $bundlePrice = $this->calculatePrice($currency, $customerGroupId);
         

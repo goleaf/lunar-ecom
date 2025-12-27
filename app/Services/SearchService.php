@@ -680,7 +680,7 @@ class SearchService
             if (is_array($value)) {
                 if ($field === 'category_ids') {
                     $query->whereHas('categories', function ($q) use ($value) {
-                        $q->whereIn('lunar_categories.id', $value);
+                        $q->whereIn('categories.id', $value);
                     });
                 } else {
                     $query->whereIn($field, $value);
@@ -841,10 +841,10 @@ class SearchService
 
         // Get categories with counts
         return Category::whereHas('products', function ($q) use ($productIds) {
-            $q->whereIn('lunar_products.id', $productIds);
+            $q->whereIn('products.id', $productIds);
         })
         ->withCount(['products' => function ($q) use ($productIds) {
-            $q->whereIn('lunar_products.id', $productIds);
+            $q->whereIn('products.id', $productIds);
         }])
         ->orderBy('products_count', 'desc')
         ->limit(20)
@@ -879,10 +879,10 @@ class SearchService
 
         // Get brands with counts
         return \Lunar\Models\Brand::whereHas('products', function ($q) use ($productIds) {
-            $q->whereIn('lunar_products.id', $productIds);
+            $q->whereIn('products.id', $productIds);
         })
         ->withCount(['products' => function ($q) use ($productIds) {
-            $q->whereIn('lunar_products.id', $productIds);
+            $q->whereIn('products.id', $productIds);
         }])
         ->orderBy('products_count', 'desc')
         ->limit(20)

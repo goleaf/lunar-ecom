@@ -21,7 +21,7 @@ class ContractPrice extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_prices';
+    protected $table = 'contract_prices';
 
     protected $fillable = [
         'price_list_id',

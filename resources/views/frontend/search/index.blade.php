@@ -1,17 +1,18 @@
 @extends('frontend.layout')
 
-@section('title', $query ? "Search: {$query}" : 'Search')
+@section('title', $query ? __('frontend.search.title_with_query', ['query' => $query]) : __('frontend.nav.search'))
 
 @section('content')
 <div class="px-4 py-6">
     <div class="mb-6">
-        <h1 class="text-3xl font-bold mb-2">Search Results</h1>
+        <h1 class="text-3xl font-bold mb-2">{{ __('frontend.search.results_heading') }}</h1>
         @if($query)
             <p class="text-gray-600">
-                Found <strong>{{ $products->total() ?? 0 }}</strong> result(s) for: <strong>"{{ $query }}"</strong>
+                {{ __('frontend.search.found_results_prefix', ['count' => $products->total() ?? 0]) }}
+                <strong>"{{ $query }}"</strong>
             </p>
         @else
-            <p class="text-gray-600">Enter a search term to find products.</p>
+            <p class="text-gray-600">{{ __('frontend.search.enter_search_term') }}</p>
         @endif
     </div>
 
@@ -74,7 +75,7 @@
                                         <input type="number" 
                                                name="price_min" 
                                                value="{{ request('price_min') }}" 
-                                               placeholder="Min" 
+                                               placeholder="{{ __('frontend.search.price_min') }}" 
                                                min="0" 
                                                step="0.01"
                                                class="border rounded px-3 py-1 w-24 text-sm">
@@ -82,7 +83,7 @@
                                         <input type="number" 
                                                name="price_max" 
                                                value="{{ request('price_max') }}" 
-                                               placeholder="Max" 
+                                               placeholder="{{ __('frontend.search.price_max') }}" 
                                                min="0" 
                                                step="0.01"
                                                class="border rounded px-3 py-1 w-24 text-sm">
@@ -94,7 +95,7 @@
                             <div class="mb-4">
                                 <label class="block text-sm font-medium mb-2">{{ __('frontend.sort_by') }}</label>
                                 <select name="sort" class="border rounded px-3 py-1 w-full text-sm">
-                                    <option value="relevance" {{ request('sort') == 'relevance' ? 'selected' : '' }}>Relevance</option>
+                                    <option value="relevance" {{ request('sort') == 'relevance' ? 'selected' : '' }}>{{ __('frontend.search.relevance') }}</option>
                                     <option value="price_asc" {{ request('sort') == 'price_asc' ? 'selected' : '' }}>{{ __('frontend.sort.price_asc') }}</option>
                                     <option value="price_desc" {{ request('sort') == 'price_desc' ? 'selected' : '' }}>{{ __('frontend.sort.price_desc') }}</option>
                                     <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>{{ __('frontend.sort.newest') }}</option>
@@ -132,7 +133,7 @@
                                     })
                                 });
                             }}">
-                                <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" @click="trackClick()">
+                                <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" @click="trackClick()">
                                     @include('frontend.products._product-card', ['product' => $product])
                                 </a>
                             </div>
@@ -144,13 +145,13 @@
                     </div>
                 @else
                     <div class="text-center py-12 bg-gray-50 rounded-lg">
-                        <p class="text-gray-600 mb-4">No products found for "{{ $query }}".</p>
+                        <p class="text-gray-600 mb-4">{{ __('frontend.search.no_products_for_query', ['query' => $query]) }}</p>
                         <div class="text-sm text-gray-500">
-                            <p class="mb-2">Try:</p>
+                            <p class="mb-2">{{ __('frontend.search.try') }}</p>
                             <ul class="list-disc list-inside space-y-1">
-                                <li>Checking your spelling</li>
-                                <li>Using different keywords</li>
-                                <li>Removing filters</li>
+                                <li>{{ __('frontend.search.try_check_spelling') }}</li>
+                                <li>{{ __('frontend.search.try_different_keywords') }}</li>
+                                <li>{{ __('frontend.search.try_remove_filters') }}</li>
                             </ul>
                         </div>
                     </div>
@@ -160,14 +161,14 @@
     @else
         {{-- Empty Search State --}}
         <div class="text-center py-12">
-            <p class="text-gray-600 mb-4">Enter a search term above to find products.</p>
+            <p class="text-gray-600 mb-4">{{ __('frontend.search.empty_state') }}</p>
             
             @php
                 $popularSearches = app(\App\Services\SearchService::class)->popularSearches(5);
             @endphp
             @if($popularSearches->count() > 0)
                 <div class="mt-6">
-                    <p class="text-sm text-gray-500 mb-2">Popular Searches:</p>
+                    <p class="text-sm text-gray-500 mb-2">{{ __('frontend.search.popular_searches') }}</p>
                     <div class="flex flex-wrap justify-center gap-2">
                         @foreach($popularSearches as $search)
                             <a href="{{ route('frontend.search.index', ['q' => $search->search_term]) }}" 

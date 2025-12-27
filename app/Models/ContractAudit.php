@@ -20,7 +20,7 @@ class ContractAudit extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_audits';
+    protected $table = 'contract_audits';
 
     protected $fillable = [
         'contract_id',

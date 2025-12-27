@@ -211,7 +211,7 @@ class GdprDataExportService
     protected function getCartHistory(User $user): array
     {
         // Get cart history if available
-        return DB::table('lunar_carts')
+        return DB::table('carts')
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->limit(100)

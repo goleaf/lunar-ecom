@@ -42,7 +42,7 @@ class CustomizationHelper
             return 'Free';
         }
 
-        $currency = \Lunar\Facades\Currency::getDefault();
+        $currency = \Lunar\Models\Currency::getDefault();
         return \Lunar\Facades\Pricing::format($price * 100, $currency);
     }
 }

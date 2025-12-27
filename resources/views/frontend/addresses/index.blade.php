@@ -1,21 +1,21 @@
 @extends('frontend.layout')
 
-@section('title', 'My Addresses')
+@section('title', __('frontend.addresses.title'))
 
 @section('content')
 <div class="px-4 py-6">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold">My Addresses</h1>
+        <h1 class="text-3xl font-bold">{{ __('frontend.addresses.title') }}</h1>
         <a href="{{ route('frontend.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Add New Address
+            {{ __('frontend.addresses.add_new') }}
         </a>
     </div>
 
     @if($addresses->isEmpty())
         <div class="bg-white rounded-lg shadow p-6 text-center">
-            <p class="text-gray-600 mb-4">You don't have any saved addresses yet.</p>
+            <p class="text-gray-600 mb-4">{{ __('frontend.addresses.empty') }}</p>
             <a href="{{ route('frontend.addresses.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block">
-                Add Your First Address
+                {{ __('frontend.addresses.add_first') }}
             </a>
         </div>
     @else
@@ -25,10 +25,10 @@
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             @if($address->shipping_default)
-                                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">Default Shipping</span>
+                                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mb-2">{{ __('frontend.addresses.default_shipping') }}</span>
                             @endif
                             @if($address->billing_default)
-                                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">Default Billing</span>
+                                <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mb-2">{{ __('frontend.addresses.default_billing') }}</span>
                             @endif
                         </div>
                         <div class="flex space-x-2">
@@ -37,7 +37,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
                             </a>
-                            <form action="{{ route('frontend.addresses.destroy', $address) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this address?');">
+                            <form action="{{ route('frontend.addresses.destroy', $address) }}" method="POST" class="inline" onsubmit="return confirm('{{ __('frontend.addresses.confirm_delete') }}');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-800">
@@ -79,10 +79,10 @@
                             <p>{{ $address->country->name }}</p>
                         @endif
                         @if($address->contact_phone)
-                            <p class="text-gray-600">Phone: {{ $address->contact_phone }}</p>
+                            <p class="text-gray-600">{{ __('frontend.addresses.phone') }}: {{ $address->contact_phone }}</p>
                         @endif
                         @if($address->delivery_instructions)
-                            <p class="text-gray-600 italic">Note: {{ $address->delivery_instructions }}</p>
+                            <p class="text-gray-600 italic">{{ __('frontend.addresses.note') }}: {{ $address->delivery_instructions }}</p>
                         @endif
                     </div>
 
@@ -90,13 +90,13 @@
                         @if(!$address->shipping_default)
                             <form action="{{ route('frontend.addresses.set-default-shipping', $address) }}" method="POST" class="inline">
                                 @csrf
-                                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Set as Shipping Default</button>
+                                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">{{ __('frontend.addresses.set_default_shipping') }}</button>
                             </form>
                         @endif
                         @if(!$address->billing_default)
                             <form action="{{ route('frontend.addresses.set-default-billing', $address) }}" method="POST" class="inline">
                                 @csrf
-                                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Set as Billing Default</button>
+                                <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">{{ __('frontend.addresses.set_default_billing') }}</button>
                             </form>
                         @endif
                     </div>

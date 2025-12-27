@@ -3,7 +3,9 @@
 namespace App\Livewire\Frontend;
 
 use App\Lunar\Attributes\AttributeFilterHelper;
+use App\Models\Category;
 use App\Models\Product;
+use App\Repositories\CategoryRepository;
 use App\Services\AttributeService;
 use App\Services\ProductAttributeFilterService;
 use App\Services\SEOService;
@@ -16,6 +18,8 @@ class ProductIndex extends Component
 {
     use WithPagination;
 
+    public ?int $categoryId = null;
+
     public ?int $brandId = null;
 
     public string $sort = 'default';
@@ -23,15 +27,22 @@ class ProductIndex extends Component
     public array $activeFilters = [];
 
     protected $queryString = [
+        'categoryId' => ['as' => 'category_id', 'except' => null],
         'brandId' => ['as' => 'brand_id', 'except' => null],
         'sort' => ['except' => 'default'],
     ];
 
     public function mount(): void
     {
+        $this->categoryId = request()->integer('category_id') ?: null;
         $this->brandId = request()->integer('brand_id') ?: null;
         $this->sort = request()->get('sort', 'default');
         $this->activeFilters = AttributeFilterHelper::getActiveFilters(request());
+    }
+
+    public function updatingCategoryId(): void
+    {
+        $this->resetPage();
     }
 
     public function updatingBrandId(): void
@@ -49,6 +60,17 @@ class ProductIndex extends Component
         $query = Product::with(['variants.prices', 'media', 'urls', 'brand', 'attributeValues.attribute'])
             ->published();
 
+        $selectedCategory = null;
+        if ($this->categoryId) {
+            $selectedCategory = Category::query()->active()->find($this->categoryId);
+            if ($selectedCategory) {
+                $categoryIds = $selectedCategory->descendants()->pluck('id')->push($selectedCategory->id);
+                $query->whereHas('categories', function ($q) use ($categoryIds) {
+                    $q->whereIn($q->qualifyColumn('id'), $categoryIds);
+                });
+            }
+        }
+
         if ($this->brandId) {
             $query->where('brand_id', $this->brandId);
         }
@@ -63,13 +85,13 @@ class ProductIndex extends Component
             case 'price_asc':
                 $query->orderByRaw(
                     '(SELECT MIN(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id IN (SELECT id FROM ' . config('lunar.database.table_prefix') . 'product_variants WHERE product_id = products.id))',
-                    [\App\Models\ProductVariant::class]
+                    [\App\Models\ProductVariant::morphName()]
                 );
                 break;
             case 'price_desc':
                 $query->orderByRaw(
                     '(SELECT MAX(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id IN (SELECT id FROM ' . config('lunar.database.table_prefix') . 'product_variants WHERE product_id = products.id)) DESC',
-                    [\App\Models\ProductVariant::class]
+                    [\App\Models\ProductVariant::morphName()]
                 );
                 break;
             case 'newest':
@@ -82,14 +104,16 @@ class ProductIndex extends Component
         $products = $query->paginate(12)->withQueryString();
         $brands = Brand::orderBy('name')->get();
 
+        $categoryTree = app(CategoryRepository::class)->getCategoryTree(null, 4);
+
         $attributeService = app(AttributeService::class);
-        $filterableAttributes = $attributeService->getFilterableAttributes();
+        $filterableAttributes = $attributeService->getFilterableAttributes(null, $selectedCategory?->id);
         $filterOptions = $attributeService->getFilterOptions($filterableAttributes, $query->getQuery());
-        $groupedAttributes = AttributeFilterHelper::getGroupedFilterableAttributes();
+        $groupedAttributes = AttributeFilterHelper::getGroupedFilterableAttributes(null, $selectedCategory?->id, $query->getQuery());
 
         $metaTags = SEOService::getDefaultMetaTags(
-            'Products',
-            'Browse our complete product catalog. Find the best deals and latest items.',
+            __('frontend.nav.products'),
+            __('frontend.products_index.meta_description'),
             null,
             request()->url()
         );
@@ -100,13 +124,15 @@ class ProductIndex extends Component
 
         return view('livewire.frontend.product-index', compact(
             'products',
+            'categoryTree',
+            'selectedCategory',
             'brands',
             'filterableAttributes',
             'filterOptions',
             'groupedAttributes',
             'metaTags'
         ))->layout('frontend.layout', [
-            'pageTitle' => $metaTags['title'] ?? 'Products',
+            'pageTitle' => $metaTags['title'] ?? __('frontend.nav.products'),
             'pageMeta' => $pageMeta,
         ]);
     }

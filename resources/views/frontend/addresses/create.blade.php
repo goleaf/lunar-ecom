@@ -1,10 +1,10 @@
 @extends('frontend.layout')
 
-@section('title', 'Add New Address')
+@section('title', __('frontend.addresses.create_title'))
 
 @section('content')
 <div class="px-4 py-6 max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Add New Address</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ __('frontend.addresses.create_title') }}</h1>
 
     <form action="{{ route('frontend.addresses.store') }}" method="POST" class="bg-white rounded-lg shadow p-6">
         @csrf
@@ -12,9 +12,9 @@
         <div class="space-y-6">
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">{{ __('frontend.addresses.fields.title') }}</label>
                     <select name="title" id="title" class="border rounded px-3 py-2 w-full">
-                        <option value="">Select Title</option>
+                        <option value="">{{ __('frontend.addresses.fields.select_title') }}</option>
                         <option value="Mr">Mr</option>
                         <option value="Mrs">Mrs</option>
                         <option value="Miss">Miss</option>
@@ -85,7 +85,7 @@
                 <div>
                     <label for="country_id" class="block text-sm font-medium text-gray-700 mb-1">Country *</label>
                     <select name="country_id" id="country_id" required class="border rounded px-3 py-2 w-full @error('country_id') border-red-500 @enderror">
-                        <option value="">Select Country</option>
+                        <option value="">{{ __('frontend.checkout.select_country') }}</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
                                 {{ $country->name }}
@@ -120,11 +120,11 @@
             <div class="flex space-x-4">
                 <div class="flex items-center">
                     <input type="checkbox" name="shipping_default" id="shipping_default" value="1" {{ old('shipping_default') ? 'checked' : '' }} class="mr-2">
-                    <label for="shipping_default" class="text-sm text-gray-700">Set as default shipping address</label>
+                    <label for="shipping_default" class="text-sm text-gray-700">{{ __('frontend.addresses.fields.set_default_shipping') }}</label>
                 </div>
                 <div class="flex items-center">
                     <input type="checkbox" name="billing_default" id="billing_default" value="1" {{ old('billing_default') ? 'checked' : '' }} class="mr-2">
-                    <label for="billing_default" class="text-sm text-gray-700">Set as default billing address</label>
+                    <label for="billing_default" class="text-sm text-gray-700">{{ __('frontend.addresses.fields.set_default_billing') }}</label>
                 </div>
             </div>
 

@@ -25,12 +25,22 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         $name = fake()->words(2, true);
+        $baseSlug = str($name)->slug()->toString();
+        $slug = $baseSlug;
+
+        // Slugs are unique in `categories`. Seeders/factories may run multiple times
+        // in one `--seed` (e.g. `CompleteSeeder` + `CategorySeeder`), so ensure uniqueness.
+        $suffix = 2;
+        while (Category::query()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$suffix;
+            $suffix++;
+        }
         
         return [
             'name' => [
                 'en' => $name,
             ],
-            'slug' => str($name)->slug(),
+            'slug' => $slug,
             'description' => fake()->optional(0.7) ? [
                 'en' => fake()->paragraph(),
             ] : null,

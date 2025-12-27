@@ -63,7 +63,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             @php
-                                $currency = \Lunar\Facades\Currency::getDefault();
+                                $currency = \Lunar\Models\Currency::getDefault();
                                 $price = $bundle->calculatePrice($currency);
                             @endphp
                             {{ $currency->formatter($price) }}

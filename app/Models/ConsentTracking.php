@@ -11,9 +11,12 @@ class ConsentTracking extends Model
 {
     use HasFactory;
 
+    protected $table = 'consent_tracking';
+
     const TYPE_COOKIE = 'cookie';
     const TYPE_MARKETING = 'marketing';
     const TYPE_ANALYTICS = 'analytics';
+    const TYPE_PREFERENCES = 'preferences';
     const TYPE_DATA_PROCESSING = 'data_processing';
     const TYPE_THIRD_PARTY = 'third_party';
 

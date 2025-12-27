@@ -6,10 +6,11 @@ use Tests\TestCase;
 use Tests\Traits\LunarTestHelpers;
 use App\Services\CartManager;
 use App\Services\CartSessionService;
-use Lunar\Models\ProductVariant;
+use App\Models\ProductVariant;
 use Lunar\Models\Product;
 use Lunar\Models\ProductType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CartOperationsTest extends TestCase
 {
@@ -44,8 +45,10 @@ class CartOperationsTest extends TestCase
         $this->variant = ProductVariant::factory()->create([
             'product_id' => $product->id,
             'sku' => 'TEST-SKU-001',
+            'status' => 'active',
+            'enabled' => true,
             'stock' => 10,
-            'purchasable' => true,
+            'purchasable' => 'always',
             'shippable' => true,
         ]);
 
@@ -58,7 +61,7 @@ class CartOperationsTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_items_to_cart()
     {
         $cartLine = $this->cartManager->addItem($this->variant, 2);
@@ -69,7 +72,7 @@ class CartOperationsTest extends TestCase
         $this->assertTrue($this->cartManager->hasItems());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_update_cart_line_quantity()
     {
         $cartLine = $this->cartManager->addItem($this->variant, 2);
@@ -81,7 +84,7 @@ class CartOperationsTest extends TestCase
         $this->assertEquals(5, $this->cartManager->getItemCount());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_remove_items_from_cart()
     {
         $cartLine = $this->cartManager->addItem($this->variant, 2);
@@ -92,7 +95,7 @@ class CartOperationsTest extends TestCase
         $this->assertFalse($this->cartManager->hasItems());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_clear_cart()
     {
         $this->cartManager->addItem($this->variant, 2);
@@ -104,7 +107,7 @@ class CartOperationsTest extends TestCase
         $this->assertFalse($this->cartManager->hasItems());
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_quantity_when_adding_items()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -113,7 +116,7 @@ class CartOperationsTest extends TestCase
         $this->cartManager->addItem($this->variant, 0);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_stock_availability()
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -122,10 +125,10 @@ class CartOperationsTest extends TestCase
         $this->cartManager->addItem($this->variant, 15); // More than available stock (10)
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_purchasable_items()
     {
-        $this->variant->update(['purchasable' => false]);
+        $this->variant->update(['purchasable' => 'never']);
         
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Item is not purchasable');
@@ -133,7 +136,7 @@ class CartOperationsTest extends TestCase
         $this->cartManager->addItem($this->variant, 1);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_existing_cart_lines_correctly()
     {
         // Add item first time
@@ -148,7 +151,7 @@ class CartOperationsTest extends TestCase
         $this->assertEquals(5, $this->cartManager->getItemCount());
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_invalid_cart_line()
     {
         // First create a cart by adding an item
@@ -160,7 +163,7 @@ class CartOperationsTest extends TestCase
         $this->cartManager->removeItem(999); // Non-existent cart line ID
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_updating_invalid_cart_line()
     {
         // First create a cart by adding an item
@@ -172,7 +175,7 @@ class CartOperationsTest extends TestCase
         $this->cartManager->updateQuantity(999, 5); // Non-existent cart line ID
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_item_when_quantity_is_zero()
     {
         $cartLine = $this->cartManager->addItem($this->variant, 2);

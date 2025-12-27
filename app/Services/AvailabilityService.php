@@ -281,7 +281,7 @@ class AvailabilityService
             : 1;
 
         // Get base price
-        $currency = \Lunar\Facades\Currency::getDefault();
+        $currency = \Lunar\Models\Currency::getDefault();
         $basePricing = \Lunar\Facades\Pricing::for($variant ?? $product->variants->first())
             ->currency($currency)
             ->get();

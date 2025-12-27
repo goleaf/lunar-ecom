@@ -53,7 +53,7 @@ class CartController extends Controller
         $this->ensureCartNotLocked();
 
         $request->validate([
-            'variant_id' => 'required|exists:lunar_product_variants,id',
+            'variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1|max:999',
         ]);
 

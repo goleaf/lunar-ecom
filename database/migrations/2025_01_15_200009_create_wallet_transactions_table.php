@@ -14,7 +14,7 @@ return new class extends Migration
             $table->enum('type', ['credit', 'debit', 'hold', 'release'])->default('credit');
             $table->decimal('amount', 15, 2);
             $table->string('reason'); // referral_reward, refund_adjustment, fraud_reversal, etc.
-            $table->foreignId('related_order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('related_order_id')->nullable()->constrained('orders')->onDelete('set null');
             $table->foreignId('related_referral_id')->nullable()->constrained('referral_attributions')->onDelete('set null');
             $table->text('notes')->nullable();
             $table->json('metadata')->nullable();

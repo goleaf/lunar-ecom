@@ -31,7 +31,7 @@ class ProductCustomizationController extends Controller
     {
         $validated = $request->validate([
             'customization_type' => 'required|in:text,image,option,color,number,date',
-            'field_name' => 'required|string|max:255|unique:lunar_product_customizations,field_name,NULL,id,product_id,' . $product->id,
+            'field_name' => 'required|string|max:255|unique:product_customizations,field_name,NULL,id,product_id,' . $product->id,
             'field_label' => 'required|string|max:255',
             'description' => 'nullable|string',
             'placeholder' => 'nullable|string|max:255',
@@ -175,7 +175,7 @@ class ProductCustomizationController extends Controller
     public function storeExample(Request $request, Product $product): JsonResponse
     {
         $validated = $request->validate([
-            'customization_id' => 'nullable|exists:lunar_product_customizations,id',
+            'customization_id' => 'nullable|exists:product_customizations,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'example_image' => 'required|image|max:2048',

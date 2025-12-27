@@ -124,7 +124,7 @@ class ProductQuestionController extends Controller
     {
         $validated = $request->validate([
             'question_ids' => 'required|array',
-            'question_ids.*' => 'exists:lunar_product_questions,id',
+            'question_ids.*' => 'exists:product_questions,id',
             'status' => 'required|in:approved,rejected,spam',
             'notes' => 'nullable|string|max:1000',
         ]);

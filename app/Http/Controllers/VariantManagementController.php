@@ -34,11 +34,11 @@ class VariantManagementController extends Controller
         
         $validator = Validator::make($request->all(), [
             'options' => 'nullable|array',
-            'options.*' => 'exists:lunar_product_options,id',
+            'options.*' => 'exists:product_options,id',
             'defaults' => 'nullable|array',
             'defaults.stock' => 'nullable|integer|min:0',
             'defaults.price' => 'nullable|numeric|min:0',
-            'defaults.currency_id' => 'nullable|exists:lunar_currencies,id',
+            'defaults.currency_id' => 'nullable|exists:currencies,id',
             'defaults.enabled' => 'nullable|boolean',
         ]);
 
@@ -84,7 +84,7 @@ class VariantManagementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'variant_ids' => 'required|array',
-            'variant_ids.*' => 'exists:lunar_product_variants,id',
+            'variant_ids.*' => 'exists:product_variants,id',
             'attributes' => 'required|array',
         ]);
 
@@ -208,7 +208,7 @@ class VariantManagementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'option_values' => 'required|array',
-            'option_values.*' => 'exists:lunar_product_option_values,id',
+            'option_values.*' => 'exists:product_option_values,id',
         ]);
 
         if ($validator->fails()) {

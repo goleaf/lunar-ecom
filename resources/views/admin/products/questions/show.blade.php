@@ -96,56 +96,5 @@
 </div>
 
 @push('scripts')
-<script>
-function submitJsonForm(form, messageEl) {
-    const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
-
-    return fetch(form.dataset.url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify(payload)
-    }).then(async (response) => {
-        const data = await response.json();
-        if (messageEl) {
-            messageEl.textContent = data.message || 'Saved.';
-        }
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    }).catch(() => {
-        if (messageEl) {
-            messageEl.textContent = 'Request failed.';
-        }
-    });
-}
-
-const moderateForm = document.getElementById('question-moderate-form');
-const moderateMessage = document.getElementById('question-moderate-message');
-moderateForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    moderateMessage.textContent = 'Saving...';
-    submitJsonForm(moderateForm, moderateMessage);
-});
-
-const answerForm = document.getElementById('question-answer-form');
-const answerMessage = document.getElementById('question-answer-message');
-answerForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    answerMessage.textContent = 'Sending...';
-    submitJsonForm(answerForm, answerMessage);
-});
-
-document.querySelectorAll('.answer-moderate-form').forEach((form) => {
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        submitJsonForm(form, null);
-    });
-});
-</script>
 @endpush
 @endsection

@@ -235,7 +235,7 @@ class ProductAutomationService
         }
         
         $price = $action['price'] ?? null;
-        $currencyId = $action['currency_id'] ?? \Lunar\Facades\Currency::getDefault()->id;
+        $currencyId = $action['currency_id'] ?? \Lunar\Models\Currency::getDefault()->id;
         
         if ($price === null) {
             return;

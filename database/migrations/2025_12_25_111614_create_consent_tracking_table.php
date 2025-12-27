@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('consent_tracking', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('customer_id')->nullable()->constrained('lunar_customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade');
             $table->string('session_id')->nullable()->index();
             $table->string('consent_type'); // 'cookie', 'marketing', 'analytics', 'data_processing', 'third_party'
             $table->string('purpose'); // Description of what the consent is for

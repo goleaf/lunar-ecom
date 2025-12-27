@@ -143,7 +143,7 @@ class ProductImportService
                 $price = (int) ($data['price'] * 100); // Convert to cents
                 $variant->prices()->create([
                     'price' => $price,
-                    'currency_id' => \Lunar\Facades\Currency::getDefault()->id,
+                    'currency_id' => \Lunar\Models\Currency::getDefault()->id,
                 ]);
             }
 
@@ -216,7 +216,7 @@ class ProductImportService
                 if (isset($data['price'])) {
                     $price = (int) ($data['price'] * 100);
                     $existingPrice = $variant->prices()
-                        ->where('currency_id', \Lunar\Facades\Currency::getDefault()->id)
+                        ->where('currency_id', \Lunar\Models\Currency::getDefault()->id)
                         ->first();
 
                     if ($existingPrice) {
@@ -224,7 +224,7 @@ class ProductImportService
                     } else {
                         $variant->prices()->create([
                             'price' => $price,
-                            'currency_id' => \Lunar\Facades\Currency::getDefault()->id,
+                            'currency_id' => \Lunar\Models\Currency::getDefault()->id,
                         ]);
                     }
                 }

@@ -16,7 +16,7 @@ class ContractCreditLimit extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_credit_limits';
+    protected $table = 'contract_credit_limits';
 
     protected $fillable = [
         'contract_id',

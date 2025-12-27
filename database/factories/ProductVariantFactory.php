@@ -138,7 +138,7 @@ class ProductVariantFactory extends Factory
                         'compare_price' => fake()->optional(0.3)->numberBetween(100000, 200000),
                         'currency_id' => $currency->id,
                         'customer_group_id' => $customerGroup->id,
-                        'priceable_type' => ProductVariant::class,
+                        'priceable_type' => ProductVariant::morphName(),
                         'priceable_id' => $variant->id,
                     ]);
                 }

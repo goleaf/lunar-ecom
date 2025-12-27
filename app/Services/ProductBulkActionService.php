@@ -192,7 +192,7 @@ class ProductBulkActionService
             throw new \Exception('Product has no variants');
         }
         
-        $currencyId = $parameters['currency_id'] ?? \Lunar\Facades\Currency::getDefault()->id;
+        $currencyId = $parameters['currency_id'] ?? \Lunar\Models\Currency::getDefault()->id;
         $price = $parameters['price'] ?? null;
         $priceType = $parameters['price_type'] ?? 'default';
         

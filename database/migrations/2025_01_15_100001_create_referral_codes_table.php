@@ -18,7 +18,7 @@ return new class extends Migration
             
             // Ownership
             $table->foreignId('referrer_id')->nullable()->constrained('users')->onDelete('set null'); // User who owns this code
-            $table->foreignId('referrer_customer_id')->nullable()->constrained('lunar_customers')->onDelete('set null'); // Customer who owns this code
+            $table->foreignId('referrer_customer_id')->nullable()->constrained('customers')->onDelete('set null'); // Customer who owns this code
             
             // Code settings
             $table->boolean('is_active')->default(true);

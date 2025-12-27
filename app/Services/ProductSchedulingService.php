@@ -239,7 +239,7 @@ class ProductSchedulingService
      */
     protected function applySalePrice(ProductVariant $variant, ProductSchedule $schedule): void
     {
-        $currency = \Lunar\Facades\Currency::getDefault();
+        $currency = \Lunar\Models\Currency::getDefault();
         $pricing = \Lunar\Facades\Pricing::for($variant)->currency($currency)->get();
         
         if (!$pricing->matched?->price) {
@@ -293,7 +293,7 @@ class ProductSchedulingService
         }
 
         $product = $schedule->product;
-        $currency = \Lunar\Facades\Currency::getDefault();
+        $currency = \Lunar\Models\Currency::getDefault();
 
         foreach ($product->variants as $variant) {
             $customMeta = $variant->custom_meta ?? [];

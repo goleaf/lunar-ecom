@@ -46,11 +46,11 @@ class ProductCoreService
     public function lockIfHasLiveOrders(Product $product, ?string $reason = null): Product
     {
         // Check if product has any orders with statuses that indicate "live" orders
-        $hasLiveOrders = DB::table('lunar_orders')
-            ->join('lunar_order_lines', 'lunar_orders.id', '=', 'lunar_order_lines.order_id')
-            ->join('lunar_product_variants', 'lunar_order_lines.purchasable_id', '=', 'lunar_product_variants.id')
-            ->where('lunar_product_variants.product_id', $product->id)
-            ->whereIn('lunar_orders.status', ['pending', 'processing', 'shipped', 'partially_shipped'])
+        $hasLiveOrders = DB::table('orders')
+            ->join('order_lines', 'orders.id', '=', 'order_lines.order_id')
+            ->join('product_variants', 'order_lines.purchasable_id', '=', 'product_variants.id')
+            ->where('product_variants.product_id', $product->id)
+            ->whereIn('orders.status', ['pending', 'processing', 'shipped', 'partially_shipped'])
             ->exists();
 
         if ($hasLiveOrders && !$product->is_locked) {

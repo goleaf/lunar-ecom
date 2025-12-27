@@ -22,7 +22,7 @@ class B2BContract extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'lunar_b2b_contracts';
+    protected $table = 'b2b_contracts';
 
     protected $fillable = [
         'contract_id',
@@ -156,7 +156,7 @@ class B2BContract extends Model
      */
     public function salesReps(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'lunar_contract_sales_reps', 'contract_id', 'user_id')
+        return $this->belongsToMany(User::class, 'contract_sales_reps', 'contract_id', 'user_id')
             ->withPivot('is_primary', 'commission_rate', 'meta')
             ->withTimestamps();
     }

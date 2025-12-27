@@ -41,6 +41,11 @@ return [
         'no_image' => 'Nėra nuotraukos',
     ],
 
+    'products_index' => [
+        'active_filters' => 'Aktyvūs filtrai:',
+        'meta_description' => 'Naršykite visą mūsų produktų katalogą. Raskite geriausius pasiūlymus ir naujausias prekes.',
+    ],
+
     'cart' => [
         'title' => 'Pirkinių krepšelis',
         'empty' => 'Jūsų krepšelis tuščias.',
@@ -61,6 +66,7 @@ return [
 
     'checkout' => [
         'title' => 'Atsiskaitymas',
+        'confirmation_title' => 'Užsakymo patvirtinimas',
         'shipping_address' => 'Pristatymo adresas',
         'billing_address' => 'Atsiskaitymo adresas',
         'order_summary' => 'Užsakymo suvestinė',
@@ -72,6 +78,14 @@ return [
         'country' => 'Šalis',
         'select_country' => 'Pasirinkite šalį',
         'place_order' => 'Pateikti užsakymą',
+        'order_confirmed' => 'Užsakymas patvirtintas!',
+        'order_confirmed_message' => 'Ačiū už užsakymą. Jūsų užsakymas sėkmingai pateiktas.',
+        'order_number' => 'Užsakymas #:reference',
+        'order_details' => 'Užsakymo detalės',
+        'order_reference' => 'Užsakymo numeris',
+        'status' => 'Būsena',
+        'placed_at' => 'Pateikta',
+        'order_items' => 'Užsakymo prekės',
     ],
 
     'collection' => [
@@ -271,6 +285,53 @@ return [
         'actions' => 'Veiksmai',
         'remove' => 'Pašalinti',
         'add_more' => 'Pridėti daugiau produktų',
+    ],
+    'reviews' => [
+        'title_for_product' => 'Atsiliepimai apie :product',
+        'guidelines_title' => 'Atsiliepimų gairės',
+    ],
+    'qa' => [
+        'title_for_product' => 'Klausimai ir atsakymai – :product',
+    ],
+    'coming_soon' => [
+        'unsubscribed_title' => 'Atsisakyta',
+    ],
+    'addresses' => [
+        'title' => 'Mano adresai',
+        'edit_title' => 'Redaguoti adresą',
+        'create_title' => 'Pridėti naują adresą',
+        'add_new' => 'Pridėti naują adresą',
+        'add_first' => 'Pridėti pirmą adresą',
+        'empty' => 'Jūs dar neturite išsaugotų adresų.',
+        'default_shipping' => 'Numatytasis pristatymo',
+        'default_billing' => 'Numatytasis atsiskaitymo',
+        'set_default_shipping' => 'Nustatyti kaip numatytąjį pristatymo',
+        'set_default_billing' => 'Nustatyti kaip numatytąjį atsiskaitymo',
+        'confirm_delete' => 'Ar tikrai norite ištrinti šį adresą?',
+        'phone' => 'Telefonas',
+        'note' => 'Pastaba',
+        'fields' => [
+            'title' => 'Kreipinys',
+            'select_title' => 'Pasirinkite kreipinį',
+            'set_default_shipping' => 'Nustatyti kaip numatytąjį pristatymo adresą',
+            'set_default_billing' => 'Nustatyti kaip numatytąjį atsiskaitymo adresą',
+        ],
+    ],
+    'search' => [
+        'title_with_query' => 'Paieška: :query',
+        'results_heading' => 'Paieškos rezultatai',
+        'found_results_prefix' => 'Rasta :count rezultatų(-ai) pagal:',
+        'enter_search_term' => 'Įveskite paieškos frazę, kad rastumėte produktus.',
+        'price_min' => 'Nuo',
+        'price_max' => 'Iki',
+        'relevance' => 'Aktualumas',
+        'no_products_for_query' => 'Pagal „:query“ produktų nerasta.',
+        'try' => 'Pabandykite:',
+        'try_check_spelling' => 'Patikrinti rašybą',
+        'try_different_keywords' => 'Naudoti kitus raktinius žodžius',
+        'try_remove_filters' => 'Pašalinti filtrus',
+        'empty_state' => 'Įveskite paieškos frazę aukščiau, kad rastumėte produktus.',
+        'popular_searches' => 'Populiarios paieškos:',
     ],
 ];
 

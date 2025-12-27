@@ -22,7 +22,7 @@ class ProductVariantController extends Controller
         $this->authorize('create', ProductVariant::class);
         
         $validated = $request->validate([
-            'sku' => 'required|string|unique:lunar_product_variants,sku',
+            'sku' => 'required|string|unique:product_variants,sku',
             'gtin' => 'nullable|string',
             'mpn' => 'nullable|string',
             'ean' => 'nullable|string',
@@ -113,7 +113,7 @@ class ProductVariantController extends Controller
         $this->authorize('update', $variant);
         
         $validated = $request->validate([
-            'sku' => 'string|unique:lunar_product_variants,sku,' . $variant->id,
+            'sku' => 'string|unique:product_variants,sku,' . $variant->id,
             'gtin' => 'nullable|string',
             'mpn' => 'nullable|string',
             'ean' => 'nullable|string',

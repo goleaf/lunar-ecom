@@ -54,7 +54,7 @@
                                     <td class="px-4 py-3">
                                         @php
                                             $variant = $product->variants->first();
-                                            $currency = \Lunar\Facades\Currency::getDefault();
+                                            $currency = \Lunar\Models\Currency::getDefault();
                                             $price = null;
                                             if ($variant) {
                                                 $pricing = \Lunar\Facades\Pricing::for($variant)->get();

@@ -48,7 +48,7 @@ class ProductBackInStock extends Notification implements ShouldQueue
         $productUrl = route('frontend.products.show', $product);
         
         // Get pricing
-        $currency = \Lunar\Facades\Currency::getDefault();
+        $currency = \Lunar\Models\Currency::getDefault();
         $price = null;
         if ($variant) {
             $pricing = \Lunar\Facades\Pricing::for($variant)->get();

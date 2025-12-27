@@ -116,10 +116,10 @@ class CategoryController extends Controller
         $sort = $request->input('sort', 'default');
         switch ($sort) {
             case 'price_asc':
-                $query->orderByRaw('(SELECT MIN(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id = products.id)', [\Lunar\Models\ProductVariant::class]);
+                $query->orderByRaw('(SELECT MIN(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id = products.id)', [\App\Models\ProductVariant::morphName()]);
                 break;
             case 'price_desc':
-                $query->orderByRaw('(SELECT MAX(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id = products.id) DESC', [\Lunar\Models\ProductVariant::class]);
+                $query->orderByRaw('(SELECT MAX(price) FROM ' . config('lunar.database.table_prefix') . 'prices WHERE priceable_type = ? AND priceable_id = products.id) DESC', [\App\Models\ProductVariant::morphName()]);
                 break;
             case 'name_asc':
                 // This would need to use attribute_data, simplified here

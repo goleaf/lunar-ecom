@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('session_id')->nullable()->index();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('customer_id')->nullable()->constrained('lunar_customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade');
             $table->boolean('necessary')->default(true);
             $table->boolean('analytics')->default(false);
             $table->boolean('marketing')->default(false);

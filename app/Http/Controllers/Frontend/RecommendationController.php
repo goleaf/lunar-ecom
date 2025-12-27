@@ -81,8 +81,8 @@ class RecommendationController extends Controller
     public function trackClick(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'source_product_id' => 'required|exists:lunar_products,id',
-            'recommended_product_id' => 'required|exists:lunar_products,id',
+            'source_product_id' => 'required|exists:products,id',
+            'recommended_product_id' => 'required|exists:products,id',
             'recommendation_type' => 'required|string',
             'display_location' => 'required|string',
             'recommendation_algorithm' => 'nullable|string',

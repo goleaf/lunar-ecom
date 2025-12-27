@@ -134,7 +134,7 @@ class ProductWizard extends Component implements HasForms
                                     Select::make('currency_id')
                                         ->label('Currency')
                                         ->options(\Lunar\Models\Currency::pluck('code', 'id'))
-                                        ->default(fn() => \Lunar\Facades\Currency::getDefault()?->id)
+                                        ->default(fn() => \Lunar\Models\Currency::getDefault()?->id)
                                         ->required(),
                                 ]),
                             
@@ -294,7 +294,7 @@ class ProductWizard extends Component implements HasForms
             
             // Set price
             if (isset($data['base_price'])) {
-                $currencyId = $data['currency_id'] ?? \Lunar\Facades\Currency::getDefault()->id;
+                $currencyId = $data['currency_id'] ?? \Lunar\Models\Currency::getDefault()->id;
                 $priceInCents = (int)($data['base_price'] * 100);
                 
                 $variant->prices()->create([

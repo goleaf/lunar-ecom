@@ -23,8 +23,8 @@ class ProductExportController extends Controller
     {
         $validated = $request->validate([
             'columns' => 'nullable|array',
-            'category_id' => 'nullable|integer|exists:lunar_collections,id',
-            'brand_id' => 'nullable|integer|exists:lunar_brands,id',
+            'category_id' => 'nullable|integer|exists:collections,id',
+            'brand_id' => 'nullable|integer|exists:brands,id',
             'stock_status' => 'nullable|in:in_stock,out_of_stock,low_stock',
             'format' => 'nullable|in:xlsx,csv',
         ]);

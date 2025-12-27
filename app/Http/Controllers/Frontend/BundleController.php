@@ -8,8 +8,8 @@ use App\Services\BundleService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Lunar\Facades\CartSession;
-use Lunar\Facades\Currency;
 use Lunar\Facades\StorefrontSession;
+use Lunar\Models\Currency;
 
 /**
  * Controller for frontend bundle functionality.
@@ -139,8 +139,8 @@ class BundleController extends Controller
     {
         $validated = $request->validate([
             'selected_items' => 'required|array',
-            'selected_items.*.product_id' => 'required|exists:lunar_products,id',
-            'selected_items.*.product_variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'selected_items.*.product_id' => 'required|exists:products,id',
+            'selected_items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'selected_items.*.quantity' => 'integer|min:1',
             'selected_items.*.group_name' => 'nullable|string',
         ]);
@@ -232,8 +232,8 @@ class BundleController extends Controller
         }
 
         if ($this->isDynamicSelection($bundle, $selectedItemsInput)) {
-            $rules['selected_items.*.product_id'] = 'required|exists:lunar_products,id';
-            $rules['selected_items.*.product_variant_id'] = 'nullable|exists:lunar_product_variants,id';
+            $rules['selected_items.*.product_id'] = 'required|exists:products,id';
+            $rules['selected_items.*.product_variant_id'] = 'nullable|exists:product_variants,id';
             $rules['selected_items.*.quantity'] = 'integer|min:1';
         } else {
             $rules['selected_items.*'] = 'nullable|integer|min:0';

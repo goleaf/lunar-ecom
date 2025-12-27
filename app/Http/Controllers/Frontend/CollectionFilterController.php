@@ -227,14 +227,14 @@ class CollectionFilterController extends Controller
     protected function sortByPrice($query, string $direction)
     {
         // Join with variants and prices to sort by price
-        return $query->leftJoin('lunar_product_variants', 'lunar_products.id', '=', 'lunar_product_variants.product_id')
-            ->leftJoin('lunar_prices', function ($join) {
-                $join->on('lunar_product_variants.id', '=', 'lunar_prices.priceable_id')
-                     ->where('lunar_prices.priceable_type', '=', \Lunar\Models\ProductVariant::class);
+        return $query->leftJoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+            ->leftJoin('prices', function ($join) {
+                $join->on('product_variants.id', '=', 'prices.priceable_id')
+                     ->where('prices.priceable_type', '=', \App\Models\ProductVariant::morphName());
             })
-            ->select('lunar_products.*')
-            ->groupBy('lunar_products.id')
-            ->orderByRaw("MIN(lunar_prices.price) {$direction}");
+            ->select('products.*')
+            ->groupBy('products.id')
+            ->orderByRaw("MIN(prices.price) {$direction}");
     }
 
     /**

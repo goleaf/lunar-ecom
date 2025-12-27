@@ -116,7 +116,7 @@ class VariantHelper
 
         return Price::updateOrCreate(
             [
-                'priceable_type' => ProductVariant::class,
+                'priceable_type' => ProductVariant::morphName(),
                 'priceable_id' => $variant->id,
                 'currency_id' => $currency->id,
                 'min_quantity' => $minQuantity,
@@ -247,7 +247,7 @@ class VariantHelper
             }
         }
 
-        $price = Price::where('priceable_type', ProductVariant::class)
+        $price = Price::where('priceable_type', ProductVariant::morphName())
             ->where('priceable_id', $variant->id)
             ->where('currency_id', $currency->id)
             ->where('min_quantity', 1)

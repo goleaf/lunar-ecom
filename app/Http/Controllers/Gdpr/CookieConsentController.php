@@ -7,6 +7,7 @@ use App\Models\CookieConsent;
 use App\Models\ConsentTracking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Lunar\Models\Customer;
 
 class CookieConsentController extends Controller
@@ -22,11 +23,13 @@ class CookieConsentController extends Controller
             'marketing' => 'boolean',
             'preferences' => 'boolean',
             'custom_categories' => 'array',
+            'consent_method' => 'nullable|string|in:banner,settings,api,import',
         ]);
 
         $user = Auth::user();
         $customer = $user ? $user->customers()->first() : null;
         $sessionId = session()->getId();
+        $consentMethod = $validated['consent_method'] ?? ConsentTracking::METHOD_BANNER;
 
         // Find or create consent record
         $consent = CookieConsent::updateOrCreate(
@@ -49,7 +52,20 @@ class CookieConsentController extends Controller
         );
 
         // Track individual consents
-        $this->trackConsents($validated, $user, $customer, $sessionId);
+        $this->trackConsents($consent, $user, $customer, $sessionId, $consentMethod);
+
+        $minutes = now()->addDays(365)->diffInMinutes();
+        Cookie::queue(Cookie::make('cookie_consent', json_encode([
+            'necessary' => true,
+            'analytics' => (bool) $consent->analytics,
+            'marketing' => (bool) $consent->marketing,
+            'preferences' => (bool) $consent->preferences,
+            'updated_at' => now()->toIso8601String(),
+        ]), $minutes));
+
+        if (! $request->expectsJson() && ! $request->wantsJson()) {
+            return redirect()->back();
+        }
 
         return response()->json([
             'success' => true,
@@ -102,7 +118,13 @@ class CookieConsentController extends Controller
     /**
      * Track individual consent types
      */
-    protected function trackConsents(array $consents, $user, $customer, string $sessionId): void
+    protected function trackConsents(
+        CookieConsent $consent,
+        $user,
+        $customer,
+        string $sessionId,
+        string $method
+    ): void
     {
         $consentTypes = [
             'analytics' => ConsentTracking::TYPE_ANALYTICS,
@@ -111,17 +133,15 @@ class CookieConsentController extends Controller
         ];
 
         foreach ($consentTypes as $key => $type) {
-            if (isset($consents[$key])) {
-                ConsentTracking::recordConsent(
-                    $type,
-                    "Cookie consent for {$key} category",
-                    $consents[$key],
-                    $user?->id,
-                    $customer?->id,
-                    $sessionId,
-                    ConsentTracking::METHOD_SETTINGS
-                );
-            }
+            ConsentTracking::recordConsent(
+                $type,
+                "Cookie consent for {$key} category",
+                (bool) $consent->{$key},
+                $user?->id,
+                $customer?->id,
+                $user ? null : $sessionId,
+                $method
+            );
         }
     }
 }

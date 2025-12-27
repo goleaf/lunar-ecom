@@ -21,9 +21,10 @@ class AttributeFilterHelper
      * 
      * @param int|null $productTypeId
      * @param int|null $categoryId
+     * @param \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null $productQuery
      * @return Collection
      */
-    public static function getGroupedFilterableAttributes(?int $productTypeId = null, ?int $categoryId = null): Collection
+    public static function getGroupedFilterableAttributes(?int $productTypeId = null, ?int $categoryId = null, $productQuery = null): Collection
     {
         $attributeService = app(AttributeService::class);
         $attributes = $attributeService->getFilterableAttributes($productTypeId, $categoryId);
@@ -31,9 +32,9 @@ class AttributeFilterHelper
         // Group by attribute group
         return $attributes->groupBy(function ($attribute) {
             return $attribute->attributeGroup?->name ?? 'Other';
-        })->map(function ($groupAttributes, $groupName) use ($attributeService) {
+        })->map(function ($groupAttributes, $groupName) use ($attributeService, $productQuery) {
             // Get filter options for each attribute
-            $options = $attributeService->getFilterOptions($groupAttributes);
+            $options = $attributeService->getFilterOptions($groupAttributes, $productQuery);
             
             return [
                 'name' => $groupName,

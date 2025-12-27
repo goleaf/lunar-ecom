@@ -354,7 +354,7 @@ class CustomizationService
                     'image_height' => $customization->isImageType() ? ($imageData['height'] ?? null) : null,
                     'image_size_kb' => $customization->isImageType() ? ($imageData['size_kb'] ?? null) : null,
                     'additional_cost' => $fieldData['additional_cost'],
-                    'currency_code' => \Lunar\Facades\Currency::getDefault()->code ?? 'USD',
+                    'currency_code' => \Lunar\Models\Currency::getDefault()->code ?? 'USD',
                 ]);
 
                 $customizations[] = $orderItemCustomization;

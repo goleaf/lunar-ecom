@@ -19,7 +19,7 @@ class ContractSharedCart extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_shared_carts';
+    protected $table = 'contract_shared_carts';
 
     protected $fillable = [
         'contract_id',

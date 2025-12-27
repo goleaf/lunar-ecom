@@ -6,6 +6,7 @@ import './homepage';
 import './components/ProductAttributeFilter';
 import './collection-filters';
 import './admin/inline';
+import './admin/bundles-form';
 
 window.Alpine = Alpine;
 Alpine.start();

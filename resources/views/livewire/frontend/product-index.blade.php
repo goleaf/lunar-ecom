@@ -9,6 +9,34 @@
             <div class="bg-white p-4 rounded-lg shadow sticky top-4">
                 <h2 class="text-lg font-semibold mb-4">{{ __('frontend.filters') }}</h2>
 
+                {{-- Categories (GET links, keeps brand/sort) --}}
+                @if(isset($categoryTree) && $categoryTree->count() > 0)
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">{{ __('frontend.categories') }}</label>
+
+                        <div class="max-h-64 overflow-y-auto pr-1">
+                            @php
+                                $preserveQuery = array_filter([
+                                    'brand_id' => $brandId,
+                                    'sort' => $sort !== 'default' ? $sort : null,
+                                ]);
+                            @endphp
+
+                            <a href="{{ route('frontend.products.index', $preserveQuery) }}"
+                               class="block rounded px-2 py-1 text-sm hover:bg-gray-100 {{ empty($categoryId) ? 'bg-gray-100 font-semibold' : '' }}">
+                                {{ __('frontend.all_categories') }}
+                            </a>
+
+                            @include('frontend.components.category-filter-tree', [
+                                'categories' => $categoryTree,
+                                'selectedCategoryId' => $categoryId,
+                                'baseUrl' => route('frontend.products.index'),
+                                'preserveQuery' => $preserveQuery,
+                            ])
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Brand + Sort controls (Livewire) --}}
                 @if(isset($brands) && $brands->count() > 0)
                     <div class="mb-4">
@@ -36,6 +64,7 @@
 
                 {{-- Attribute filters (GET form for complex filter payloads) --}}
                 <form method="GET" action="{{ route('frontend.products.index') }}" id="filter-form">
+                    <input type="hidden" name="category_id" value="{{ $categoryId }}">
                     <input type="hidden" name="brand_id" value="{{ $brandId }}">
                     <input type="hidden" name="sort" value="{{ $sort }}">
 
@@ -50,7 +79,7 @@
                     <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-2">
                         {{ __('frontend.apply_filters') }}
                     </button>
-                    @if($brandId || !empty($activeFilters ?? []))
+                    @if($categoryId || $brandId || !empty($activeFilters ?? []))
                         <a href="{{ route('frontend.products.index') }}" class="block text-center text-blue-600 hover:text-blue-800 text-sm">
                             {{ __('frontend.clear_filters') }}
                         </a>
@@ -63,17 +92,23 @@
         <div class="lg:col-span-3">
 
             {{-- Active Filters Display --}}
-            @if($brandId || !empty($activeFilters ?? []))
+            @if($categoryId || $brandId || !empty($activeFilters ?? []))
                 <div class="mb-4 p-3 bg-blue-50 rounded flex flex-wrap items-center gap-2">
-                    <span class="text-sm font-medium">Active filters:</span>
+                    <span class="text-sm font-medium">{{ __('frontend.products_index.active_filters') }}</span>
+                    @if($categoryId && !empty($selectedCategory))
+                        <span class="text-sm bg-white px-2 py-1 rounded">
+                            {{ __('frontend.category') }}: {{ $selectedCategory->getName() }}
+                            <a href="{{ route('frontend.products.index', array_merge(request()->except('category_id', 'page'), ['brand_id' => $brandId, 'sort' => $sort])) }}" class="ml-1 text-red-600">x</a>
+                        </span>
+                    @endif
                     @if($brandId)
                         @php
                             $selectedBrand = $brands->firstWhere('id', $brandId);
                         @endphp
                         @if($selectedBrand)
                             <span class="text-sm bg-white px-2 py-1 rounded">
-                                Brand: {{ $selectedBrand->name }}
-                                <a href="{{ route('frontend.products.index', array_merge(request()->except('brand_id'), $activeFilters ?? [])) }}" class="ml-1 text-red-600">x</a>
+                                {{ __('frontend.brand') }}: {{ $selectedBrand->name }}
+                                <a href="{{ route('frontend.products.index', array_merge(request()->except('brand_id', 'page'), ['category_id' => $categoryId, 'sort' => $sort])) }}" class="ml-1 text-red-600">x</a>
                             </span>
                         @endif
                     @endif
@@ -86,7 +121,7 @@
                                 <span class="text-sm bg-white px-2 py-1 rounded">
                                     {{ \App\Lunar\Attributes\AttributeFilterHelper::getFilterDisplayName($attribute) }}:
                                     {{ is_array($value) ? implode(', ', $value) : \App\Lunar\Attributes\AttributeFilterHelper::formatFilterValue($attribute, $value) }}
-                                    <a href="{{ route('frontend.products.index', array_merge(request()->except($handle), ['brand_id' => $brandId, 'sort' => $sort])) }}" class="ml-1 text-red-600">x</a>
+                                    <a href="{{ route('frontend.products.index', array_merge(request()->except($handle, 'page'), ['category_id' => $categoryId, 'brand_id' => $brandId, 'sort' => $sort])) }}" class="ml-1 text-red-600">x</a>
                                 </span>
                             @endif
                         @endforeach
@@ -109,12 +144,12 @@
                                  class="w-full h-48 object-cover">
                         @else
                             <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                <span class="text-gray-400">No Image</span>
+                                <span class="text-gray-400">{{ __('frontend.product.no_image') }}</span>
                             </div>
                         @endif
                         <div class="p-4">
                             <h3 class="text-lg font-semibold mb-2">
-                                <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" class="text-gray-900 hover:text-gray-600">
+                                <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="text-gray-900 hover:text-gray-600">
                                     {{ $product->translateAttribute('name') }}
                                 </a>
                             </h3>
@@ -133,7 +168,7 @@
                                     {{ $price->formatted }}
                                 </p>
                             @endif
-                            <a href="{{ route('frontend.products.show', $product->urls->first()->slug ?? $product->id) }}" class="mt-3 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="mt-3 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
                                 {{ __('frontend.product.view_details') }}
                             </a>
                         </div>

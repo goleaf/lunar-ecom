@@ -198,7 +198,7 @@ class ProductFactory extends Factory
                     [
                         'language_id' => $language->id,
                         'slug' => $slug,
-                        'element_type' => Product::class,
+                        'element_type' => Product::morphName(),
                         'element_id' => $product->id,
                     ],
                     [

@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\ProductType;
 use App\Models\Attribute;
 use Lunar\Models\Currency;
+use Lunar\Models\TaxZone;
 use Lunar\Models\TaxClass;
 use Lunar\Models\AttributeGroup;
 use Lunar\Models\CollectionGroup;
@@ -90,6 +91,16 @@ trait LunarTestHelpers
         TaxClass::firstOrCreate([
             'name' => 'Default Tax Class',
         ], [
+            'default' => true,
+        ]);
+
+        // Create a default tax zone so SystemTaxDriver can always resolve a zone.
+        TaxZone::firstOrCreate([
+            'name' => 'Default Tax Zone',
+        ], [
+            'zone_type' => 'country',
+            'price_display' => 'inclusive',
+            'active' => true,
             'default' => true,
         ]);
 

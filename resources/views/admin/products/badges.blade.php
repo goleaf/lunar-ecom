@@ -29,7 +29,7 @@
 
         <div class="bg-white rounded-lg shadow p-5">
             <h3 class="text-lg font-semibold mb-4">Assign badge</h3>
-            <form id="badge-assign-form" class="space-y-4">
+            <form id="badge-assign-form" class="space-y-4" data-url="{{ route('admin.badges.products.assign', $product) }}">
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Badge</label>
@@ -75,59 +75,5 @@
 </div>
 
 @push('scripts')
-<script>
-const badgeAssignForm = document.getElementById('badge-assign-form');
-const badgeAssignMessage = document.getElementById('badge-assign-message');
-
-badgeAssignForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    badgeAssignMessage.textContent = 'Assigning...';
-
-    const formData = new FormData(badgeAssignForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch('{{ route('admin.badges.products.assign', $product) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        badgeAssignMessage.textContent = data.message || 'Badge assigned.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 700);
-        }
-    } catch (error) {
-        badgeAssignMessage.textContent = 'Failed to assign badge.';
-    }
-});
-
-document.querySelectorAll('.badge-remove').forEach((button) => {
-    button.addEventListener('click', async () => {
-        if (!confirm('Remove this badge?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(button.dataset.url, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            if (response.ok) {
-                window.location.reload();
-            }
-        } catch (error) {
-            alert('Failed to remove badge.');
-        }
-    });
-});
-</script>
 @endpush
 @endsection

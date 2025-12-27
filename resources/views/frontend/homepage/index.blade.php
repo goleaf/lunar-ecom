@@ -43,7 +43,7 @@
                                         {{ Str::limit($collection->translateAttribute('description'), 150) }}
                                     </p>
                                 @endif
-                                <a href="{{ route('frontend.collections.show', $collection->urls->first()->slug ?? $collection->id) }}" 
+                                <a href="{{ route('frontend.collections.show', $collection->urls->first()?->slug ?? $collection->id) }}" 
                                    class="inline-block bg-white text-gray-900 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors animate-fade-in-delay-2">
                                     {{ __('frontend.homepage.explore_collection') }}
                                 </a>
@@ -138,7 +138,7 @@
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl md:text-4xl font-bold">{{ __('frontend.homepage.bestsellers') }}</h2>
                     @if($bestsellers->urls->first())
-                        <a href="{{ route('frontend.collections.show', $bestsellers->urls->first()->slug) }}" 
+                        <a href="{{ route('frontend.collections.show', $bestsellers->urls->first()?->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
                             {{ __('frontend.common.view_all') }} →
                         </a>
@@ -195,7 +195,7 @@
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl md:text-4xl font-bold">{{ __('frontend.homepage.new_arrivals') }}</h2>
                     @if($newArrivals->urls->first())
-                        <a href="{{ route('frontend.collections.show', $newArrivals->urls->first()->slug) }}" 
+                        <a href="{{ route('frontend.collections.show', $newArrivals->urls->first()?->slug) }}" 
                            class="text-blue-600 hover:text-blue-800 font-semibold">
                             {{ __('frontend.common.view_all') }} →
                         </a>

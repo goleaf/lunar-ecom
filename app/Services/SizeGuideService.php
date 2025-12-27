@@ -21,10 +21,14 @@ class SizeGuideService
     public function getSizeGuide(Product $product, ?string $region = null): ?SizeGuide
     {
         // First, check if product has a direct size guide assignment
+        $pivotTable = config('lunar.database.table_prefix') . 'product_size_guide';
+
         $sizeGuide = $product->sizeGuides()
-            ->when($region, function ($query) use ($region) {
-                $query->wherePivot('region', $region)
-                      ->orWherePivotNull('region');
+            ->when($region, function ($query) use ($region, $pivotTable) {
+                $query->where(function ($query) use ($region, $pivotTable) {
+                    $query->where("{$pivotTable}.region", $region)
+                        ->orWhereNull("{$pivotTable}.region");
+                });
             })
             ->orderByPivot('priority', 'desc')
             ->active()
@@ -345,5 +349,4 @@ class SizeGuideService
         return $distribution;
     }
 }
-
 

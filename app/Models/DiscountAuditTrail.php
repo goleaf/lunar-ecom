@@ -15,7 +15,7 @@ use Lunar\Models\Order;
  */
 class DiscountAuditTrail extends Model
 {
-    protected $table = 'lunar_discount_audit_trails';
+    protected $table = 'discount_audit_trails';
 
     protected $fillable = [
         'discount_id',

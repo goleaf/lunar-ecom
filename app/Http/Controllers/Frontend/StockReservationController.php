@@ -26,9 +26,9 @@ class StockReservationController extends Controller
     public function reserve(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_variant_id' => 'required|exists:lunar_product_variants,id',
+            'product_variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
-            'warehouse_id' => 'nullable|exists:lunar_warehouses,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'expiration_minutes' => 'integer|min:1|max:60',
         ]);
 
@@ -65,7 +65,7 @@ class StockReservationController extends Controller
     public function release(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'reservation_id' => 'required|exists:lunar_stock_reservations,id',
+            'reservation_id' => 'required|exists:stock_reservations,id',
         ]);
 
         $this->inventoryService->releaseReservedStock($validated['reservation_id']);

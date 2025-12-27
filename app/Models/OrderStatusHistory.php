@@ -17,7 +17,7 @@ class OrderStatusHistory extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_order_status_history';
+    protected $table = 'order_status_history';
 
     protected $fillable = [
         'order_id',

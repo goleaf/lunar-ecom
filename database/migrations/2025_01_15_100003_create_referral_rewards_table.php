@@ -15,19 +15,19 @@ return new class extends Migration
             
             // Reward recipient
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('customer_id')->nullable()->constrained('lunar_customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('cascade');
             
             // Reward details
             $table->string('reward_type'); // discount_code, credit, percentage, fixed_amount
             $table->decimal('reward_value', 15, 2);
-            $table->foreignId('currency_id')->nullable()->constrained('lunar_currencies')->onDelete('set null');
+            $table->foreignId('currency_id')->nullable()->constrained('currencies')->onDelete('set null');
             
             // Reward delivery
             $table->string('status')->default('pending'); // pending, issued, redeemed, expired, cancelled
             $table->string('delivery_method')->default('automatic'); // automatic, manual, email
             
             // Discount code (if reward_type is discount_code)
-            $table->foreignId('discount_id')->nullable()->constrained('lunar_discounts')->onDelete('set null');
+            $table->foreignId('discount_id')->nullable()->constrained('discounts')->onDelete('set null');
             $table->string('discount_code')->nullable();
             
             // Validity
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->integer('max_uses')->default(1);
             
             // Related order (if redeemed)
-            $table->foreignId('redeemed_order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('redeemed_order_id')->nullable()->constrained('orders')->onDelete('set null');
             
             // Notes
             $table->text('notes')->nullable();

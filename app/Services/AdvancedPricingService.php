@@ -40,6 +40,59 @@ class AdvancedPricingService
     }
 
     /**
+     * Calculate a price for a variant for use in storefront/cart pricing.
+     *
+     * This is a lightweight wrapper around the PriorityPricingResolver.
+     * It does NOT create simulation or history records.
+     *
+     * @return array{
+     *   price:int,
+     *   original_price?:int,
+     *   compare_at_price?:int|null,
+     *   layer?:string|null,
+     *   source?:string|null,
+     *   currency?:\Lunar\Models\Currency|null,
+     *   tax_inclusive?:bool,
+     *   applied_rules?:\Illuminate\Support\Collection
+     * }
+     */
+    public function calculatePrice(
+        ProductVariant $variant,
+        int $quantity = 1,
+        ?Currency $currency = null,
+        ?CustomerGroup $customerGroup = null,
+        ?Channel $channel = null,
+        bool $includeTax = false,
+        ?Customer $customer = null
+    ): array {
+        $priceData = $this->resolver->resolvePrice(
+            $variant,
+            $quantity,
+            $currency,
+            $channel,
+            $customerGroup,
+            $customer
+        );
+
+        if (!$priceData) {
+            return [
+                'price' => 0,
+                'original_price' => 0,
+                'compare_at_price' => null,
+                'layer' => null,
+                'source' => null,
+                'currency' => $currency,
+                'tax_inclusive' => $includeTax,
+                'applied_rules' => collect(),
+            ];
+        }
+
+        $priceData['tax_inclusive'] = $includeTax;
+
+        return $priceData;
+    }
+
+    /**
      * Create a time-windowed price (sale, flash deal).
      *
      * @param  ProductVariant  $variant

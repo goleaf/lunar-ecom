@@ -52,7 +52,7 @@ class ComparisonController extends Controller
     public function add(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
         try {
@@ -76,7 +76,7 @@ class ComparisonController extends Controller
     public function remove(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
         $result = $this->comparisonService->removeFromComparison($validated['product_id']);
@@ -120,7 +120,7 @@ class ComparisonController extends Controller
     public function check(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'product_id' => 'required|exists:lunar_products,id',
+            'product_id' => 'required|exists:products,id',
         ]);
 
         return response()->json([

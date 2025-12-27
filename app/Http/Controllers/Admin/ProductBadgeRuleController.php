@@ -39,7 +39,7 @@ class ProductBadgeRuleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'badge_id' => 'required|exists:lunar_product_badges,id',
+            'badge_id' => 'required|exists:product_badges,id',
             'condition_type' => 'required|in:manual,automatic',
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -82,7 +82,7 @@ class ProductBadgeRuleController extends Controller
     public function update(Request $request, ProductBadgeRule $rule)
     {
         $validated = $request->validate([
-            'badge_id' => 'required|exists:lunar_product_badges,id',
+            'badge_id' => 'required|exists:product_badges,id',
             'condition_type' => 'required|in:manual,automatic',
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',

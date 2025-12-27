@@ -17,7 +17,7 @@
 
     <div class="bg-white rounded-lg shadow p-6 space-y-4">
         <h3 class="text-lg font-semibold">Create matrix</h3>
-        <form id="matrix-create-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="matrix-create-form" class="grid grid-cols-1 md:grid-cols-4 gap-4" data-url="{{ route('admin.products.pricing.matrices.store', $product) }}" data-message-id="matrix-status">
             @csrf
             <div>
                 <label class="block text-xs text-slate-600 mb-1">Matrix type</label>
@@ -89,37 +89,5 @@
 </div>
 
 @push('scripts')
-<script>
-const matrixForm = document.getElementById('matrix-create-form');
-const matrixStatus = document.getElementById('matrix-status');
-
-matrixForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    matrixStatus.textContent = 'Saving...';
-
-    const formData = new FormData(matrixForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch('{{ route('admin.products.pricing.matrices.store', $product) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        matrixStatus.textContent = data.message || 'Matrix created.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    } catch (error) {
-        matrixStatus.textContent = 'Failed to create matrix.';
-    }
-});
-</script>
 @endpush
 @endsection

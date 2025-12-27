@@ -38,7 +38,7 @@ class UrlFactory extends Factory
                     ]
                 )->id;
             },
-            'element_type' => Product::class,
+            'element_type' => Product::morphName(),
             'element_id' => Product::factory(),
             'slug' => $slug,
             'default' => false,
@@ -61,7 +61,7 @@ class UrlFactory extends Factory
     public function forElement($element): static
     {
         return $this->state(fn (array $attributes) => [
-            'element_type' => get_class($element),
+            'element_type' => $element->getMorphClass(),
             'element_id' => $element->id,
         ]);
     }

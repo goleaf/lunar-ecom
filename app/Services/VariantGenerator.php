@@ -232,7 +232,7 @@ class VariantGenerator
     {
         Price::updateOrCreate(
             [
-                'priceable_type' => ProductVariant::class,
+                'priceable_type' => ProductVariant::morphName(),
                 'priceable_id' => $variant->id,
                 'currency_id' => $currencyId,
                 'min_quantity' => 1,

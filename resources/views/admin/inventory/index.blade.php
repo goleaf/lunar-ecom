@@ -13,7 +13,7 @@
 
     <div class="bg-white rounded-lg shadow p-6 space-y-4">
         <h3 class="text-lg font-semibold">Quick adjust</h3>
-        <form id="inventory-adjust-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form id="inventory-adjust-form" class="grid grid-cols-1 md:grid-cols-4 gap-4" data-url="{{ route('admin.inventory.adjust') }}">
             @csrf
             <div>
                 <label class="block text-xs text-slate-600 mb-1">Variant ID</label>
@@ -90,37 +90,5 @@
 </div>
 
 @push('scripts')
-<script>
-const adjustForm = document.getElementById('inventory-adjust-form');
-const adjustMessage = document.getElementById('inventory-adjust-message');
-
-adjustForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    adjustMessage.textContent = 'Saving...';
-
-    const formData = new FormData(adjustForm);
-    const payload = Object.fromEntries(formData.entries());
-
-    try {
-        const response = await fetch('{{ route('admin.inventory.adjust') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        adjustMessage.textContent = data.message || 'Inventory updated.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    } catch (error) {
-        adjustMessage.textContent = 'Failed to update inventory.';
-    }
-});
-</script>
 @endpush
 @endsection

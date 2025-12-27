@@ -4,7 +4,7 @@ return [
 
     'connection' => null,
 
-    'table_prefix' => 'lunar_',
+    'table_prefix' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -12,7 +12,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | If you wish to prefix Lunar's morph mapping in the database, you can
-    | set that here e.g. `lunar_product` instead of `product`
+    | set that here e.g. `shop_product` instead of `product`
     |
     */
     'morph_prefix' => null,

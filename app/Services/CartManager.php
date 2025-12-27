@@ -27,9 +27,18 @@ class CartManager implements CartManagerInterface
             throw new \InvalidArgumentException('Quantity must be greater than 0');
         }
 
-        // Validate item is purchasable
-        if (!$item->purchasable) {
+        // Validate item is purchasable / available.
+        // Lunar purchasables expose availability via methods, and some variants use a string
+        // `purchasable` attribute (always|in_stock|never).
+        if (method_exists($item, 'isAvailable') && !$item->isAvailable()) {
             throw new \InvalidArgumentException('Item is not purchasable');
+        }
+
+        if (isset($item->purchasable)) {
+            $purchasable = (string) $item->purchasable;
+            if ($purchasable === 'never' || $purchasable === '0' || $purchasable === 'false') {
+                throw new \InvalidArgumentException('Item is not purchasable');
+            }
         }
 
         $cart = $this->cartSession->getOrCreate();
@@ -225,17 +234,28 @@ class CartManager implements CartManagerInterface
      */
     protected function validateStockAvailability(Purchasable $item, int $quantity): void
     {
-        // Check if item has stock tracking
-        if (property_exists($item, 'stock') && $item->stock !== null) {
-            if ($item->stock < $quantity) {
+        // Lunar product variants track stock via attributes, not declared properties.
+        // Prefer explicit handling for variants.
+        if ($item instanceof \Lunar\Models\ProductVariant || $item instanceof \App\Models\ProductVariant) {
+            $stock = (int) ($item->stock ?? 0);
+            $backorder = (bool) ($item->backorder ?? false);
+
+            if (!$backorder && $stock < $quantity) {
                 throw new \InvalidArgumentException(
-                    "Insufficient stock. Only {$item->stock} items available."
+                    "Insufficient stock. Only {$stock} items available."
+                );
+            }
+        } elseif (isset($item->stock)) {
+            $stock = (int) $item->stock;
+            if ($stock < $quantity) {
+                throw new \InvalidArgumentException(
+                    "Insufficient stock. Only {$stock} items available."
                 );
             }
         }
 
         // Check minimum quantity requirements
-        if (property_exists($item, 'min_quantity') && $item->min_quantity !== null) {
+        if (isset($item->min_quantity)) {
             if ($quantity < $item->min_quantity) {
                 throw new \InvalidArgumentException(
                     "Minimum quantity is {$item->min_quantity} for this item."

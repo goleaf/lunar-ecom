@@ -40,18 +40,20 @@ class ApplyQuantityTierStep
         $customerGroup = $cart->customer?->customerGroups->first();
         
         // Get tier pricing from MatrixPricingService
-        $tierPricing = $this->matrixPricingService->calculatePrice(
-            $purchasable,
-            $line->quantity,
-            $cart->currency,
-            $customerGroup
-        );
+        $tierPricing = $this->matrixPricingService->calculatePrice($purchasable, [
+            'quantity' => $line->quantity,
+            // include a few common context keys used by rule-based matrices
+            'customer_group_id' => $customerGroup?->id,
+            'customer_group' => $customerGroup?->handle ?? $customerGroup?->name,
+            'currency' => $cart->currency?->code,
+            'channel' => $cart->channel?->handle ?? $cart->channel?->name,
+        ]);
 
         // Check if tier pricing applies and is better than current price
         if (isset($tierPricing['price']) && $tierPricing['price'] < $currentPrice) {
             $data['current_price'] = $tierPricing['price'];
             $data['tier_price'] = $tierPricing['price'];
-            $data['tier_name'] = $tierPricing['tier_name'] ?? "Quantity {$line->quantity}+";
+            $data['tier_name'] = $tierPricing['tier']['name'] ?? $tierPricing['tier_name'] ?? "Quantity {$line->quantity}+";
             $data['price_source'] = $data['price_source'] === 'contract' ? 'contract' : 'matrix';
             
             // Store tier information

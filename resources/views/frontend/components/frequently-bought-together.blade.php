@@ -40,7 +40,7 @@
                             @endphp
                             @if($price)
                                 <p class="text-lg font-semibold text-blue-600 mt-1">
-                                    {{ \Lunar\Facades\Currency::getDefault()->formatter($price->value) }}
+                                    {{ $price->formatted }}
                                 </p>
                             @endif
                         </div>

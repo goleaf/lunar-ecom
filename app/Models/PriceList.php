@@ -19,7 +19,7 @@ class PriceList extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'lunar_price_lists';
+    protected $table = 'price_lists';
 
     protected $fillable = [
         'contract_id',

@@ -61,37 +61,5 @@
 </div>
 
 @push('scripts')
-<script>
-const synonymForm = document.getElementById('synonym-form');
-const synonymMessage = document.getElementById('synonym-message');
-
-synonymForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    synonymMessage.textContent = 'Saving...';
-
-    const formData = new FormData(synonymForm);
-    const payload = Object.fromEntries(formData.entries());
-    payload.synonyms = payload.synonyms.split(',').map((item) => item.trim()).filter(Boolean);
-
-    try {
-        const response = await fetch(synonymForm.dataset.url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(payload)
-        });
-        const data = await response.json();
-        synonymMessage.textContent = data.message || 'Synonym saved.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    } catch (error) {
-        synonymMessage.textContent = 'Failed to save synonym.';
-    }
-});
-</script>
 @endpush
 @endsection

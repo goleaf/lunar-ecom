@@ -21,7 +21,7 @@ return new class extends Migration
             
             // User identification (if available)
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('customer_id')->nullable()->constrained('lunar_customers')->onDelete('set null');
+            $table->foreignId('customer_id')->nullable()->constrained('customers')->onDelete('set null');
             
             // Event tracking
             $table->string('event_type'); // click, signup, purchase, etc.
@@ -30,7 +30,7 @@ return new class extends Migration
             // Conversion tracking
             $table->boolean('converted')->default(false);
             $table->timestamp('converted_at')->nullable();
-            $table->foreignId('conversion_order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('conversion_order_id')->nullable()->constrained('orders')->onDelete('set null');
             
             // Metadata
             $table->json('metadata')->nullable();

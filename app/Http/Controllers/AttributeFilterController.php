@@ -61,8 +61,8 @@ class AttributeFilterController extends Controller
         $validated = $request->validate([
             'filters' => 'array',
             'filters.*' => 'required',
-            'category_id' => 'nullable|exists:lunar_categories,id',
-            'product_type_id' => 'nullable|exists:lunar_product_types,id',
+            'category_id' => 'nullable|exists:categories,id',
+            'product_type_id' => 'nullable|exists:product_types,id',
             'logic' => 'in:and,or',
             'page' => 'integer|min:1',
             'per_page' => 'integer|min:1|max:100',
@@ -119,7 +119,7 @@ class AttributeFilterController extends Controller
         $validated = $request->validate([
             'attribute_handle' => 'required|string',
             'value' => 'required',
-            'category_id' => 'nullable|exists:lunar_categories,id',
+            'category_id' => 'nullable|exists:categories,id',
         ]);
 
         $attribute = \App\Models\Attribute::where('handle', $validated['attribute_handle'])

@@ -4,8 +4,8 @@ namespace App\Helpers;
 
 use App\Models\ProductVariant;
 use App\Services\MatrixPricingService;
-use Lunar\Facades\Currency;
 use Lunar\Facades\Pricing;
+use Lunar\Models\Currency;
 
 class PricingHelper
 {

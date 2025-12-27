@@ -93,7 +93,7 @@ class VariantPriceCalculator
         Currency $currency,
         $customerGroups = null
     ): ?Price {
-        $query = Price::where('priceable_type', ProductVariant::class)
+        $query = Price::where('priceable_type', ProductVariant::morphName())
             ->where('priceable_id', $variant->id)
             ->where('currency_id', $currency->id)
             ->where('min_quantity', '<=', $quantity)
@@ -217,7 +217,7 @@ class VariantPriceCalculator
             return collect();
         }
 
-        $query = Price::where('priceable_type', ProductVariant::class)
+        $query = Price::where('priceable_type', ProductVariant::morphName())
             ->where('priceable_id', $variant->id)
             ->where('currency_id', $currency->id)
             ->orderBy('min_quantity', 'asc');

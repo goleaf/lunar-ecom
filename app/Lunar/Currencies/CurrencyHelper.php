@@ -102,7 +102,7 @@ class CurrencyHelper
 
         // This project removes currency formatting columns (see 2022_03_11_100000_* migration),
         // but keep compatibility if they're present in some environments.
-        $table = config('lunar.database.table_prefix', 'lunar_') . 'currencies';
+        $table = config('lunar.database.table_prefix', '') . 'currencies';
         if (Schema::hasColumn($table, 'format')) {
             $attributes['format'] = $format ?? '{symbol}{value}';
         }
@@ -347,5 +347,4 @@ class CurrencyHelper
         return $converted;
     }
 }
-
 

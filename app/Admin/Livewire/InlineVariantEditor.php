@@ -98,7 +98,7 @@ class InlineVariantEditor extends Component implements HasForms
 
                 // Update price
                 if (isset($this->editingData['price'])) {
-                    $currencyId = \Lunar\Facades\Currency::getDefault()->id;
+                    $currencyId = \Lunar\Models\Currency::getDefault()->id;
                     $priceInCents = (int)($this->editingData['price'] * 100);
 
                     $variant->prices()->updateOrCreate(

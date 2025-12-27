@@ -17,7 +17,7 @@ class ContractCompanyHierarchy extends Model
 {
     use HasFactory;
 
-    protected $table = 'lunar_contract_company_hierarchies';
+    protected $table = 'contract_company_hierarchies';
 
     protected $fillable = [
         'parent_customer_id',

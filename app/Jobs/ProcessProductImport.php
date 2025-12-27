@@ -418,7 +418,7 @@ class ProcessProductImport implements ShouldQueue
 
         // Set price if provided
         if (isset($data['variant_price'])) {
-            $currency = \Lunar\Facades\Currency::getDefault();
+            $currency = \Lunar\Models\Currency::getDefault();
             $price = (int)($data['variant_price'] * 100); // Convert to cents
 
             $variant->prices()->updateOrCreate(

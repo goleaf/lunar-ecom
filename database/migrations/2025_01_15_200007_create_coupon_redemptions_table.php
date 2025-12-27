@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('coupon_id')->constrained('coupons')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('order_id')->nullable()->constrained('lunar_orders')->onDelete('set null');
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
             $table->timestamp('redeemed_at');
             $table->decimal('discount_amount', 15, 2)->nullable();
             $table->json('metadata')->nullable();

@@ -47,7 +47,7 @@ class PriceFactory extends Factory
             'compare_price' => fake()->optional(0.3)->numberBetween(1100, 120000),
             'currency_id' => $currencyId,
             'customer_group_id' => $customerGroupId,
-            'priceable_type' => ProductVariant::class,
+            'priceable_type' => ProductVariant::morphName(),
             'priceable_id' => ProductVariant::factory(),
             // Lunar renamed `tier` -> `min_quantity` (2024_01_31_100000_update_tier_to_min_quantity_on_prices_table).
             'min_quantity' => 1,
@@ -60,7 +60,7 @@ class PriceFactory extends Factory
     public function forVariant(ProductVariant $variant): static
     {
         return $this->state(fn () => [
-            'priceable_type' => ProductVariant::class,
+            'priceable_type' => ProductVariant::morphName(),
             'priceable_id' => $variant->id,
         ]);
     }

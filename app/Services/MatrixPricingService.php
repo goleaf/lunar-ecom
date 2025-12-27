@@ -10,7 +10,7 @@ use App\Models\PricingRule;
 use App\Models\PriceHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Lunar\Facades\Currency;
+use Lunar\Models\Currency;
 use Lunar\Facades\Pricing;
 
 class MatrixPricingService

@@ -143,7 +143,7 @@ class ReviewModerationController extends Controller
 
         $validated = $request->validate([
             'review_ids' => 'required|array',
-            'review_ids.*' => 'integer|exists:lunar_reviews,id',
+            'review_ids.*' => 'integer|exists:reviews,id',
         ]);
 
         $count = $this->reviewService->bulkApprove($validated['review_ids']);
@@ -169,7 +169,7 @@ class ReviewModerationController extends Controller
 
         $validated = $request->validate([
             'review_ids' => 'required|array',
-            'review_ids.*' => 'integer|exists:lunar_reviews,id',
+            'review_ids.*' => 'integer|exists:reviews,id',
         ]);
 
         $count = $this->reviewService->bulkReject($validated['review_ids']);

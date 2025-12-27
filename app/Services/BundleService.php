@@ -9,7 +9,7 @@ use App\Models\BundlePrice;
 use App\Services\InventoryService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Lunar\Facades\Currency;
+use Lunar\Models\Currency;
 use Lunar\Facades\StorefrontSession;
 use Lunar\Models\Cart;
 use Lunar\Models\Product;

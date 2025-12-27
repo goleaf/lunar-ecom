@@ -41,8 +41,8 @@ class ProductBadgeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:lunar_product_badges,name',
-            'handle' => 'nullable|string|max:255|unique:lunar_product_badges,handle',
+            'name' => 'required|string|max:255|unique:product_badges,name',
+            'handle' => 'nullable|string|max:255|unique:product_badges,handle',
             'type' => 'required|in:new,sale,hot,limited,exclusive,custom',
             'description' => 'nullable|string',
             'label' => 'nullable|string|max:255',
@@ -99,8 +99,8 @@ class ProductBadgeController extends Controller
     public function update(Request $request, ProductBadge $badge)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:lunar_product_badges,name,' . $badge->id,
-            'handle' => 'nullable|string|max:255|unique:lunar_product_badges,handle,' . $badge->id,
+            'name' => 'required|string|max:255|unique:product_badges,name,' . $badge->id,
+            'handle' => 'nullable|string|max:255|unique:product_badges,handle,' . $badge->id,
             'type' => 'required|in:new,sale,hot,limited,exclusive,custom',
             'description' => 'nullable|string',
             'label' => 'nullable|string|max:255',

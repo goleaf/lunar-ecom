@@ -33,6 +33,61 @@ class PricingCacheService
     protected int $defaultTtl = 3600; // 1 hour
     protected array $requestCache = []; // In-memory request scope cache
 
+    protected function cacheEnabled(): bool
+    {
+        // Never require external Redis in tests.
+        if (app()->environment('testing')) {
+            return false;
+        }
+
+        return (bool) config('pricing_cache.enabled', true);
+    }
+
+    protected function cacheStore(): string
+    {
+        $store = (string) config('pricing_cache.store', 'redis');
+        return $store !== '' ? $store : (string) config('cache.default', 'array');
+    }
+
+    protected function cacheGet(string $key, $default = null)
+    {
+        if (!$this->cacheEnabled()) {
+            return $default;
+        }
+
+        try {
+            return Cache::store($this->cacheStore())->get($key, $default);
+        } catch (\Throwable) {
+            return $default;
+        }
+    }
+
+    protected function cachePut(string $key, $value, int $ttlSeconds): void
+    {
+        if (!$this->cacheEnabled()) {
+            return;
+        }
+
+        try {
+            Cache::store($this->cacheStore())->put($key, $value, $ttlSeconds);
+        } catch (\Throwable) {
+            // Ignore cache failures (e.g. Redis unavailable) - pricing must still work.
+        }
+    }
+
+    protected function cacheIncrement(string $key, int $by = 1): void
+    {
+        if (!$this->cacheEnabled()) {
+            return;
+        }
+
+        try {
+            Cache::store($this->cacheStore())->increment($key, $by);
+        } catch (\Throwable) {
+            // Ignore.
+        }
+    }
+
     /**
      * Get attribute metadata (cached).
      */
@@ -49,8 +104,8 @@ class PricingCacheService
             return $this->requestCache[$key];
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return $cached;
@@ -78,7 +133,7 @@ class PricingCacheService
         ];
 
         // Cache with version
-        Cache::store('redis')->put($key, $metadata, $this->defaultTtl);
+        $this->cachePut($key, $metadata, $this->defaultTtl);
         $this->requestCache[$key] = $metadata;
 
         return $metadata;
@@ -99,8 +154,8 @@ class PricingCacheService
             return $this->requestCache[$key];
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return $cached;
@@ -123,7 +178,7 @@ class PricingCacheService
         ];
 
         // Cache with version
-        Cache::store('redis')->put($key, $matrix, $this->defaultTtl);
+        $this->cachePut($key, $matrix, $this->defaultTtl);
         $this->requestCache[$key] = $matrix;
 
         return $matrix;
@@ -152,15 +207,15 @@ class PricingCacheService
             return $this->requestCache[$key];
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return $cached;
         }
 
         // Load from database
-        $query = Price::where('priceable_type', ProductVariant::class)
+        $query = Price::where('priceable_type', ProductVariant::morphName())
             ->where('priceable_id', $variantId)
             ->where('currency_id', $currencyId)
             ->where('tier', '<=', $quantity);
@@ -177,7 +232,7 @@ class PricingCacheService
         $basePrice = $price?->price ?? 0;
 
         // Cache with version
-        Cache::store('redis')->put($key, $basePrice, $this->defaultTtl);
+        $this->cachePut($key, $basePrice, $this->defaultTtl);
         $this->requestCache[$key] = $basePrice;
 
         return $basePrice;
@@ -202,8 +257,8 @@ class PricingCacheService
             return $this->requestCache[$key];
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return $cached;
@@ -219,7 +274,7 @@ class PricingCacheService
         ];
 
         // Cache with version
-        Cache::store('redis')->put($key, $contractPrices, $this->defaultTtl);
+        $this->cachePut($key, $contractPrices, $this->defaultTtl);
         $this->requestCache[$key] = $contractPrices;
 
         return $contractPrices;
@@ -242,8 +297,8 @@ class PricingCacheService
             return collect($this->requestCache[$key]);
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return collect($cached);
@@ -276,7 +331,7 @@ class PricingCacheService
             ->toArray();
 
         // Cache with version
-        Cache::store('redis')->put($key, $promotions, $this->defaultTtl);
+        $this->cachePut($key, $promotions, $this->defaultTtl);
         $this->requestCache[$key] = $promotions;
 
         return collect($promotions);
@@ -294,8 +349,8 @@ class PricingCacheService
             return $this->requestCache[$key];
         }
 
-        // Check Redis cache
-        $cached = Cache::store('redis')->get($key);
+        // Check cache
+        $cached = $this->cacheGet($key);
         if ($cached !== null) {
             $this->requestCache[$key] = $cached;
             return $cached;
@@ -317,7 +372,7 @@ class PricingCacheService
         }
 
         // Cache with shorter TTL (5 minutes) for currency rates
-        Cache::store('redis')->put($key, $rates, 300);
+        $this->cachePut($key, $rates, 300);
         $this->requestCache[$key] = $rates;
 
         return $rates;
@@ -330,10 +385,15 @@ class PricingCacheService
     {
         // Redis tag-based invalidation
         $pattern = $this->buildKey($tag, ['*']);
-        $keys = Redis::keys($pattern);
-        
-        if (!empty($keys)) {
-            Redis::del($keys);
+        if ($this->cacheEnabled()) {
+            try {
+                $keys = Redis::keys($pattern);
+                if (!empty($keys)) {
+                    Redis::del($keys);
+                }
+            } catch (\Throwable) {
+                // Ignore invalidation failures when Redis is unavailable.
+            }
         }
 
         // Clear request cache
@@ -371,7 +431,7 @@ class PricingCacheService
     protected function getVersion(string $type): int
     {
         $key = "{$this->prefix}:version:{$type}";
-        return (int) Cache::store('redis')->get($key, 1);
+        return (int) $this->cacheGet($key, 1);
     }
 
     /**
@@ -380,7 +440,7 @@ class PricingCacheService
     protected function incrementVersion(string $type): void
     {
         $key = "{$this->prefix}:version:{$type}";
-        Cache::store('redis')->increment($key);
+        $this->cacheIncrement($key);
     }
 
     /**
@@ -396,9 +456,18 @@ class PricingCacheService
      */
     public function getStats(): array
     {
+        $redisConnected = null;
+        if ($this->cacheEnabled()) {
+            try {
+                $redisConnected = Redis::ping() === 'PONG';
+            } catch (\Throwable) {
+                $redisConnected = false;
+            }
+        }
+
         return [
             'request_cache_size' => count($this->requestCache),
-            'redis_connected' => Redis::ping() === 'PONG',
+            'redis_connected' => $redisConnected,
         ];
     }
 }

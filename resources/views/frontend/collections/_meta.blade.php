@@ -6,3 +6,5 @@
 <link rel="canonical" href="{{ $metaTags['canonical'] ?? request()->url() }}">
 
 
+
+

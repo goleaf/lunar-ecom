@@ -24,7 +24,7 @@ class AvailabilityController extends Controller
         $validated = $request->validate([
             'date' => 'required|date',
             'quantity' => 'nullable|integer|min:1',
-            'variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
             'timezone' => 'nullable|string|max:50',
         ]);
 
@@ -55,7 +55,7 @@ class AvailabilityController extends Controller
         $validated = $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
             'timezone' => 'nullable|string|max:50',
         ]);
 
@@ -88,7 +88,7 @@ class AvailabilityController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after:start_date',
             'quantity' => 'nullable|integer|min:1',
-            'variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
         ]);
 
         $startDate = Carbon::parse($validated['start_date']);
@@ -124,7 +124,7 @@ class AvailabilityController extends Controller
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after:start_time',
             'quantity' => 'required|integer|min:1',
-            'variant_id' => 'nullable|exists:lunar_product_variants,id',
+            'variant_id' => 'nullable|exists:product_variants,id',
             'customer_name' => 'nullable|string|max:255',
             'customer_email' => 'nullable|email|max:255',
             'customer_phone' => 'nullable|string|max:50',

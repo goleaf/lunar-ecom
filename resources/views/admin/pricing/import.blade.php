@@ -13,7 +13,7 @@
         <h2 class="text-xl font-semibold mb-4">Import pricing data</h2>
         <p class="text-sm text-slate-600 mb-6">Upload a CSV or XLSX file to update pricing matrices for this product.</p>
 
-        <form id="pricing-import-form" method="POST" action="{{ route('admin.products.pricing.import', ['product' => $productId]) }}" enctype="multipart/form-data" class="space-y-4">
+        <form id="pricing-import-form" method="POST" action="{{ route('admin.products.pricing.import', ['product' => $productId]) }}" enctype="multipart/form-data" class="space-y-4" data-message-id="import-status">
             @csrf
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Import file</label>
@@ -37,32 +37,5 @@
 </div>
 
 @push('scripts')
-<script>
-const importForm = document.getElementById('pricing-import-form');
-const importStatus = document.getElementById('import-status');
-
-importForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    importStatus.textContent = 'Uploading...';
-
-    const formData = new FormData(importForm);
-
-    try {
-        const response = await fetch(importForm.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        });
-
-        const data = await response.json();
-        importStatus.textContent = data.message || 'Import complete.';
-    } catch (error) {
-        importStatus.textContent = 'Import failed.';
-    }
-});
-</script>
 @endpush
 @endsection

@@ -75,35 +75,5 @@
 </div>
 
 @push('scripts')
-<script>
-const templateForm = document.getElementById('template-form');
-const templateMessage = document.getElementById('template-message');
-
-templateForm?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    templateMessage.textContent = 'Saving...';
-
-    const formData = new FormData(templateForm);
-
-    try {
-        const response = await fetch(templateForm.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        });
-
-        const data = await response.json();
-        templateMessage.textContent = data.message || 'Template saved.';
-        if (response.ok) {
-            setTimeout(() => window.location.reload(), 800);
-        }
-    } catch (error) {
-        templateMessage.textContent = 'Failed to save template.';
-    }
-});
-</script>
 @endpush
 @endsection

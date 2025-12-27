@@ -24,9 +24,9 @@ class PricingController extends Controller
     public function calculate(Request $request): JsonResponse
     {
         $request->validate([
-            'variant_id' => 'required|exists:lunar_product_variants,id',
+            'variant_id' => 'required|exists:product_variants,id',
             'quantity' => 'required|integer|min:1',
-            'currency_id' => 'sometimes|exists:lunar_currencies,id',
+            'currency_id' => 'sometimes|exists:currencies,id',
             'customer_group' => 'sometimes|string',
             'region' => 'sometimes|string',
         ]);
@@ -57,8 +57,8 @@ class PricingController extends Controller
     public function tiers(Request $request): JsonResponse
     {
         $request->validate([
-            'variant_id' => 'required|exists:lunar_product_variants,id',
-            'currency_id' => 'sometimes|exists:lunar_currencies,id',
+            'variant_id' => 'required|exists:product_variants,id',
+            'currency_id' => 'sometimes|exists:currencies,id',
             'customer_group' => 'sometimes|string',
             'region' => 'sometimes|string',
         ]);
@@ -90,8 +90,8 @@ class PricingController extends Controller
     public function volumeDiscounts(Request $request): JsonResponse
     {
         $request->validate([
-            'variant_id' => 'required|exists:lunar_product_variants,id',
-            'currency_id' => 'sometimes|exists:lunar_currencies,id',
+            'variant_id' => 'required|exists:product_variants,id',
+            'currency_id' => 'sometimes|exists:currencies,id',
             'customer_group' => 'sometimes|string',
         ]);
 

@@ -348,13 +348,13 @@ class InventoryService
         $query = InventoryLevel::where('product_variant_id', $variant->id)
             ->whereRaw('(quantity - reserved_quantity) > 0')
             ->with('warehouse')
-            ->join('lunar_warehouses', 'lunar_inventory_levels.warehouse_id', '=', 'lunar_warehouses.id')
-            ->where('lunar_warehouses.is_active', true)
-            ->orderBy('lunar_warehouses.priority')
-            ->orderByDesc('lunar_inventory_levels.quantity');
+            ->join('warehouses', 'inventory_levels.warehouse_id', '=', 'warehouses.id')
+            ->where('warehouses.is_active', true)
+            ->orderBy('warehouses.priority')
+            ->orderByDesc('inventory_levels.quantity');
 
         if ($preferredWarehouseId) {
-            $query->orderByRaw("CASE WHEN lunar_inventory_levels.warehouse_id = {$preferredWarehouseId} THEN 0 ELSE 1 END");
+            $query->orderByRaw("CASE WHEN inventory_levels.warehouse_id = {$preferredWarehouseId} THEN 0 ELSE 1 END");
         }
 
         $levels = $query->get();

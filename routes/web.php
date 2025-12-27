@@ -73,11 +73,15 @@ Route::get('/{locale}/r/{code}', ReferralLandingPage::class)
     ->name('frontend.referrals.landing');
 
 Route::get('/products', ProductIndex::class)->name('frontend.products.index');
-Route::get('/products/{slug}', ProductShow::class)->name('frontend.products.show');
+Route::get('/products/{slug}', ProductShow::class)
+    ->middleware('canonical.product-slug')
+    ->name('frontend.products.show');
 
 Route::get('/collections', CollectionsIndex::class)->name('frontend.collections.index');
 Route::get('/collections/{collection}/filter', [\App\Http\Controllers\Frontend\CollectionFilterController::class, 'index'])->name('frontend.collections.filter');
-Route::get('/collections/{slug}', CollectionShow::class)->name('frontend.collections.show');
+Route::get('/collections/{slug}', CollectionShow::class)
+    ->middleware('canonical.collection-slug')
+    ->name('frontend.collections.show');
 
 // Category routes with SEO-friendly URLs
 Route::prefix('categories')->name('categories.')->group(function () {
@@ -601,6 +605,5 @@ Route::prefix('admin/products/export')->name('admin.products.export.')->middlewa
     Route::post('/', [\App\Http\Controllers\Admin\ProductExportController::class, 'export'])->name('export');
     Route::get('/columns', [\App\Http\Controllers\Admin\ProductExportController::class, 'columns'])->name('columns');
 });
-
 
 

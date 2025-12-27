@@ -103,7 +103,7 @@ class ProductResourceExtension extends ResourceExtension
                 });
             })
             ->sortable(query: function ($query, string $direction) {
-                $tablePrefix = config('lunar.database.table_prefix', 'lunar_');
+                $tablePrefix = config('lunar.database.table_prefix', '');
                 return $query->join($tablePrefix . 'brands', $tablePrefix . 'products.brand_id', '=', $tablePrefix . 'brands.id')
                     ->orderBy($tablePrefix . 'brands.name', $direction)
                     ->select($tablePrefix . 'products.*');
@@ -132,4 +132,3 @@ class ProductResourceExtension extends ResourceExtension
         return $table->columns($columns);
     }
 }
-

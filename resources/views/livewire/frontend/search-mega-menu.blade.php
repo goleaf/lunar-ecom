@@ -14,7 +14,7 @@
                 inputmode="search"
                 autocomplete="off"
                 placeholder="{{ __('frontend.nav.search_placeholder') }}"
-                class="w-full border rounded px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full h-11 border border-slate-300 border-l-0 rounded-l-none rounded-r-xl bg-white px-4 pr-12 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[rgba(242,104,75,0.35)]"
                 wire:model.live.debounce.250ms="query"
                 wire:focus="openDropdown"
                 wire:keydown.escape="close"
@@ -25,7 +25,7 @@
 
             <button
                 type="submit"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                class="absolute right-0 top-0 h-11 w-12 inline-flex items-center justify-center rounded-r-xl bg-[rgba(242,104,75,1)] text-white hover:bg-[rgba(213,86,59,1)]"
                 aria-label="{{ __('frontend.nav.search_placeholder') }}"
             >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,7 +36,7 @@
     </form>
 
     @if($open)
-        <div class="absolute z-50 mt-2 right-0 w-[46rem] max-w-[calc(100vw-2rem)] bg-white border rounded-xl shadow-lg overflow-hidden">
+        <div class="absolute z-50 mt-2 left-0 w-[46rem] max-w-[calc(100vw-2rem)] bg-white border rounded-xl shadow-lg overflow-hidden">
             <div class="relative">
                 <div wire:loading.flex wire:target="query" class="absolute inset-0 bg-white/70 backdrop-blur-sm items-center justify-center z-10">
                     <div class="text-sm text-gray-600">Searching…</div>

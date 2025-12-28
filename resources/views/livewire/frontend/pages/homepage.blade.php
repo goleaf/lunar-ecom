@@ -403,7 +403,7 @@
                             @endif
                         </div>
                         <div class="mt-6 flex items-center justify-between text-xs uppercase text-muted">
-                            <span>{{ __('frontend.collections') }}</span>
+                            <span>{{ __('frontend.nav.collections') }}</span>
                             <span class="text-base font-semibold text-ink">{{ $featuredCollections->count() }}</span>
                         </div>
                     </div>

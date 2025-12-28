@@ -4,6 +4,7 @@ namespace App\Livewire\Frontend\Pages;
 
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\Product;
 use App\Models\PromotionalBanner;
 use App\Services\SEOService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -103,6 +104,8 @@ class Homepage extends Component
             request()->url(),
         );
 
+        $categorySpotlights = $this->getCategorySpotlights();
+
         $pageMeta = new HtmlString(view('frontend.homepage._meta', [
             'metaTags' => $metaTags,
         ])->render());
@@ -111,6 +114,7 @@ class Homepage extends Component
             'featuredCollections' => $this->featuredCollections,
             'heroCollections' => $this->heroCollections,
             'navigationCategories' => $this->navigationCategories,
+            'categorySpotlights' => $categorySpotlights,
             'bestsellers' => $this->bestsellers,
             'newArrivals' => $this->newArrivals,
             'promotionalBanners' => $this->promotionalBanners,
@@ -119,6 +123,37 @@ class Homepage extends Component
             'pageMeta' => $pageMeta,
             'mainClass' => 'max-w-none p-0',
         ]);
+    }
+
+    protected function getCategorySpotlights(int $categoryLimit = 4, int $productLimit = 12): SupportCollection
+    {
+        if (!isset($this->navigationCategories) || $this->navigationCategories->isEmpty()) {
+            return collect();
+        }
+
+        return $this->navigationCategories
+            ->take($categoryLimit)
+            ->map(function (Category $category) use ($productLimit) {
+                $categoryIds = $category->descendants()->pluck('id')->push($category->id);
+                $categoryTable = $category->getTable();
+
+                $products = Product::query()
+                    ->published()
+                    ->whereHas('categories', function ($query) use ($categoryIds, $categoryTable) {
+                        $query->whereIn($categoryTable.'.id', $categoryIds);
+                    })
+                    ->with(['urls', 'media', 'variants'])
+                    ->latest('published_at')
+                    ->limit($productLimit)
+                    ->get();
+
+                return [
+                    'category' => $category,
+                    'products' => $products,
+                ];
+            })
+            ->filter(fn (array $row) => $row['products']->isNotEmpty())
+            ->values();
     }
 
     protected function getPromotionalBanners(): SupportCollection

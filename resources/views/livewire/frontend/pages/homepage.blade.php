@@ -142,6 +142,85 @@
             ->values();
     @endphp
 
+    {{-- Newsletter modal (original implementation; inspired by common ecommerce patterns) --}}
+    <div
+        x-data="{
+            open: false,
+            email: '',
+            saved: false,
+            show() {
+                if (localStorage.getItem('newsletterDismissed') === '1') return;
+                this.open = true;
+            },
+            dismiss() {
+                this.open = false;
+                localStorage.setItem('newsletterDismissed', '1');
+            },
+            submit() {
+                if (!this.email) return;
+                this.saved = true;
+                // TODO: wire to real newsletter endpoint/provider.
+                setTimeout(() => this.dismiss(), 900);
+            },
+        }"
+        x-init="setTimeout(() => show(), 1200)"
+        x-cloak
+    >
+        <div
+            x-show="open"
+            x-transition.opacity
+            class="fixed inset-0 z-[60] flex items-center justify-center px-4"
+            role="dialog"
+            aria-modal="true"
+        >
+            <div class="absolute inset-0 bg-black/50" @click="dismiss()"></div>
+            <div class="relative w-full max-w-xl rounded-3xl surface-card p-8">
+                <button
+                    type="button"
+                    class="absolute right-5 top-5 rounded-full p-2 text-muted hover:bg-black/5"
+                    aria-label="Close"
+                    @click="dismiss()"
+                >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                    {{ __('frontend.common.shop_now') }}
+                </p>
+                <h2 class="mt-3 font-display text-3xl text-ink">
+                    Updates, early drops, and offers
+                </h2>
+                <p class="mt-3 text-sm text-muted">
+                    Subscribe to get notified when new collections land.
+                </p>
+
+                <form class="mt-6 flex flex-col gap-3 sm:flex-row" @submit.prevent="submit()">
+                    <label class="sr-only" for="newsletter-email">Email</label>
+                    <input
+                        id="newsletter-email"
+                        type="email"
+                        required
+                        x-model="email"
+                        placeholder="you@example.com"
+                        class="w-full rounded-full border border-black/10 bg-white px-5 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-[rgba(242,104,75,0.35)]"
+                    >
+                    <button
+                        type="submit"
+                        class="btn-primary inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-semibold"
+                    >
+                        Subscribe
+                    </button>
+                </form>
+
+                <p x-show="saved" x-transition.opacity class="mt-4 text-sm font-semibold text-ink">
+                    Thanks — you’re on the list.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <section class="relative overflow-hidden">
         <div class="absolute inset-0 pointer-events-none">
             <div class="absolute -top-24 right-0 h-64 w-64 rounded-full bg-[rgba(242,104,75,0.22)] blur-3xl"></div>
@@ -149,7 +228,49 @@
         </div>
 
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-            <div class="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+            <div class="grid gap-8 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,1.25fr)_minmax(0,0.65fr)]">
+                <aside class="surface-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                            {{ __('frontend.categories') }}
+                        </p>
+                        <a
+                            href="{{ route('categories.index') }}"
+                            class="text-xs font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
+                        >
+                            {{ __('frontend.common.view_all') }} →
+                        </a>
+                    </div>
+
+                    <nav class="mt-4 space-y-1">
+                        @foreach($navigationCategories as $category)
+                            <a
+                                href="{{ route('categories.show', $category->getFullPath()) }}"
+                                class="group flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-ink hover:bg-white/80"
+                            >
+                                <span class="truncate group-hover:text-[rgba(242,104,75,1)]">
+                                    {{ $category->getName() }}
+                                </span>
+                                <svg class="h-4 w-4 text-muted group-hover:text-[rgba(242,104,75,1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        @endforeach
+                    </nav>
+
+                    <div class="mt-6 rounded-2xl bg-surface-strong p-4">
+                        <p class="text-sm font-semibold text-ink">
+                            {{ __('frontend.homepage.hero_subtitle') }}
+                        </p>
+                        <a
+                            href="{{ route('frontend.products.index') }}"
+                            class="mt-4 inline-flex items-center justify-center rounded-full bg-ink px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+                        >
+                            {{ __('frontend.common.shop_now') }}
+                        </a>
+                    </div>
+                </aside>
+
                 <div class="hero-section relative rounded-[28px] border border-white/70 bg-white/70 shadow-[0_24px_60px_rgba(15,27,30,0.16)] overflow-hidden">
                     @if($heroCollections->isNotEmpty())
                         <div class="relative min-h-[520px] sm:min-h-[620px]">

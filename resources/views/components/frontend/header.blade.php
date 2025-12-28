@@ -9,8 +9,11 @@
             <p class="text-xs sm:text-sm">
                 Free shipping worldwide (limited time)
             </p>
-            <a href="{{ route('frontend.products.index') }}" class="text-xs sm:text-sm font-semibold underline-offset-2 hover:underline">
-                {{ __('frontend.common.shop_now') }}
+            <a
+                href="{{ route('frontend.homepage', ['newsletter' => 1]) }}"
+                class="text-xs sm:text-sm font-semibold underline-offset-2 hover:underline"
+            >
+                Subscribe &amp; Save
             </a>
         </div>
     </div>

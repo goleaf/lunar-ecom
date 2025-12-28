@@ -345,22 +345,23 @@ Lunar automatically falls back to the default language when a translation is mis
 ### How It Works
 
 1. **Current Locale**: First, the system tries to get the translation for the current locale
-2. **Default Language**: If not found, it falls back to the default language (English)
+2. **Default Language**: If not found, it falls back to the default language (Lithuanian)
 3. **First Available**: As a last resort, it uses the first available translation
 
 ### Example
 
 ```php
-// Product with only English and French translations
+// Product with Lithuanian, English, and French translations
 $product->attribute_data = [
     'name' => TranslatedText([
+        'lt' => 'Ausinės',
         'en' => 'Headphones',
         'fr' => 'Écouteurs',
     ]),
 ];
 
 // Current locale is German (de)
-$name = $product->translateAttribute('name'); // Returns 'Headphones' (fallback to default)
+$name = $product->translateAttribute('name'); // Returns 'Ausinės' (fallback to default)
 ```
 
 ### Custom Fallback Chain
@@ -368,11 +369,11 @@ $name = $product->translateAttribute('name'); // Returns 'Headphones' (fallback 
 You can specify a custom locale to use:
 
 ```php
-// Get French, fallback to English, then first available
+// Get French, fallback to Lithuanian, then first available
 $name = $product->translateAttribute('name', 'fr'); // Returns 'Écouteurs'
 
 // Try German, falls back to default
-$name = $product->translateAttribute('name', 'de'); // Returns 'Headphones'
+$name = $product->translateAttribute('name', 'de'); // Returns 'Ausinės'
 ```
 
 ## Seamless Laravel Integration
@@ -588,7 +589,7 @@ if (LanguageHelper::exists('es')) {
 
 ## Best Practices
 
-1. **Always provide default language translations**: Ensure all content has at least a default language (English) translation.
+1. **Always provide default language translations**: Ensure all content has at least a default language (Lithuanian) translation.
 
 2. **Use fallback wisely**: The automatic fallback to default language ensures users always see content, even if not in their preferred language.
 
@@ -626,4 +627,3 @@ if (LanguageHelper::exists('es')) {
 - [Laravel Localization](https://laravel.com/docs/localization)
 - [Attribute System Guide](./PRODUCT_ATTRIBUTES_SYSTEM.md)
 - [Multi-Language Setup](./MULTI_LANGUAGE_SETUP.md)
-

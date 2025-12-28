@@ -1,10 +1,11 @@
 @props(['collection'])
 
 @php
-    $collectionImage = $collection->getFirstMedia('images') 
-        ?? $collection->getFirstMedia('hero')
-        ?? $collection->products->first()?->getFirstMedia('images');
-    $productCount = $collection->products()->count();
+    $collectionImage = $collection->getFirstMedia('images')
+        ?? $collection->getFirstMedia('hero');
+
+    // Prefer withCount('products') when available to avoid N+1 queries.
+    $productCount = $collection->products_count ?? $collection->products()->count();
     $url = $collection->urls->first()?->slug ?? $collection->id;
 @endphp
 

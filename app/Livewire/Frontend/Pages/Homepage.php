@@ -27,6 +27,11 @@ class Homepage extends Component
      */
     public EloquentCollection $navigationCategories;
 
+    /**
+     * Latest products site-wide (for "Newly added" section).
+     */
+    public EloquentCollection $newlyAddedProducts;
+
     public ?Collection $bestsellers = null;
 
     public ?Collection $newArrivals = null;
@@ -50,6 +55,13 @@ class Homepage extends Component
             ->whereNull('parent_id')
             ->ordered()
             ->with('media')
+            ->limit(12)
+            ->get();
+
+        $this->newlyAddedProducts = Product::query()
+            ->published()
+            ->with(['urls', 'media', 'variants'])
+            ->latest('published_at')
             ->limit(12)
             ->get();
 
@@ -115,6 +127,7 @@ class Homepage extends Component
             'heroCollections' => $this->heroCollections,
             'navigationCategories' => $this->navigationCategories,
             'categorySpotlights' => $categorySpotlights,
+            'newlyAddedProducts' => $this->newlyAddedProducts,
             'bestsellers' => $this->bestsellers,
             'newArrivals' => $this->newArrivals,
             'promotionalBanners' => $this->promotionalBanners,

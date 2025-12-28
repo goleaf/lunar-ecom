@@ -8,6 +8,7 @@
         mobileOpen: false,
         catOpen: false,
         catActive: 0,
+        scrolled: false,
         openMobile() { this.mobileOpen = true; },
         closeMobile() { this.mobileOpen = false; },
         toggleCatDesktop() {
@@ -15,7 +16,13 @@
             if (this.catOpen) this.catActive = 0;
         },
         closeCat() { this.catOpen = false; },
+        initSticky() {
+            const onScroll = () => { this.scrolled = (window.scrollY || 0) > 10; };
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        },
     }"
+    x-init="initSticky()"
     x-effect="document.documentElement.classList.toggle('overflow-hidden', mobileOpen)"
     @keydown.escape.window="closeMobile(); closeCat()"
 >
@@ -156,9 +163,10 @@
         </div>
     </div>
 
-    {{-- Main header row --}}
-    <div class="border-b border-slate-300/70 bg-slate-100">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+    <div class="sticky top-0 z-50" :class="scrolled ? 'shadow-lg' : ''">
+        {{-- Main header row --}}
+        <div class="border-b" :class="scrolled ? 'bg-white/90 backdrop-blur-md border-slate-200' : 'border-slate-300/70 bg-slate-100'">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" :class="scrolled ? 'py-3' : 'py-4'">
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
                 <div class="flex items-center justify-between gap-3">
                     <button
@@ -185,13 +193,67 @@
                             <livewire:frontend.currency-selector />
                         </div>
 
+                        {{-- Account links --}}
                         @auth
-                            <a href="{{ route('frontend.addresses.index') }}" class="hidden lg:inline text-sm font-semibold text-slate-700 hover:text-slate-900">
-                                {{ __('frontend.nav.addresses') }}
-                            </a>
-                            <a href="{{ route('frontend.downloads.index') }}" class="hidden lg:inline text-sm font-semibold text-slate-700 hover:text-slate-900">
-                                {{ __('frontend.nav.downloads') }}
-                            </a>
+                            <div class="hidden lg:block relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                    @click="open = !open"
+                                    aria-haspopup="true"
+                                    :aria-expanded="open ? 'true' : 'false'"
+                                >
+                                    My account
+                                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div
+                                    x-show="open"
+                                    x-transition.origin.top.right
+                                    x-cloak
+                                    @click.outside="open = false"
+                                    class="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-xl ring-1 ring-black/10 overflow-hidden z-50"
+                                >
+                                    <div class="p-2">
+                                        <a href="{{ route('frontend.addresses.index') }}" class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                            {{ __('frontend.nav.addresses') }}
+                                        </a>
+                                        <a href="{{ route('frontend.downloads.index') }}" class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                            {{ __('frontend.nav.downloads') }}
+                                        </a>
+                                        @if (Route::has('dashboard'))
+                                            <a href="{{ route('dashboard') }}" class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900">
+                                                Dashboard
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if (Route::has('logout'))
+                                        <div class="border-t bg-slate-50 p-2">
+                                            <form method="POST" action="{{ route('logout') }}">
+                                                @csrf
+                                                <button type="submit" class="w-full text-left rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-white hover:text-slate-900">
+                                                    Log out
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @else
+                            @if (Route::has('login'))
+                                <div class="hidden lg:flex items-center gap-2">
+                                    <a href="{{ route('login') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                        Log in
+                                    </a>
+                                    @if (Route::has('register'))
+                                        <a href="{{ route('register') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                            Sign up
+                                        </a>
+                                    @endif
+                                </div>
+                            @endif
                         @endauth
 
                         @include('frontend.components.cart-widget')
@@ -330,12 +392,12 @@
                 {{-- Actions moved into the logo row for unique cart widget ID --}}
             </div>
         </div>
-    </div>
+        </div>
 
-    {{-- Category menu row --}}
-    <nav class="hidden lg:block bg-white border-b border-slate-200">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center gap-6 overflow-x-auto py-3">
+        {{-- Category menu row --}}
+        <nav class="hidden lg:block border-b border-slate-200" :class="scrolled ? 'bg-white/90 backdrop-blur-md' : 'bg-white'">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-6 overflow-x-auto py-3">
                 <a href="{{ route('frontend.products.index') }}" class="whitespace-nowrap text-sm font-semibold text-slate-700 hover:text-slate-900">
                     {{ __('frontend.nav.products') }}
                 </a>
@@ -400,8 +462,9 @@
                         </a>
                     @endif
                 @endforeach
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </div>
 </header>
 

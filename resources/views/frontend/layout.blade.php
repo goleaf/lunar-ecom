@@ -49,50 +49,7 @@
 </head>
 <body class="bg-gray-50" data-app="frontend">
     <div id="app" class="min-h-screen bg-gray-50">
-        <nav class="bg-white shadow">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex">
-                        <a href="{{ route('frontend.homepage') }}" class="flex items-center px-2 py-2 text-xl font-bold text-gray-900">
-                            {{ config('app.name', 'Store') }}
-                        </a>
-                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                            <a href="{{ route('frontend.products.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.nav.products') }}
-                            </a>
-                            <a href="{{ route('frontend.bundles.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.nav.bundles') }}
-                            </a>
-                            <a href="{{ route('frontend.collections.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.nav.collections') }}
-                            </a>
-                            <a href="{{ route('categories.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.categories') }}
-                            </a>
-                            <a href="{{ route('frontend.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
-                                {{ __('frontend.nav.brands') }}
-                            </a>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <div class="mr-4 w-64">
-                            @include('frontend.components.search-autocomplete')
-                        </div>
-                        <livewire:frontend.language-selector />
-                        <livewire:frontend.currency-selector />
-                        @auth
-                            <a href="{{ route('frontend.addresses.index') }}" class="text-gray-700 hover:text-gray-900">
-                                {{ __('frontend.nav.addresses') }}
-                            </a>
-                            <a href="{{ route('frontend.downloads.index') }}" class="text-gray-700 hover:text-gray-900">
-                                {{ __('frontend.nav.downloads') }}
-                            </a>
-                        @endauth
-                        @include('frontend.components.cart-widget')
-                    </div>
-                </div>
-            </div>
-        </nav>
+        <x-frontend.header />
 
         @php
             $mainClass = $mainClass ?? 'max-w-7xl mx-auto py-6 sm:px-6 lg:px-8';

@@ -68,21 +68,21 @@ class MultilingualContentExampleSeeder extends Seeder
                 'product_type_id' => $productType->id,
                 'status' => 'published',
                 'attribute_data' => collect([
-                    'name' => AttributeHelper::translatedText([
-                        'en' => 'Premium Wireless Headphones',
-                        'fr' => 'Ecouteurs sans fil premium',
-                        'es' => 'Auriculares inalambricos premium',
-                        'de' => 'Premium-Kopfhorer',
-                        'zh' => 'Premium Wireless Headphones',
+                        'name' => AttributeHelper::translatedText([
+                            'en' => 'Premium Wireless Headphones',
+                            'fr' => 'Ecouteurs sans fil premium',
+                            'es' => 'Auriculares inalambricos premium',
+                            'de' => 'Premium-Kopfhorer',
+                            'lt' => 'Aukštos kokybės belaidės ausinės',
+                        ]),
+                        'description' => AttributeHelper::translatedText([
+                            'en' => 'High-quality wireless headphones with active noise cancellation technology. Perfect for music lovers and professionals.',
+                            'fr' => 'Ecouteurs sans fil de haute qualite avec annulation active du bruit. Parfait pour les amateurs de musique et les professionnels.',
+                            'es' => 'Auriculares inalambricos de alta calidad con cancelacion activa de ruido. Perfecto para amantes de la musica y profesionales.',
+                            'de' => 'Hochwertige Funkkopfhorer mit aktiver Gerauschunterdruckung. Perfekt fur Musikliebhaber und Profis.',
+                            'lt' => 'Aukštos kokybės belaidės ausinės su aktyvaus triukšmo slopinimo technologija. Puikiai tinka muzikos mėgėjams ir profesionalams.',
+                        ]),
                     ]),
-                    'description' => AttributeHelper::translatedText([
-                        'en' => 'High-quality wireless headphones with active noise cancellation technology. Perfect for music lovers and professionals.',
-                        'fr' => 'Ecouteurs sans fil de haute qualite avec annulation active du bruit. Parfait pour les amateurs de musique et les professionnels.',
-                        'es' => 'Auriculares inalambricos de alta calidad con cancelacion activa de ruido. Perfecto para amantes de la musica y profesionales.',
-                        'de' => 'Hochwertige Funkkopfhorer mit aktiver Gerauschunterdruckung. Perfekt fur Musikliebhaber und Profis.',
-                        'zh' => 'High-quality wireless headphones with active noise cancellation technology.',
-                    ]),
-                ]),
             ])
             ->create();
 
@@ -121,12 +121,12 @@ class MultilingualContentExampleSeeder extends Seeder
                     'name' => AttributeHelper::translatedText([
                         'en' => 'Leather Boots',
                         'fr' => 'Bottes en cuir',
-                        // Missing es, de, zh - will fallback to English.
+                        // Missing es, de, lt - will fallback to English.
                     ]),
                     'description' => AttributeHelper::translatedText([
                         'en' => 'Premium leather boots with excellent durability and style.',
                         'fr' => 'Bottes en cuir premium avec une excellente durabilite et un style elegant.',
-                        // Missing es, de, zh - will fallback to English.
+                        // Missing es, de, lt - will fallback to English.
                     ]),
                 ]),
             ])
@@ -174,14 +174,14 @@ class MultilingualContentExampleSeeder extends Seeder
                         'fr' => 'Electronique',
                         'es' => 'Electronica',
                         'de' => 'Elektronik',
-                        'zh' => 'Electronics',
+                        'lt' => 'Elektronika',
                     ]),
                     'description' => AttributeHelper::translatedText([
                         'en' => 'All electronics and gadgets',
                         'fr' => 'Tous les appareils electroniques et gadgets',
                         'es' => 'Todos los aparatos electronicos y gadgets',
                         'de' => 'Alle Elektronik und Gadgets',
-                        'zh' => 'All electronics and gadgets',
+                        'lt' => 'Visa elektronika ir įrenginiai',
                     ]),
                 ]),
             ])
@@ -212,7 +212,7 @@ class MultilingualContentExampleSeeder extends Seeder
                             'fr' => $collectionName,
                             'es' => $collectionName,
                             'de' => $collectionName,
-                            'zh' => $collectionName,
+                            'lt' => $collectionName,
                         ]),
                     ]),
                 ])

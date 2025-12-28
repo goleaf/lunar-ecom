@@ -16,12 +16,16 @@
             this.currentSlide = 0;
             this.autoplayInterval = null;
             this.autoplayDelay = 5000; // 5 seconds
+            this.prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
             this.init();
         }
 
         init() {
-            if (this.slides.length <= 1) return;
+            if (this.container.dataset.heroSliderInitialized === 'true') return;
+            this.container.dataset.heroSliderInitialized = 'true';
+
+            if (this.slides.length === 0) return;
 
             // Set up event listeners
             if (this.prevBtn) {
@@ -37,24 +41,58 @@
                 dot.addEventListener('click', () => this.goToSlide(index));
             });
 
-            // Start autoplay
-            this.startAutoplay();
+            // Ensure initial state is consistent (classes + aria)
+            this.slides.forEach((slide, index) => {
+                this.setSlideActive(slide, index === this.currentSlide);
+            });
+            this.dots.forEach((dot, index) => {
+                this.setDotActive(dot, index === this.currentSlide);
+            });
+
+            // Start autoplay unless reduced motion is requested
+            if (!this.prefersReducedMotion && this.slides.length > 1) {
+                this.startAutoplay();
+            }
 
             // Pause autoplay on hover
             this.container.addEventListener('mouseenter', () => this.stopAutoplay());
             this.container.addEventListener('mouseleave', () => this.startAutoplay());
 
             // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
+            this.onKeyDown = (e) => {
+                const activeEl = document.activeElement;
+                const isTyping = activeEl && (
+                    activeEl.tagName === 'INPUT' ||
+                    activeEl.tagName === 'TEXTAREA' ||
+                    activeEl.tagName === 'SELECT' ||
+                    activeEl.isContentEditable
+                );
+
+                if (isTyping) return;
                 if (e.key === 'ArrowLeft') this.prevSlide();
                 if (e.key === 'ArrowRight') this.nextSlide();
-            });
+            };
+            document.addEventListener('keydown', this.onKeyDown);
+
+            // Pause autoplay when tab is hidden
+            this.onVisibilityChange = () => {
+                if (document.hidden) {
+                    this.stopAutoplay();
+                } else if (!this.prefersReducedMotion) {
+                    this.startAutoplay();
+                }
+            };
+            document.addEventListener('visibilitychange', this.onVisibilityChange);
         }
 
         goToSlide(index) {
-            // Remove active class from current slide and dot
-            this.slides[this.currentSlide].classList.remove('active');
-            this.dots[this.currentSlide]?.classList.remove('active');
+            if (this.slides.length === 0) return;
+
+            // Remove active styling from current slide and dot
+            this.setSlideActive(this.slides[this.currentSlide], false);
+            if (this.dots[this.currentSlide]) {
+                this.setDotActive(this.dots[this.currentSlide], false);
+            }
 
             // Set new current slide
             this.currentSlide = index % this.slides.length;
@@ -62,12 +100,34 @@
                 this.currentSlide = this.slides.length - 1;
             }
 
-            // Add active class to new slide and dot
-            this.slides[this.currentSlide].classList.add('active');
-            this.dots[this.currentSlide]?.classList.add('active');
+            // Add active styling to new slide and dot
+            this.setSlideActive(this.slides[this.currentSlide], true);
+            if (this.dots[this.currentSlide]) {
+                this.setDotActive(this.dots[this.currentSlide], true);
+            }
 
             // Reset autoplay
             this.resetAutoplay();
+        }
+
+        setSlideActive(slide, isActive) {
+            if (!slide) return;
+            slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+
+            // Tailwind-driven state
+            slide.classList.toggle('opacity-100', isActive);
+            slide.classList.toggle('z-10', isActive);
+            slide.classList.toggle('opacity-0', !isActive);
+            slide.classList.toggle('pointer-events-none', !isActive);
+        }
+
+        setDotActive(dot, isActive) {
+            if (!dot) return;
+            dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+
+            dot.classList.toggle('bg-white', isActive);
+            dot.classList.toggle('opacity-100', isActive);
+            dot.classList.toggle('opacity-60', !isActive);
         }
 
         nextSlide() {
@@ -79,6 +139,10 @@
         }
 
         startAutoplay() {
+            if (this.prefersReducedMotion) return;
+            if (this.slides.length <= 1) return;
+            if (this.autoplayInterval) return;
+
             this.autoplayInterval = setInterval(() => {
                 this.nextSlide();
             }, this.autoplayDelay);
@@ -94,62 +158,6 @@
         resetAutoplay() {
             this.stopAutoplay();
             this.startAutoplay();
-        }
-    }
-
-    // Lazy Loading
-    class LazyLoader {
-        constructor() {
-            this.images = document.querySelectorAll('img[loading="lazy"]');
-            this.imageObserver = null;
-
-            this.init();
-        }
-
-        init() {
-            if ('IntersectionObserver' in window) {
-                this.imageObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            this.loadImage(img);
-                            this.imageObserver.unobserve(img);
-                        }
-                    });
-                }, {
-                    rootMargin: '50px'
-                });
-
-                this.images.forEach(img => {
-                    this.imageObserver.observe(img);
-                });
-            } else {
-                // Fallback for browsers without IntersectionObserver
-                this.images.forEach(img => {
-                    this.loadImage(img);
-                });
-            }
-        }
-
-        loadImage(img) {
-            if (img.dataset.src) {
-                img.src = img.dataset.src;
-                delete img.dataset.src;
-            }
-            
-            img.addEventListener('load', () => {
-                img.classList.add('loaded');
-                // Remove loading placeholder from parent
-                const card = img.closest('.collection-card, .promotional-banner');
-                if (card) {
-                    card.classList.add('loaded');
-                }
-            });
-
-            img.addEventListener('error', () => {
-                // Handle error - show placeholder
-                img.src = '/images/placeholder.jpg';
-            });
         }
     }
 
@@ -172,55 +180,19 @@
         });
     }
 
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize hero slider
+    function initHomepage() {
         const heroSection = document.querySelector('.hero-section');
         if (heroSection) {
             new HeroSlider(heroSection);
         }
 
-        // Initialize lazy loading
-        new LazyLoader();
-
-        // Initialize smooth scroll
         initSmoothScroll();
+    }
 
-        // Add fade-in animation on scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+    // Initialize on first load
+    document.addEventListener('DOMContentLoaded', initHomepage);
 
-        const fadeInObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('fade-in-visible');
-                    fadeInObserver.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        // Observe sections for fade-in
-        document.querySelectorAll('.featured-collections, .bestsellers, .new-arrivals').forEach(section => {
-            section.classList.add('fade-in-section');
-            fadeInObserver.observe(section);
-        });
-    });
-
-    // Add fade-in styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-        .fade-in-section.fade-in-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    `;
-    document.head.appendChild(style);
+    // Re-initialize after Livewire navigation (if enabled)
+    document.addEventListener('livewire:navigated', initHomepage);
 })();
 

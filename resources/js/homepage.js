@@ -60,6 +60,11 @@
 
             // Keyboard navigation
             this.onKeyDown = (e) => {
+                if (!this.container.isConnected) {
+                    this.destroy();
+                    return;
+                }
+
                 const activeEl = document.activeElement;
                 const isTyping = activeEl && (
                     activeEl.tagName === 'INPUT' ||
@@ -76,6 +81,11 @@
 
             // Pause autoplay when tab is hidden
             this.onVisibilityChange = () => {
+                if (!this.container.isConnected) {
+                    this.destroy();
+                    return;
+                }
+
                 if (document.hidden) {
                     this.stopAutoplay();
                 } else if (!this.prefersReducedMotion) {
@@ -159,11 +169,26 @@
             this.stopAutoplay();
             this.startAutoplay();
         }
+
+        destroy() {
+            this.stopAutoplay();
+
+            if (this.onKeyDown) {
+                document.removeEventListener('keydown', this.onKeyDown);
+            }
+
+            if (this.onVisibilityChange) {
+                document.removeEventListener('visibilitychange', this.onVisibilityChange);
+            }
+        }
     }
 
     // Smooth Scroll
     function initSmoothScroll() {
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            if (anchor.dataset.smoothScrollBound === 'true') return;
+            anchor.dataset.smoothScrollBound = 'true';
+
             anchor.addEventListener('click', function (e) {
                 const href = this.getAttribute('href');
                 if (href === '#') return;
@@ -182,7 +207,7 @@
 
     function initHomepage() {
         const heroSection = document.querySelector('.hero-section');
-        if (heroSection) {
+        if (heroSection && heroSection.dataset.heroSliderInitialized !== 'true') {
             new HeroSlider(heroSection);
         }
 

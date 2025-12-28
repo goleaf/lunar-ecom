@@ -1,3 +1,128 @@
+@push('styles')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+    <style>
+        .homepage {
+            --ink: #0f1b1e;
+            --muted: #566368;
+            --accent: #f2684b;
+            --accent-deep: #d5563b;
+            --surface: #f7f2eb;
+            --surface-strong: #efe6db;
+            --sea: #2aa6a1;
+            background: radial-gradient(circle at top right, rgba(242, 104, 75, 0.12), transparent 45%),
+                radial-gradient(circle at 12% 18%, rgba(42, 166, 161, 0.14), transparent 40%),
+                var(--surface);
+            color: var(--ink);
+            font-family: 'Manrope', 'Instrument Sans', ui-sans-serif, sans-serif;
+        }
+
+        .homepage .font-display {
+            font-family: 'Fraunces', serif;
+        }
+
+        .homepage .text-muted {
+            color: var(--muted);
+        }
+
+        .homepage .bg-surface {
+            background: var(--surface);
+        }
+
+        .homepage .bg-surface-strong {
+            background: var(--surface-strong);
+        }
+
+        .homepage .surface-card {
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: 0 18px 45px rgba(15, 27, 30, 0.12);
+        }
+
+        .homepage .glass-card {
+            background: rgba(11, 18, 20, 0.58);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            backdrop-filter: blur(14px);
+        }
+
+        .homepage .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(242, 104, 75, 0.35);
+        }
+
+        .homepage .btn-primary:hover {
+            background: var(--accent-deep);
+        }
+
+        .homepage .btn-outline {
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .homepage .hero-overlay {
+            background: linear-gradient(110deg, rgba(10, 16, 18, 0.82), rgba(10, 16, 18, 0.5) 45%, rgba(10, 16, 18, 0.1));
+        }
+
+        .homepage .eyebrow {
+            letter-spacing: 0.4em;
+        }
+
+        .homepage .animate-rise {
+            animation: rise 0.8s ease both;
+        }
+
+        .homepage .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .homepage .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .homepage .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .homepage .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .homepage .animate-rise,
+            .homepage .animate-float {
+                animation: none;
+            }
+        }
+    </style>
+@endpush
+
 <div class="homepage">
     @php
         $topBanners = $promotionalBanners
@@ -9,209 +134,476 @@
             ->values();
     @endphp
 
-    {{-- Hero --}}
-    @if($heroCollections->isNotEmpty())
-        <section class="hero-section relative overflow-hidden">
-            <div class="relative min-h-[520px] sm:min-h-[620px] lg:min-h-[720px]">
-                @foreach($heroCollections as $index => $collection)
-                    @php
-                        $heroImage = $collection->getFirstMedia('hero') ?? $collection->getFirstMedia('images');
-                        $collectionSlug = $collection->urls->first()?->slug ?? $collection->id;
-                    @endphp
+    <section class="relative overflow-hidden">
+        <div class="absolute inset-0 pointer-events-none">
+            <div class="absolute -top-24 right-0 h-64 w-64 rounded-full bg-[rgba(242,104,75,0.22)] blur-3xl"></div>
+            <div class="absolute bottom-0 left-6 h-72 w-72 rounded-full bg-[rgba(42,166,161,0.22)] blur-3xl"></div>
+        </div>
 
-                    <div
-                        class="hero-slide absolute inset-0 transition-opacity duration-700 ease-out {{ $index === 0 ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none' }}"
-                        data-slide-index="{{ $index }}"
-                        aria-hidden="{{ $index === 0 ? 'false' : 'true' }}"
-                    >
-                        <div class="absolute inset-0">
-                            @if($heroImage)
-                                @include('frontend.components.responsive-image', [
-                                    'media' => $heroImage,
-                                    'model' => $collection,
-                                    'collectionName' => $heroImage->collection_name ?? 'hero',
-                                    'conversion' => 'hero',
-                                    'sizeType' => 'hero',
-                                    'alt' => $collection->translateAttribute('name'),
-                                    'class' => 'w-full h-full object-cover',
-                                    'loading' => $index === 0 ? 'eager' : 'lazy',
-                                ])
-                            @endif
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+            <div class="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
+                <div class="hero-section relative rounded-[28px] border border-white/70 bg-white/70 shadow-[0_24px_60px_rgba(15,27,30,0.16)] overflow-hidden">
+                    @if($heroCollections->isNotEmpty())
+                        <div class="relative min-h-[520px] sm:min-h-[620px]">
+                            @foreach($heroCollections as $index => $collection)
+                                @php
+                                    $heroImage = $collection->getFirstMedia('hero') ?? $collection->getFirstMedia('images');
+                                    $collectionSlug = $collection->urls->first()?->slug ?? $collection->id;
+                                    $collectionCount = $collection->products_count ?? $collection->products()->count();
+                                @endphp
 
-                            <div class="absolute inset-0 bg-gradient-to-r from-gray-950/80 via-gray-950/55 to-gray-950/20"></div>
-                        </div>
-
-                        <div class="relative z-10 flex items-center h-full">
-                            <div class="w-full">
-                                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-                                    <div class="max-w-2xl">
-                                        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-white/80">
-                                            {{ __('frontend.homepage.featured_collections') }}
-                                        </p>
-
-                                        <h1 class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-semibold leading-tight text-white">
-                                            {{ $collection->translateAttribute('name') }}
-                                        </h1>
-
-                                        @if($collection->translateAttribute('description'))
-                                            <p class="mt-4 text-lg sm:text-xl text-white/90 max-w-prose">
-                                                {{ Str::limit($collection->translateAttribute('description'), 170) }}
-                                            </p>
+                                <article
+                                    class="hero-slide absolute inset-0 transition-opacity duration-700 ease-out {{ $index === 0 ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none' }}"
+                                    data-slide-index="{{ $index }}"
+                                    aria-hidden="{{ $index === 0 ? 'false' : 'true' }}"
+                                >
+                                    <div class="absolute inset-0">
+                                        @if($heroImage)
+                                            @include('frontend.components.responsive-image', [
+                                                'media' => $heroImage,
+                                                'model' => $collection,
+                                                'collectionName' => $heroImage->collection_name ?? 'hero',
+                                                'conversion' => 'hero',
+                                                'sizeType' => 'hero',
+                                                'alt' => $collection->translateAttribute('name'),
+                                                'class' => 'w-full h-full object-cover',
+                                                'loading' => $index === 0 ? 'eager' : 'lazy',
+                                            ])
                                         @endif
 
-                                        <div class="mt-8 flex flex-wrap gap-3">
-                                            <a
-                                                href="{{ route('frontend.collections.show', $collectionSlug) }}"
-                                                class="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-gray-900 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                                            >
-                                                {{ __('frontend.homepage.explore_collection') }}
-                                            </a>
+                                        <div class="absolute inset-0 hero-overlay"></div>
+                                    </div>
 
-                                            <a
-                                                href="{{ route('frontend.products.index') }}"
-                                                class="inline-flex items-center justify-center rounded-lg bg-white/10 px-6 py-3 text-sm font-semibold text-white ring-1 ring-white/30 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                                            >
-                                                {{ __('frontend.nav.products') }}
-                                            </a>
+                                    <div class="relative z-10 flex h-full">
+                                        <div class="grid w-full h-full content-between px-6 sm:px-10 py-10 sm:py-12">
+                                            <div class="max-w-2xl space-y-6">
+                                                <p class="eyebrow text-xs font-semibold uppercase text-white/75 animate-rise delay-1">
+                                                    {{ __('frontend.homepage.hero_tagline') }}
+                                                </p>
+
+                                                <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl leading-tight text-white animate-rise delay-2">
+                                                    {{ $collection->translateAttribute('name') }}
+                                                </h1>
+
+                                                <p class="text-base sm:text-lg text-white/85 max-w-prose animate-rise delay-3">
+                                                    {{ $collection->translateAttribute('description')
+                                                        ? Str::limit($collection->translateAttribute('description'), 180)
+                                                        : __('frontend.homepage.hero_subtitle')
+                                                    }}
+                                                </p>
+
+                                                <div class="flex flex-wrap gap-3 animate-rise delay-3">
+                                                    <a
+                                                        href="{{ route('frontend.collections.show', $collectionSlug) }}"
+                                                        class="btn-primary inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+                                                    >
+                                                        {{ __('frontend.homepage.explore_collection') }}
+                                                    </a>
+                                                    <a
+                                                        href="{{ route('frontend.products.index') }}"
+                                                        class="btn-outline inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+                                                    >
+                                                        {{ __('frontend.homepage.hero_secondary') }}
+                                                    </a>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-6 text-xs uppercase text-white/70">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-white/60">{{ __('frontend.products') }}</span>
+                                                    <span class="text-base font-semibold text-white">{{ $collectionCount }}</span>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-white/60">{{ __('frontend.homepage.featured_collections') }}</span>
+                                                    <span class="text-base font-semibold text-white">{{ $featuredCollections->count() }}</span>
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        <div class="hidden md:flex flex-col gap-4 pr-8 py-10">
+                                            @if($bestsellers)
+                                                <a
+                                                    href="{{ route('frontend.collections.show', $bestsellers->urls->first()?->slug ?? $bestsellers->id) }}"
+                                                    class="glass-card rounded-2xl p-5 text-white animate-float"
+                                                >
+                                                    <p class="text-xs uppercase tracking-[0.3em] text-white/70">
+                                                        {{ __('frontend.homepage.bestsellers') }}
+                                                    </p>
+                                                    <p class="mt-3 font-display text-2xl">
+                                                        {{ $bestsellers->translateAttribute('name') ?? __('frontend.homepage.bestsellers') }}
+                                                    </p>
+                                                    <p class="mt-2 text-sm text-white/80">
+                                                        {{ __('frontend.homepage.bestsellers_subtitle') }}
+                                                    </p>
+                                                </a>
+                                            @endif
+
+                                            @if($newArrivals)
+                                                <a
+                                                    href="{{ route('frontend.collections.show', $newArrivals->urls->first()?->slug ?? $newArrivals->id) }}"
+                                                    class="glass-card rounded-2xl p-5 text-white"
+                                                >
+                                                    <p class="text-xs uppercase tracking-[0.3em] text-white/70">
+                                                        {{ __('frontend.homepage.new_arrivals') }}
+                                                    </p>
+                                                    <p class="mt-3 font-display text-2xl">
+                                                        {{ $newArrivals->translateAttribute('name') ?? __('frontend.homepage.new_arrivals') }}
+                                                    </p>
+                                                    <p class="mt-2 text-sm text-white/80">
+                                                        {{ __('frontend.homepage.new_arrivals_subtitle') }}
+                                                    </p>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+
+                        @if($heroCollections->count() > 1)
+                            <div class="absolute inset-x-0 bottom-6 z-20">
+                                <div class="mx-auto px-6 sm:px-10 flex items-center justify-between gap-4">
+                                    <button
+                                        type="button"
+                                        class="hero-prev inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white ring-1 ring-white/30 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                        aria-label="Previous slide"
+                                    >
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                        </svg>
+                                    </button>
+
+                                    <div class="hero-navigation flex items-center gap-2" aria-label="Hero slides">
+                                        @foreach($heroCollections as $index => $collection)
+                                            <button
+                                                type="button"
+                                                class="hero-dot h-3 w-3 rounded-full border-2 border-white/80 bg-transparent opacity-60 transition hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 {{ $index === 0 ? 'bg-white opacity-100' : '' }}"
+                                                data-slide="{{ $index }}"
+                                                aria-label="Go to slide {{ $index + 1 }}"
+                                            ></button>
+                                        @endforeach
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        class="hero-next inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white ring-1 ring-white/30 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+                                        aria-label="Next slide"
+                                    >
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                    @else
+                        <div class="relative min-h-[520px] sm:min-h-[620px]">
+                            <div class="absolute inset-0 bg-gradient-to-br from-[rgba(15,27,30,0.92)] via-[rgba(15,27,30,0.75)] to-[rgba(15,27,30,0.4)]"></div>
+                            <div class="relative z-10 h-full flex items-center px-6 sm:px-10">
+                                <div class="max-w-xl space-y-6">
+                                    <p class="eyebrow text-xs font-semibold uppercase text-white/75">
+                                        {{ __('frontend.homepage.hero_tagline') }}
+                                    </p>
+                                    <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl text-white">
+                                        {{ __('frontend.homepage.featured_collections') }}
+                                    </h1>
+                                    <p class="text-base sm:text-lg text-white/85">
+                                        {{ __('frontend.homepage.hero_subtitle') }}
+                                    </p>
+                                    <div class="flex flex-wrap gap-3">
+                                        <a
+                                            href="{{ route('frontend.collections.index') }}"
+                                            class="btn-primary inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+                                        >
+                                            {{ __('frontend.homepage.explore_collection') }}
+                                        </a>
+                                        <a
+                                            href="{{ route('frontend.products.index') }}"
+                                            class="btn-outline inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+                                        >
+                                            {{ __('frontend.homepage.hero_secondary') }}
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
+                    @endif
+                </div>
 
-            @if($heroCollections->count() > 1)
-                <div class="absolute inset-x-0 bottom-6 z-20">
-                    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-                        <button
-                            type="button"
-                            class="hero-prev inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white ring-1 ring-white/30 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                            aria-label="Previous slide"
-                        >
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-
-                        <div class="hero-navigation flex items-center gap-2" aria-label="Hero slides">
-                            @foreach($heroCollections as $index => $collection)
-                                <button
-                                    type="button"
-                                    class="hero-dot h-3 w-3 rounded-full border-2 border-white/80 bg-transparent opacity-60 transition hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 {{ $index === 0 ? 'bg-white opacity-100' : '' }}"
-                                    data-slide="{{ $index }}"
-                                    aria-label="Go to slide {{ $index + 1 }}"
-                                ></button>
+                <div class="flex flex-col gap-6">
+                    @if($topBanners->isNotEmpty())
+                        <div class="grid gap-5">
+                            @foreach($topBanners as $banner)
+                                <a
+                                    href="{{ $banner['link'] ?? '#' }}"
+                                    class="group relative overflow-hidden rounded-2xl bg-gray-900 shadow-[0_18px_40px_rgba(15,27,30,0.2)]"
+                                >
+                                    <div class="absolute inset-0">
+                                        <img
+                                            src="{{ $banner['image'] ?? asset('images/banners/default.jpg') }}"
+                                            alt="{{ $banner['title'] ?? 'Promotional banner' }}"
+                                            class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            loading="lazy"
+                                        >
+                                        <div class="absolute inset-0 bg-gradient-to-br from-[rgba(15,27,30,0.75)] via-[rgba(15,27,30,0.5)] to-transparent"></div>
+                                    </div>
+                                    <div class="relative z-10 p-6 text-white">
+                                        @if(!empty($banner['subtitle']))
+                                            <p class="eyebrow text-[11px] font-semibold uppercase text-white/70">
+                                                {{ $banner['subtitle'] }}
+                                            </p>
+                                        @endif
+                                        @if(!empty($banner['title']))
+                                            <h2 class="mt-3 font-display text-2xl">
+                                                {{ $banner['title'] }}
+                                            </h2>
+                                        @endif
+                                        @if(!empty($banner['description']))
+                                            <p class="mt-3 text-sm text-white/85">
+                                                {{ $banner['description'] }}
+                                            </p>
+                                        @endif
+                                        <span class="mt-6 inline-flex items-center rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white">
+                                            {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
+                                        </span>
+                                    </div>
+                                </a>
                             @endforeach
                         </div>
+                    @endif
 
-                        <button
-                            type="button"
-                            class="hero-next inline-flex items-center justify-center rounded-full bg-white/10 p-3 text-white ring-1 ring-white/30 hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-                            aria-label="Next slide"
-                        >
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
+                    <div class="surface-card rounded-2xl p-6">
+                        <p class="eyebrow text-[11px] font-semibold uppercase text-muted">
+                            {{ __('frontend.homepage.featured_collections') }}
+                        </p>
+                        <p class="mt-4 text-lg font-semibold text-ink">
+                            {{ __('frontend.homepage.featured_subtitle') }}
+                        </p>
+                        <div class="mt-5 flex flex-wrap gap-2">
+                            <a href="#featured-collections" class="rounded-full bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink shadow-sm">
+                                {{ __('frontend.homepage.featured_collections') }}
+                            </a>
+                            @if($bestsellers)
+                                <a href="#bestsellers" class="rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink shadow-sm">
+                                    {{ __('frontend.homepage.bestsellers') }}
+                                </a>
+                            @endif
+                            @if($newArrivals)
+                                <a href="#new-arrivals" class="rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-ink shadow-sm">
+                                    {{ __('frontend.homepage.new_arrivals') }}
+                                </a>
+                            @endif
+                        </div>
+                        <div class="mt-6 flex items-center justify-between text-xs uppercase text-muted">
+                            <span>{{ __('frontend.collections') }}</span>
+                            <span class="text-base font-semibold text-ink">{{ $featuredCollections->count() }}</span>
+                        </div>
                     </div>
                 </div>
-            @endif
-        </section>
-    @endif
+            </div>
+        </div>
+    </section>
 
-    {{-- Promotional banners (top) --}}
-    @if($topBanners->isNotEmpty())
-        <section class="py-10 bg-gray-50">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @foreach($topBanners as $banner)
-                        <div class="rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow">
-                            <a href="{{ $banner['link'] ?? '#' }}" class="block">
-                                <div class="relative h-64 md:h-80">
-                                    <img
-                                        src="{{ $banner['image'] ?? asset('images/banners/default.jpg') }}"
-                                        alt="{{ $banner['title'] ?? 'Promotional banner' }}"
-                                        class="h-full w-full object-cover"
-                                        loading="lazy"
-                                    >
-                                    <div class="absolute inset-0 bg-gradient-to-r from-gray-950/65 via-gray-950/35 to-transparent"></div>
-                                    <div class="absolute inset-0 flex items-end md:items-center p-6 md:p-8 text-white">
-                                        <div class="max-w-md">
-                                            @if(!empty($banner['subtitle']))
-                                                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
-                                                    {{ $banner['subtitle'] }}
-                                                </p>
-                                            @endif
-
-                                            @if(!empty($banner['title']))
-                                                <h2 class="mt-2 text-2xl md:text-3xl font-semibold leading-tight">
-                                                    {{ $banner['title'] }}
-                                                </h2>
-                                            @endif
-
-                                            @if(!empty($banner['description']))
-                                                <p class="mt-3 text-sm md:text-base text-white/90">
-                                                    {{ $banner['description'] }}
-                                                </p>
-                                            @endif
-
-                                            <div class="mt-5">
-                                                <span class="inline-flex items-center rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-white/90">
-                                                    {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
+    <section class="py-10">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="surface-card rounded-2xl p-6">
+                    <div class="flex items-center gap-4">
+                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(42,166,161,0.15)] text-[rgba(42,166,161,1)]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h13l4 6-4 6H3l4-6-4-6z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-ink">
+                                {{ __('frontend.homepage.value_props.shipping.title') }}
+                            </p>
+                            <p class="text-sm text-muted">
+                                {{ __('frontend.homepage.value_props.shipping.description') }}
+                            </p>
                         </div>
-                    @endforeach
+                    </div>
+                </div>
+                <div class="surface-card rounded-2xl p-6">
+                    <div class="flex items-center gap-4">
+                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(242,104,75,0.15)] text-[rgba(242,104,75,1)]">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-ink">
+                                {{ __('frontend.homepage.value_props.quality.title') }}
+                            </p>
+                            <p class="text-sm text-muted">
+                                {{ __('frontend.homepage.value_props.quality.description') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="surface-card rounded-2xl p-6">
+                    <div class="flex items-center gap-4">
+                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[rgba(15,27,30,0.1)] text-ink">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-ink">
+                                {{ __('frontend.homepage.value_props.returns.title') }}
+                            </p>
+                            <p class="text-sm text-muted">
+                                {{ __('frontend.homepage.value_props.returns.description') }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </section>
-    @endif
+        </div>
+    </section>
 
-    {{-- Featured collections --}}
     @if($featuredCollections->isNotEmpty())
-        <section class="py-14">
+        <section id="featured-collections" class="py-14">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex items-end justify-between gap-4 mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-semibold text-gray-900">
-                        {{ __('frontend.homepage.featured_collections') }}
-                    </h2>
-
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-10">
+                    <div>
+                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                            {{ __('frontend.homepage.featured_collections') }}
+                        </p>
+                        <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                            {{ __('frontend.homepage.featured_collections') }}
+                        </h2>
+                        <p class="mt-3 text-muted">
+                            {{ __('frontend.homepage.featured_subtitle') }}
+                        </p>
+                    </div>
                     <a
                         href="{{ route('frontend.collections.index') }}"
-                        class="text-sm font-semibold text-blue-700 hover:text-blue-900"
+                        class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
                     >
                         {{ __('frontend.common.view_all') }} →
                     </a>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @foreach($featuredCollections as $collection)
-                        <x-frontend.collection-card :collection="$collection" />
+                <div class="grid gap-6 lg:grid-cols-12">
+                    @foreach($featuredCollections as $index => $collection)
+                        @php
+                            $collectionImage = $collection->getFirstMedia('images')
+                                ?? $collection->getFirstMedia('hero');
+                            $productCount = $collection->products_count ?? $collection->products()->count();
+                            $url = $collection->urls->first()?->slug ?? $collection->id;
+
+                            $span = $index === 0 ? 'lg:col-span-7' : 'lg:col-span-5';
+                        @endphp
+
+                        <a
+                            href="{{ route('frontend.collections.show', $url) }}"
+                            class="group relative overflow-hidden rounded-3xl {{ $span }}"
+                        >
+                            <div class="absolute inset-0">
+                                @if($collectionImage)
+                                    @include('frontend.components.responsive-image', [
+                                        'media' => $collectionImage,
+                                        'model' => $collection,
+                                        'collectionName' => $collectionImage->collection_name ?? 'images',
+                                        'conversion' => 'collection_card',
+                                        'sizeType' => 'collection_card',
+                                        'alt' => $collection->translateAttribute('name'),
+                                        'class' => 'w-full h-full object-cover transition-transform duration-500 group-hover:scale-105',
+                                        'loading' => 'lazy',
+                                    ])
+                                @else
+                                    <div class="h-full w-full bg-gradient-to-br from-gray-200 to-gray-300"></div>
+                                @endif
+                                <div class="absolute inset-0 bg-gradient-to-t from-[rgba(10,16,18,0.82)] via-[rgba(10,16,18,0.4)] to-transparent"></div>
+                            </div>
+                            <div class="relative z-10 flex h-full flex-col justify-end p-6 sm:p-8 text-white">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="font-display text-2xl sm:text-3xl">
+                                        {{ $collection->translateAttribute('name') }}
+                                    </h3>
+                                    <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]">
+                                        {{ $productCount }} {{ __('frontend.products') }}
+                                    </span>
+                                </div>
+                                @if($collection->translateAttribute('description'))
+                                    <p class="mt-3 text-sm sm:text-base text-white/85 max-w-xl">
+                                        {{ Str::limit($collection->translateAttribute('description'), 140) }}
+                                    </p>
+                                @endif
+                                <span class="mt-4 inline-flex items-center text-sm font-semibold">
+                                    {{ __('frontend.homepage.explore_collection') }} →
+                                </span>
+                            </div>
+                        </a>
                     @endforeach
                 </div>
             </div>
         </section>
     @endif
 
-    {{-- Bestsellers --}}
-    @if($bestsellers && $bestsellers->products->count() > 0)
-        <section class="py-14 bg-gray-50">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex items-end justify-between gap-4 mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-semibold text-gray-900">
-                        {{ __('frontend.homepage.bestsellers') }}
-                    </h2>
+    @if($middleBanners->isNotEmpty())
+        @foreach($middleBanners as $banner)
+            <section class="py-14">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] items-center">
+                        <div class="relative overflow-hidden rounded-3xl min-h-[260px]">
+                            <img
+                                src="{{ $banner['image'] ?? asset('images/banners/default.jpg') }}"
+                                alt="{{ $banner['title'] ?? 'Promotional banner' }}"
+                                class="h-full w-full object-cover"
+                                loading="lazy"
+                            >
+                            <div class="absolute inset-0 bg-gradient-to-r from-[rgba(10,16,18,0.78)] via-[rgba(10,16,18,0.3)] to-transparent"></div>
+                        </div>
+                        <div class="surface-card rounded-3xl p-8">
+                            @if(!empty($banner['subtitle']))
+                                <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                                    {{ $banner['subtitle'] }}
+                                </p>
+                            @endif
+                            @if(!empty($banner['title']))
+                                <h2 class="mt-3 font-display text-3xl text-ink">
+                                    {{ $banner['title'] }}
+                                </h2>
+                            @endif
+                            @if(!empty($banner['description']))
+                                <p class="mt-4 text-sm text-muted">
+                                    {{ $banner['description'] }}
+                                </p>
+                            @endif
+                            <a
+                                href="{{ $banner['link'] ?? '#' }}"
+                                class="mt-6 inline-flex items-center rounded-full bg-ink px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+                            >
+                                {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endforeach
+    @endif
 
+    @if($bestsellers && $bestsellers->products->count() > 0)
+        <section id="bestsellers" class="py-14 bg-surface-strong">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+                    <div>
+                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                            {{ __('frontend.homepage.bestsellers') }}
+                        </p>
+                        <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                            {{ __('frontend.homepage.bestsellers') }}
+                        </h2>
+                        <p class="mt-3 text-muted">
+                            {{ __('frontend.homepage.bestsellers_subtitle') }}
+                        </p>
+                    </div>
                     @if($bestsellers->urls->first())
                         <a
                             href="{{ route('frontend.collections.show', $bestsellers->urls->first()?->slug) }}"
-                            class="text-sm font-semibold text-blue-700 hover:text-blue-900"
+                            class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
                         >
                             {{ __('frontend.common.view_all') }} →
                         </a>
@@ -227,69 +619,25 @@
         </section>
     @endif
 
-    {{-- Promotional banner (middle) --}}
-    @if($middleBanners->isNotEmpty())
-        @foreach($middleBanners as $banner)
-            <section class="py-14">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="rounded-2xl overflow-hidden bg-white shadow-sm ring-1 ring-black/5 hover:shadow-md transition-shadow">
-                        <a href="{{ $banner['link'] ?? '#' }}" class="block">
-                            <div class="relative h-64 md:h-96">
-                                <img
-                                    src="{{ $banner['image'] ?? asset('images/banners/default.jpg') }}"
-                                    alt="{{ $banner['title'] ?? 'Promotional banner' }}"
-                                    class="h-full w-full object-cover"
-                                    loading="lazy"
-                                >
-                                <div class="absolute inset-0 bg-gradient-to-r from-gray-950/75 via-gray-950/45 to-gray-950/20"></div>
-                                <div class="absolute inset-0 flex items-center justify-center text-center p-8 text-white">
-                                    <div class="max-w-2xl">
-                                        @if(!empty($banner['subtitle']))
-                                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
-                                                {{ $banner['subtitle'] }}
-                                            </p>
-                                        @endif
-
-                                        @if(!empty($banner['title']))
-                                            <h2 class="mt-2 text-3xl md:text-5xl font-semibold leading-tight">
-                                                {{ $banner['title'] }}
-                                            </h2>
-                                        @endif
-
-                                        @if(!empty($banner['description']))
-                                            <p class="mt-4 text-base md:text-lg text-white/90">
-                                                {{ $banner['description'] }}
-                                            </p>
-                                        @endif
-
-                                        <div class="mt-6">
-                                            <span class="inline-flex items-center rounded-lg bg-white px-7 py-3 text-sm font-semibold text-gray-900 hover:bg-white/90">
-                                                {{ $banner['link_text'] ?? __('frontend.common.shop_now') }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </section>
-        @endforeach
-    @endif
-
-    {{-- New arrivals --}}
     @if($newArrivals && $newArrivals->products->count() > 0)
-        <section class="py-14 bg-gray-50">
+        <section id="new-arrivals" class="py-14">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex items-end justify-between gap-4 mb-8">
-                    <h2 class="text-3xl sm:text-4xl font-semibold text-gray-900">
-                        {{ __('frontend.homepage.new_arrivals') }}
-                    </h2>
-
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+                    <div>
+                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                            {{ __('frontend.homepage.new_arrivals') }}
+                        </p>
+                        <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                            {{ __('frontend.homepage.new_arrivals') }}
+                        </h2>
+                        <p class="mt-3 text-muted">
+                            {{ __('frontend.homepage.new_arrivals_subtitle') }}
+                        </p>
+                    </div>
                     @if($newArrivals->urls->first())
                         <a
                             href="{{ route('frontend.collections.show', $newArrivals->urls->first()?->slug) }}"
-                            class="text-sm font-semibold text-blue-700 hover:text-blue-900"
+                            class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
                         >
                             {{ __('frontend.common.view_all') }} →
                         </a>
@@ -305,4 +653,3 @@
         </section>
     @endif
 </div>
-

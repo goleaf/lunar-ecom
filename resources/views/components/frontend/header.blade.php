@@ -125,12 +125,55 @@
                 </a>
 
                 @foreach($navCategories->take(6) as $category)
-                    <a
-                        href="{{ route('categories.show', $category->getFullPath()) }}"
-                        class="whitespace-nowrap text-sm font-semibold text-slate-700 hover:text-slate-900"
-                    >
-                        {{ $category->getName() }}
-                    </a>
+                    @php
+                        $children = $category->children ?? collect();
+                    @endphp
+
+                    @if($children->isNotEmpty())
+                        <div class="relative group">
+                            <a
+                                href="{{ route('categories.show', $category->getFullPath()) }}"
+                                class="whitespace-nowrap text-sm font-semibold text-slate-700 hover:text-slate-900 inline-flex items-center gap-1"
+                            >
+                                {{ $category->getName() }}
+                                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </a>
+
+                            <div class="absolute left-0 top-full mt-2 hidden group-hover:block z-50">
+                                <div class="w-80 rounded-2xl bg-white shadow-xl ring-1 ring-black/10 overflow-hidden">
+                                    <div class="p-3">
+                                        <div class="grid grid-cols-2 gap-1">
+                                            @foreach($children->take(12) as $child)
+                                                <a
+                                                    href="{{ route('categories.show', $child->getFullPath()) }}"
+                                                    class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                                >
+                                                    {{ $child->getName() }}
+                                                </a>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="border-t bg-slate-50 px-3 py-2">
+                                        <a
+                                            href="{{ route('categories.show', $category->getFullPath()) }}"
+                                            class="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                        >
+                                            {{ __('frontend.common.view_all') }} →
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <a
+                            href="{{ route('categories.show', $category->getFullPath()) }}"
+                            class="whitespace-nowrap text-sm font-semibold text-slate-700 hover:text-slate-900"
+                        >
+                            {{ $category->getName() }}
+                        </a>
+                    @endif
                 @endforeach
             </div>
         </div>

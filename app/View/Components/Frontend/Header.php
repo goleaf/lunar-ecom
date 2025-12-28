@@ -13,6 +13,13 @@ class Header extends Component
     public EloquentCollection $navCategories;
 
     /**
+     * Mobile-friendly category tree used by the off-canvas drawer.
+     *
+     * @var array<int, array{id:int,name:string,url:string,children:array<int, array{id:int,name:string,url:string,children:array}>,has_more_children:bool}>
+     */
+    public array $mobileNavCategories = [];
+
+    /**
      * Optional promo banner shown inside the desktop mega menu.
      *
      * @var array{title:string,subtitle:?string,image:?string,link:string,link_text:string}|null
@@ -32,12 +39,38 @@ class Header extends Component
                     $query
                         ->active()
                         ->inNavigation()
-                        ->ordered()
-                        ->limit(12);
+                        ->ordered();
                 },
             ])
             ->limit(10)
             ->get();
+
+        $mobileChildLimit = 24;
+        $this->mobileNavCategories = $this->navCategories
+            ->map(function (Category $category) use ($mobileChildLimit) {
+                $children = $category->children ?? collect();
+
+                return [
+                    'id' => $category->id,
+                    'name' => $category->getName(),
+                    'url' => route('categories.show', $category->getFullPath()),
+                    'children' => $children
+                        ->take($mobileChildLimit)
+                        ->map(function (Category $child) {
+                            return [
+                                'id' => $child->id,
+                                'name' => $child->getName(),
+                                'url' => route('categories.show', $child->getFullPath()),
+                                'children' => [],
+                            ];
+                        })
+                        ->values()
+                        ->all(),
+                    'has_more_children' => $children->count() > $mobileChildLimit,
+                ];
+            })
+            ->values()
+            ->all();
 
         // Optional mega-menu promo banner.
         // Prefer an explicit "header" banner, else reuse the top promo banner, else any active banner.

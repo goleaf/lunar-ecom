@@ -783,38 +783,4 @@
             </div>
         </section>
     @endif
-
-    @if($newArrivals && $newArrivals->products->count() > 0)
-        <section id="new-arrivals" class="py-14">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
-                    <div>
-                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
-                            {{ __('frontend.homepage.new_arrivals') }}
-                        </p>
-                        <h2 class="font-display text-3xl sm:text-4xl text-ink">
-                            {{ __('frontend.homepage.new_arrivals') }}
-                        </h2>
-                        <p class="mt-3 text-muted">
-                            {{ __('frontend.homepage.new_arrivals_subtitle') }}
-                        </p>
-                    </div>
-                    @if($newArrivals->urls->first())
-                        <a
-                            href="{{ route('frontend.collections.show', $newArrivals->urls->first()?->slug) }}"
-                            class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
-                        >
-                            {{ __('frontend.common.view_all') }} →
-                        </a>
-                    @endif
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    @foreach($newArrivals->products->take(8) as $product)
-                        <x-frontend.product-card :product="$product" />
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
 </div>

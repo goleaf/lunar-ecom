@@ -83,6 +83,41 @@
                     <livewire:frontend.currency-selector />
                 </div>
 
+                @auth
+                    <div class="space-y-2">
+                        <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
+                            My account
+                        </div>
+                        <a href="{{ route('frontend.addresses.index') }}" class="block text-sm font-semibold text-slate-700 hover:text-slate-900">
+                            {{ __('frontend.nav.addresses') }}
+                        </a>
+                        <a href="{{ route('frontend.downloads.index') }}" class="block text-sm font-semibold text-slate-700 hover:text-slate-900">
+                            {{ __('frontend.nav.downloads') }}
+                        </a>
+                        @if (Route::has('logout'))
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                    Log out
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                @else
+                    @if (Route::has('login'))
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('login') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                Log in
+                            </a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                    Sign up
+                                </a>
+                            @endif
+                        </div>
+                    @endif
+                @endauth
+
                 <div class="grid grid-cols-2 gap-2">
                     <a href="{{ route('frontend.products.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50">
                         {{ __('frontend.nav.products') }}
@@ -100,17 +135,6 @@
                         {{ __('frontend.categories') }}
                     </a>
                 </div>
-
-                @auth
-                    <div class="space-y-2">
-                        <a href="{{ route('frontend.addresses.index') }}" class="block text-sm font-semibold text-slate-700 hover:text-slate-900">
-                            {{ __('frontend.nav.addresses') }}
-                        </a>
-                        <a href="{{ route('frontend.downloads.index') }}" class="block text-sm font-semibold text-slate-700 hover:text-slate-900">
-                            {{ __('frontend.nav.downloads') }}
-                        </a>
-                    </div>
-                @endauth
 
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">

@@ -26,7 +26,23 @@
                         </span>
                         <span class="hidden sm:inline">{{ config('app.name', 'Store') }}</span>
                     </a>
-                    <div class="lg:hidden flex items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="hidden lg:block">
+                            <livewire:frontend.language-selector />
+                        </div>
+                        <div class="hidden lg:block">
+                            <livewire:frontend.currency-selector />
+                        </div>
+
+                        @auth
+                            <a href="{{ route('frontend.addresses.index') }}" class="hidden lg:inline text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                {{ __('frontend.nav.addresses') }}
+                            </a>
+                            <a href="{{ route('frontend.downloads.index') }}" class="hidden lg:inline text-sm font-semibold text-slate-700 hover:text-slate-900">
+                                {{ __('frontend.nav.downloads') }}
+                            </a>
+                        @endauth
+
                         @include('frontend.components.cart-widget')
                     </div>
                 </div>
@@ -83,21 +99,7 @@
                     </div>
                 </div>
 
-                <div class="hidden lg:flex items-center gap-4">
-                    <livewire:frontend.language-selector />
-                    <livewire:frontend.currency-selector />
-
-                    @auth
-                        <a href="{{ route('frontend.addresses.index') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
-                            {{ __('frontend.nav.addresses') }}
-                        </a>
-                        <a href="{{ route('frontend.downloads.index') }}" class="text-sm font-semibold text-slate-700 hover:text-slate-900">
-                            {{ __('frontend.nav.downloads') }}
-                        </a>
-                    @endauth
-
-                    @include('frontend.components.cart-widget')
-                </div>
+                {{-- Actions moved into the logo row for unique cart widget ID --}}
             </div>
         </div>
     </div>

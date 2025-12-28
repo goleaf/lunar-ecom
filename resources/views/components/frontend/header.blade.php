@@ -53,16 +53,28 @@
                 <div class="flex-1">
                     <div class="flex w-full items-stretch">
                         {{-- Categories dropdown button (marketplace-style) --}}
-                        <div class="relative" x-data="{ open: false }" @keydown.escape.window="open = false">
+                        <div
+                            class="relative"
+                            x-data="{
+                                open: false,
+                                active: 0,
+                                toggle() {
+                                    this.open = !this.open;
+                                    if (this.open) this.active = 0;
+                                },
+                                close() { this.open = false; },
+                            }"
+                            @keydown.escape.window="close()"
+                        >
                             <button
                                 type="button"
                                 class="h-11 inline-flex items-center gap-2 rounded-l-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                                @click="open = !open"
+                                @click="toggle()"
                                 aria-haspopup="true"
                                 :aria-expanded="open ? 'true' : 'false'"
                             >
-                                <span class="hidden sm:inline">{{ __('frontend.categories') }}</span>
-                                <span class="sm:hidden">Cat</span>
+                                <span class="hidden sm:inline">All categories</span>
+                                <span class="sm:hidden">All</span>
                                 <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
@@ -72,25 +84,100 @@
                                 x-show="open"
                                 x-transition.origin.top.left
                                 x-cloak
-                                @click.outside="open = false"
-                                class="absolute left-0 mt-2 w-72 rounded-2xl bg-white shadow-xl ring-1 ring-black/10 overflow-hidden z-50"
+                                @click.outside="close()"
+                                class="absolute left-0 mt-2 w-[52rem] max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-xl ring-1 ring-black/10 overflow-hidden z-50"
                             >
-                                <div class="p-2">
-                                    @forelse($navCategories as $category)
-                                        <a
-                                            href="{{ route('categories.show', $category->getFullPath()) }}"
-                                            class="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                                        >
-                                            <span class="truncate">{{ $category->getName() }}</span>
-                                            <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    @empty
-                                        <div class="px-3 py-4 text-sm text-slate-500">
-                                            No categories yet.
+                                <div class="grid grid-cols-12 min-h-[22rem]">
+                                    <div class="col-span-5 sm:col-span-4 border-r bg-slate-50/70">
+                                        <div class="p-2">
+                                            @forelse($navCategories as $index => $category)
+                                                <a
+                                                    href="{{ route('categories.show', $category->getFullPath()) }}"
+                                                    @mouseenter="active = {{ $index }}"
+                                                    @focus="active = {{ $index }}"
+                                                    class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-white/80"
+                                                    :class="active === {{ $index }} ? 'bg-white shadow ring-1 ring-black/5' : ''"
+                                                >
+                                                    <span class="truncate">{{ $category->getName() }}</span>
+                                                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </a>
+                                            @empty
+                                                <div class="px-3 py-4 text-sm text-slate-500">
+                                                    No categories yet.
+                                                </div>
+                                            @endforelse
                                         </div>
-                                    @endforelse
+                                        <div class="border-t bg-white px-3 py-3">
+                                            <a
+                                                href="{{ route('categories.index') }}"
+                                                class="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                            >
+                                                {{ __('frontend.common.view_all') }} →
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-7 sm:col-span-8 p-4">
+                                        @foreach($navCategories as $index => $category)
+                                            @php
+                                                $children = $category->children ?? collect();
+                                            @endphp
+
+                                            <div x-show="active === {{ $index }}" x-transition.opacity>
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <div class="text-sm font-semibold text-slate-900">
+                                                        {{ $category->getName() }}
+                                                    </div>
+                                                    <a
+                                                        href="{{ route('categories.show', $category->getFullPath()) }}"
+                                                        class="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                                    >
+                                                        {{ __('frontend.common.view_all') }} →
+                                                    </a>
+                                                </div>
+
+                                                <div class="mt-4 grid grid-cols-2 gap-2">
+                                                    @forelse($children->take(12) as $child)
+                                                        <a
+                                                            href="{{ route('categories.show', $child->getFullPath()) }}"
+                                                            class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900 hover:bg-slate-50"
+                                                        >
+                                                            {{ $child->getName() }}
+                                                        </a>
+                                                    @empty
+                                                        <div class="col-span-2 rounded-xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-500">
+                                                            No subcategories yet.
+                                                        </div>
+                                                    @endforelse
+                                                </div>
+
+                                                <div class="mt-4 rounded-2xl bg-slate-900 px-5 py-4 text-white">
+                                                    <div class="text-xs uppercase tracking-[0.3em] text-white/70">
+                                                        Explore
+                                                    </div>
+                                                    <div class="mt-2 text-lg font-semibold">
+                                                        Browse {{ $category->getName() }}
+                                                    </div>
+                                                    <div class="mt-3 flex flex-wrap gap-2">
+                                                        <a
+                                                            href="{{ route('categories.show', $category->getFullPath()) }}"
+                                                            class="inline-flex items-center justify-center rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/20"
+                                                        >
+                                                            Shop now
+                                                        </a>
+                                                        <a
+                                                            href="{{ route('frontend.products.index') }}"
+                                                            class="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/15"
+                                                        >
+                                                            All products
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             </div>
                         </div>

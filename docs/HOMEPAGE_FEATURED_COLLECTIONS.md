@@ -60,27 +60,33 @@ A comprehensive homepage system displaying featured collections with hero images
 
 ## Controllers
 
-### Frontend\HomepageController
-- **Location**: `app/Http/Controllers/Frontend/HomepageController.php`
-- **Methods**:
-  - `index()`: Display homepage with all sections
-  - `getPromotionalBanners()`: Get active promotional banners
-  - `getBannerLink()`: Generate banner link based on type
+## Livewire Page
+
+### Frontend\Pages\Homepage
+- **Location**: `app/Livewire/Frontend/Pages/Homepage.php`
+- **Responsibilities**:
+  - Load featured collections (including hero subset)
+  - Load bestsellers + new arrivals collections
+  - Load promotional banners with link resolution
+  - Provide SEO meta tags via `App\Services\SEOService`
 
 ## Views
 
-### Homepage Index
-- **Location**: `resources/views/frontend/homepage/index.blade.php`
+### Homepage View (Livewire)
+- **Location**: `resources/views/livewire/frontend/pages/homepage.blade.php`
+- **Meta partial**: `resources/views/frontend/homepage/_meta.blade.php`
 - **Sections**:
-  - Hero section with slider
+  - Hero slider (featured collections with hero-capable media)
   - Promotional banners (top)
   - Featured collections grid
   - Bestsellers section
-  - Middle promotional banner
+  - Promotional banner(s) (middle)
   - New Arrivals section
 
 ### Collection Card Component
-- **Location**: `resources/views/frontend/components/collection-card.blade.php`
+- **Location**:
+  - `resources/views/components/frontend/collection-card.blade.php` (Blade component)
+  - `resources/views/frontend/collection-card.blade.php` (markup include)
 - **Features**:
   - Collection image with fallback
   - Collection name and description
@@ -91,32 +97,23 @@ A comprehensive homepage system displaying featured collections with hero images
 ## Assets
 
 ### CSS
-- **Location**: `resources/css/homepage.css`
-- **Features**:
-  - Hero slider styles
-  - Promotional banner styles
-  - Collection card styles
-  - Responsive breakpoints
-  - Animations
-  - Lazy loading states
+- Homepage styling is implemented with Tailwind utility classes in the Blade view.
 
 ### JavaScript
 - **Location**: `resources/js/homepage.js`
 - **Classes**:
   - `HeroSlider`: Manages hero image slider
-  - `LazyLoader`: Handles lazy loading with IntersectionObserver
 - **Features**:
   - Auto-play hero slider
   - Manual navigation
   - Keyboard support
-  - Lazy loading
-  - Scroll animations
+  - Respects `prefers-reduced-motion`
 
 ## Routes
 
 ```php
 // Homepage
-Route::get('/', [HomepageController::class, 'index'])->name('frontend.homepage');
+Route::get('/', \App\Livewire\Frontend\Pages\Homepage::class)->name('frontend.homepage');
 ```
 
 ## Usage Examples

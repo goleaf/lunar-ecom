@@ -125,7 +125,7 @@ class Homepage extends Component
         ]);
     }
 
-    protected function getCategorySpotlights(int $categoryLimit = 4, int $productLimit = 12): SupportCollection
+    protected function getCategorySpotlights(int $categoryLimit = 6, int $productLimit = 12): SupportCollection
     {
         if (!isset($this->navigationCategories) || $this->navigationCategories->isEmpty()) {
             return collect();

@@ -153,6 +153,11 @@
             email: '',
             saved: false,
             show() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('newsletter') === '1') {
+                    this.open = true;
+                    return;
+                }
                 if (localStorage.getItem('newsletterDismissed') === '1') return;
                 this.open = true;
             },

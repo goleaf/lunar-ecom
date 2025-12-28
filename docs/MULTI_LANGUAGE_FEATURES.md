@@ -14,13 +14,13 @@ Complete overview of Lunar's multi-language support implementation.
 
 **UI Translations:**
 - Laravel translation files in `resources/lang/{locale}/frontend.php`
-- Support for 5 languages: English, Spanish, French, German, Chinese
+- Support for 5 languages: Lithuanian, English, Spanish, French, German
 - Uses Laravel's `__()` helper function
 
 **Files:**
 - `app/Lunar/Attributes/AttributeHelper.php` - Helper for creating translated attributes
 - `app/Services/TranslationService.php` - Advanced translation utilities with fallback support
-- Translation files: `resources/lang/{en,es,fr,de,zh}/frontend.php`
+- Translation files: `resources/lang/{lt,en,es,fr,de}/frontend.php`
 
 ### 2. Language Switcher ✅
 
@@ -44,7 +44,7 @@ Complete overview of Lunar's multi-language support implementation.
 
 **Automatic Fallback Chain:**
 1. Current locale (user's selected language)
-2. Default language (English)
+2. Default language (Lithuanian)
 3. First available translation
 
 **Implementation:**
@@ -102,11 +102,11 @@ database/
 
 resources/
 ├── lang/
+│   ├── lt/frontend.php                       # Lithuanian translations
 │   ├── en/frontend.php                       # English translations
 │   ├── es/frontend.php                       # Spanish translations
 │   ├── fr/frontend.php                       # French translations
-│   ├── de/frontend.php                       # German translations
-│   └── zh/frontend.php                       # Chinese translations
+│   └── de/frontend.php                       # German translations
 └── views/
     └── frontend/
         └── components/
@@ -214,18 +214,18 @@ $collection->attribute_data = collect([
 
 | Code | Name | Default |
 |------|------|---------|
-| `en` | English | ✅ Yes |
+| `lt` | Lithuanian | ✅ Yes |
+| `en` | English | No |
 | `es` | Spanish | No |
 | `fr` | French | No |
 | `de` | German | No |
-| `zh` | Chinese | No |
 
 ### Language Detection Priority
 
 1. **URL Parameter** (`?lang=fr`) - Highest priority
 2. **Browser Header** (`Accept-Language`) - Detects from browser
 3. **Session** - Previously selected language
-4. **Default Language** - Falls back to English
+4. **Default Language** - Falls back to Lithuanian
 
 ## 🛠️ Advanced Features
 
@@ -291,5 +291,4 @@ Test the multi-language features:
 **🎉 Your Lunar store now has full multi-language support!**
 
 All features are implemented and ready to use. See the guides above for detailed documentation and examples.
-
 

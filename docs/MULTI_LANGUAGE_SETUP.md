@@ -4,7 +4,7 @@ This document describes the multi-language setup for the Lunar e-commerce applic
 
 ## Overview
 
-The application supports multiple languages (English, Spanish, French, German, Chinese) with:
+The application supports multiple languages (Lithuanian, English, Spanish, French, German) with:
 - Language detection (URL parameter, browser header, session)
 - Translation files for UI strings
 - Database translations for products, categories, and collections
@@ -33,11 +33,11 @@ The following languages are configured:
 
 | Code | Name | Default |
 |------|------|---------|
-| en   | English | Yes |
+| lt   | Lithuanian | Yes |
+| en   | English | No |
 | es   | Spanish | No |
 | fr   | French | No |
 | de   | German | No |
-| zh   | Chinese | No |
 
 ## Usage
 
@@ -133,7 +133,7 @@ Content-Type: application/json
    - URL parameter (`?lang=fr`)
    - Browser `Accept-Language` header
    - Session (if already set)
-   - Default language (English)
+   - Default language (Lithuanian)
 
 2. **Language Initialization**: The `StorefrontSessionMiddleware` initializes the language on every request, ensuring the locale is set correctly.
 
@@ -151,11 +151,11 @@ Content-Type: application/json
 
 Translation files are located in `resources/lang/{locale}/frontend.php`:
 
+- `resources/lang/lt/frontend.php` - Lithuanian
 - `resources/lang/en/frontend.php` - English
 - `resources/lang/es/frontend.php` - Spanish
 - `resources/lang/fr/frontend.php` - French
 - `resources/lang/de/frontend.php` - German
-- `resources/lang/zh/frontend.php` - Chinese
 
 ### Adding New Translations
 
@@ -200,7 +200,7 @@ $product = Product::create([
             'fr' => new Text('Écouteurs Premium'),
             'es' => new Text('Auriculares Premium'),
             'de' => new Text('Premium-Kopfhörer'),
-            'zh' => new Text('高级耳机'),
+            'lt' => new Text('Aukštos kokybės ausinės'),
         ])),
         'description' => new TranslatedText(collect([
             'en' => new Text('High-quality wireless headphones.'),
@@ -242,16 +242,15 @@ The language detection middleware checks in this order:
 1. **URL Parameter** (`?lang=fr`) - Highest priority
 2. **Browser Header** (`Accept-Language`) - Detects from browser preferences
 3. **Session** - Previously selected language
-4. **Default Language** - Falls back to English
+4. **Default Language** - Falls back to Lithuanian
 
 ## Notes
 
-- The default language (English) is always available
+- The default language (Lithuanian) is always available
 - All languages are enabled by default (no enable/disable field)
 - Product and collection translations are stored in the database using Lunar's attribute system
 - UI translations are stored in Laravel translation files
 - The language selector uses Alpine.js for interactivity
 - Language changes persist in the session across requests
 - The locale is automatically set via `App::setLocale()` when language is switched
-
 

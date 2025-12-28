@@ -205,6 +205,67 @@
         });
     }
 
+    function initCarousels() {
+        document.querySelectorAll('[data-carousel]').forEach((carousel) => {
+            if (carousel.dataset.carouselInitialized === 'true') return;
+            carousel.dataset.carouselInitialized = 'true';
+
+            const track = carousel.querySelector('[data-carousel-track]');
+            const prev = carousel.querySelector('[data-carousel-prev]');
+            const next = carousel.querySelector('[data-carousel-next]');
+
+            if (!track || !prev || !next) return;
+
+            const scrollAmount = () => {
+                const item = track.querySelector('[data-carousel-item]');
+                if (item) {
+                    const itemWidth = item.getBoundingClientRect().width;
+                    const gap = parseFloat(getComputedStyle(track.firstElementChild || track).gap || '0') || 0;
+                    return (itemWidth + gap) * 2;
+                }
+                return track.clientWidth * 0.9;
+            };
+
+            const update = () => {
+                const max = Math.max(track.scrollWidth - track.clientWidth, 0);
+                const atStart = track.scrollLeft <= 1;
+                const atEnd = track.scrollLeft >= max - 1;
+
+                prev.disabled = atStart;
+                next.disabled = atEnd;
+
+                prev.classList.toggle('opacity-40', atStart);
+                prev.classList.toggle('pointer-events-none', atStart);
+                next.classList.toggle('opacity-40', atEnd);
+                next.classList.toggle('pointer-events-none', atEnd);
+            };
+
+            prev.addEventListener('click', () => {
+                track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+            });
+            next.addEventListener('click', () => {
+                track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
+            });
+
+            let ticking = false;
+            track.addEventListener(
+                'scroll',
+                () => {
+                    if (ticking) return;
+                    ticking = true;
+                    requestAnimationFrame(() => {
+                        update();
+                        ticking = false;
+                    });
+                },
+                { passive: true }
+            );
+
+            window.addEventListener('resize', update);
+            update();
+        });
+    }
+
     function initHomepage() {
         const heroSection = document.querySelector('.hero-section');
         if (heroSection && heroSection.dataset.heroSliderInitialized !== 'true') {
@@ -212,6 +273,7 @@
         }
 
         initSmoothScroll();
+        initCarousels();
     }
 
     // Initialize on first load (or immediately if loaded after DOMContentLoaded)

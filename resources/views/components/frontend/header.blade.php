@@ -1,6 +1,7 @@
 @php
     /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $navCategories */
     /** @var array|null $megaMenuBanner */
+    /** @var array $mobileNavCategories */
 @endphp
 
 <header
@@ -10,13 +11,26 @@
         catOpen: false,
         catActive: 0,
         scrolled: false,
+        mobileCategories: @js($mobileNavCategories),
+        mobileCatStack: [],
         openMobile() { this.mobileOpen = true; },
-        closeMobile() { this.mobileOpen = false; },
+        closeMobile() { this.mobileOpen = false; this.mobileCatStack = []; },
         toggleCatDesktop() {
             this.catOpen = !this.catOpen;
             if (this.catOpen) this.catActive = 0;
         },
         closeCat() { this.catOpen = false; },
+        mobileCatPush(cat) {
+            if (!cat) return;
+            if (cat.children && cat.children.length) this.mobileCatStack.push(cat);
+        },
+        mobileCatPop() { this.mobileCatStack.pop(); },
+        mobileCatReset() { this.mobileCatStack = []; },
+        mobileCatCurrent() { return this.mobileCatStack.length ? this.mobileCatStack[this.mobileCatStack.length - 1] : null; },
+        mobileCatItems() {
+            const current = this.mobileCatCurrent();
+            return current ? (current.children || []) : (this.mobileCategories || []);
+        },
         initSticky() {
             const onScroll = () => { this.scrolled = (window.scrollY || 0) > 10; };
             window.addEventListener('scroll', onScroll, { passive: true });
@@ -141,47 +155,84 @@
                     <div class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                         {{ __('frontend.categories') }}
                     </div>
-                    <div class="mt-3 space-y-2">
-                        @forelse($navCategories as $category)
-                            @php
-                                $children = $category->children ?? collect();
-                            @endphp
+                    <div class="mt-3 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                        <div class="flex items-center justify-between gap-3 px-4 py-3 border-b bg-slate-50">
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                x-show="mobileCatStack.length"
+                                x-cloak
+                                @click="mobileCatPop()"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Back
+                            </button>
 
-                            @if($children->isNotEmpty())
-                                <details class="rounded-xl border border-slate-200 bg-white">
-                                    <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-800">
-                                        <span class="truncate">{{ $category->getName() }}</span>
-                                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </summary>
-                                    <div class="px-4 pb-3 space-y-1">
-                                        <a href="{{ route('categories.show', $category->getFullPath()) }}" class="block text-sm font-semibold text-slate-700 hover:text-slate-900">
-                                            {{ __('frontend.common.view_all') }} →
-                                        </a>
-                                        @foreach($children->take(12) as $child)
-                                            <a
-                                                href="{{ route('categories.show', $child->getFullPath()) }}"
-                                                class="block rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                                            >
-                                                {{ $child->getName() }}
-                                            </a>
-                                        @endforeach
-                                    </div>
-                                </details>
-                            @else
-                                <a
-                                    href="{{ route('categories.show', $category->getFullPath()) }}"
-                                    class="block rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                                >
-                                    {{ $category->getName() }}
-                                </a>
-                            @endif
-                        @empty
-                            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
-                                No categories yet.
+                            <div class="text-sm font-semibold text-slate-900 truncate">
+                                <span x-show="!mobileCatStack.length">{{ __('frontend.categories') }}</span>
+                                <span x-show="mobileCatStack.length" x-text="mobileCatCurrent()?.name"></span>
                             </div>
-                        @endforelse
+
+                            <a
+                                x-show="mobileCatStack.length"
+                                x-cloak
+                                :href="mobileCatCurrent()?.url"
+                                class="text-sm font-semibold text-slate-700 hover:text-slate-900"
+                                @click="closeMobile()"
+                            >
+                                {{ __('frontend.common.view_all') }} →
+                            </a>
+                        </div>
+
+                        <div class="p-2 space-y-1">
+                            <template x-if="mobileCatStack.length">
+                                <a
+                                    :href="mobileCatCurrent()?.url"
+                                    class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                                    @click="closeMobile()"
+                                >
+                                    All <span x-text="mobileCatCurrent()?.name"></span> →
+                                </a>
+                            </template>
+
+                            <template x-for="cat in mobileCatItems()" :key="cat.id">
+                                <div>
+                                    <template x-if="cat.children && cat.children.length">
+                                        <button
+                                            type="button"
+                                            class="w-full flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                                            @click="mobileCatPush(cat)"
+                                        >
+                                            <span class="truncate" x-text="cat.name"></span>
+                                            <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </template>
+                                    <template x-if="!(cat.children && cat.children.length)">
+                                        <a
+                                            :href="cat.url"
+                                            class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+                                            @click="closeMobile()"
+                                        >
+                                            <span class="truncate" x-text="cat.name"></span>
+                                        </a>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template x-if="!mobileCatStack.length">
+                                <a
+                                    href="{{ route('categories.index') }}"
+                                    class="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                    @click="closeMobile()"
+                                >
+                                    {{ __('frontend.common.view_all') }} →
+                                </a>
+                            </template>
+                        </div>
                     </div>
                 </div>
             </div>

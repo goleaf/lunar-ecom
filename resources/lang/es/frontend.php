@@ -24,10 +24,30 @@ return [
     ],
     'homepage' => [
         'meta_description' => ':store - Descubre nuestras colecciones destacadas, los más vendidos y las novedades.',
+        'hero_tagline' => 'Curado para el ritmo moderno',
+        'hero_subtitle' => 'Esenciales con diseño para acompañarte del trabajo al fin de semana.',
+        'hero_secondary' => 'Ver todos los productos',
         'featured_collections' => 'Colecciones destacadas',
+        'featured_subtitle' => 'Empieza con las colecciones que marcan la temporada.',
         'bestsellers' => 'Más vendidos',
+        'bestsellers_subtitle' => 'Las piezas a las que siempre se vuelve.',
         'new_arrivals' => 'Novedades',
+        'new_arrivals_subtitle' => 'Nuevos lanzamientos para tu próxima etapa.',
         'explore_collection' => 'Explorar colección',
+        'value_props' => [
+            'shipping' => [
+                'title' => 'Envío rápido',
+                'description' => 'Empaquetado con cuidado y enviado rápidamente.',
+            ],
+            'quality' => [
+                'title' => 'Calidad cuidada',
+                'description' => 'Materiales elegidos por su durabilidad, comodidad y acabado.',
+            ],
+            'returns' => [
+                'title' => 'Devoluciones fáciles',
+                'description' => 'Devoluciones sin complicaciones en artículos elegibles.',
+            ],
+        ],
     ],
     'product' => [
         'view_details' => 'Ver detalles',

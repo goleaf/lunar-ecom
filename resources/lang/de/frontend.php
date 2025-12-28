@@ -24,10 +24,30 @@ return [
     ],
     'homepage' => [
         'meta_description' => ':store – Entdecke unsere Featured Collections, Bestseller und Neuheiten.',
+        'hero_tagline' => 'Kuratiert für den modernen Alltag',
+        'hero_subtitle' => 'Designorientierte Essentials, die dich vom Arbeitstag bis zum Wochenende begleiten.',
+        'hero_secondary' => 'Alle Produkte ansehen',
         'featured_collections' => 'Ausgewählte Kollektionen',
+        'featured_subtitle' => 'Beginne mit den Kollektionen, die die Saison prägen.',
         'bestsellers' => 'Bestseller',
+        'bestsellers_subtitle' => 'Die Stücke, zu denen man immer wieder greift.',
         'new_arrivals' => 'Neuheiten',
+        'new_arrivals_subtitle' => 'Neue Highlights für die nächste Runde.',
         'explore_collection' => 'Kollektion entdecken',
+        'value_props' => [
+            'shipping' => [
+                'title' => 'Schneller Versand',
+                'description' => 'Sorgfältig verpackt und schnell verschickt.',
+            ],
+            'quality' => [
+                'title' => 'Geprüfte Qualität',
+                'description' => 'Materialien gewählt für Haltbarkeit, Komfort und Finish.',
+            ],
+            'returns' => [
+                'title' => 'Einfache Rückgabe',
+                'description' => 'Unkomplizierte Rückgaben für berechtigte Artikel.',
+            ],
+        ],
     ],
     'product' => [
         'view_details' => 'Details ansehen',

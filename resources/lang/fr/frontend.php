@@ -24,10 +24,30 @@ return [
     ],
     'homepage' => [
         'meta_description' => ':store - Découvrez nos collections en vedette, meilleures ventes et nouveautés.',
+        'hero_tagline' => 'Sélectionné pour le rythme moderne',
+        'hero_subtitle' => 'Des essentiels design pour vous suivre du bureau au week-end.',
+        'hero_secondary' => 'Voir tous les produits',
         'featured_collections' => 'Collections en vedette',
+        'featured_subtitle' => 'Commencez par les collections qui façonnent la saison.',
         'bestsellers' => 'Meilleures ventes',
+        'bestsellers_subtitle' => 'Les pièces auxquelles on revient.',
         'new_arrivals' => 'Nouveautés',
+        'new_arrivals_subtitle' => 'Nouveautés pour votre prochaine étape.',
         'explore_collection' => 'Explorer la collection',
+        'value_props' => [
+            'shipping' => [
+                'title' => 'Expédition rapide',
+                'description' => 'Préparé avec soin et expédié rapidement.',
+            ],
+            'quality' => [
+                'title' => 'Qualité soignée',
+                'description' => 'Matériaux choisis pour la durabilité, le confort et la finition.',
+            ],
+            'returns' => [
+                'title' => 'Retours faciles',
+                'description' => 'Retours sans tracas sur les articles éligibles.',
+            ],
+        ],
     ],
     'product' => [
         'view_details' => 'Voir les détails',

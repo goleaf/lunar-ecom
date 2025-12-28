@@ -15,7 +15,6 @@ use App\Livewire\Frontend\Pages\ProductReviewsIndex;
 use App\Livewire\Frontend\Pages\ReviewGuidelines;
 use App\Livewire\Frontend\Pages\BundlesIndex;
 use App\Livewire\Frontend\Pages\BundleShow;
-use App\Livewire\Frontend\Pages\ComparisonIndex;
 use App\Livewire\Frontend\Pages\CartIndex;
 use App\Livewire\Frontend\Pages\CheckoutIndex;
 use App\Livewire\Frontend\Pages\CheckoutConfirmation;
@@ -359,18 +358,6 @@ Route::prefix('admin/collections/{collection}')->name('admin.collections.')->mid
 });
 
 
-// Product Comparison
-Route::prefix('comparison')->name('frontend.comparison.')->group(function () {
-    Route::get('/', ComparisonIndex::class)->name('index');
-    Route::post('/add', [\App\Http\Controllers\Frontend\ComparisonController::class, 'add'])->name('add');
-    Route::post('/remove', [\App\Http\Controllers\Frontend\ComparisonController::class, 'remove'])->name('remove');
-    Route::post('/clear', [\App\Http\Controllers\Frontend\ComparisonController::class, 'clear'])->name('clear');
-    Route::get('/count', [\App\Http\Controllers\Frontend\ComparisonController::class, 'count'])->name('count');
-    Route::get('/check', [\App\Http\Controllers\Frontend\ComparisonController::class, 'check'])->name('check');
-    Route::get('/products', [\App\Http\Controllers\Frontend\ComparisonController::class, 'products'])->name('products');
-    Route::get('/export-pdf', [\App\Http\Controllers\Frontend\ComparisonController::class, 'exportPdf'])->name('export-pdf');
-});
-
 // Admin Bundle Management
 Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('index');
@@ -452,11 +439,6 @@ Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth'])->gr
     Route::post('/{bundle}/items', [\App\Http\Controllers\Admin\BundleController::class, 'addItem'])->name('items.store');
     Route::put('/{bundle}/items/{item}', [\App\Http\Controllers\Admin\BundleController::class, 'updateItem'])->name('items.update');
     Route::delete('/{bundle}/items/{item}', [\App\Http\Controllers\Admin\BundleController::class, 'removeItem'])->name('items.destroy');
-});
-
-// Admin Comparison Analytics
-Route::prefix('admin/comparison-analytics')->name('admin.comparison-analytics.')->middleware(['auth'])->group(function () {
-    Route::get('/', [\App\Http\Controllers\Admin\ComparisonAnalyticsController::class, 'index'])->name('index');
 });
 
 // Admin Stock Notifications

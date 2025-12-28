@@ -542,6 +542,125 @@
         </div>
     </section>
 
+    @if(isset($newlyAddedProducts) && $newlyAddedProducts->count() > 0)
+        <section class="py-14">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+                    <div>
+                        <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                            Newly added
+                        </p>
+                        <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                            Newly Added
+                        </h2>
+                        <p class="mt-3 text-muted">
+                            Freshly listed products to explore.
+                        </p>
+                    </div>
+                    <a
+                        href="{{ route('frontend.products.index') }}"
+                        class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
+                    >
+                        {{ __('frontend.common.view_all') }} →
+                    </a>
+                </div>
+
+                <div class="relative" data-carousel>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-prev
+                        aria-label="Scroll left"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-next
+                        aria-label="Scroll right"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2 scroll-smooth" data-carousel-track>
+                        <div class="flex gap-4 min-w-max">
+                            @foreach($newlyAddedProducts as $product)
+                                <div class="w-72 flex-shrink-0" data-carousel-item>
+                                    <x-frontend.product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+
+    <section class="py-12 bg-surface-strong">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+                <div>
+                    <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                        {{ __('frontend.categories') }}
+                    </p>
+                    <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                        {{ __('frontend.categories') }}
+                    </h2>
+                    <p class="mt-3 text-muted">
+                        Browse by category to find your favorites faster.
+                    </p>
+                </div>
+                <a
+                    href="{{ route('categories.index') }}"
+                    class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
+                >
+                    {{ __('frontend.common.view_all') }} →
+                </a>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                @foreach($navigationCategories->take(8) as $category)
+                    @php
+                        $imageUrl = $category->getImageUrl();
+                    @endphp
+                    <a
+                        href="{{ route('categories.show', $category->getFullPath()) }}"
+                        class="group surface-card rounded-2xl overflow-hidden"
+                    >
+                        <div class="relative h-28 bg-slate-200">
+                            @if($imageUrl)
+                                <img src="{{ $imageUrl }}" alt="{{ $category->getName() }}" class="h-full w-full object-cover" loading="lazy">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                            @else
+                                <div class="absolute inset-0 bg-gradient-to-br from-[rgba(42,166,161,0.22)] via-white/70 to-[rgba(242,104,75,0.18)]"></div>
+                            @endif
+                        </div>
+                        <div class="p-5">
+                            <div class="flex items-center justify-between gap-3">
+                                <p class="text-base font-semibold text-ink truncate group-hover:text-[rgba(242,104,75,1)]">
+                                    {{ $category->getName() }}
+                                </p>
+                                <svg class="h-4 w-4 text-muted group-hover:text-[rgba(242,104,75,1)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            @if(!empty($category->product_count))
+                                <p class="mt-2 text-sm text-muted">
+                                    {{ $category->product_count }} {{ __('frontend.products') }}
+                                </p>
+                            @endif
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </section>
+
     @if($newArrivals && $newArrivals->products->count() > 0)
         <section id="new-arrivals" class="py-14 bg-surface-strong">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

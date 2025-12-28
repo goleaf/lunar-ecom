@@ -255,21 +255,21 @@ Response:
     "languages": [
         {
             "id": 1,
-            "code": "en",
-            "name": "English",
+            "code": "lt",
+            "name": "Lithuanian",
             "is_default": true
         },
         {
             "id": 2,
-            "code": "fr",
-            "name": "French",
+            "code": "en",
+            "name": "English",
             "is_default": false
         }
     ],
     "current": {
         "id": 1,
-        "code": "en",
-        "name": "English",
+        "code": "lt",
+        "name": "Lithuanian",
         "is_default": true
     }
 }
@@ -286,8 +286,8 @@ Response:
 {
     "language": {
         "id": 1,
-        "code": "en",
-        "name": "English",
+        "code": "lt",
+        "name": "Lithuanian",
         "is_default": true
     }
 }

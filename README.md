@@ -8089,7 +8089,7 @@ This project implements languages following the [Lunar Languages documentation](
 
 **Overview**:
 
-Lunar supports multiple languages. By default, Lunar is set to install a default language of "en" (English). Languages allow data in Lunar models to be translated, such as attributes on Products and Collections.
+Lunar supports multiple languages. By default, this project installs "lt" (Lithuanian) as the default language. Languages allow data in Lunar models to be translated, such as attributes on Products and Collections.
 
 **Configuration**:
 
@@ -8182,7 +8182,7 @@ $spanish = Language::create([
 **Important Notes**:
 
 - **Only One Default**: There should only ever be one default language. Setting more than one language as default will likely break things!
-- **Default Language**: By default, Lunar installs "en" (English) as the default language
+- **Default Language**: By default, this project installs "lt" (Lithuanian) as the default language
 - **Translation Support**: Languages enable translation of attribute data in Lunar models (Products, Collections, etc.)
 - **Language Codes**: Typically use ISO 2 character language codes (e.g., 'en', 'fr', 'de', 'es')
 
@@ -10120,4 +10120,3 @@ php artisan test
 ## License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-

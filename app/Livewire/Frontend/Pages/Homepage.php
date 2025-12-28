@@ -4,12 +4,21 @@ namespace App\Livewire\Frontend\Pages;
 
 use App\Models\Collection;
 use App\Models\PromotionalBanner;
+use App\Services\SEOService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Support\HtmlString;
 use Livewire\Component;
 
 class Homepage extends Component
 {
-    public $featuredCollections;
+    public EloquentCollection $featuredCollections;
+
+    /**
+     * Subset of featured collections used for the hero slider.
+     * We only include collections that have a usable hero image.
+     */
+    public EloquentCollection $heroCollections;
 
     public ?Collection $bestsellers = null;
 
@@ -19,30 +28,52 @@ class Homepage extends Component
 
     public function mount(): void
     {
-        // Get featured collections
         $this->featuredCollections = Collection::query()
             ->homepage()
-            ->with(['products' => function ($query) {
-                $query->limit(8);
-            }])
+            ->withCount('products')
+            ->with([
+                'urls',
+                'media',
+            ])
             ->get();
+
+        // Only include collections that can actually render a hero image.
+        // (Avoid mismatched slide indices/dots when collections don't have media.)
+        $this->heroCollections = $this->featuredCollections
+            ->filter(function (Collection $collection) {
+                return (bool) ($collection->getFirstMedia('hero') ?? $collection->getFirstMedia('images'));
+            })
+            ->take(3)
+            ->values();
 
         // Get bestseller collection
         $this->bestsellers = Collection::query()
             ->ofType('bestsellers')
             ->active()
-            ->with(['products' => function ($query) {
-                $query->limit(12);
-            }])
+            ->with([
+                'urls',
+                'media',
+                'products' => function ($query) {
+                    $query
+                        ->with(['urls', 'media', 'variants'])
+                        ->limit(12);
+                },
+            ])
             ->first();
 
         // Get new arrivals collection
         $this->newArrivals = Collection::query()
             ->ofType('new_arrivals')
             ->active()
-            ->with(['products' => function ($query) {
-                $query->limit(12);
-            }])
+            ->with([
+                'urls',
+                'media',
+                'products' => function ($query) {
+                    $query
+                        ->with(['urls', 'media', 'variants'])
+                        ->limit(12);
+                },
+            ])
             ->first();
 
         $this->promotionalBanners = $this->getPromotionalBanners();
@@ -50,17 +81,34 @@ class Homepage extends Component
 
     public function render()
     {
-        return view('frontend.homepage.index', [
+        $metaTags = SEOService::getDefaultMetaTags(
+            __('frontend.home'),
+            __('frontend.homepage.meta_description', ['store' => SEOService::getSiteName()]),
+            null,
+            request()->url(),
+        );
+
+        $pageMeta = new HtmlString(view('frontend.homepage._meta', [
+            'metaTags' => $metaTags,
+        ])->render());
+
+        return view('livewire.frontend.pages.homepage', [
             'featuredCollections' => $this->featuredCollections,
+            'heroCollections' => $this->heroCollections,
             'bestsellers' => $this->bestsellers,
             'newArrivals' => $this->newArrivals,
             'promotionalBanners' => $this->promotionalBanners,
+        ])->layout('frontend.layout', [
+            'pageTitle' => $metaTags['title'] ?? SEOService::getSiteName(),
+            'pageMeta' => $pageMeta,
+            'mainClass' => 'max-w-none p-0',
         ]);
     }
 
     protected function getPromotionalBanners(): SupportCollection
     {
         $banners = PromotionalBanner::active()
+            ->with('media')
             ->orderBy('position')
             ->orderBy('order')
             ->get()
@@ -103,7 +151,7 @@ class Homepage extends Component
             return match ($banner->link_type) {
                 'collection' => route('frontend.collections.show', $banner->link),
                 'product' => route('frontend.products.show', $banner->link),
-                'category' => route('frontend.categories.show', $banner->link),
+                'category' => route('categories.show', $banner->link),
                 'url' => $banner->link,
                 default => route('frontend.collections.show', $banner->link),
             };

@@ -21,6 +21,10 @@
             font-family: 'Manrope', 'Instrument Sans', ui-sans-serif, sans-serif;
         }
 
+        .homepage [x-cloak] {
+            display: none !important;
+        }
+
         .homepage .font-display {
             font-family: 'Fraunces', serif;
         }
@@ -751,7 +755,7 @@
     @endif
 
     @if($bestsellers && $bestsellers->products->count() > 0)
-        <section id="bestsellers" class="py-14 bg-surface-strong">
+        <section id="bestsellers" class="py-14">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
                     <div>
@@ -775,10 +779,14 @@
                     @endif
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    @foreach($bestsellers->products->take(8) as $product)
-                        <x-frontend.product-card :product="$product" />
-                    @endforeach
+                <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2">
+                    <div class="flex gap-4 min-w-max">
+                        @foreach($bestsellers->products->take(12) as $product)
+                            <div class="w-72 flex-shrink-0">
+                                <x-frontend.product-card :product="$product" />
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </section>

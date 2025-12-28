@@ -29,6 +29,14 @@
             color: var(--muted);
         }
 
+        .homepage .text-ink {
+            color: var(--ink);
+        }
+
+        .homepage .bg-ink {
+            background: var(--ink);
+        }
+
         .homepage .bg-surface {
             background: var(--surface);
         }

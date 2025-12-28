@@ -24,10 +24,30 @@ return [
     ],
     'homepage' => [
         'meta_description' => ':store - Discover our featured collections, bestsellers, and new arrivals.',
+        'hero_tagline' => 'Curated for modern orbit',
+        'hero_subtitle' => 'Design-forward essentials made to move with you from workday to weekend.',
+        'hero_secondary' => 'Shop all products',
         'featured_collections' => 'Featured Collections',
+        'featured_subtitle' => 'Start with the collections shaping this season.',
         'bestsellers' => 'Bestsellers',
+        'bestsellers_subtitle' => 'The pieces customers come back for.',
         'new_arrivals' => 'New Arrivals',
+        'new_arrivals_subtitle' => 'Fresh drops for the next orbit.',
         'explore_collection' => 'Explore Collection',
+        'value_props' => [
+            'shipping' => [
+                'title' => 'Fast dispatch',
+                'description' => 'Packed with care and sent out quickly from our studio.',
+            ],
+            'quality' => [
+                'title' => 'Lunar-grade quality',
+                'description' => 'Materials chosen for durability, comfort, and finish.',
+            ],
+            'returns' => [
+                'title' => 'Easy returns',
+                'description' => 'Hassle-free returns on eligible items.',
+            ],
+        ],
     ],
     'product' => [
         'view_details' => 'View Details',
@@ -323,4 +343,3 @@ return [
         'popular_searches' => 'Popular Searches:',
     ],
 ];
-

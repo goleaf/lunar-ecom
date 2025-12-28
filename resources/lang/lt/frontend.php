@@ -27,10 +27,30 @@ return [
 
     'homepage' => [
         'meta_description' => ':store – atraskite išskirtines kolekcijas, perkamiausias prekes ir naujienas.',
+        'hero_tagline' => 'Atrinkta šiuolaikiniam ritmui',
+        'hero_subtitle' => 'Šiuolaikiniai būtini daiktai, tinkantys nuo darbo dienos iki savaitgalio.',
+        'hero_secondary' => 'Visi produktai',
         'featured_collections' => 'Išskirtinės kolekcijos',
+        'featured_subtitle' => 'Pradėkite nuo kolekcijų, formuojančių sezoną.',
         'bestsellers' => 'Perkamiausios',
+        'bestsellers_subtitle' => 'Populiariausi pasirinkimai, prie kurių grįžtama.',
         'new_arrivals' => 'Naujienos',
+        'new_arrivals_subtitle' => 'Naujausi pristatymai artimiausiam etapui.',
         'explore_collection' => 'Peržiūrėti kolekciją',
+        'value_props' => [
+            'shipping' => [
+                'title' => 'Greitas išsiuntimas',
+                'description' => 'Kruopščiai supakuojame ir greitai išsiunčiame.',
+            ],
+            'quality' => [
+                'title' => 'Patikima kokybė',
+                'description' => 'Medžiagos parinktos ilgaamžiškumui, komfortui ir apdailai.',
+            ],
+            'returns' => [
+                'title' => 'Lengvas grąžinimas',
+                'description' => 'Paprastas grąžinimas tinkamoms prekėms.',
+            ],
+        ],
     ],
 
     'product' => [
@@ -334,5 +354,4 @@ return [
         'popular_searches' => 'Populiarios paieškos:',
     ],
 ];
-
 

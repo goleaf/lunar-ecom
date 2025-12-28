@@ -24,7 +24,7 @@ class SeedLanguages extends Command
      *
      * @var string
      */
-    protected $description = 'Seed multi-language configuration (English, Spanish, French, German, Chinese)';
+    protected $description = 'Seed multi-language configuration (Lithuanian, English, Spanish, French, German)';
 
     /**
      * Execute the console command.
@@ -42,4 +42,3 @@ class SeedLanguages extends Command
         return Command::SUCCESS;
     }
 }
-

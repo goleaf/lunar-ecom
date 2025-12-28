@@ -21,7 +21,7 @@ class ProductTypeAttributesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Ensure languages exist (project uses LanguageSeeder for en/es/fr/de/zh).
+        // Ensure languages exist (project uses LanguageSeeder for lt/en/es/fr/de).
         if (! Language::query()->exists()) {
             $this->call(LanguageSeeder::class);
         }
@@ -253,5 +253,4 @@ class ProductTypeAttributesSeeder extends Seeder
         return $out;
     }
 }
-
 

@@ -10,7 +10,7 @@ use Lunar\Models\Language;
 /**
  * Seeder for multi-language configuration.
  *
- * Creates and configures 6 languages: Lithuanian, English, Spanish, French, German, Chinese
+ * Creates and configures 5 languages: Lithuanian, English, Spanish, French, German
  */
 class LanguageSeeder extends Seeder
 {
@@ -48,11 +48,6 @@ class LanguageSeeder extends Seeder
                 'name' => 'German',
                 'default' => false,
             ],
-            [
-                'code' => 'zh',
-                'name' => 'Chinese',
-                'default' => false,
-            ],
         ];
 
         // First, unset any existing default languages
@@ -77,6 +72,6 @@ class LanguageSeeder extends Seeder
 
         $this->command->info('✅ Multi-language configuration completed!');
         $this->command->info('   Default language: Lithuanian (lt)');
-        $this->command->info('   Available languages: Lithuanian, English, Spanish, French, German, Chinese');
+        $this->command->info('   Available languages: Lithuanian, English, Spanish, French, German');
     }
 }

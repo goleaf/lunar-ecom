@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Frontend\Pages;
 
+use App\Models\Category;
 use App\Models\Collection;
 use App\Models\PromotionalBanner;
 use App\Services\SEOService;
@@ -20,6 +21,11 @@ class Homepage extends Component
      */
     public EloquentCollection $heroCollections;
 
+    /**
+     * Root categories shown in the homepage navigation blocks.
+     */
+    public EloquentCollection $navigationCategories;
+
     public ?Collection $bestsellers = null;
 
     public ?Collection $newArrivals = null;
@@ -35,6 +41,15 @@ class Homepage extends Component
                 'urls',
                 'media',
             ])
+            ->get();
+
+        $this->navigationCategories = Category::query()
+            ->active()
+            ->inNavigation()
+            ->whereNull('parent_id')
+            ->ordered()
+            ->with('media')
+            ->limit(12)
             ->get();
 
         // Only include collections that can actually render a hero image.
@@ -95,6 +110,7 @@ class Homepage extends Component
         return view('livewire.frontend.pages.homepage', [
             'featuredCollections' => $this->featuredCollections,
             'heroCollections' => $this->heroCollections,
+            'navigationCategories' => $this->navigationCategories,
             'bestsellers' => $this->bestsellers,
             'newArrivals' => $this->newArrivals,
             'promotionalBanners' => $this->promotionalBanners,

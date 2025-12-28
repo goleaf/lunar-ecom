@@ -16,7 +16,7 @@
                 @include('frontend.components.responsive-image', [
                     'media' => $collectionImage,
                     'model' => $collection,
-                    'collectionName' => 'images',
+                    'collectionName' => $collectionImage->collection_name ?? 'images',
                     'conversion' => 'collection_card',
                     'sizeType' => 'collection_card',
                     'alt' => $collection->translateAttribute('name'),

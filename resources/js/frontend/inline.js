@@ -266,88 +266,6 @@ function initReviewHelpful() {
     };
 }
 
-function initComparison() {
-    window.updateComparisonCount = function updateComparisonCount(count) {
-        const countElement = document.getElementById('comparison-count');
-        if (!countElement) return;
-        countElement.textContent = String(count);
-        if (count > 0) {
-            countElement.classList.remove('hidden');
-        } else {
-            countElement.classList.add('hidden');
-        }
-    };
-
-    window.clearComparison = function clearComparison() {
-        const confirmMessage =
-            document.querySelector('[data-comparison-confirm-clear]')?.getAttribute('data-comparison-confirm-clear') ||
-            'Clear comparison?';
-
-        if (!confirm(confirmMessage)) return;
-
-        postJson('/comparison/clear', {})
-            .then(({ data }) => {
-                if (data?.success) {
-                    // If we're on a page with a bar, remove it; otherwise just reload.
-                    document.getElementById('comparison-bar')?.remove();
-                    window.updateComparisonCount(0);
-                    location.reload();
-                }
-            })
-            .catch(() => {
-                location.reload();
-            });
-    };
-
-    window.removeFromComparison = function removeFromComparison(productId) {
-        postJson(`/comparison/products/${productId}/remove`, {})
-            .then(({ data }) => {
-                if (data?.success) location.reload();
-            })
-            .catch(() => location.reload());
-    };
-
-    window.toggleComparison = function toggleComparison(productId) {
-        const btn = document.getElementById(`compare-btn-${productId}`);
-        const text = document.getElementById(`compare-text-${productId}`);
-        if (!btn || !text) return;
-
-        if (btn.classList.contains('cursor-not-allowed')) {
-            alert(btn.dataset.maxItemsMessage || 'Maximum items reached');
-            return;
-        }
-
-        const isInComparison = btn.classList.contains('bg-green-600');
-        const url = isInComparison
-            ? `/comparison/products/${productId}/remove`
-            : `/comparison/products/${productId}/add`;
-
-        postJson(url, {})
-            .then(({ data }) => {
-                if (!data?.success) {
-                    alert(data?.message || 'An error occurred');
-                    return;
-                }
-
-                if (isInComparison) {
-                    btn.classList.remove('bg-green-600', 'text-white', 'hover:bg-green-700');
-                    btn.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                    text.textContent = btn.dataset.addText || text.textContent;
-                } else {
-                    btn.classList.remove('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
-                    btn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700');
-                    text.textContent = btn.dataset.removeText || text.textContent;
-                }
-
-                window.updateComparisonCount(data?.count || 0);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('An error occurred while updating comparison');
-            });
-    };
-}
-
 function initDownloads() {
     window.resendEmail = function resendEmail(downloadId) {
         postJson(`/downloads/${downloadId}/resend-email`, {})
@@ -706,7 +624,6 @@ export function initFrontendInlineMigrations() {
     initRecommendationsTracking();
     initReviewForm();
     initReviewHelpful();
-    initComparison();
     initDownloads();
     initCartPage();
     initBundleShow();

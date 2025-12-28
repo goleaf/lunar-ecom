@@ -143,10 +143,6 @@
                             <x-frontend.notify-me-button :product="$product" :variant="$variant" />
                         </div>
                     @endif
-
-                    <div class="mt-4">
-                        <x-frontend.compare-button :product="$product" />
-                    </div>
                 @endif
 
                 @if($product->tags->count() > 0)

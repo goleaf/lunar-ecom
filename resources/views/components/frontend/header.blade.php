@@ -1,5 +1,6 @@
 @php
     /** @var \Illuminate\Database\Eloquent\Collection|\App\Models\Category[] $navCategories */
+    /** @var array|null $megaMenuBanner */
 @endphp
 
 <header
@@ -377,28 +378,66 @@
                                                     @endforelse
                                                 </div>
 
-                                                <div class="mt-4 rounded-2xl bg-slate-900 px-5 py-4 text-white">
-                                                    <div class="text-xs uppercase tracking-[0.3em] text-white/70">
-                                                        Explore
+                                                @if(!empty($megaMenuBanner))
+                                                    <div class="mt-4 overflow-hidden rounded-2xl bg-slate-900 text-white">
+                                                        <div class="relative">
+                                                            @if(!empty($megaMenuBanner['image']))
+                                                                <div
+                                                                    class="absolute inset-0 bg-cover bg-center"
+                                                                    style="background-image: url('{{ $megaMenuBanner['image'] }}')"
+                                                                ></div>
+                                                            @endif
+                                                            <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-black/15"></div>
+
+                                                            <div class="relative px-5 py-4">
+                                                                <div class="text-xs uppercase tracking-[0.3em] text-white/70">
+                                                                    {{ $megaMenuBanner['subtitle'] ?: 'Featured' }}
+                                                                </div>
+                                                                <div class="mt-2 text-lg font-semibold">
+                                                                    {{ $megaMenuBanner['title'] }}
+                                                                </div>
+
+                                                                <div class="mt-3 flex flex-wrap gap-2">
+                                                                    <a
+                                                                        href="{{ $megaMenuBanner['link'] }}"
+                                                                        class="inline-flex items-center justify-center rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/20"
+                                                                    >
+                                                                        {{ $megaMenuBanner['link_text'] }}
+                                                                    </a>
+                                                                    <a
+                                                                        href="{{ route('categories.show', $category->getFullPath()) }}"
+                                                                        class="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/15"
+                                                                    >
+                                                                        Browse {{ $category->getName() }}
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div class="mt-2 text-lg font-semibold">
-                                                        Browse {{ $category->getName() }}
+                                                @else
+                                                    <div class="mt-4 rounded-2xl bg-slate-900 px-5 py-4 text-white">
+                                                        <div class="text-xs uppercase tracking-[0.3em] text-white/70">
+                                                            Explore
+                                                        </div>
+                                                        <div class="mt-2 text-lg font-semibold">
+                                                            Browse {{ $category->getName() }}
+                                                        </div>
+                                                        <div class="mt-3 flex flex-wrap gap-2">
+                                                            <a
+                                                                href="{{ route('categories.show', $category->getFullPath()) }}"
+                                                                class="inline-flex items-center justify-center rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/20"
+                                                            >
+                                                                Shop now
+                                                            </a>
+                                                            <a
+                                                                href="{{ route('frontend.products.index') }}"
+                                                                class="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/15"
+                                                            >
+                                                                All products
+                                                            </a>
+                                                        </div>
                                                     </div>
-                                                    <div class="mt-3 flex flex-wrap gap-2">
-                                                        <a
-                                                            href="{{ route('categories.show', $category->getFullPath()) }}"
-                                                            class="inline-flex items-center justify-center rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/20"
-                                                        >
-                                                            Shop now
-                                                        </a>
-                                                        <a
-                                                            href="{{ route('frontend.products.index') }}"
-                                                            class="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-white/15"
-                                                        >
-                                                            All products
-                                                        </a>
-                                                    </div>
-                                                </div>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>

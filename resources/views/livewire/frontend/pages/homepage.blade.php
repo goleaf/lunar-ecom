@@ -573,6 +573,53 @@
         </section>
     @endif
 
+    @if(isset($categorySpotlights) && $categorySpotlights->isNotEmpty())
+        @foreach($categorySpotlights as $spotlight)
+            @php
+                /** @var \App\Models\Category $spotCategory */
+                $spotCategory = $spotlight['category'];
+                $spotProducts = $spotlight['products'];
+                $spotBg = $loop->even ? 'bg-surface-strong' : '';
+            @endphp
+
+            <section class="py-14 {{ $spotBg }}">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+                        <div>
+                            <p class="eyebrow text-xs font-semibold uppercase text-muted">
+                                {{ __('frontend.categories') }}
+                            </p>
+                            <h2 class="font-display text-3xl sm:text-4xl text-ink">
+                                {{ $spotCategory->getName() }}
+                            </h2>
+                            @if($spotCategory->getDescription())
+                                <p class="mt-3 text-muted">
+                                    {{ Str::limit($spotCategory->getDescription(), 140) }}
+                                </p>
+                            @endif
+                        </div>
+                        <a
+                            href="{{ route('categories.show', $spotCategory->getFullPath()) }}"
+                            class="text-sm font-semibold text-ink hover:text-[rgba(242,104,75,1)]"
+                        >
+                            {{ __('frontend.common.view_all') }} →
+                        </a>
+                    </div>
+
+                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2">
+                        <div class="flex gap-4 min-w-max">
+                            @foreach($spotProducts as $product)
+                                <div class="w-72 flex-shrink-0">
+                                    <x-frontend.product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </section>
+        @endforeach
+    @endif
+
     <section class="py-10">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid gap-4 sm:grid-cols-3">

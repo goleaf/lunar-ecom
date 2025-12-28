@@ -565,13 +565,36 @@
                     </a>
                 </div>
 
-                <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2">
-                    <div class="flex gap-4 min-w-max">
-                        @foreach($newArrivals->products->take(12) as $product)
-                            <div class="w-72 flex-shrink-0">
-                                <x-frontend.product-card :product="$product" />
-                            </div>
-                        @endforeach
+                <div class="relative" data-carousel>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-prev
+                        aria-label="Scroll left"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-next
+                        aria-label="Scroll right"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2 scroll-smooth" data-carousel-track>
+                        <div class="flex gap-4 min-w-max">
+                            @foreach($newArrivals->products->take(12) as $product)
+                                <div class="w-72 flex-shrink-0" data-carousel-item>
+                                    <x-frontend.product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
@@ -611,13 +634,36 @@
                         </a>
                     </div>
 
-                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2">
-                        <div class="flex gap-4 min-w-max">
-                            @foreach($spotProducts as $product)
-                                <div class="w-72 flex-shrink-0">
-                                    <x-frontend.product-card :product="$product" />
-                                </div>
-                            @endforeach
+                    <div class="relative" data-carousel>
+                        <button
+                            type="button"
+                            class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                            data-carousel-prev
+                            aria-label="Scroll left"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                            data-carousel-next
+                            aria-label="Scroll right"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2 scroll-smooth" data-carousel-track>
+                            <div class="flex gap-4 min-w-max">
+                                @foreach($spotProducts as $product)
+                                    <div class="w-72 flex-shrink-0" data-carousel-item>
+                                        <x-frontend.product-card :product="$product" />
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -831,13 +877,36 @@
                     @endif
                 </div>
 
-                <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2">
-                    <div class="flex gap-4 min-w-max">
-                        @foreach($bestsellers->products->take(12) as $product)
-                            <div class="w-72 flex-shrink-0">
-                                <x-frontend.product-card :product="$product" />
-                            </div>
-                        @endforeach
+                <div class="relative" data-carousel>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-prev
+                        aria-label="Scroll left"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 items-center justify-center rounded-full bg-white/85 text-ink shadow ring-1 ring-black/5 hover:bg-white"
+                        data-carousel-next
+                        aria-label="Scroll right"
+                    >
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <div class="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto pb-2 scroll-smooth" data-carousel-track>
+                        <div class="flex gap-4 min-w-max">
+                            @foreach($bestsellers->products->take(12) as $product)
+                                <div class="w-72 flex-shrink-0" data-carousel-item>
+                                    <x-frontend.product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>

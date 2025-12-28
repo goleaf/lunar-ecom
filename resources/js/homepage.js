@@ -214,8 +214,12 @@
         initSmoothScroll();
     }
 
-    // Initialize on first load
-    document.addEventListener('DOMContentLoaded', initHomepage);
+    // Initialize on first load (or immediately if loaded after DOMContentLoaded)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initHomepage);
+    } else {
+        initHomepage();
+    }
 
     // Re-initialize after Livewire navigation (if enabled)
     document.addEventListener('livewire:navigated', initHomepage);

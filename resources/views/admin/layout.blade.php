@@ -39,7 +39,6 @@
             <a href="{{ route('admin.schedules.calendar') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Schedule calendar</a>
 
             <p class="text-xs uppercase tracking-wide text-slate-400 px-2 mt-6">Insights</p>
-            <a href="{{ route('admin.comparison-analytics.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Comparison analytics</a>
             <a href="{{ route('admin.stock-notifications.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Stock notifications</a>
             @if (Route::has('admin.search-analytics.index'))
                 <a href="{{ route('admin.search-analytics.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Search analytics</a>

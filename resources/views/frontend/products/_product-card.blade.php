@@ -53,11 +53,10 @@
                 {{ $price->formatted }}
             </p>
         @endif
-        <div class="flex gap-2">
-            <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+        <div>
+            <a href="{{ route('frontend.products.show', $product->urls->first()?->slug ?? $product->id) }}" class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
                 {{ __('frontend.product.view_details') }}
             </a>
-            <x-frontend.compare-button :product="$product" />
         </div>
     </div>
 </div>

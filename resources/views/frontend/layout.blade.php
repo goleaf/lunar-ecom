@@ -72,20 +72,6 @@
                             <a href="{{ route('frontend.brands.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900">
                                 {{ __('frontend.nav.brands') }}
                             </a>
-                            <a href="{{ route('frontend.comparison.index') }}" class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 relative">
-                                {{ __('frontend.nav.comparison') }}
-                                @php
-                                    $comparisonService = app(\App\Services\ComparisonService::class);
-                                    $comparisonCount = $comparisonService->getComparisonCount();
-                                @endphp
-                                @if($comparisonCount > 0)
-                                    <span id="comparison-count" class="ml-1 bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">
-                                        {{ $comparisonCount }}
-                                    </span>
-                                @else
-                                    <span id="comparison-count" class="hidden ml-1 bg-blue-600 text-white text-xs rounded-full px-2 py-0.5"></span>
-                                @endif
-                            </a>
                         </div>
                     </div>
                     <div class="flex items-center space-x-4">
@@ -107,9 +93,6 @@
                 </div>
             </div>
         </nav>
-
-        {{-- Comparison Bar --}}
-        @include('frontend.components.comparison-bar')
 
         @php
             $mainClass = $mainClass ?? 'max-w-7xl mx-auto py-6 sm:px-6 lg:px-8';

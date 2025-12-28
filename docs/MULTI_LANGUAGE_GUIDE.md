@@ -64,11 +64,11 @@ The following languages are configured by default:
 
 | Code | Name | Default |
 |------|------|---------|
-| `en` | English | ✅ Yes |
+| `lt` | Lithuanian | ✅ Yes |
+| `en` | English | No |
 | `es` | Spanish | No |
 | `fr` | French | No |
 | `de` | German | No |
-| `zh` | Chinese | No |
 
 ### 3. Language Detection Middleware
 
@@ -77,7 +77,7 @@ The `LanguageDetectionMiddleware` automatically detects the language from:
 1. **URL Parameter** (`?lang=fr`) - Highest priority
 2. **Browser Header** (`Accept-Language`) - Detects from browser preferences
 3. **Session** - Previously selected language
-4. **Default Language** - Falls back to English
+4. **Default Language** - Falls back to Lithuanian
 
 The middleware is already registered in `bootstrap/app.php`.
 
@@ -104,14 +104,14 @@ $product = Product::create([
             'fr' => 'Écouteurs sans fil premium',
             'es' => 'Auriculares inalámbricos premium',
             'de' => 'Premium-Kopfhörer',
-            'zh' => '高级无线耳机',
+            'lt' => 'Aukštos kokybės belaidės ausinės',
         ]),
         'description' => AttributeHelper::translatedText([
             'en' => 'High-quality wireless headphones with active noise cancellation.',
             'fr' => 'Écouteurs sans fil de haute qualité avec annulation active du bruit.',
             'es' => 'Auriculares inalámbricos de alta calidad con cancelación activa de ruido.',
             'de' => 'Hochwertige Funkkopfhörer mit aktiver Geräuschunterdrückung.',
-            'zh' => '高品质无线耳机，具有主动降噪功能。',
+            'lt' => 'Aukštos kokybės belaidės ausinės su aktyviu triukšmo slopinimu.',
         ]),
     ]),
 ]);
@@ -131,7 +131,7 @@ $collection = Collection::create([
             'fr' => 'Électronique',
             'es' => 'Electrónica',
             'de' => 'Elektronik',
-            'zh' => '电子产品',
+            'lt' => 'Elektronika',
         ]),
         'description' => AttributeHelper::translatedText([
             'en' => 'All electronics and gadgets',
@@ -414,7 +414,7 @@ resources/lang/
 │   └── frontend.php
 ├── de/
 │   └── frontend.php
-└── zh/
+└── lt/
     └── frontend.php
 ```
 
@@ -506,14 +506,14 @@ $product = Product::create([
             'fr' => 'Écouteurs sans fil premium',
             'es' => 'Auriculares inalámbricos premium',
             'de' => 'Premium-Kopfhörer',
-            'zh' => '高级无线耳机',
+            'lt' => 'Aukštos kokybės belaidės ausinės',
         ]),
         'description' => AttributeHelper::translatedText([
             'en' => 'High-quality wireless headphones with active noise cancellation.',
             'fr' => 'Écouteurs sans fil de haute qualité avec annulation active du bruit.',
             'es' => 'Auriculares inalámbricos de alta calidad con cancelación activa de ruido.',
             'de' => 'Hochwertige Funkkopfhörer mit aktiver Geräuschunterdrückung.',
-            'zh' => '高品质无线耳机，具有主动降噪功能。',
+            'lt' => 'Aukštos kokybės belaidės ausinės su aktyviu triukšmo slopinimu.',
         ]),
     ]),
 ]);
@@ -626,5 +626,4 @@ if (LanguageHelper::exists('es')) {
 - [Laravel Localization](https://laravel.com/docs/localization)
 - [Attribute System Guide](./PRODUCT_ATTRIBUTES_SYSTEM.md)
 - [Multi-Language Setup](./MULTI_LANGUAGE_SETUP.md)
-
 

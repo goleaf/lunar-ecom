@@ -140,7 +140,7 @@ Content-Type: application/json
 ## Fallback Behavior
 
 1. **Current locale** → Tries the current locale first
-2. **Default language** → Falls back to default language (usually English)
+2. **Default language** → Falls back to default language (Lithuanian in this project)
 3. **First available** → Uses first available translation as last resort
 
 ## Best Practices
@@ -188,7 +188,7 @@ if ($info['is_fallback']) {
 ### Bulk Translation Check
 
 ```php
-$requiredLocales = ['en', 'fr', 'es', 'de', 'zh'];
+$requiredLocales = ['lt', 'en', 'fr', 'es', 'de'];
 
 foreach ($products as $product) {
     $missing = TranslationService::getMissingTranslations($product, 'name', $requiredLocales);
@@ -197,5 +197,4 @@ foreach ($products as $product) {
     }
 }
 ```
-
 

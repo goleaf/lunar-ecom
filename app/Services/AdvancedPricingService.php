@@ -14,6 +14,7 @@ use Lunar\Models\Channel;
 use Lunar\Models\CustomerGroup;
 use Lunar\Models\Customer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 /**
@@ -40,41 +41,37 @@ class AdvancedPricingService
     }
 
     /**
-     * Calculate a price for a variant for use in storefront/cart pricing.
+     * Calculate the current price for a variant.
      *
-     * This is a lightweight wrapper around the PriorityPricingResolver.
-     * It does NOT create simulation or history records.
+     * This is the "core" pricing entrypoint used by cart pricing.
+     * It resolves the best available price layer (manual override / contract / group / channel / promo / base)
+     * and returns a normalized pricing payload.
      *
-     * @return array{
-     *   price:int,
-     *   original_price?:int,
-     *   compare_at_price?:int|null,
-     *   layer?:string|null,
-     *   source?:string|null,
-     *   currency?:\Lunar\Models\Currency|null,
-     *   tax_inclusive?:bool,
-     *   applied_rules?:\Illuminate\Support\Collection
-     * }
+     * @return array{price:int, original_price:int, compare_at_price:int|null, layer:string|null, source:string|null, currency:Currency|null, tax_inclusive:bool, applied_rules:mixed}
      */
     public function calculatePrice(
         ProductVariant $variant,
         int $quantity = 1,
         ?Currency $currency = null,
-        ?CustomerGroup $customerGroup = null,
-        ?Channel $channel = null,
-        bool $includeTax = false,
-        ?Customer $customer = null
+        $customerGroup = null,
+        $channel = null,
+        bool $includeTax = false
     ): array {
-        $priceData = $this->resolver->resolvePrice(
+        // Some call sites historically swapped channel/customerGroup.
+        if ($customerGroup instanceof Channel && ($channel instanceof CustomerGroup || $channel === null)) {
+            [$customerGroup, $channel] = [$channel, $customerGroup];
+        }
+
+        $resolved = $this->resolver->resolvePrice(
             $variant,
             $quantity,
             $currency,
-            $channel,
-            $customerGroup,
-            $customer
+            $channel instanceof Channel ? $channel : null,
+            $customerGroup instanceof CustomerGroup ? $customerGroup : null,
+            null
         );
 
-        if (!$priceData) {
+        if (! $resolved) {
             return [
                 'price' => 0,
                 'original_price' => 0,
@@ -82,14 +79,16 @@ class AdvancedPricingService
                 'layer' => null,
                 'source' => null,
                 'currency' => $currency,
-                'tax_inclusive' => $includeTax,
+                'tax_inclusive' => false,
                 'applied_rules' => collect(),
             ];
         }
 
-        $priceData['tax_inclusive'] = $includeTax;
+        // This codebase treats "tax included" as a downstream concern.
+        // We keep the flag for compatibility but do not adjust amounts here.
+        $resolved['tax_inclusive'] = (bool) ($resolved['tax_inclusive'] ?? false);
 
-        return $priceData;
+        return $resolved;
     }
 
     /**
@@ -272,7 +271,7 @@ class AdvancedPricingService
         $hookService = $hook->hook_service;
         
         if (!class_exists($hookService)) {
-            \Log::warning("Dynamic pricing hook service not found: {$hookService}");
+            Log::warning("Dynamic pricing hook service not found: {$hookService}");
             return null;
         }
 
@@ -291,7 +290,7 @@ class AdvancedPricingService
                 return $price;
             }
         } catch (\Exception $e) {
-            \Log::error("Dynamic pricing hook error: {$e->getMessage()}");
+            Log::error("Dynamic pricing hook error: {$e->getMessage()}");
         }
 
         return null;
@@ -469,6 +468,10 @@ class AdvancedPricingService
             ->orderByDesc('priority')
             ->first();
 
+        $effectiveFrom = $data['effective_from'] ?? now();
+        $newPriceMinor = (int) ($data['price'] ?? $currentPrice?->price ?? 0);
+        $oldPriceMinor = (int) ($currentPrice?->price ?? 0);
+
         // Close previous price history entry
         PriceHistory::where('product_variant_id', $variant->id)
             ->where('currency_id', $currency->id)
@@ -477,18 +480,29 @@ class AdvancedPricingService
 
         // Create new history entry
         return PriceHistory::create([
+            // Legacy required columns (from older price_history schema)
+            'product_id' => $variant->product_id,
+            'price_matrix_id' => $data['price_matrix_id'] ?? null,
+            'old_price' => $oldPriceMinor > 0 ? round($oldPriceMinor / 100, 2) : null,
+            'new_price' => round($newPriceMinor / 100, 2),
+            'currency_code' => $currency->code ?? 'EUR',
+            'change_type' => $data['change_type'] ?? 'manual',
+            'context' => $data['context'] ?? null,
+            'change_notes' => $data['change_notes'] ?? null,
+            'changed_at' => $effectiveFrom,
+
             'product_variant_id' => $variant->id,
             'currency_id' => $currency->id,
-            'price' => $data['price'] ?? $currentPrice?->price ?? 0,
+            'price' => $newPriceMinor,
             'compare_at_price' => $data['compare_at_price'] ?? $currentPrice?->compare_at_price ?? null,
             'channel_id' => $data['channel_id'] ?? $currentPrice?->channel_id,
             'customer_group_id' => $data['customer_group_id'] ?? $currentPrice?->customer_group_id,
             'pricing_layer' => $data['pricing_layer'] ?? $currentPrice?->pricing_layer ?? 'base',
             'pricing_rule_id' => $data['pricing_rule_id'] ?? null,
-            'changed_by' => $data['changed_by'] ?? auth()->id(),
+            'changed_by' => $data['changed_by'] ?? auth('web')->id(),
             'change_reason' => $data['change_reason'] ?? 'manual',
             'change_metadata' => $data['change_metadata'] ?? null,
-            'effective_from' => $data['effective_from'] ?? now(),
+            'effective_from' => $effectiveFrom,
             'effective_to' => $data['effective_to'] ?? null,
         ]);
     }

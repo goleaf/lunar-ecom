@@ -103,23 +103,6 @@ class ProductImportController extends Controller
         ]);
 
         try {
-            // Create import record
-            $import = ProductImportModel::create([
-                'filename' => $validated['filename'],
-                'original_filename' => $validated['filename'],
-                'file_path' => $validated['file_path'],
-                'file_type' => $validated['file_type'],
-                'status' => 'pending',
-                'field_mapping' => $validated['field_mapping'] ?? [],
-                'import_options' => $validated['import_options'] ?? ['action' => 'create'],
-                'user_id' => auth()->id(),
-            ]);
-
-            // Get total row count
-            $filePath = Storage::disk('local')->path($validated['file_path']);
-            $totalRows = $this->countRows($filePath, $validated['file_type']);
-            $import->update(['total_rows' => $totalRows]);
-
             // Process field mapping - convert from UI format to import format
             $fieldMapping = [];
             if (!empty($validated['field_mapping'])) {
@@ -131,6 +114,30 @@ class ProductImportController extends Controller
                     }
                 }
             }
+
+            // Create import record
+            $import = ProductImportModel::create([
+                'original_filename' => $validated['filename'],
+                'file_name' => basename($validated['file_path']),
+                'file_path' => $validated['file_path'],
+                'file_type' => $validated['file_type'],
+                'status' => 'pending',
+                'field_mapping' => $fieldMapping,
+                'options' => $validated['import_options'] ?? ['action' => 'create'],
+                'user_id' => auth('web')->id(),
+            ]);
+
+            // Get total row count
+            $filePath = Storage::disk('local')->path($validated['file_path']);
+            $totalRows = $this->countRows($filePath, $validated['file_type']);
+            $fileSize = Storage::disk('local')->exists($validated['file_path'])
+                ? Storage::disk('local')->size($validated['file_path'])
+                : null;
+
+            $import->update([
+                'total_rows' => $totalRows,
+                'file_size' => $fileSize,
+            ]);
 
             // Dispatch import job (queue it for background processing)
             Excel::queueImport(

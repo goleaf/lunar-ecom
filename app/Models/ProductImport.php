@@ -30,9 +30,11 @@ class ProductImport extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'filename',
-        'original_filename',
+        'user_id',
         'file_path',
+        'file_name',
+        'original_filename',
+        'file_size',
         'file_type',
         'status',
         'total_rows',
@@ -41,11 +43,11 @@ class ProductImport extends Model
         'failed_rows',
         'skipped_rows',
         'field_mapping',
-        'import_options',
+        'options',
         'validation_errors',
         'import_report',
+        'error_summary',
         'error_message',
-        'user_id',
         'started_at',
         'completed_at',
     ];
@@ -57,17 +59,51 @@ class ProductImport extends Model
      */
     protected $casts = [
         'field_mapping' => 'array',
-        'import_options' => 'array',
+        'options' => 'array',
         'validation_errors' => 'array',
         'import_report' => 'array',
+        'error_summary' => 'array',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'file_size' => 'integer',
         'total_rows' => 'integer',
         'processed_rows' => 'integer',
         'successful_rows' => 'integer',
         'failed_rows' => 'integer',
         'skipped_rows' => 'integer',
     ];
+
+    /**
+     * Backwards-compatible alias for legacy code.
+     */
+    public function getFilenameAttribute(): ?string
+    {
+        return $this->file_name;
+    }
+
+    /**
+     * Backwards-compatible alias for legacy code.
+     */
+    public function setFilenameAttribute(?string $value): void
+    {
+        $this->attributes['file_name'] = $value;
+    }
+
+    /**
+     * Backwards-compatible alias for legacy code.
+     */
+    public function getImportOptionsAttribute(): array
+    {
+        return $this->options ?? [];
+    }
+
+    /**
+     * Backwards-compatible alias for legacy code.
+     */
+    public function setImportOptionsAttribute($value): void
+    {
+        $this->attributes['options'] = $value;
+    }
 
     /**
      * User relationship.

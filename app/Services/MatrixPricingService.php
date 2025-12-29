@@ -6,7 +6,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\PriceMatrix;
 use App\Models\PricingTier;
-use App\Models\PricingRule;
+use App\Models\PriceMatrixRule;
 use App\Models\PriceHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -346,7 +346,7 @@ class MatrixPricingService
     /**
      * Apply rule pricing.
      */
-    protected function applyRulePricing(PricingRule $rule, float $basePrice): float
+    protected function applyRulePricing(PriceMatrixRule $rule, float $basePrice): float
     {
         return match ($rule->adjustment_type) {
             'fixed', 'override' => $rule->price ?? $basePrice,

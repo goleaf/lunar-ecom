@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Osama\LaravelEnums\Concerns\EnumTranslatable;
+
 /**
  * Discount Stacking Strategies
  * 
@@ -9,6 +11,8 @@ namespace App\Enums;
  */
 enum DiscountStackingStrategy: string
 {
+    use EnumTranslatable;
+
     case BEST_OF = 'best_of';
     case PRIORITY_FIRST = 'priority_first';
     case CUMULATIVE = 'cumulative';
@@ -19,12 +23,7 @@ enum DiscountStackingStrategy: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::BEST_OF => 'Best Of (Choose Max Discount)',
-            self::PRIORITY_FIRST => 'Priority First',
-            self::CUMULATIVE => 'Cumulative',
-            self::EXCLUSIVE_OVERRIDE => 'Exclusive Override',
-        };
+        return $this->trans();
     }
 
     /**

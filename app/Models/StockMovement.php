@@ -204,6 +204,7 @@ class StockMovement extends Model
 
         return match($this->actor_type) {
             'system' => 'System',
+            'staff' => $this->actor_identifier ? "Staff #{$this->actor_identifier}" : 'Staff',
             'api' => 'API',
             'import' => 'Import',
             default => 'Unknown',

@@ -10,7 +10,7 @@ use App\Models\ProductVariant;
  * Check margin alerts for all variants.
  * 
  * Run via cron:
- * 0 */6 * * * php artisan pricing:check-margin-alerts
+ * 0 *\/6 * * * php artisan pricing:check-margin-alerts
  */
 class CheckMarginAlerts extends Command
 {

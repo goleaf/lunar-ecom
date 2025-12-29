@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Osama\LaravelEnums\Concerns\EnumTranslatable;
+
 /**
  * Discount Types
  * 
@@ -10,6 +12,8 @@ namespace App\Enums;
  */
 enum DiscountType: string
 {
+    use EnumTranslatable;
+
     case ITEM_LEVEL = 'item_level';
     case CART_LEVEL = 'cart_level';
     case SHIPPING = 'shipping';
@@ -23,15 +27,7 @@ enum DiscountType: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::ITEM_LEVEL => 'Item-Level Discount',
-            self::CART_LEVEL => 'Cart-Level Discount',
-            self::SHIPPING => 'Shipping Discount',
-            self::PAYMENT_METHOD => 'Payment Method Discount',
-            self::CUSTOMER_LOYALTY => 'Customer Loyalty Discount',
-            self::COUPON_BASED => 'Coupon-Based Discount',
-            self::AUTOMATIC_PROMOTION => 'Automatic Promotion',
-        };
+        return $this->trans();
     }
 
     /**

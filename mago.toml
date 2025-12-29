@@ -1,0 +1,21 @@
+php-version = "8.2"
+
+[source]
+# Only project PHP code (avoid Blade templates and generated/runtime files).
+paths = [
+  "app",
+  "bootstrap",
+  "config",
+  "database",
+  "routes",
+  "tests",
+  "public/index.php",
+]
+
+excludes = [
+  "bootstrap/cache",
+  "resources",
+  "storage",
+]
+
+extensions = ["php"]

@@ -466,6 +466,18 @@ class StockService
         ?string $reason = null,
         ?string $notes = null
     ): StockMovement {
+        $createdBy = auth('web')->id();
+
+        $actorType = 'system';
+        $actorIdentifier = null;
+
+        if ($createdBy) {
+            $actorType = 'user';
+        } elseif (auth('staff')->check()) {
+            $actorType = 'staff';
+            $actorIdentifier = (string) auth('staff')->id();
+        }
+
         return StockMovement::create([
             'product_variant_id' => $variant->id,
             'warehouse_id' => $warehouse?->id,
@@ -479,7 +491,10 @@ class StockService
             'reference_number' => $reference?->reference ?? $reference?->id,
             'reason' => $reason,
             'notes' => $notes,
-            'created_by' => auth()->id(),
+            'created_by' => $createdBy,
+            'actor_type' => $actorType,
+            'actor_identifier' => $actorIdentifier,
+            'ip_address' => request()?->ip(),
             'movement_date' => now(),
         ]);
     }

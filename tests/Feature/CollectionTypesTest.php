@@ -74,6 +74,8 @@ class CollectionTypesTest extends TestCase
 
     public function test_collection_type_enum_has_labels(): void
     {
+        app()->setLocale('en');
+
         $this->assertEquals('Cross-Sell', CollectionType::CROSS_SELL->label());
         $this->assertEquals('Up-Sell', CollectionType::UP_SELL->label());
         $this->assertEquals('Standard', CollectionType::STANDARD->label());

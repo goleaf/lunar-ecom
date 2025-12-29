@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->prefix.'category_product', function (Blueprint $table) {
-            $table->id();
             $table->foreignId('category_id')->constrained($this->prefix.'categories')->onDelete('cascade');
             $table->foreignId('product_id')->constrained($this->prefix.'products')->onDelete('cascade');
             $table->integer('position')->default(0)->index();
             $table->timestamps();
             
-            // Ensure a product can only be in a category once
-            $table->unique(['category_id', 'product_id']);
+            // Composite key prevents duplicate pairs without introducing an `id` column
+            // which can cause ambiguous column issues when joining and selecting `id`.
+            $table->primary(['category_id', 'product_id']);
         });
     }
 

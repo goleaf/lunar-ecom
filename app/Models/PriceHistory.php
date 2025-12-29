@@ -29,7 +29,21 @@ class PriceHistory extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        // Legacy price change tracking (MatrixPricingService + early UI)
+        'product_id',
         'product_variant_id',
+        'price_matrix_id',
+        'old_price',
+        'new_price',
+        'currency_code',
+        'change_type',
+        'change_reason',
+        'change_notes',
+        'context',
+        'changed_by',
+        'changed_at',
+
+        // Advanced pricing / normalized history (AdvancedPricingService + compliance)
         'currency_id',
         'price',
         'compare_at_price',
@@ -37,8 +51,6 @@ class PriceHistory extends Model
         'customer_group_id',
         'pricing_layer',
         'pricing_rule_id',
-        'changed_by',
-        'change_reason',
         'change_metadata',
         'effective_from',
         'effective_to',
@@ -50,12 +62,24 @@ class PriceHistory extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'old_price' => 'decimal:2',
+        'new_price' => 'decimal:2',
+        'context' => 'array',
+        'changed_at' => 'datetime',
         'price' => 'integer',
         'compare_at_price' => 'integer',
         'change_metadata' => 'array',
         'effective_from' => 'datetime',
         'effective_to' => 'datetime',
     ];
+
+    /**
+     * Product relationship.
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
 
     /**
      * Variant relationship.
@@ -65,6 +89,22 @@ class PriceHistory extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
+    }
+
+    /**
+     * Product variant relationship (alias for legacy controller expectations).
+     */
+    public function productVariant(): BelongsTo
+    {
+        return $this->variant();
+    }
+
+    /**
+     * Price matrix relationship (optional).
+     */
+    public function priceMatrix(): BelongsTo
+    {
+        return $this->belongsTo(PriceMatrix::class, 'price_matrix_id');
     }
 
     /**

@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Osama\LaravelEnums\Concerns\EnumTranslatable;
+
 /**
  * Discount Stacking Modes
  * 
@@ -9,6 +11,8 @@ namespace App\Enums;
  */
 enum DiscountStackingMode: string
 {
+    use EnumTranslatable;
+
     case STACKABLE = 'stackable';
     case NON_STACKABLE = 'non_stackable';
     case EXCLUSIVE = 'exclusive';
@@ -18,11 +22,7 @@ enum DiscountStackingMode: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::STACKABLE => 'Stackable',
-            self::NON_STACKABLE => 'Non-Stackable',
-            self::EXCLUSIVE => 'Exclusive',
-        };
+        return $this->trans();
     }
 
     /**

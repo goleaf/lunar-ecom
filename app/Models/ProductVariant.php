@@ -2014,7 +2014,7 @@ class ProductVariant extends LunarProductVariant
      */
     public function priceHistories()
     {
-        return $this->hasMany(\App\Models\PriceHistory::class, 'variant_id');
+        return $this->hasMany(\App\Models\PriceHistory::class, 'product_variant_id');
     }
 
     /**

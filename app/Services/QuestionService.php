@@ -25,15 +25,17 @@ class QuestionService
     public function submitQuestion(Product $product, array $data): ProductQuestion
     {
         return DB::transaction(function () use ($product, $data) {
+            $user = auth('web')->user();
+
             // Check for duplicate questions
             $similarQuestions = $this->findSimilarQuestions($product, $data['question'] ?? '');
             
             // Create the question
             $question = ProductQuestion::create([
                 'product_id' => $product->id,
-                'customer_id' => $data['customer_id'] ?? auth()->user()?->customer?->id,
-                'customer_name' => $data['customer_name'] ?? auth()->user()?->name ?? 'Guest',
-                'email' => $data['email'] ?? auth()->user()?->email,
+                'customer_id' => $data['customer_id'] ?? $user?->customer?->id,
+                'customer_name' => $data['customer_name'] ?? $user?->name ?? 'Guest',
+                'email' => $data['email'] ?? $user?->email,
                 'question' => $data['question'],
                 'status' => $data['auto_approve'] ?? false ? 'approved' : 'pending',
                 'is_public' => $data['is_public'] ?? true,
@@ -56,7 +58,7 @@ class QuestionService
     public function submitAnswer(ProductQuestion $question, array $data): ProductAnswer
     {
         return DB::transaction(function () use ($question, $data) {
-            $answerer = auth()->user();
+            $answerer = auth('web')->user();
             $answererType = $data['answerer_type'] ?? ($answerer ? 'admin' : 'customer');
             $answererId = $data['answerer_id'] ?? $answerer?->id;
 
@@ -133,7 +135,7 @@ class QuestionService
     {
         $question->update([
             'status' => $status,
-            'moderated_by' => auth()->id(),
+            'moderated_by' => auth('web')->id(),
             'moderated_at' => now(),
             'moderation_notes' => $notes,
         ]);
@@ -157,7 +159,7 @@ class QuestionService
         $answer->update([
             'status' => $status,
             'is_approved' => $status === 'approved',
-            'moderated_by' => auth()->id(),
+            'moderated_by' => auth('web')->id(),
             'moderated_at' => now(),
             'moderation_notes' => $notes,
         ]);
@@ -256,7 +258,7 @@ class QuestionService
      */
     public function updateMetrics(Product $product): void
     {
-        $today = now()->toDateString();
+        $today = now()->startOfDay();
         
         $questions = ProductQuestion::where('product_id', $product->id)->get();
         $answers = ProductAnswer::whereIn('question_id', $questions->pluck('id'))->get();

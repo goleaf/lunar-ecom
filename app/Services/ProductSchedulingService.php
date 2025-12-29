@@ -181,10 +181,18 @@ class ProductSchedulingService
     protected function publishProduct(Product $product, ProductSchedule $schedule): void
     {
         $status = $schedule->target_status ?? Product::STATUS_ACTIVE;
-        $product->update([
-            'status' => $status,
-            'is_coming_soon' => false, // Remove coming soon status when published
-        ]);
+        // Status is intentionally NOT mass-assignable on our Product model.
+        // Use domain methods / direct assignment so scheduling always works.
+        $product->is_coming_soon = false; // Remove coming soon status when published
+
+        if ($status === Product::STATUS_PUBLISHED) {
+            $product->publish();
+        } elseif ($status === Product::STATUS_ACTIVE) {
+            $product->activate();
+        } else {
+            $product->status = $status;
+            $product->save();
+        }
 
         // Set published_at if not set
         if (!$product->published_at) {
@@ -207,7 +215,15 @@ class ProductSchedulingService
     protected function unpublishProduct(Product $product, ProductSchedule $schedule): void
     {
         $status = $schedule->target_status ?? 'draft';
-        $product->update(['status' => $status]);
+
+        // Status is intentionally NOT mass-assignable on our Product model.
+        if ($status === Product::STATUS_DRAFT) {
+            $product->unpublish();
+            return;
+        }
+
+        $product->status = $status;
+        $product->save();
     }
 
     /**
@@ -221,7 +237,7 @@ class ProductSchedulingService
     {
         // Publish product if not already published
         if (!$product->isActive()) {
-            $product->update(['status' => Product::STATUS_ACTIVE]);
+            $product->activate();
         }
 
         // Apply sale pricing to all variants

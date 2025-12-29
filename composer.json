@@ -14,9 +14,11 @@
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.0",
         "lunarphp/lunar": "^1.0",
-        "maatwebsite/excel": "*"
+        "maatwebsite/excel": "*",
+        "osama-98/laravel-enum-translatable": "^1.2"
     },
     "require-dev": {
+        "carthage-software/mago": "^1.0.3",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
@@ -83,6 +85,7 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
+            "carthage-software/mago": true,
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }

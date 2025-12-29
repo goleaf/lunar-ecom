@@ -86,7 +86,7 @@ class PriceMatrix extends Model
      */
     public function pricingRules(): HasMany
     {
-        return $this->hasMany(PricingRule::class, 'price_matrix_id')
+        return $this->hasMany(PriceMatrixRule::class, 'price_matrix_id')
             ->orderBy('priority', 'desc');
     }
 

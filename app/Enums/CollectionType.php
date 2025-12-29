@@ -2,8 +2,12 @@
 
 namespace App\Enums;
 
+use Osama\LaravelEnums\Concerns\EnumTranslatable;
+
 enum CollectionType: string
 {
+    use EnumTranslatable;
+
     case STANDARD = 'standard';
     case CROSS_SELL = 'cross_sell';
     case UP_SELL = 'up_sell';
@@ -27,13 +31,7 @@ enum CollectionType: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::STANDARD => 'Standard',
-            self::CROSS_SELL => 'Cross-Sell',
-            self::UP_SELL => 'Up-Sell',
-            self::RELATED => 'Related Products',
-            self::BUNDLE => 'Bundle',
-        };
+        return $this->trans();
     }
 
     /**

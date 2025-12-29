@@ -112,6 +112,8 @@ class StaffLoginTest extends TestCase
      */
     public function test_staff_user_can_access_admin_panel_after_login(): void
     {
+        $this->withoutExceptionHandling();
+
         $this->seed();
 
         $staff = Staff::where('email', 'admin@example.com')->first();

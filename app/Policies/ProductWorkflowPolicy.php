@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\Product;
 use App\Models\ProductWorkflow;
+use Lunar\Admin\Models\Staff;
 
 /**
  * Policy for product workflow operations.
@@ -18,8 +19,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function submitForReview(User $user, Product $product): bool
+    public function submitForReview(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Editors and above can submit
         return $user->hasRole(['editor', 'admin', 'super_admin']);
     }
@@ -31,8 +35,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function approve(User $user, Product $product): bool
+    public function approve(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Only admins and managers can approve
         return $user->hasRole(['admin', 'manager', 'super_admin']);
     }
@@ -44,8 +51,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function reject(User $user, Product $product): bool
+    public function reject(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Only admins and managers can reject
         return $user->hasRole(['admin', 'manager', 'super_admin']);
     }
@@ -57,8 +67,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function publish(User $user, Product $product): bool
+    public function publish(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Editors and above can publish
         return $user->hasRole(['editor', 'admin', 'manager', 'super_admin']);
     }
@@ -70,8 +83,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function edit(User $user, Product $product): bool
+    public function edit(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Check if user has edit permission
         if (!$user->hasPermissionTo('edit products')) {
             return false;
@@ -93,8 +109,11 @@ class ProductWorkflowPolicy
      * @param  Product  $product
      * @return bool
      */
-    public function delete(User $user, Product $product): bool
+    public function delete(User|Staff|null $user, Product $product): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Only admins can delete
         return $user->hasRole(['admin', 'super_admin']);
     }
@@ -105,8 +124,11 @@ class ProductWorkflowPolicy
      * @param  User  $user
      * @return bool
      */
-    public function bulkAction(User $user): bool
+    public function bulkAction(User|Staff|null $user): bool
     {
+        if (!$user) {
+            return false;
+        }
         // Editors and above can perform bulk actions
         return $user->hasRole(['editor', 'admin', 'manager', 'super_admin']);
     }

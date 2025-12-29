@@ -40,6 +40,12 @@ class DatabaseSeeder extends Seeder
             $staff->assignRole('admin');
         }
 
+        // Tests only need the staff user + role; skip heavy demo seeding to keep
+        // the suite fast and deterministic.
+        if (app()->environment('testing')) {
+            return;
+        }
+
         // Seed core reference data early so other seeders can rely on it.
         $this->call([
             CustomerGroupSeeder::class,

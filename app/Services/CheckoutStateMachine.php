@@ -269,7 +269,7 @@ class CheckoutStateMachine
         }
 
         // Create cart-level snapshot
-        PriceSnapshot::create([
+        $snapshot = PriceSnapshot::create([
             'checkout_lock_id' => $lock->id,
             'cart_id' => $cart->id,
             'unit_price' => 0,
@@ -582,8 +582,13 @@ class CheckoutStateMachine
      */
     protected function extractAppliedDiscounts(Cart $cart): ?array
     {
-        // Extract discount information from cart
-        return $cart->discountBreakdown ?? null;
+        $breakdown = $cart->discountBreakdown ?? null;
+
+        if ($breakdown instanceof \Illuminate\Support\Collection) {
+            return $breakdown->toArray();
+        }
+
+        return is_array($breakdown) ? $breakdown : null;
     }
 
     /**

@@ -17,6 +17,8 @@ class FitFeedback extends Model
 {
     use HasFactory;
 
+    protected $table = 'fit_feedbacks';
+
     protected $fillable = [
         'product_id',
         'size_guide_id',

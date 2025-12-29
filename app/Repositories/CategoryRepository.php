@@ -208,16 +208,16 @@ class CategoryRepository
      * Get flat list of categories with indentation.
      *
      * @param  Category|null  $root
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function getFlatList(?Category $root = null): Collection
+    public function getFlatList(?Category $root = null): \Illuminate\Support\Collection
     {
         $cacheKey = $root 
             ? "categories.flat.{$root->id}"
             : 'categories.flat.all';
 
         return Cache::remember($cacheKey, 3600, function () use ($root) {
-            $query = Category::query()->active()->ordered();
+            $query = Category::query()->active()->ordered()->withDepth();
             
             if ($root) {
                 $query->whereDescendantOf($root);

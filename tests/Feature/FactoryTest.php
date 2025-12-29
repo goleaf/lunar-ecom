@@ -354,7 +354,8 @@ class FactoryTest extends TestCase
         $this->assertInstanceOf(Url::class, $url);
         $this->assertNotNull($url->id);
         $this->assertNotNull($url->slug);
-        $this->assertEquals(Product::class, $url->element_type);
+        // Lunar stores morph types in `element_type` (e.g. "product"), not PHP class names.
+        $this->assertEquals(Product::morphName(), $url->element_type);
         $this->assertEquals($product->id, $url->element_id);
     }
 

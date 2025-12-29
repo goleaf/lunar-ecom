@@ -34,7 +34,8 @@ class ProductLivewireTest extends TestCase
     public function test_product_show_renders_for_published_product(): void
     {
         $product = Product::factory()->active()->create();
-        $url = Url::where('element_type', Product::class)
+        // Lunar stores morph types (e.g. "product") in element_type.
+        $url = Url::where('element_type', Product::morphName())
             ->where('element_id', $product->id)
             ->firstOrFail();
 

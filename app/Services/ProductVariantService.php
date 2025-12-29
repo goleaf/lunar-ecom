@@ -17,7 +17,6 @@ class ProductVariantService
         $taxClass = \Lunar\Models\TaxClass::where('default', true)->first();
         
         $variant = new ProductVariant([
-            'product_id' => $product->id,
             'sku' => $data['sku'],
             'gtin' => $data['gtin'] ?? null,
             'mpn' => $data['mpn'] ?? null,
@@ -31,6 +30,8 @@ class ProductVariantService
             'shippable' => $data['shippable'] ?? true,
             'tax_class_id' => $taxClass?->id,
         ]);
+        // Product relation must be set even if the model's fillable rules are strict.
+        $variant->product_id = $product->id;
         $variant->save();
 
         // Set pricing if provided

@@ -6,14 +6,16 @@ use App\Events\CheckoutCompleted;
 use App\Events\CheckoutFailed;
 use App\Events\CheckoutStarted;
 use App\Models\CheckoutLock;
+use App\Models\InventoryLevel;
 use App\Models\PriceSnapshot;
 use App\Models\StockReservation;
+use App\Models\Warehouse;
 use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Lunar\Facades\CartSession;
 use Lunar\Models\Cart;
-use Lunar\Models\ProductVariant;
+use App\Models\ProductVariant;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -117,8 +119,6 @@ class CheckoutTest extends TestCase
      */
     public function test_checkout_failure_triggers_rollback(): void
     {
-        Event::fake();
-
         $cart = $this->createCartWithItems();
         $checkoutService = app(CheckoutService::class);
         $stateMachine = app(\App\Services\CheckoutStateMachine::class);
@@ -131,20 +131,16 @@ class CheckoutTest extends TestCase
         $reserveMethod->setAccessible(true);
         $reservations = $reserveMethod->invoke($stateMachine, $lock);
 
-        // Simulate failure by throwing exception
-        $this->expectException(\App\Exceptions\CheckoutException::class);
+        $this->assertNotEmpty($reservations);
 
-        try {
-            // This would normally fail in payment authorization
-            throw new \App\Exceptions\CheckoutException(
-                'Payment failed',
-                \App\Services\CheckoutStateMachine::PHASE_PAYMENT_AUTHORIZATION
-            );
-        } catch (\App\Exceptions\CheckoutException $e) {
-            // Verify rollback would execute
-            // In real scenario, rollback is automatic
-            Event::assertDispatched(CheckoutFailed::class);
+        // Simulate a failure by explicitly releasing the checkout (rollback).
+        $checkoutService->releaseCheckout($lock);
+
+        foreach ($reservations as $reservation) {
+            $this->assertTrue((bool) $reservation->fresh()?->is_released);
         }
+
+        $this->assertTrue($lock->fresh()->isFailed());
     }
 
     /**
@@ -174,24 +170,17 @@ class CheckoutTest extends TestCase
         $cart = $this->createCartWithItems();
         $checkoutService = app(CheckoutService::class);
 
-        // Start checkout with session 1
-        session()->put('_token', 'session1');
+        // Start checkout (creates an active lock for the current session)
         $lock1 = $checkoutService->startCheckout($cart);
 
-        // Try to start checkout with session 2
+        // Simulate another session holding the lock by changing the lock session_id
+        $lock1->update(['session_id' => 'other-session']);
+
+        // Trying to start checkout again should now fail
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Cart is currently being checked out by another session');
 
-        // Simulate different session
-        // In real scenario, this would be caught by service
-        $otherLock = CheckoutLock::where('cart_id', $cart->id)
-            ->where('session_id', '!=', session()->getId())
-            ->active()
-            ->first();
-
-        if ($otherLock) {
-            throw new \Exception('Cart is currently being checked out by another session');
-        }
+        $checkoutService->startCheckout($cart);
     }
 
     /**
@@ -208,22 +197,47 @@ class CheckoutTest extends TestCase
             ['code' => 'USD'],
             ['name' => 'US Dollar', 'exchange_rate' => 1, 'decimal_places' => 2, 'enabled' => true, 'default' => true]
         );
-        $customerGroup = \Lunar\Models\CustomerGroup::firstOrCreate(
-            ['handle' => 'retail'],
-            ['name' => 'Retail', 'default' => true]
+
+        // Create a price through the relation to ensure the correct morph type is used.
+        $variant->prices()->updateOrCreate(
+            [
+                'currency_id' => $currency->id,
+                'customer_group_id' => null, // guest checkout in tests
+                'min_quantity' => 1,
+            ],
+            [
+                'price' => 1000,
+                'compare_price' => null,
+            ]
         );
-        \Lunar\Models\Price::firstOrCreate([
-            'priceable_type' => ProductVariant::class,
-            'priceable_id' => $variant->id,
-            'currency_id' => $currency->id,
-            'customer_group_id' => $customerGroup->id,
-        ], [
-            'price' => 1000,
-            'compare_price' => null,
-        ]);
+
+        // Ensure inventory can be reserved during checkout (stock reservations require a warehouse + inventory level).
+        $warehouse = Warehouse::firstOrCreate(
+            ['code' => 'default'],
+            [
+                'name' => 'Default Warehouse',
+                'is_active' => true,
+                'priority' => 0,
+            ]
+        );
+
+        InventoryLevel::firstOrCreate(
+            [
+                'product_variant_id' => $variant->id,
+                'warehouse_id' => $warehouse->id,
+            ],
+            [
+                'quantity' => 100,
+                'reserved_quantity' => 0,
+                'incoming_quantity' => 0,
+                'reorder_point' => 0,
+                'reorder_quantity' => 0,
+                'status' => 'in_stock',
+            ]
+        );
         
         $cart->lines()->create([
-            'purchasable_type' => ProductVariant::class,
+            'purchasable_type' => get_class($variant),
             'purchasable_id' => $variant->id,
             'quantity' => 2,
         ]);

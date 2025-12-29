@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CollectionType;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +34,9 @@ class Collection extends LunarCollection
         'products_per_row',
         'starts_at',
         'ends_at',
+        'scheduled_publish_at',
+        'scheduled_unpublish_at',
+        'auto_publish_products',
         'product_count',
         'last_updated_at',
     ];
@@ -51,6 +56,9 @@ class Collection extends LunarCollection
         'product_count' => 'integer',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'scheduled_publish_at' => 'datetime',
+        'scheduled_unpublish_at' => 'datetime',
+        'auto_publish_products' => 'boolean',
         'last_updated_at' => 'datetime',
     ];
 
@@ -218,6 +226,91 @@ class Collection extends LunarCollection
     public function scopeOfType($query, string $type)
     {
         return $query->where('collection_type', $type);
+    }
+
+    /**
+     * Scope: cross-sell collections.
+     */
+    public function scopeCrossSell($query)
+    {
+        return $query->ofType(CollectionType::CROSS_SELL->value);
+    }
+
+    /**
+     * Scope: up-sell collections.
+     */
+    public function scopeUpSell($query)
+    {
+        return $query->ofType(CollectionType::UP_SELL->value);
+    }
+
+    /**
+     * Schedule this collection for publishing.
+     */
+    public function schedulePublish(Carbon $publishAt): void
+    {
+        $this->scheduled_publish_at = $publishAt;
+        $this->save();
+    }
+
+    /**
+     * Schedule this collection for unpublishing.
+     */
+    public function scheduleUnpublish(Carbon $unpublishAt): void
+    {
+        $this->scheduled_unpublish_at = $unpublishAt;
+        $this->save();
+    }
+
+    public function clearScheduledPublish(): void
+    {
+        $this->scheduled_publish_at = null;
+        $this->save();
+    }
+
+    public function clearScheduledUnpublish(): void
+    {
+        $this->scheduled_unpublish_at = null;
+        $this->save();
+    }
+
+    public function isScheduledForPublish(): bool
+    {
+        return (bool) $this->scheduled_publish_at;
+    }
+
+    public function isScheduledForUnpublish(): bool
+    {
+        return (bool) $this->scheduled_unpublish_at;
+    }
+
+    /**
+     * Scope: collections that have any schedule set.
+     */
+    public function scopeScheduled($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNotNull('scheduled_publish_at')
+              ->orWhereNotNull('scheduled_unpublish_at');
+        });
+    }
+
+    /**
+     * Scope: collections ready to be published (scheduled_publish_at <= now).
+     */
+    public function scopeScheduledForPublish($query)
+    {
+        return $query->whereNotNull('scheduled_publish_at')
+            ->where('scheduled_publish_at', '<=', now());
+    }
+
+    /**
+     * Scope: collections ready to be unpublished (scheduled_unpublish_at <= now).
+     */
+    public function scopeScheduledForUnpublish($query)
+    {
+        return $query->whereNotNull('scheduled_unpublish_at')
+            ->where('scheduled_unpublish_at', '<=', now());
     }
 
     /**

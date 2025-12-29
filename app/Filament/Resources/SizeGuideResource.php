@@ -10,12 +10,13 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use Lunar\Models\Product;
 
 class SizeGuideResource extends Resource
 {
     protected static ?string $model = SizeGuide::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-ruler-square';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationGroup = 'Product Management';
 
@@ -94,7 +95,10 @@ class SizeGuideResource extends Resource
                 Forms\Components\Section::make('Associated Products')
                     ->schema([
                         Forms\Components\Select::make('products')
-                            ->relationship('products', 'translate.name')
+                            ->relationship('products', 'id')
+                            ->getOptionLabelFromRecordUsing(
+                                fn (Product $record): string => (string) ($record->translate('name') ?? "Product #{$record->id}")
+                            )
                             ->multiple()
                             ->searchable()
                             ->preload()

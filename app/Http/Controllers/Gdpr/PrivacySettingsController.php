@@ -93,7 +93,7 @@ class PrivacySettingsController extends Controller
             }
         }
 
-        return redirect()->route('gdpr.privacy-settings')
+        return redirect()->route('gdpr.privacy-settings.index')
             ->with('success', 'Privacy settings updated successfully');
     }
 }

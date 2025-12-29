@@ -34,7 +34,9 @@
             <p class="text-xs uppercase tracking-wide text-slate-400 px-2 mt-6">Merchandising</p>
             <a href="{{ route('admin.badges.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Badges</a>
             <a href="{{ route('admin.badges.rules.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Badge rules</a>
-            <a href="{{ route('admin.size-guides.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Size guides</a>
+            @if (Route::has('filament.admin.resources.size-guides.index'))
+                <a href="{{ route('filament.admin.resources.size-guides.index') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Size guides</a>
+            @endif
             <a href="{{ route('admin.customizations.templates') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Customization templates</a>
             <a href="{{ route('admin.schedules.calendar') }}" class="block px-3 py-2 rounded hover:bg-slate-800">Schedule calendar</a>
 

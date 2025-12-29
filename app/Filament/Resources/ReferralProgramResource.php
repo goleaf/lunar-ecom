@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ReferralProgramResource\Pages;
 use App\Filament\Resources\ReferralProgramResource\RelationManagers;
 use App\Models\ReferralProgram;
+use App\Models\ReferralRule;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;

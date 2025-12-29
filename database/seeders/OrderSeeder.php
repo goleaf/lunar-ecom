@@ -32,7 +32,10 @@ class OrderSeeder extends Seeder
             $orderSubTotal = 0;
             foreach ($selectedVariants as $variant) {
                 $quantity = fake()->numberBetween(1, 3);
-                $unitPrice = (int) ($variant->prices()->first()?->price ?? 1000);
+                $rawPrice = $variant->prices()->first()?->price;
+                $unitPrice = $rawPrice instanceof \Lunar\DataTypes\Price
+                    ? (int) $rawPrice->value
+                    : (int) ($rawPrice ?? 1000);
                 $lineSubTotal = $unitPrice * $quantity;
                 $orderSubTotal += $lineSubTotal;
 

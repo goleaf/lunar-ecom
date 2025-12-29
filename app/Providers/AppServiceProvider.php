@@ -88,6 +88,12 @@ class AppServiceProvider extends ServiceProvider
             \Lunar\Models\Contracts\Attribute::class,
             \App\Models\Attribute::class,
         );
+
+        // Register the extended Collection model (scopes, scheduling, homepage fields, etc.)
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Collection::class,
+            \App\Models\Collection::class,
+        );
         
         // Register extended Channel model (if Lunar supports Channel contracts)
         // Note: Channel may not have a contract, so this might not be needed

@@ -98,7 +98,9 @@ class ProductCreationConsistencyTest extends TestCase
         return [
             'product_type_id' => $productType->id,
             'status' => $this->randomStatus(),
-            'brand' => $this->randomBrand(),
+            // Our product schema stores manufacturer as a string (manufacturer_name),
+            // not a `brand` column.
+            'manufacturer_name' => $this->randomBrand(),
             'attribute_data' => $this->generateRandomProductAttributeData(),
         ];
     }

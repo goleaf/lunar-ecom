@@ -212,7 +212,7 @@ class ReferralCodeManagementResource extends Resource
 
                     Tables\Actions\BulkAction::make('block_referrals')
                         ->label('Block Referral Rewards')
-                        ->icon('heroicon-o-ban')
+                        ->icon('heroicon-o-x-circle')
                         ->requiresConfirmation()
                         ->action(function ($records) {
                             User::whereIn('id', $records->pluck('id'))

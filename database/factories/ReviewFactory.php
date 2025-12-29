@@ -69,6 +69,8 @@ class ReviewFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_approved' => false,
+            'approved_at' => null,
+            'approved_by' => null,
         ]);
     }
 

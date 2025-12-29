@@ -25,6 +25,12 @@ use App\Livewire\Frontend\Pages\ComingSoonUnsubscribed;
 use App\Livewire\Frontend\Pages\AddressesIndex;
 use App\Livewire\Frontend\Pages\AddressCreate;
 use App\Livewire\Frontend\Pages\AddressEdit;
+use App\Livewire\Frontend\Pages\Auth\Login as FrontendLogin;
+use App\Livewire\Frontend\Pages\Gdpr\PrivacyPolicyShow;
+use App\Livewire\Frontend\Pages\Gdpr\PrivacyPolicyVersions;
+use App\Livewire\Frontend\Pages\Gdpr\PrivacyPolicyVersion;
+use App\Livewire\Frontend\Pages\Gdpr\PrivacySettings;
+use App\Livewire\Frontend\Pages\Gdpr\RequestCreate as GdprRequestCreate;
 use App\Http\Controllers\Frontend\CollectionController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\CartController;
@@ -46,6 +52,9 @@ Route::get('/lunar/{any}', function (string $any) {
 
 // Dynamic robots.txt
 Route::get('/robots.txt', [\App\Http\Controllers\Frontend\RobotsController::class, 'index'])->name('robots');
+
+// Customer login (required for auth middleware redirects)
+Route::get('/login', FrontendLogin::class)->name('login');
 
 Route::get('/', Homepage::class)->name('frontend.homepage');
 Route::get('/home', ProductIndex::class)->name('frontend.home');
@@ -114,7 +123,7 @@ Route::prefix('reviews/{review}')->name('frontend.reviews.')->group(function () 
 });
 
 // Admin Review Moderation
-Route::prefix('admin/reviews')->name('admin.reviews.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/reviews')->name('admin.reviews.')->middleware(['admin'])->group(function () {
     Route::get('/moderation', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'index'])->name('moderation');
     Route::get('/{review}', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'show'])->name('show');
     Route::post('/{review}/approve', [\App\Http\Controllers\Admin\ReviewModerationController::class, 'approve'])->name('approve');
@@ -126,7 +135,7 @@ Route::prefix('admin/reviews')->name('admin.reviews.')->middleware(['auth', 'adm
 });
 
 // Admin Stock Management
-Route::prefix('admin/stock')->name('admin.stock.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/stock')->name('admin.stock.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\StockManagementController::class, 'index'])->name('index');
     Route::get('/statistics', [\App\Http\Controllers\Admin\StockManagementController::class, 'statistics'])->name('statistics');
     Route::get('/movements', [\App\Http\Controllers\Admin\StockManagementController::class, 'movements'])->name('movements');
@@ -165,7 +174,7 @@ Route::prefix('downloads')->name('frontend.downloads.')->group(function () {
 });
 
 // Admin Product Import/Export
-Route::prefix('admin/products')->name('admin.products.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products')->name('admin.products.')->middleware(['admin'])->group(function () {
     Route::get('/import-export', [\App\Http\Controllers\Admin\ProductImportController::class, 'index'])->name('import-export');
     Route::post('/import', [\App\Http\Controllers\Admin\ProductImportController::class, 'import'])->name('import');
     Route::get('/imports/{import}/status', [\App\Http\Controllers\Admin\ProductImportController::class, 'status'])->name('imports.status');
@@ -176,14 +185,14 @@ Route::prefix('admin/products')->name('admin.products.')->middleware(['auth', 'a
 });
 
 // Admin Product Scheduling
-Route::prefix('admin/products/{product}/schedules')->name('admin.products.schedules.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/{product}/schedules')->name('admin.products.schedules.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'store'])->name('store');
     Route::put('/{schedule}', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'update'])->name('update');
     Route::delete('/{schedule}', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'destroy'])->name('destroy');
 });
 
-Route::prefix('admin/schedules')->name('admin.schedules.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/schedules')->name('admin.schedules.')->middleware(['admin'])->group(function () {
     Route::get('/upcoming', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'upcoming'])->name('upcoming');
     Route::get('/flash-sales', [\App\Http\Controllers\Admin\ProductScheduleController::class, 'activeFlashSales'])->name('flash-sales');
     Route::get('/calendar', [\App\Http\Controllers\Admin\ProductScheduleCalendarController::class, 'index'])->name('calendar');
@@ -210,7 +219,7 @@ Route::prefix('products/{product}/questions')->name('frontend.products.questions
 });
 
 // Admin Product Questions & Answers
-Route::prefix('admin/products/questions')->name('admin.products.questions.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/questions')->name('admin.products.questions.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'index'])->name('index');
     Route::get('/{question}', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'show'])->name('show');
     Route::post('/{question}/moderate', [\App\Http\Controllers\Admin\ProductQuestionController::class, 'moderate'])->name('moderate');
@@ -228,13 +237,7 @@ Route::prefix('products/{product}/size-guide')->name('frontend.products.size-gui
     Route::post('/fit-review', [\App\Http\Controllers\Frontend\SizeGuideController::class, 'submitFitReview'])->name('fit-review');
 });
 
-// Admin Size Guides
-Route::prefix('admin/size-guides')->name('admin.size-guides.')->middleware(['auth', 'admin'])->group(function () {
-    Route::resource('/', \App\Http\Controllers\Admin\SizeGuideController::class)->parameters(['' => 'sizeGuide']);
-    Route::post('/{sizeGuide}/size-charts', [\App\Http\Controllers\Admin\SizeGuideController::class, 'addSizeChart'])->name('size-charts.store');
-    Route::put('/{sizeGuide}/size-charts/{sizeChart}', [\App\Http\Controllers\Admin\SizeGuideController::class, 'updateSizeChart'])->name('size-charts.update');
-    Route::delete('/{sizeGuide}/size-charts/{sizeChart}', [\App\Http\Controllers\Admin\SizeGuideController::class, 'deleteSizeChart'])->name('size-charts.destroy');
-});
+// Admin Size Guides are managed via Filament (SizeGuideResource) under the admin panel.
 
 // Frontend Pricing
 Route::prefix('pricing')->name('frontend.pricing.')->group(function () {
@@ -244,7 +247,7 @@ Route::prefix('pricing')->name('frontend.pricing.')->group(function () {
 });
 
 // Admin Price Matrices
-Route::prefix('admin/products/{product}/pricing')->name('admin.products.pricing.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/{product}/pricing')->name('admin.products.pricing.')->middleware(['admin'])->group(function () {
     Route::get('/matrices', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'index'])->name('matrices.index');
     Route::post('/matrices', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'store'])->name('matrices.store');
     Route::put('/matrices/{matrix}', [\App\Http\Controllers\Admin\PriceMatrixController::class, 'update'])->name('matrices.update');
@@ -268,7 +271,7 @@ Route::prefix('products/{product}/availability')->name('frontend.products.availa
 });
 
 // Admin Product Availability
-Route::prefix('admin/products/{product}/availability')->name('admin.products.availability.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/{product}/availability')->name('admin.products.availability.')->middleware(['admin'])->group(function () {
     Route::get('/calendar', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'calendar'])->name('calendar');
     Route::post('/', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'store'])->name('store');
     Route::put('/{availability}', [\App\Http\Controllers\Admin\ProductAvailabilityController::class, 'update'])->name('update');
@@ -287,7 +290,7 @@ Route::prefix('products/{product}/customizations')->name('frontend.products.cust
 });
 
 // Admin Product Customizations
-Route::prefix('admin/products/{product}/customizations')->name('admin.products.customizations.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/{product}/customizations')->name('admin.products.customizations.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'store'])->name('store');
     Route::put('/{customization}', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'update'])->name('update');
@@ -296,13 +299,13 @@ Route::prefix('admin/products/{product}/customizations')->name('admin.products.c
     Route::post('/examples', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'storeExample'])->name('examples.store');
 });
 
-Route::prefix('admin/customizations')->name('admin.customizations.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/customizations')->name('admin.customizations.')->middleware(['admin'])->group(function () {
     Route::get('/templates', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'templates'])->name('templates');
     Route::post('/templates', [\App\Http\Controllers\Admin\ProductCustomizationController::class, 'storeTemplate'])->name('templates.store');
 });
 
 // Admin Product Badges
-Route::prefix('admin/badges')->name('admin.badges.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/badges')->name('admin.badges.')->middleware(['admin'])->group(function () {
     Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeController::class)->parameters(['' => 'badge']);
     Route::post('/{badge}/preview', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'preview'])->name('preview');
     Route::get('/{badge}/performance', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'performance'])->name('performance');
@@ -322,7 +325,7 @@ Route::prefix('admin/badges')->name('admin.badges.')->middleware(['auth', 'admin
 });
 
 // Admin Product Badges
-Route::prefix('admin/products/badges')->name('admin.products.badges.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/badges')->name('admin.products.badges.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'index'])->name('index');
     Route::get('/create', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'store'])->name('store');
@@ -333,13 +336,13 @@ Route::prefix('admin/products/badges')->name('admin.products.badges.')->middlewa
 });
 
 // Product Badge Assignment
-Route::prefix('admin/products/{product}/badges')->name('admin.products.product-badges.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/{product}/badges')->name('admin.products.product-badges.')->middleware(['admin'])->group(function () {
     Route::post('/assign', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'assignToProduct'])->name('assign');
     Route::post('/remove', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'removeFromProduct'])->name('remove');
 });
 
 // Admin Collection Management
-Route::prefix('admin/collections/{collection}')->name('admin.collections.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/collections/{collection}')->name('admin.collections.')->middleware(['admin'])->group(function () {
     Route::get('/manage', [\App\Http\Controllers\Admin\CollectionManagementController::class, 'show'])->name('manage');
     Route::put('/settings', [\App\Http\Controllers\Admin\CollectionManagementController::class, 'updateSettings'])->name('update-settings');
     Route::post('/products', [\App\Http\Controllers\Admin\CollectionManagementController::class, 'addProduct'])->name('add-product');
@@ -359,7 +362,7 @@ Route::prefix('admin/collections/{collection}')->name('admin.collections.')->mid
 
 
 // Admin Bundle Management
-Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('index');
     Route::get('/create', [\App\Http\Controllers\Admin\BundleController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('store');
@@ -369,7 +372,7 @@ Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth', 'adm
 });
 
 // Admin Order Status Management
-Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/orders')->name('admin.orders.')->middleware(['admin'])->group(function () {
     Route::get('/statuses', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getAvailableStatuses'])->name('statuses');
     Route::get('/status/{status}', [\App\Http\Controllers\Admin\OrderStatusController::class, 'getOrdersByStatus'])->name('by-status');
     Route::post('/{order}/status', [\App\Http\Controllers\Admin\OrderStatusController::class, 'updateStatus'])->name('update-status');
@@ -378,7 +381,7 @@ Route::prefix('admin/orders')->name('admin.orders.')->middleware(['auth'])->grou
 });
 
 // Admin Checkout Lock Management
-Route::prefix('admin/checkout-locks')->name('admin.checkout-locks.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/checkout-locks')->name('admin.checkout-locks.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'index'])->name('index');
     Route::get('/statistics', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'statistics'])->name('statistics');
     Route::get('/{checkoutLock}', [\App\Http\Controllers\Admin\CheckoutLockController::class, 'show'])->name('show');
@@ -406,7 +409,7 @@ Route::prefix('stock-reservations')->name('frontend.stock-reservations.')->group
 
 // NOTE: Duplicate bundles/{bundle} group removed (handled under the main "bundles" prefix group above).
 // Admin Inventory Management
-Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
     Route::post('/adjust', [\App\Http\Controllers\Admin\InventoryController::class, 'adjust'])->name('adjust');
     Route::post('/transfer', [\App\Http\Controllers\Admin\InventoryController::class, 'transfer'])->name('transfer');
@@ -416,7 +419,7 @@ Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])
 });
 
 // Admin Inventory Reports
-Route::prefix('admin/inventory/reports')->name('admin.inventory.reports.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/inventory/reports')->name('admin.inventory.reports.')->middleware(['admin'])->group(function () {
     Route::get('/stock-valuation', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockValuation'])->name('stock-valuation');
     Route::get('/inventory-turnover', [\App\Http\Controllers\Admin\InventoryReportController::class, 'inventoryTurnover'])->name('inventory-turnover');
     Route::get('/dead-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'deadStock'])->name('dead-stock');
@@ -424,13 +427,13 @@ Route::prefix('admin/inventory/reports')->name('admin.inventory.reports.')->midd
 });
 
 // Admin Inventory Import/Export
-Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/inventory')->name('admin.inventory.')->middleware(['admin'])->group(function () {
     Route::get('/export', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'export'])->name('export');
     Route::post('/import', [\App\Http\Controllers\Admin\InventoryImportExportController::class, 'import'])->name('import');
 });
 
 // Admin Bundle Management
-Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\BundleController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\Admin\BundleController::class, 'store'])->name('store');
     Route::get('/{bundle}', [\App\Http\Controllers\Admin\BundleController::class, 'show'])->name('show');
@@ -442,7 +445,7 @@ Route::prefix('admin/bundles')->name('admin.bundles.')->middleware(['auth'])->gr
 });
 
 // Admin Stock Notifications
-Route::prefix('admin/stock-notifications')->name('admin.stock-notifications.')->middleware(['auth'])->group(function () {
+Route::prefix('admin/stock-notifications')->name('admin.stock-notifications.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\StockNotificationController::class, 'index'])->name('index');
     Route::get('/variants/{variant}/subscriptions', [\App\Http\Controllers\Admin\StockNotificationController::class, 'subscriptions'])->name('subscriptions');
     Route::get('/variants/{variant}/metrics', [\App\Http\Controllers\Admin\StockNotificationController::class, 'metrics'])->name('metrics');
@@ -542,23 +545,20 @@ Route::prefix('gdpr')->name('gdpr.')->group(function () {
 
     // Privacy Policy
     Route::prefix('privacy-policy')->name('privacy-policy.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'show'])->name('show');
-        Route::get('/versions', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'index'])->name('index');
-        Route::get('/version/{version}', [\App\Http\Controllers\Gdpr\PrivacyPolicyController::class, 'version'])->name('version');
+        Route::get('/', PrivacyPolicyShow::class)->name('show');
+        Route::get('/versions', PrivacyPolicyVersions::class)->name('index');
+        Route::get('/version/{version}', PrivacyPolicyVersion::class)->name('version');
     });
 
     // Privacy Settings (requires authentication)
     Route::prefix('privacy-settings')->name('privacy-settings.')->middleware('auth')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Gdpr\PrivacySettingsController::class, 'index'])->name('index');
+        Route::get('/', PrivacySettings::class)->name('index');
         Route::put('/', [\App\Http\Controllers\Gdpr\PrivacySettingsController::class, 'update'])->name('update');
     });
 
     // GDPR Requests
     Route::prefix('request')->name('request.')->group(function () {
-        Route::get('/create', function () {
-            $type = request()->get('type', 'export');
-            return view('gdpr.request-form', ['type' => $type]);
-        })->name('create');
+        Route::get('/create', GdprRequestCreate::class)->name('create');
         Route::post('/', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'store'])->name('store');
         Route::get('/verify/{token}', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'verify'])->name('verify');
         Route::get('/download/{token}', [\App\Http\Controllers\Gdpr\GdprRequestController::class, 'download'])->name('download');
@@ -566,14 +566,14 @@ Route::prefix('gdpr')->name('gdpr.')->group(function () {
 });
 
 // Admin Stock Notifications
-Route::prefix('admin/stock-notifications')->name('admin.stock-notifications.')->middleware(['auth:staff'])->group(function () {
+Route::prefix('admin/stock-notifications')->name('admin.stock-notifications.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\StockNotificationController::class, 'index'])->name('index');
     Route::get('/variants/{variant}/subscriptions', [\App\Http\Controllers\Admin\StockNotificationController::class, 'subscriptions'])->name('variant.subscriptions');
     Route::get('/variants/{variant}/metrics', [\App\Http\Controllers\Admin\StockNotificationController::class, 'metrics'])->name('variant.metrics');
 });
 
 // Admin Product Import/Export
-Route::prefix('admin/products/import')->name('admin.products.import.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/import')->name('admin.products.import.')->middleware(['admin'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Admin\ProductImportController::class, 'index'])->name('index');
     Route::post('/preview', [\App\Http\Controllers\Admin\ProductImportController::class, 'preview'])->name('preview');
     Route::post('/import', [\App\Http\Controllers\Admin\ProductImportController::class, 'import'])->name('import');
@@ -583,7 +583,7 @@ Route::prefix('admin/products/import')->name('admin.products.import.')->middlewa
     Route::get('/template/download', [\App\Http\Controllers\Admin\ProductImportController::class, 'downloadTemplate'])->name('template.download');
 });
 
-Route::prefix('admin/products/export')->name('admin.products.export.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin/products/export')->name('admin.products.export.')->middleware(['admin'])->group(function () {
     Route::post('/', [\App\Http\Controllers\Admin\ProductExportController::class, 'export'])->name('export');
     Route::get('/columns', [\App\Http\Controllers\Admin\ProductExportController::class, 'columns'])->name('columns');
 });

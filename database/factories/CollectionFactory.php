@@ -37,7 +37,9 @@ class CollectionFactory extends Factory
                     ]
                 )->id;
             },
-            'sort' => fake()->numberBetween(0, 100),
+            // Lunar expects `sort` in the format "<key>:<direction>" (e.g. "sku:asc").
+            // Use a safe default that doesn't require extra data.
+            'sort' => 'position:asc',
             'collection_type' => \App\Enums\CollectionType::STANDARD->value,
             'attribute_data' => collect([
                 'name' => new Text($name),

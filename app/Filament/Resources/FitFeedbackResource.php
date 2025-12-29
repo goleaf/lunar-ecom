@@ -9,6 +9,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Lunar\Models\Customer;
+use Lunar\Models\Product;
 
 class FitFeedbackResource extends Resource
 {
@@ -27,13 +29,19 @@ class FitFeedbackResource extends Resource
                 Forms\Components\Section::make('Product & Customer')
                     ->schema([
                         Forms\Components\Select::make('product_id')
-                            ->relationship('product', 'translate.name')
+                            ->relationship('product', 'id')
+                            ->getOptionLabelFromRecordUsing(
+                                fn (Product $record): string => (string) ($record->translate('name') ?? "Product #{$record->id}")
+                            )
                             ->searchable()
                             ->preload()
                             ->required(),
 
                         Forms\Components\Select::make('customer_id')
-                            ->relationship('customer', 'full_name')
+                            ->relationship('customer', 'id')
+                            ->getOptionLabelFromRecordUsing(
+                                fn (Customer $record): string => (string) ($record->full_name ?? "Customer #{$record->id}")
+                            )
                             ->searchable()
                             ->preload()
                             ->nullable(),
@@ -135,10 +143,10 @@ class FitFeedbackResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('product.translate.name')
+                Tables\Columns\TextColumn::make('product_name')
                     ->label('Product')
-                    ->searchable()
-                    ->sortable(),
+                    ->getStateUsing(fn (FitFeedback $record): ?string => $record->product?->translate('name'))
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('customer.full_name')
                     ->label('Customer')

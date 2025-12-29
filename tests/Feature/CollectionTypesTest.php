@@ -69,7 +69,7 @@ class CollectionTypesTest extends TestCase
         $crossSell = $this->service->searchCollections(['collection_type' => CollectionType::CROSS_SELL->value]);
 
         $this->assertCount(1, $crossSell);
-        $this->assertEquals(CollectionType::CROSS_SELL, $crossSell->first()->collection_type);
+        $this->assertEquals(CollectionType::CROSS_SELL->value, $crossSell->first()->collection_type);
     }
 
     public function test_collection_type_enum_has_labels(): void

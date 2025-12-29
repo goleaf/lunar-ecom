@@ -121,7 +121,7 @@ class ProductResource extends Resource
                     ->columns(2),
                 Section::make('Attributes')
                     ->schema([
-                        Attributes::make('attribute_data')
+                        Attributes::make()
                             ->label('Attribute Data'),
                     ])
                     ->collapsible()

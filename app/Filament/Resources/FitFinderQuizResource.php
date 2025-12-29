@@ -10,6 +10,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Lunar\Models\Product;
 
 class FitFinderQuizResource extends Resource
 {
@@ -90,7 +91,10 @@ class FitFinderQuizResource extends Resource
                 Forms\Components\Section::make('Associated Products')
                     ->schema([
                         Forms\Components\Select::make('products')
-                            ->relationship('products', 'translate.name')
+                            ->relationship('products', 'id')
+                            ->getOptionLabelFromRecordUsing(
+                                fn (Product $record): string => (string) ($record->translate('name') ?? "Product #{$record->id}")
+                            )
                             ->multiple()
                             ->searchable()
                             ->preload()

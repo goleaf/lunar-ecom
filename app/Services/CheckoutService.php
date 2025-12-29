@@ -218,8 +218,9 @@ class CheckoutService
                 $this->stockService->releaseReservation($reservation);
             }
 
-            // Mark lock as released (if not already completed/failed)
-            if ($lock->isActive()) {
+            // Mark lock as failed unless it already completed/failed.
+            // (Expired locks are not "active" but still need a terminal state.)
+            if (!$lock->isCompleted() && !$lock->isFailed()) {
                 $lock->update(['state' => CheckoutLock::STATE_FAILED]);
             }
 
@@ -259,7 +260,6 @@ class CheckoutService
     public function isCartLocked(Cart $cart): bool
     {
         return CheckoutLock::where('cart_id', $cart->id)
-            ->where('session_id', '!=', session()->getId())
             ->active()
             ->exists();
     }

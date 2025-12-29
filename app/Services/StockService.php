@@ -245,7 +245,7 @@ class StockService
             $variant,
             $warehouse,
             $inventoryLevel,
-            $quantity > 0 ? 'adjustment' : 'adjustment',
+            'manual_adjustment',
             $quantity,
             $quantityBefore,
             $quantityAfter,

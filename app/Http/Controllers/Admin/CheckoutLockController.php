@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Filament\Resources\CheckoutLockResource as FilamentCheckoutLockResource;
 use App\Http\Resources\CheckoutLockResource;
 use App\Models\CheckoutLock;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Admin controller for managing checkout locks.
@@ -18,51 +19,28 @@ class CheckoutLockController extends Controller
     public function __construct(
         protected CheckoutService $checkoutService
     ) {
-        $this->middleware('auth');
+        // Align legacy admin routes with Filament's staff guard.
+        $this->middleware('auth:staff');
     }
 
     /**
      * Display a listing of checkout locks.
      */
-    public function index(Request $request): View
+    public function index(Request $request): RedirectResponse
     {
-        $query = CheckoutLock::with(['cart', 'user'])
-            ->orderBy('created_at', 'desc');
-
-        // Filter by state
-        if ($request->has('state')) {
-            $query->where('state', $request->state);
-        }
-
-        // Filter by date range
-        if ($request->has('date_from')) {
-            $query->where('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->has('date_to')) {
-            $query->where('created_at', '<=', $request->date_to);
-        }
-
-        $locks = $query->paginate(50);
-
-        return view('admin.checkout-locks.index', compact('locks'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentCheckoutLockResource::getSlug() . '.index', $request->query());
     }
 
     /**
      * Display the specified checkout lock.
      */
-    public function show(CheckoutLock $checkoutLock): View
+    public function show(CheckoutLock $checkoutLock): RedirectResponse
     {
-        $checkoutLock->load([
-            'cart.lines.purchasable',
-            'priceSnapshots',
-            'stockReservations.productVariant',
-            'user',
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentCheckoutLockResource::getSlug() . '.view', [
+            'record' => $checkoutLock->getKey(),
         ]);
-
-        $order = $checkoutLock->getOrder();
-
-        return view('admin.checkout-locks.show', compact('checkoutLock', 'order'));
     }
 
     /**
@@ -73,7 +51,7 @@ class CheckoutLockController extends Controller
         try {
             $this->checkoutService->releaseCheckout($checkoutLock);
 
-            return redirect()->route('admin.checkout-locks.index')
+            return redirect()->route('filament.admin.resources.' . FilamentCheckoutLockResource::getSlug() . '.index')
                 ->with('success', 'Checkout lock released successfully');
         } catch (\Exception $e) {
             return redirect()->back()
@@ -129,7 +107,7 @@ class CheckoutLockController extends Controller
             'user',
         ]);
 
-        return new CheckoutLockResource($checkoutLock);
+        return (new CheckoutLockResource($checkoutLock))->response();
     }
 }
 

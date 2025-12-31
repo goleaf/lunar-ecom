@@ -140,10 +140,8 @@ class ReferralAttributionResource extends Resource
                     ->label('Fraud Flags')
                     ->icon('heroicon-o-exclamation-triangle')
                     ->color('danger')
-                    ->getStateUsing(function (ReferralAttribution $record) {
-                        return $this->hasFraudFlags($record);
-                    })
-                    ->tooltip(fn (ReferralAttribution $record) => $this->getFraudFlagsTooltip($record)),
+                    ->getStateUsing(fn (ReferralAttribution $record): bool => static::hasFraudFlags($record))
+                    ->tooltip(fn (ReferralAttribution $record): string => static::getFraudFlagsTooltip($record)),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -233,7 +231,7 @@ class ReferralAttributionResource extends Resource
         return $table;
     }
 
-    protected function hasFraudFlags(ReferralAttribution $record): bool
+    protected static function hasFraudFlags(ReferralAttribution $record): bool
     {
         // Check for fraud flags
         $referee = $record->referee;
@@ -264,7 +262,7 @@ class ReferralAttributionResource extends Resource
         return false;
     }
 
-    protected function getFraudFlagsTooltip(ReferralAttribution $record): string
+    protected static function getFraudFlagsTooltip(ReferralAttribution $record): string
     {
         $flags = [];
 

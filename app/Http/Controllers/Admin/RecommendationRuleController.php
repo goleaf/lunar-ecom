@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\RecommendationRuleResource as FilamentRecommendationRuleResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\RecommendationRule;
@@ -26,6 +27,11 @@ class RecommendationRuleController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        // Prefer Filament for the admin UI. Keep JSON support for internal tooling.
+        if (! $request->wantsJson()) {
+            return redirect()->route('filament.admin.resources.' . FilamentRecommendationRuleResource::getSlug() . '.index', $request->query());
+        }
+
         $query = RecommendationRule::with(['sourceProduct', 'recommendedProduct'])
             ->orderByDesc('priority')
             ->orderByDesc('created_at');
@@ -40,11 +46,7 @@ class RecommendationRuleController extends Controller
 
         $rules = $query->paginate(20);
 
-        if ($request->wantsJson()) {
-            return response()->json($rules);
-        }
-
-        return view('admin.recommendations.rules', compact('rules'));
+        return response()->json($rules);
     }
 
     /**

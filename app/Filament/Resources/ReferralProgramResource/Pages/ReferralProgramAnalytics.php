@@ -20,6 +20,11 @@ class ReferralProgramAnalytics extends Page
 
     protected static string $view = 'filament.resources.referral-program-resource.pages.referral-program-analytics';
 
+    public function mount($record): void
+    {
+        $this->record = $this->resolveRecord($record);
+    }
+
     public function getTitle(): string
     {
         return 'Analytics: ' . $this->record->name;

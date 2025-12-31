@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\InventoryLevelResource as FilamentInventoryLevelResource;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryLevel;
 use App\Models\Warehouse;
@@ -23,13 +24,18 @@ class InventoryController extends Controller
      * Display inventory levels.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View|JsonResponse
+     * @return \Illuminate\Http\RedirectResponse|JsonResponse
      */
     public function index(Request $request)
     {
         // Admin-only: require staff authentication
         if (!auth('staff')->check()) {
             abort(403, 'Unauthorized');
+        }
+
+        // Prefer Filament for the admin UI. Keep JSON support for internal tooling.
+        if (! $request->wantsJson()) {
+            return redirect()->route('filament.admin.resources.' . FilamentInventoryLevelResource::getSlug() . '.index', $request->query());
         }
 
         $query = InventoryLevel::with(['productVariant.product', 'warehouse']);
@@ -48,13 +54,7 @@ class InventoryController extends Controller
 
         $inventoryLevels = $query->paginate(50);
 
-        if ($request->wantsJson()) {
-            return response()->json($inventoryLevels);
-        }
-
-        $warehouses = Warehouse::active()->get();
-
-        return view('admin.inventory.index', compact('inventoryLevels', 'warehouses'));
+        return response()->json($inventoryLevels);
     }
 
     /**

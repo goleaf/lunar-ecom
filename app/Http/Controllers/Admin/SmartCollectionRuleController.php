@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\SmartCollectionRuleResource;
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\SmartCollectionRule;
 use App\Services\SmartCollectionService;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 
 class SmartCollectionRuleController extends Controller
 {
@@ -21,30 +23,24 @@ class SmartCollectionRuleController extends Controller
      * Show the smart collection rules page.
      *
      * @param Collection $collection
-     * @return \Illuminate\View\View
+     * @return RedirectResponse
      */
-    public function index(Collection $collection)
+    public function index(Collection $collection): RedirectResponse
     {
-        $rules = $collection->smartRules()->orderBy('priority')->get();
-        $availableFields = SmartCollectionRule::getAvailableFields();
-        $availableOperators = SmartCollectionRule::getAvailableOperators();
-        
-        // Get options for select fields
-        $productTypes = \Lunar\Models\ProductType::all();
-        $brands = \App\Models\Brand::all();
-        $categories = \App\Models\Category::all();
-        $attributes = \App\Models\Attribute::where('attribute_type', 'product')->get();
+        // Prefer Filament for the admin UI.
+        $slug = SmartCollectionRuleResource::getSlug();
 
-        return view('admin.collections.smart-rules', compact(
-            'collection',
-            'rules',
-            'availableFields',
-            'availableOperators',
-            'productTypes',
-            'brands',
-            'categories',
-            'attributes'
-        ));
+        return redirect()->route(
+            "filament.admin.resources.{$slug}.index",
+            [
+                // Pre-apply the collection filter in the table.
+                'tableFilters' => [
+                    'collection_id' => [
+                        'value' => $collection->getKey(),
+                    ],
+                ],
+            ]
+        );
     }
 
     /**

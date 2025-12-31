@@ -60,6 +60,11 @@ class Product extends LunarProduct
      * @var array<int, string>
      */
     protected $fillable = [
+        // Lunar core fields (required for Filament CRUD)
+        'product_type_id',
+        'status',
+        'brand_id',
+        'attribute_data',
         'uuid',
         'sku',
         'barcode',
@@ -932,6 +937,22 @@ class Product extends LunarProduct
     }
 
     /**
+     * Product customizations relationship.
+     */
+    public function customizations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\ProductCustomization::class, 'product_id');
+    }
+
+    /**
+     * Product customization examples relationship.
+     */
+    public function customizationExamples(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\CustomizationExample::class, 'product_id');
+    }
+
+    /**
      * Product badges relationship.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
@@ -1601,7 +1622,8 @@ class Product extends LunarProduct
     {
         $this->is_locked = true;
         $this->lock_reason = $reason ?? 'Product has live orders';
-        $this->locked_by = $user?->id ?? auth()->id();
+        // `locked_by` references the `users` table; use the web guard.
+        $this->locked_by = $user?->id ?? auth('web')->id();
         $this->locked_at = now();
         $this->save();
 
@@ -1699,7 +1721,8 @@ class Product extends LunarProduct
             'version_name' => $versionName,
             'version_notes' => $versionNotes,
             'product_data' => $productData,
-            'created_by' => auth()->id(),
+            // `created_by` references the `users` table; use the web guard.
+            'created_by' => auth('web')->id(),
         ]);
     }
 

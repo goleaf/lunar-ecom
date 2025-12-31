@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute as CastAttribute;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Casts\AsCollection;
+use Illuminate\Support\Collection;
 use Lunar\Models\Attribute as LunarAttribute;
 
 /**
@@ -32,7 +34,6 @@ class Attribute extends LunarAttribute
         // Keep Lunar's core casts (these are required for translated/admin fields).
         'name' => AsCollection::class,
         'description' => AsCollection::class,
-        'configuration' => AsCollection::class,
 
         'display_order' => 'integer',
         'sortable' => 'boolean',
@@ -42,6 +43,46 @@ class Attribute extends LunarAttribute
         'required' => 'boolean',
         'default_value' => 'array',
     ];
+
+    /**
+     * Ensure `configuration` is never null (Lunar field types expect a Collection).
+     *
+     * Some records can have NULL configuration, which breaks calls like:
+     * `$attribute->configuration->get('richtext')`.
+     */
+    protected function configuration(): CastAttribute
+    {
+        return CastAttribute::make(
+            get: function ($value): Collection {
+                if ($value instanceof Collection) {
+                    return $value;
+                }
+
+                if (is_array($value)) {
+                    return collect($value);
+                }
+
+                if (is_string($value) && trim($value) !== '') {
+                    $decoded = json_decode($value, true);
+                    return collect(is_array($decoded) ? $decoded : []);
+                }
+
+                return collect();
+            },
+            set: function ($value): string {
+                if ($value instanceof Collection) {
+                    $value = $value->all();
+                }
+
+                if (is_string($value)) {
+                    // Assume this is a JSON string (e.g. "{}") and store as-is.
+                    return $value;
+                }
+
+                return json_encode($value ?? []);
+            },
+        );
+    }
 
     /**
      * Product attribute values relationship.
@@ -273,7 +314,22 @@ class Attribute extends LunarAttribute
      */
     public function getValidationRules(): array
     {
-        $rules = $this->validation_rules ?? [];
+        $rules = $this->validation_rules;
+
+        // Lunar's base model PHPDoc declares `validation_rules` as a string, but in this
+        // codebase we cast it to an array. Coerce defensively so callers always get an array.
+        if (is_string($rules)) {
+            $decoded = json_decode($rules, true);
+            $rules = is_array($decoded) ? $decoded : [];
+        }
+
+        if ($rules instanceof \Illuminate\Support\Collection) {
+            $rules = $rules->all();
+        }
+
+        if (! is_array($rules)) {
+            $rules = [];
+        }
 
         // Add required rule if attribute is required
         if ($this->required) {

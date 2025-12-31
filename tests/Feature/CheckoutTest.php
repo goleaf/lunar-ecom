@@ -14,7 +14,9 @@ use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Lunar\Facades\CartSession;
+use Lunar\Models\Channel;
 use Lunar\Models\Cart;
+use Lunar\Models\Currency;
 use App\Models\ProductVariant;
 use Tests\TestCase;
 
@@ -188,15 +190,33 @@ class CheckoutTest extends TestCase
      */
     protected function createCartWithItems(): Cart
     {
-        $cart = Cart::factory()->create();
-        
+        $currency = Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'enabled' => true,
+                'default' => true,
+            ]
+        );
+
+        $channel = Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            [
+                'name' => 'Web Store',
+                'default' => true,
+                'url' => 'http://localhost',
+            ]
+        );
+
+        $cart = Cart::factory()->create([
+            'currency_id' => $currency->id,
+            'channel_id' => $channel->id,
+        ]);
+
         // Add some test items with guaranteed pricing
         $variant = ProductVariant::factory()->create(['stock' => 10]);
-
-        $currency = \Lunar\Models\Currency::firstOrCreate(
-            ['code' => 'USD'],
-            ['name' => 'US Dollar', 'exchange_rate' => 1, 'decimal_places' => 2, 'enabled' => true, 'default' => true]
-        );
 
         // Create a price through the relation to ensure the correct morph type is used.
         $variant->prices()->updateOrCreate(

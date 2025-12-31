@@ -4,7 +4,9 @@ namespace Tests\Feature\Frontend;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Lunar\Facades\CartSession;
+use Lunar\Models\Channel;
 use Lunar\Models\Cart;
+use Lunar\Models\Currency;
 use Tests\TestCase;
 
 class CartApiTest extends TestCase
@@ -39,7 +41,29 @@ class CartApiTest extends TestCase
 
     public function test_cart_pricing_returns_pricing_payload_when_cart_exists(): void
     {
+        $currency = Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'default' => true,
+                'enabled' => true,
+            ]
+        );
+
+        $channel = Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            [
+                'name' => 'Web Store',
+                'default' => true,
+                'url' => 'http://localhost',
+            ]
+        );
+
         $cart = Cart::factory()->create([
+            'currency_id' => $currency->id,
+            'channel_id' => $channel->id,
             'coupon_code' => null,
         ]);
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Filament\Resources\ProductImportResource;
 use App\Imports\ProductImport;
 use App\Models\ProductImport as ProductImportModel;
 use App\Services\ProductImportService;
@@ -23,17 +24,12 @@ class ProductImportController extends Controller
     /**
      * Display import interface.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index()
     {
-        $imports = ProductImportModel::with('user')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        return view('admin.products.import.index', [
-            'imports' => $imports,
-        ]);
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . ProductImportResource::getSlug() . '.index');
     }
 
     /**
@@ -188,7 +184,7 @@ class ProductImportController extends Controller
      * Get import report.
      *
      * @param  int  $id
-     * @return JsonResponse
+     * @return JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function report(int $id)
     {
@@ -215,9 +211,9 @@ class ProductImportController extends Controller
             ]);
         }
 
-        return view('admin.products.import.report', [
-            'import' => $import,
-            'failed_rows' => $failedRows,
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . ProductImportResource::getSlug() . '.view', [
+            'record' => $import->getKey(),
         ]);
     }
 
@@ -232,7 +228,8 @@ class ProductImportController extends Controller
     {
         $import = ProductImportModel::findOrFail($id);
 
-        $result = $this->importService->rollback($import, auth()->id());
+        // NOTE: `rolled_back_by` references the `users` table, not `staff`.
+        $result = $this->importService->rollback($import, auth('web')->id());
 
         return response()->json($result);
     }

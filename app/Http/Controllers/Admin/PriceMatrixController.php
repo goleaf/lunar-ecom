@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\PriceMatrixResource as FilamentPriceMatrixResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -23,13 +24,10 @@ class PriceMatrixController extends Controller
      */
     public function index(Product $product)
     {
-        $matrices = PriceMatrix::where('product_id', $product->id)
-            ->with(['productVariant', 'tiers', 'pricingRules'])
-            ->orderBy('priority', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('admin.products.pricing.matrices', compact('product', 'matrices'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentPriceMatrixResource::getSlug() . '.index', [
+            'product_id' => $product->getKey(),
+        ]);
     }
 
     /**
@@ -174,7 +172,8 @@ class PriceMatrixController extends Controller
 
         $matrix->update([
             'approval_status' => $validated['approval_status'],
-            'approved_by' => auth()->id(),
+            // NOTE: `approved_by` references the `users` table, not `staff`. If no web user is present, this stays null.
+            'approved_by' => auth('web')->id(),
             'approved_at' => now(),
             'approval_notes' => $validated['approval_notes'] ?? null,
         ]);

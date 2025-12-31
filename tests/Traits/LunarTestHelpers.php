@@ -12,6 +12,7 @@ use Lunar\Models\TaxClass;
 use Lunar\Models\AttributeGroup;
 use Lunar\Models\CollectionGroup;
 use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\Text as TextFieldType;
 
 trait LunarTestHelpers
 {
@@ -143,11 +144,11 @@ trait LunarTestHelpers
             'attribute_group_id' => $productAttributeGroup->id,
             'position' => 1,
             'name' => 'Name',
-            'type' => 'text',
+            'type' => TextFieldType::class,
             'required' => true,
             'filterable' => true,
             'searchable' => true,
-            'configuration' => '{}',
+            'configuration' => [],
             'system' => true,
         ]);
 
@@ -158,11 +159,13 @@ trait LunarTestHelpers
             'attribute_group_id' => $productAttributeGroup->id,
             'position' => 2,
             'name' => 'Description',
-            'type' => 'richtext',
+            'type' => TextFieldType::class,
             'required' => false,
             'filterable' => false,
             'searchable' => true,
-            'configuration' => '{}',
+            'configuration' => [
+                'richtext' => true,
+            ],
             'system' => true,
         ]);
 
@@ -174,11 +177,11 @@ trait LunarTestHelpers
             'attribute_group_id' => $collectionAttributeGroup->id,
             'position' => 1,
             'name' => 'Collection Name',
-            'type' => 'text',
+            'type' => TextFieldType::class,
             'required' => true,
             'filterable' => true,
             'searchable' => true,
-            'configuration' => '{}',
+            'configuration' => [],
             'system' => true,
         ]);
 

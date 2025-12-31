@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\CustomizationTemplateResource;
+use App\Filament\Resources\ProductResource as FilamentProductResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCustomization;
@@ -9,19 +11,19 @@ use App\Models\CustomizationTemplate;
 use App\Models\CustomizationExample;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class ProductCustomizationController extends Controller
 {
     /**
      * Display customizations for a product.
      */
-    public function index(Product $product)
+    public function index(Product $product): RedirectResponse
     {
-        $customizations = ProductCustomization::where('product_id', $product->id)
-            ->orderBy('display_order')
-            ->get();
-
-        return view('admin.products.customizations.index', compact('product', 'customizations'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            FilamentProductResource::getUrl('edit', ['record' => $product])
+        );
     }
 
     /**
@@ -57,6 +59,13 @@ class ProductCustomizationController extends Controller
             'template_image' => 'nullable|image|max:2048',
             'example_values' => 'nullable|array',
         ]);
+
+        if ($request->hasFile('template_image')) {
+            $validated['template_image'] = $request->file('template_image')
+                ->store('customizations/template-images', 'public');
+        } else {
+            unset($validated['template_image']);
+        }
 
         $customization = ProductCustomization::create(array_merge($validated, [
             'product_id' => $product->id,
@@ -101,6 +110,13 @@ class ProductCustomizationController extends Controller
             'example_values' => 'nullable|array',
         ]);
 
+        if ($request->hasFile('template_image')) {
+            $validated['template_image'] = $request->file('template_image')
+                ->store('customizations/template-images', 'public');
+        } else {
+            unset($validated['template_image']);
+        }
+
         $customization->update($validated);
 
         return response()->json([
@@ -126,13 +142,12 @@ class ProductCustomizationController extends Controller
     /**
      * Manage customization templates.
      */
-    public function templates()
+    public function templates(): RedirectResponse
     {
-        $templates = CustomizationTemplate::orderBy('category')
-            ->orderBy('name')
-            ->paginate(20);
-
-        return view('admin.customizations.templates', compact('templates'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            CustomizationTemplateResource::getUrl('index')
+        );
     }
 
     /**
@@ -148,6 +163,13 @@ class ProductCustomizationController extends Controller
             'preview_image' => 'nullable|image|max:2048',
         ]);
 
+        if ($request->hasFile('preview_image')) {
+            $validated['preview_image'] = $request->file('preview_image')
+                ->store('customizations/template-previews', 'public');
+        } else {
+            unset($validated['preview_image']);
+        }
+
         $template = CustomizationTemplate::create($validated);
 
         return response()->json([
@@ -160,13 +182,12 @@ class ProductCustomizationController extends Controller
     /**
      * Manage customization examples.
      */
-    public function examples(Product $product)
+    public function examples(Product $product): RedirectResponse
     {
-        $examples = CustomizationExample::where('product_id', $product->id)
-            ->orderBy('display_order')
-            ->get();
-
-        return view('admin.products.customizations.examples', compact('product', 'examples'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            FilamentProductResource::getUrl('edit', ['record' => $product])
+        );
     }
 
     /**
@@ -182,6 +203,9 @@ class ProductCustomizationController extends Controller
             'customization_values' => 'nullable|array',
             'display_order' => 'nullable|integer|min:0',
         ]);
+
+        $validated['example_image'] = $request->file('example_image')
+            ->store('customizations/examples', 'public');
 
         $example = CustomizationExample::create(array_merge($validated, [
             'product_id' => $product->id,

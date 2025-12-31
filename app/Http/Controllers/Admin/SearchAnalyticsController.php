@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\SearchAnalyticResource;
+use App\Filament\Resources\SearchSynonymResource;
 use App\Http\Controllers\Controller;
 use App\Models\SearchAnalytic;
 use App\Models\SearchSynonym;
 use App\Services\SearchService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -23,47 +26,21 @@ class SearchAnalyticsController extends Controller
      * Display search analytics dashboard.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View
+     * @return RedirectResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): RedirectResponse
     {
         // Admin-only: require staff authentication
         if (!auth('staff')->check()) {
             abort(403, 'Unauthorized');
         }
 
-        $period = $request->get('period', 'week');
-        $limit = (int) $request->get('limit', 50);
+        $slug = SearchAnalyticResource::getSlug();
 
-        // Get popular searches
-        $popularSearches = $this->searchService->popularSearches($limit, $period);
-
-        // Get zero-result searches
-        $zeroResults = SearchAnalytic::where('zero_results', true)
-            ->where('searched_at', '>=', $this->getPeriodStart($period))
-            ->select('search_term')
-            ->selectRaw('COUNT(*) as count')
-            ->groupBy('search_term')
-            ->orderByDesc('count')
-            ->limit(20)
-            ->get();
-
-        // Get search statistics
-        $stats = $this->getSearchStatistics($period);
-
-        // Get recent searches
-        $recentSearches = SearchAnalytic::where('searched_at', '>=', $this->getPeriodStart($period))
-            ->orderByDesc('searched_at')
-            ->limit(50)
-            ->get();
-
-        return view('admin.search-analytics.index', compact(
-            'popularSearches',
-            'zeroResults',
-            'stats',
-            'recentSearches',
-            'period'
-        ));
+        return redirect()->route(
+            "filament.admin.resources.{$slug}.index",
+            $request->query()
+        );
     }
 
     /**
@@ -121,13 +98,18 @@ class SearchAnalyticsController extends Controller
     /**
      * Manage search synonyms.
      *
-     * @return \Illuminate\View\View
+     * @return RedirectResponse
      */
-    public function synonyms()
+    public function synonyms(): RedirectResponse
     {
-        $synonyms = SearchSynonym::ordered()->get();
+        // Admin-only: require staff authentication
+        if (!auth('staff')->check()) {
+            abort(403, 'Unauthorized');
+        }
 
-        return view('admin.search-analytics.synonyms', compact('synonyms'));
+        $slug = SearchSynonymResource::getSlug();
+
+        return redirect()->route("filament.admin.resources.{$slug}.index");
     }
 
     /**

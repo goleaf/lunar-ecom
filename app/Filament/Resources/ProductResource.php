@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use App\Admin\Support\Forms\Components\Attributes;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers\ActivitiesRelationManager;
+use App\Filament\Resources\ProductResource\RelationManagers\BadgeAssignmentsRelationManager;
+use App\Filament\Resources\ProductResource\RelationManagers\CustomizationExamplesRelationManager;
+use App\Filament\Resources\ProductResource\RelationManagers\CustomizationsRelationManager;
 use App\Filament\Resources\ProductResource\RelationManagers\UrlsRelationManager;
 use App\Filament\Resources\ProductResource\RelationManagers\VersionsRelationManager;
 use App\Models\Product;
@@ -190,6 +193,9 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
+            BadgeAssignmentsRelationManager::class,
+            CustomizationsRelationManager::class,
+            CustomizationExamplesRelationManager::class,
             UrlsRelationManager::class,
             VersionsRelationManager::class,
             ActivitiesRelationManager::class,
@@ -201,7 +207,8 @@ class ProductResource extends Resource
         return [
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
-            'view' => Pages\ViewProduct::route('/{record}'),
+            // Avoid collisions with legacy `/admin/products/*` routes (e.g. import/export tools).
+            'view' => Pages\ViewProduct::route('/{record}/view'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }

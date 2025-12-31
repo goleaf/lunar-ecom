@@ -306,13 +306,18 @@ Route::prefix('admin/customizations')->name('admin.customizations.')->middleware
 
 // Admin Product Badges
 Route::prefix('admin/badges')->name('admin.badges.')->middleware(['admin'])->group(function () {
-    Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeController::class)->parameters(['' => 'badge']);
+    // Constrain the resource param to avoid swallowing nested routes like `/admin/badges/rules/*`.
+    Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeController::class)
+        ->parameters(['' => 'badge'])
+        ->where(['badge' => '[0-9]+']);
     Route::post('/{badge}/preview', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'preview'])->name('preview');
     Route::get('/{badge}/performance', [\App\Http\Controllers\Admin\ProductBadgeController::class, 'performance'])->name('performance');
     
     // Badge Rules
     Route::prefix('rules')->name('rules.')->group(function () {
-        Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeRuleController::class)->parameters(['' => 'rule']);
+        Route::resource('/', \App\Http\Controllers\Admin\ProductBadgeRuleController::class)
+            ->parameters(['' => 'rule'])
+            ->where(['rule' => '[0-9]+']);
         Route::post('/{rule}/test', [\App\Http\Controllers\Admin\ProductBadgeRuleController::class, 'test'])->name('test');
     });
     

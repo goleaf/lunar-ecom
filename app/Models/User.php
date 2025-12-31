@@ -154,6 +154,14 @@ class User extends Authenticatable implements LunarUser
     }
 
     /**
+     * Referral codes owned by this user (multi-program support).
+     */
+    public function referralCodes()
+    {
+        return $this->hasMany(ReferralCode::class, 'referrer_id');
+    }
+
+    /**
      * Get coupon redemptions.
      */
     public function couponRedemptions()

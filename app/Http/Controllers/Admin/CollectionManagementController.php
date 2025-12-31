@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\CollectionResource as FilamentCollectionResource;
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\Product;
 use App\Services\CollectionManagementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Admin controller for collection management.
@@ -22,21 +24,14 @@ class CollectionManagementController extends Controller
      * Display collection management page.
      *
      * @param  Collection  $collection
-     * @return \Illuminate\View\View
+     * @return RedirectResponse
      */
-    public function show(Collection $collection)
+    public function show(Collection $collection): RedirectResponse
     {
-        $products = $collection->productsWithMetadata()
-            ->paginate(20);
-
-        $availableProducts = Product::published()
-            ->whereDoesntHave('collections', function ($q) use ($collection) {
-                $q->where('collections.id', $collection->id);
-            })
-            ->limit(50)
-            ->get();
-
-        return view('admin.collections.manage', compact('collection', 'products', 'availableProducts'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            FilamentCollectionResource::getUrl('edit', ['record' => $collection])
+        );
     }
 
     /**

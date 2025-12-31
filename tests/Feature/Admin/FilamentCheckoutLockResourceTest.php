@@ -9,7 +9,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Lunar\Admin\Models\Staff;
 use Livewire\Livewire;
+use Lunar\Models\Channel;
 use Lunar\Models\Cart;
+use Lunar\Models\Currency;
 use Tests\TestCase;
 
 class FilamentCheckoutLockResourceTest extends TestCase
@@ -23,7 +25,30 @@ class FilamentCheckoutLockResourceTest extends TestCase
         $staff = Staff::where('email', 'admin@example.com')->firstOrFail();
         $this->actingAs($staff, 'staff');
 
-        $cart = Cart::factory()->create();
+        $currency = Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'default' => true,
+                'enabled' => true,
+            ]
+        );
+
+        $channel = Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            [
+                'name' => 'Web Store',
+                'default' => true,
+                'url' => 'http://localhost',
+            ]
+        );
+
+        $cart = Cart::factory()->create([
+            'currency_id' => $currency->id,
+            'channel_id' => $channel->id,
+        ]);
 
         $lock = CheckoutLock::create([
             'cart_id' => $cart->id,
@@ -48,7 +73,30 @@ class FilamentCheckoutLockResourceTest extends TestCase
         $staff = Staff::where('email', 'admin@example.com')->firstOrFail();
         $this->actingAs($staff, 'staff');
 
-        $cart = Cart::factory()->create();
+        $currency = Currency::firstOrCreate(
+            ['code' => 'USD'],
+            [
+                'name' => 'US Dollar',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'default' => true,
+                'enabled' => true,
+            ]
+        );
+
+        $channel = Channel::firstOrCreate(
+            ['handle' => 'webstore'],
+            [
+                'name' => 'Web Store',
+                'default' => true,
+                'url' => 'http://localhost',
+            ]
+        );
+
+        $cart = Cart::factory()->create([
+            'currency_id' => $currency->id,
+            'channel_id' => $channel->id,
+        ]);
 
         $lock = CheckoutLock::create([
             'cart_id' => $cart->id,

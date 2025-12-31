@@ -21,13 +21,18 @@ class ReviewModerationController extends Controller
      * Display moderation queue.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View|JsonResponse
+     * @return \Illuminate\Http\RedirectResponse|JsonResponse
      */
     public function index(Request $request)
     {
         // Admin-only: require staff authentication
         if (!auth('staff')->check()) {
             abort(403, 'Unauthorized');
+        }
+
+        // Prefer Filament for the admin UI. Keep JSON support for internal tooling.
+        if (! $request->wantsJson()) {
+            return redirect()->route('filament.admin.resources.reviews.index', $request->query());
         }
 
         $query = Review::with(['product', 'customer', 'order', 'media'])
@@ -60,11 +65,7 @@ class ReviewModerationController extends Controller
         $perPage = $request->get('per_page', 20);
         $reviews = $query->paginate($perPage);
 
-        if ($request->wantsJson()) {
-            return response()->json($reviews);
-        }
-
-        return view('admin.reviews.moderation', compact('reviews', 'status'));
+        return response()->json($reviews);
     }
 
     /**
@@ -94,7 +95,8 @@ class ReviewModerationController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $this->reviewService->approveReview($review, auth('staff')->id());
+        // NOTE: `approved_by` references the `users` table, not `staff`. If no web user is present, this stays null.
+        $this->reviewService->approveReview($review, auth('web')->id());
 
         return response()->json([
             'message' => 'Review approved successfully',
@@ -198,7 +200,8 @@ class ReviewModerationController extends Controller
             'response' => 'required|string|min:10|max:2000',
         ]);
 
-        $this->reviewService->addAdminResponse($review, $validated['response'], auth()->id());
+        // NOTE: `responded_by` references the `users` table, not `staff`. If no web user is present, this stays null.
+        $this->reviewService->addAdminResponse($review, $validated['response'], auth('web')->id());
 
         return response()->json([
             'message' => 'Admin response added successfully',

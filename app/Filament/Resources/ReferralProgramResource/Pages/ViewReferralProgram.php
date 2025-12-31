@@ -16,7 +16,7 @@ class ViewReferralProgram extends ViewRecord
             Actions\Action::make('analytics')
                 ->label('Analytics')
                 ->icon('heroicon-o-chart-bar')
-                ->url(fn () => static::getUrl('analytics', ['record' => $this->record])),
+                ->url(fn (): string => ReferralProgramResource::getUrl('analytics', ['record' => $this->record])),
             Actions\EditAction::make(),
         ];
     }

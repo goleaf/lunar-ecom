@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductQuestionResource as FilamentProductQuestionResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductQuestion;
@@ -21,21 +22,8 @@ class ProductQuestionController extends Controller
      */
     public function index(Request $request)
     {
-        $status = $request->input('status', 'pending');
-        
-        $questions = ProductQuestion::with(['product', 'customer'])
-            ->where('status', $status)
-            ->orderBy('asked_at', 'desc')
-            ->paginate(20);
-
-        $stats = [
-            'pending' => ProductQuestion::where('status', 'pending')->count(),
-            'approved' => ProductQuestion::where('status', 'approved')->count(),
-            'rejected' => ProductQuestion::where('status', 'rejected')->count(),
-            'unanswered' => ProductQuestion::where('is_answered', false)->approved()->count(),
-        ];
-
-        return view('admin.products.questions.index', compact('questions', 'stats', 'status'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductQuestionResource::getSlug() . '.index', $request->query());
     }
 
     /**
@@ -43,9 +31,10 @@ class ProductQuestionController extends Controller
      */
     public function show(ProductQuestion $question)
     {
-        $question->load(['product', 'customer', 'answers.answerer', 'moderator']);
-        
-        return view('admin.products.questions.show', compact('question'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductQuestionResource::getSlug() . '.view', [
+            'record' => $question->getKey(),
+        ]);
     }
 
     /**

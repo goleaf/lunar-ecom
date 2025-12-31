@@ -61,14 +61,13 @@ class ReferralCodeManagementResource extends Resource
 
                 Forms\Components\Section::make('Referral Status')
                     ->schema([
-                        Forms\Components\TextInput::make('referred_by.name')
+                        Forms\Components\TextInput::make('referrer.name')
                             ->label('Referred By')
                             ->disabled(),
 
-                        Forms\Components\TextInput::make('referred_at')
+                        Forms\Components\DateTimePicker::make('referred_at')
                             ->label('Referred At')
-                            ->disabled()
-                            ->dateTime(),
+                            ->disabled(),
 
                         Forms\Components\Toggle::make('referral_blocked')
                             ->label('Block Referral Rewards')
@@ -102,7 +101,7 @@ class ReferralCodeManagementResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('referred_by.name')
+                Tables\Columns\TextColumn::make('referrer.name')
                     ->label('Referred By')
                     ->searchable()
                     ->sortable(),

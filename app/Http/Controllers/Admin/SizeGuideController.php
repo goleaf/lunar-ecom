@@ -2,42 +2,38 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\SizeGuideResource as FilamentSizeGuideResource;
 use App\Http\Controllers\Controller;
 use App\Models\SizeGuide;
 use App\Models\SizeChart;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class SizeGuideController extends Controller
 {
     /**
      * Display a listing of size guides.
      */
-    public function index()
+    public function index(): RedirectResponse
     {
-        $sizeGuides = SizeGuide::with(['category', 'brand'])
-            ->orderBy('display_order')
-            ->orderBy('name')
-            ->paginate(20);
-
-        return view('admin.size-guides.index', compact('sizeGuides'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(FilamentSizeGuideResource::getUrl('index'));
     }
 
     /**
      * Show the form for creating a new size guide.
      */
-    public function create()
+    public function create(): RedirectResponse
     {
-        $categories = \Lunar\Models\Collection::defaultOrder()->get();
-        $brands = \Lunar\Models\Brand::orderBy('name')->get();
-
-        return view('admin.size-guides.create', compact('categories', 'brands'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(FilamentSizeGuideResource::getUrl('create'));
     }
 
     /**
      * Store a newly created size guide.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -55,38 +51,45 @@ class SizeGuideController extends Controller
             'conversion_table' => 'nullable|array',
         ]);
 
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('size-guides', 'public');
+        } else {
+            unset($validated['image']);
+        }
+
         $sizeGuide = SizeGuide::create($validated);
 
-        return redirect()->route('admin.size-guides.show', $sizeGuide)
-            ->with('success', 'Size guide created successfully.');
+        return redirect()->to(
+            FilamentSizeGuideResource::getUrl('edit', ['record' => $sizeGuide])
+        );
     }
 
     /**
      * Display the specified size guide.
      */
-    public function show(SizeGuide $sizeGuide)
+    public function show(SizeGuide $sizeGuide): RedirectResponse
     {
-        $sizeGuide->load(['sizeCharts', 'category', 'brand', 'products']);
-        
-        return view('admin.size-guides.show', compact('sizeGuide'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            FilamentSizeGuideResource::getUrl('edit', ['record' => $sizeGuide])
+        );
     }
 
     /**
      * Show the form for editing the specified size guide.
      */
-    public function edit(SizeGuide $sizeGuide)
+    public function edit(SizeGuide $sizeGuide): RedirectResponse
     {
-        $categories = \Lunar\Models\Collection::defaultOrder()->get();
-        $brands = \Lunar\Models\Brand::orderBy('name')->get();
-        $sizeGuide->load('sizeCharts');
-
-        return view('admin.size-guides.edit', compact('sizeGuide', 'categories', 'brands'));
+        // Prefer Filament for the admin UI.
+        return redirect()->to(
+            FilamentSizeGuideResource::getUrl('edit', ['record' => $sizeGuide])
+        );
     }
 
     /**
      * Update the specified size guide.
      */
-    public function update(Request $request, SizeGuide $sizeGuide)
+    public function update(Request $request, SizeGuide $sizeGuide): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -104,21 +107,27 @@ class SizeGuideController extends Controller
             'conversion_table' => 'nullable|array',
         ]);
 
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('size-guides', 'public');
+        } else {
+            unset($validated['image']);
+        }
+
         $sizeGuide->update($validated);
 
-        return redirect()->route('admin.size-guides.show', $sizeGuide)
-            ->with('success', 'Size guide updated successfully.');
+        return redirect()->to(
+            FilamentSizeGuideResource::getUrl('edit', ['record' => $sizeGuide])
+        );
     }
 
     /**
      * Remove the specified size guide.
      */
-    public function destroy(SizeGuide $sizeGuide)
+    public function destroy(SizeGuide $sizeGuide): RedirectResponse
     {
         $sizeGuide->delete();
 
-        return redirect()->route('admin.size-guides.index')
-            ->with('success', 'Size guide deleted successfully.');
+        return redirect()->to(FilamentSizeGuideResource::getUrl('index'));
     }
 
     /**

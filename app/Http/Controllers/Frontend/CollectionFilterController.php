@@ -7,6 +7,7 @@ use App\Models\Collection;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 /**
  * Controller for collection filtering and sorting with AJAX.
@@ -18,7 +19,7 @@ class CollectionFilterController extends Controller
      *
      * @param  Request  $request
      * @param  Collection  $collection
-     * @return JsonResponse|\Illuminate\View\View
+     * @return JsonResponse|RedirectResponse
      */
     public function index(Request $request, Collection $collection)
     {
@@ -54,11 +55,12 @@ class CollectionFilterController extends Controller
             ]);
         }
 
-        return view('frontend.collections.show', [
-            'collection' => $collection,
-            'products' => $products,
-            'filterOptions' => $filterOptions,
-        ]);
+        // Frontend pages are served by Livewire (`CollectionShow`). Keep this legacy URL as a
+        // redirect for non-AJAX requests.
+        return redirect()->route(
+            'frontend.collections.show',
+            array_merge(['slug' => (string) $collection->getKey()], $request->query())
+        );
     }
 
     /**

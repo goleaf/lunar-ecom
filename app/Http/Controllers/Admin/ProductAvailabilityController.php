@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductAvailabilityResource as FilamentProductAvailabilityResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductAvailability;
@@ -23,27 +24,10 @@ class ProductAvailabilityController extends Controller
      */
     public function calendar(Product $product, Request $request)
     {
-        $month = $request->input('month', now()->format('Y-m'));
-        $startDate = Carbon::parse($month)->startOfMonth();
-        $endDate = Carbon::parse($month)->endOfMonth();
-
-        $availability = $this->availabilityService->getAvailableDates(
-            $product,
-            $startDate,
-            $endDate
-        );
-
-        $bookings = AvailabilityBooking::where('product_id', $product->id)
-            ->whereBetween('start_date', [$startDate, $endDate])
-            ->with(['customer', 'order'])
-            ->get();
-
-        return view('admin.products.availability.calendar', compact(
-            'product',
-            'availability',
-            'bookings',
-            'month'
-        ));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductAvailabilityResource::getSlug() . '.index', [
+            'product_id' => $product->getKey(),
+        ]);
     }
 
     /**

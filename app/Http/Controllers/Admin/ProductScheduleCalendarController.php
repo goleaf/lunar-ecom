@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductScheduleResource as FilamentProductScheduleResource;
 use App\Http\Controllers\Controller;
 use App\Models\ProductSchedule;
 use Illuminate\Http\Request;
@@ -16,11 +17,12 @@ class ProductScheduleCalendarController extends Controller
     /**
      * Display calendar view.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index()
     {
-        return view('admin.products.schedules.calendar');
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductScheduleResource::getSlug() . '.index');
     }
 
     /**
@@ -49,7 +51,9 @@ class ProductScheduleCalendarController extends Controller
                     'color' => $this->getScheduleColor($schedule->type),
                     'type' => $schedule->type,
                     'product_id' => $schedule->product_id,
-                    'url' => route('admin.products.schedules.show', $schedule->id),
+                    'url' => route('filament.admin.resources.' . FilamentProductScheduleResource::getSlug() . '.view', [
+                        'record' => $schedule->getKey(),
+                    ]),
                 ];
             });
 

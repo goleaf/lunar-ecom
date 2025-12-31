@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductScheduleResource as FilamentProductScheduleResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductSchedule;
@@ -22,15 +23,14 @@ class ProductScheduleController extends Controller
      * Display product schedules.
      *
      * @param  Product  $product
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index(Product $product)
     {
-        $schedules = ProductSchedule::where('product_id', $product->id)
-            ->orderByDesc('scheduled_at')
-            ->paginate(20);
-
-        return view('admin.products.schedules', compact('product', 'schedules'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductScheduleResource::getSlug() . '.index', [
+            'product_id' => $product->getKey(),
+        ]);
     }
 
     /**
@@ -174,7 +174,7 @@ class ProductScheduleController extends Controller
      * Get schedule history.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View|JsonResponse
+     * @return \Illuminate\Http\RedirectResponse|JsonResponse
      */
     public function history(Request $request)
     {
@@ -186,9 +186,8 @@ class ProductScheduleController extends Controller
             return response()->json($history);
         }
 
-        return view('admin.products.schedules.history', [
-            'history' => $history,
-        ]);
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductScheduleResource::getSlug() . '.index');
     }
 }
 

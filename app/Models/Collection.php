@@ -22,6 +22,14 @@ class Collection extends LunarCollection
      * @var array<int, string>
      */
     protected $fillable = [
+        // Lunar core fields
+        'collection_group_id',
+        'parent_id',
+        'type',
+        'sort',
+        'attribute_data',
+
+        // Extended collection management fields
         'collection_type',
         'auto_assign',
         'assignment_rules',
@@ -47,6 +55,9 @@ class Collection extends LunarCollection
      * @var array<string, string>
      */
     protected $casts = [
+        // Keep Lunar's core attribute casting.
+        'attribute_data' => \Lunar\Base\Casts\AsAttributeData::class,
+
         'auto_assign' => 'boolean',
         'assignment_rules' => 'array',
         'max_products' => 'integer',

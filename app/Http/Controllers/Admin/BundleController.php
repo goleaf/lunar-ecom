@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Filament\Resources\BundleResource;
 use App\Models\Bundle;
 use App\Models\BundleItem;
 use App\Services\BundleService;
@@ -22,41 +23,23 @@ class BundleController extends Controller
      * Display bundle management index.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index(Request $request)
     {
-        $query = Bundle::with(['product', 'items']);
-
-        if ($request->has('status')) {
-            if ($request->get('status') === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->get('status') === 'inactive') {
-                $query->where('is_active', false);
-            }
-        }
-
-        if ($request->has('featured')) {
-            $query->where('is_featured', true);
-        }
-
-        $bundles = $query->orderBy('display_order')->paginate(20);
-
-        return view('admin.bundles.index', compact('bundles'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . BundleResource::getSlug() . '.index', $request->query());
     }
 
     /**
      * Show bundle creation form.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function create()
     {
-        $products = \App\Models\Product::published()->get();
-        $currencies = \Lunar\Models\Currency::where('enabled', true)->get();
-        $customerGroups = \Lunar\Models\CustomerGroup::all();
-
-        return view('admin.bundles.create', compact('products', 'currencies', 'customerGroups'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . BundleResource::getSlug() . '.create');
     }
 
     /**
@@ -119,16 +102,14 @@ class BundleController extends Controller
      * Show bundle edit form.
      *
      * @param  Bundle  $bundle
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function edit(Bundle $bundle)
     {
-        $bundle->load(['items.product', 'items.productVariant', 'prices']);
-        $products = \App\Models\Product::published()->get();
-        $currencies = \Lunar\Models\Currency::where('enabled', true)->get();
-        $customerGroups = \Lunar\Models\CustomerGroup::all();
-
-        return view('admin.bundles.edit', compact('bundle', 'products', 'currencies', 'customerGroups'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . BundleResource::getSlug() . '.edit', [
+            'record' => $bundle->getKey(),
+        ]);
     }
 
     /**

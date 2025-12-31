@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductBadge;
@@ -20,10 +21,10 @@ class ProductBadgeAssignmentController extends Controller
      */
     public function index(Product $product)
     {
-        $badges = $this->badgeService->getProductBadges($product);
-        $allBadges = ProductBadge::active()->orderBy('name')->get();
-        
-        return view('admin.products.badges', compact('product', 'badges', 'allBadges'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . ProductResource::getSlug() . '.edit', [
+            'record' => $product->getKey(),
+        ]);
     }
 
     /**

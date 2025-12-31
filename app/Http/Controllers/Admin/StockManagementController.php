@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\InventoryLevelResource;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryLevel;
 use App\Models\LowStockAlert;
@@ -10,6 +11,7 @@ use App\Models\Warehouse;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Lunar\Models\ProductVariant;
 
 /**
@@ -25,61 +27,28 @@ class StockManagementController extends Controller
      * Display stock management dashboard.
      *
      * @param  Request  $request
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function index(Request $request)
     {
-        $warehouseId = $request->get('warehouse_id');
-        $status = $request->get('status', 'all');
-
-        $query = InventoryLevel::with(['productVariant.product', 'warehouse']);
-
-        if ($warehouseId) {
-            $query->where('warehouse_id', $warehouseId);
-        }
-
-        switch ($status) {
-            case 'low_stock':
-                $query->lowStock();
-                break;
-            case 'out_of_stock':
-                $query->outOfStock();
-                break;
-            case 'in_stock':
-                $query->inStock();
-                break;
-        }
-
-        $inventoryLevels = $query->paginate(50);
-        $warehouses = Warehouse::active()->get();
-        $lowStockAlerts = LowStockAlert::unresolved()->with(['productVariant.product', 'warehouse'])->get();
-
-        return view('admin.stock.index', compact('inventoryLevels', 'warehouses', 'lowStockAlerts', 'warehouseId', 'status'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.inventory-levels.index', $request->query());
     }
 
     /**
      * Show stock details for a variant.
      *
      * @param  ProductVariant  $variant
-     * @return \Illuminate\View\View
+     * @return RedirectResponse
      */
-    public function show(ProductVariant $variant)
+    public function show(ProductVariant $variant): RedirectResponse
     {
-        $inventoryLevels = InventoryLevel::where('product_variant_id', $variant->id)
-            ->with('warehouse')
-            ->get();
+        // Prefer Filament for the admin UI. Use table search to narrow to the SKU.
+        $slug = InventoryLevelResource::getSlug();
 
-        $stockMovements = StockMovement::where('product_variant_id', $variant->id)
-            ->with(['warehouse', 'creator'])
-            ->orderByDesc('movement_date')
-            ->paginate(50);
-
-        $reservations = \App\Models\StockReservation::where('product_variant_id', $variant->id)
-            ->where('is_released', false)
-            ->with(['warehouse', 'user'])
-            ->get();
-
-        return view('admin.stock.show', compact('variant', 'inventoryLevels', 'stockMovements', 'reservations'));
+        return redirect()->route("filament.admin.resources.{$slug}.index", [
+            'tableSearch' => (string) $variant->sku,
+        ]);
     }
 
     /**
@@ -185,7 +154,8 @@ class StockManagementController extends Controller
         $alert->update([
             'is_resolved' => true,
             'resolved_at' => now(),
-            'resolved_by' => auth()->id(),
+            // NOTE: `resolved_by` references the `users` table, not `staff`. If no web user is present, this stays null.
+            'resolved_by' => auth('web')->id(),
         ]);
 
         return response()->json([

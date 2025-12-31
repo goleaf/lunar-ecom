@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Frontend;
 
+use App\Models\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -23,6 +24,14 @@ class CollectionsIndexTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('No collections found.');
+    }
+
+    public function test_collection_filter_page_redirects_to_livewire_collection_show(): void
+    {
+        $collection = Collection::factory()->create();
+
+        $this->get(route('frontend.collections.filter', ['collection' => $collection->getKey()]))
+            ->assertRedirect(route('frontend.collections.show', ['slug' => (string) $collection->getKey()]));
     }
 }
 

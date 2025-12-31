@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\PriceMatrixResource as FilamentPriceMatrixResource;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -22,9 +23,12 @@ class PricingImportController extends Controller
     /**
      * Display import interface.
      */
-    public function index()
+    public function index(Product $product)
     {
-        return view('admin.pricing.import');
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentPriceMatrixResource::getSlug() . '.index', [
+            'product_id' => $product->getKey(),
+        ]);
     }
 
     /**

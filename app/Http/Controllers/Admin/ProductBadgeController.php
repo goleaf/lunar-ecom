@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Filament\Resources\ProductBadgeResource as FilamentProductBadgeResource;
 use App\Http\Controllers\Controller;
 use App\Models\ProductBadge;
 use App\Services\BadgeService;
@@ -19,12 +20,8 @@ class ProductBadgeController extends Controller
      */
     public function index()
     {
-        $badges = ProductBadge::withCount('assignments')
-            ->orderBy('priority', 'desc')
-            ->orderBy('name')
-            ->paginate(20);
-
-        return view('admin.badges.index', compact('badges'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.index');
     }
 
     /**
@@ -32,7 +29,8 @@ class ProductBadgeController extends Controller
      */
     public function create()
     {
-        return view('admin.badges.create');
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.create');
     }
 
     /**
@@ -71,7 +69,7 @@ class ProductBadgeController extends Controller
 
         $badge = ProductBadge::create($validated);
 
-        return redirect()->route('admin.badges.index')
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.index')
             ->with('success', 'Badge created successfully.');
     }
 
@@ -80,9 +78,10 @@ class ProductBadgeController extends Controller
      */
     public function show(ProductBadge $badge)
     {
-        $badge->load(['assignments.product', 'rules', 'performance']);
-        
-        return view('admin.badges.show', compact('badge'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.edit', [
+            'record' => $badge->getKey(),
+        ]);
     }
 
     /**
@@ -90,7 +89,10 @@ class ProductBadgeController extends Controller
      */
     public function edit(ProductBadge $badge)
     {
-        return view('admin.badges.edit', compact('badge'));
+        // Prefer Filament for the admin UI.
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.edit', [
+            'record' => $badge->getKey(),
+        ]);
     }
 
     /**
@@ -129,7 +131,7 @@ class ProductBadgeController extends Controller
 
         $badge->update($validated);
 
-        return redirect()->route('admin.badges.index')
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.index')
             ->with('success', 'Badge updated successfully.');
     }
 
@@ -140,7 +142,7 @@ class ProductBadgeController extends Controller
     {
         $badge->delete();
 
-        return redirect()->route('admin.badges.index')
+        return redirect()->route('filament.admin.resources.' . FilamentProductBadgeResource::getSlug() . '.index')
             ->with('success', 'Badge deleted successfully.');
     }
 

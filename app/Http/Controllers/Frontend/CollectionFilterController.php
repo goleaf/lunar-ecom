@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Collection;
 use App\Models\Product;
+use App\Services\CollectionFilterOptionsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -266,33 +267,7 @@ class CollectionFilterController extends Controller
      */
     public function getFilterOptions(Collection $collection, Request $request)
     {
-        $baseQuery = $collection->products()->published();
-
-        // Apply all filters except the one we're getting options for
-        $tempRequest = clone $request;
-        
-        // Get price range
-        $priceRange = $this->getPriceRange($baseQuery);
-        
-        // Get available brands
-        $brands = $this->getAvailableBrands($baseQuery, $tempRequest);
-        
-        // Get available categories
-        $categories = $this->getAvailableCategories($baseQuery, $tempRequest);
-        
-        // Get available attributes
-        $attributes = $this->getAvailableAttributes($baseQuery, $tempRequest);
-        
-        // Get availability counts
-        $availability = $this->getAvailabilityCounts($baseQuery, $tempRequest);
-
-        return [
-            'price_range' => $priceRange,
-            'brands' => $brands,
-            'categories' => $categories,
-            'attributes' => $attributes,
-            'availability' => $availability,
-        ];
+        return app(CollectionFilterOptionsService::class)->getFilterOptions($collection, $request);
     }
 
     /**

@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 use App\Models\ProductVariant;
 use App\Services\MatrixPricingService;
-use Lunar\Facades\Pricing;
+use Lunar\DataTypes\Price as PriceData;
 use Lunar\Models\Currency;
 
 class PricingHelper
@@ -41,7 +41,7 @@ class PricingHelper
     public static function formatPrice(float $price): string
     {
         $currency = Currency::getDefault();
-        return Pricing::format($price * 100, $currency);
+        return (new PriceData((int) round($price * 100), $currency))->formatted();
     }
 
     /**

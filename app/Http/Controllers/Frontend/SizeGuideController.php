@@ -93,8 +93,12 @@ class SizeGuideController extends Controller
             'order_id' => 'nullable|exists:orders,id',
         ]);
 
+        /** @var \App\Models\User|null $user */
+        $user = auth('web')->user();
+        $customerId = $user?->latestCustomer()?->id;
+
         $review = $this->sizeGuideService->recordFitReview($product, array_merge($validated, [
-            'customer_id' => auth()->user()?->customer?->id,
+            'customer_id' => $customerId,
         ]));
 
         return response()->json([

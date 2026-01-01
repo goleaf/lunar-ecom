@@ -47,12 +47,14 @@ class StockNotificationTrackingController extends Controller
     {
         $metric = StockNotificationMetric::find($metricId);
         
-        if ($metric) {
-            $metric->trackLinkClick($linkType);
+        if (! $metric) {
+            return redirect(url('/'));
         }
 
+        $metric->trackLinkClick($linkType);
+
         // Get redirect URL based on link type
-        $variant = $metric->productVariant ?? null;
+        $variant = $metric->productVariant;
         $product = $variant?->product ?? null;
 
         switch ($linkType) {

@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Contracts\CartManagerInterface;
 use App\Http\Controllers\Controller;
+use App\Models\ProductVariant;
 use App\Services\CartPricing\CartPricingOutputFormatter;
 use App\Traits\ChecksCheckoutLock;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Lunar\Facades\CartSession;
-use Lunar\Models\ProductVariant;
 
 class CartController extends Controller
 {

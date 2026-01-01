@@ -1677,6 +1677,22 @@ class Product extends LunarProduct
     }
 
     /**
+     * Check if product is coming soon.
+     */
+    public function isComingSoon(): bool
+    {
+        if ($this->is_coming_soon === true) {
+            return true;
+        }
+
+        if ($this->expected_available_at !== null && $this->expected_available_at->isFuture()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if product is scheduled for publish.
      *
      * @return bool

@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Frontend\CheckoutController;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Lunar\Models\Order;
 
@@ -17,7 +17,11 @@ class CheckoutConfirmation extends Component
 
     public function render()
     {
-        return app(CheckoutController::class)->confirmation($this->order);
+        Gate::authorize('view', $this->order);
+
+        $order = $this->order;
+
+        return view('frontend.checkout.confirmation', compact('order'));
     }
 }
 

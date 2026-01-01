@@ -28,7 +28,8 @@ class ProductQuestionController extends Controller
         ];
 
         $questions = $this->questionService->getProductQuestions($product, $filters);
-        $qaCount = $this->questionService->getQaCount($product);
+        $qaCounts = $this->questionService->getQaCount($product);
+        $qaCount = $qaCounts['total'] ?? $questions->total();
         $similarQuestions = null;
 
         return view('frontend.products.qa', compact('product', 'questions', 'qaCount', 'similarQuestions'));
@@ -63,8 +64,12 @@ class ProductQuestionController extends Controller
             ], 422);
         }
 
+        /** @var \App\Models\User|null $user */
+        $user = auth('web')->user();
+        $customerId = $user?->latestCustomer()?->id;
+
         $question = $this->questionService->submitQuestion($product, array_merge($validated, [
-            'customer_id' => auth()->user()?->customer?->id,
+            'customer_id' => $customerId,
         ]));
 
         return response()->json([
@@ -77,8 +82,12 @@ class ProductQuestionController extends Controller
     /**
      * Submit an answer (for customers).
      */
-    public function answer(Request $request, ProductQuestion $question): JsonResponse
+    public function answer(Request $request, Product $product, ProductQuestion $question): JsonResponse
     {
+        if ($question->product_id !== $product->id) {
+            abort(404);
+        }
+
         if (!$question->isApproved()) {
             return response()->json([
                 'success' => false,
@@ -105,8 +114,12 @@ class ProductQuestionController extends Controller
     /**
      * Mark question as helpful.
      */
-    public function markHelpful(ProductQuestion $question): JsonResponse
+    public function markHelpful(Product $product, ProductQuestion $question): JsonResponse
     {
+        if ($question->product_id !== $product->id) {
+            abort(404);
+        }
+
         $this->questionService->markHelpful($question);
 
         return response()->json([
@@ -118,8 +131,12 @@ class ProductQuestionController extends Controller
     /**
      * Mark answer as helpful.
      */
-    public function markAnswerHelpful(ProductQuestion $question, int $answerId): JsonResponse
+    public function markAnswerHelpful(Product $product, ProductQuestion $question, int $answerId): JsonResponse
     {
+        if ($question->product_id !== $product->id) {
+            abort(404);
+        }
+
         $answer = $question->answers()->findOrFail($answerId);
         $this->questionService->markHelpful($answer);
 
@@ -132,8 +149,12 @@ class ProductQuestionController extends Controller
     /**
      * Increment question views.
      */
-    public function view(ProductQuestion $question): JsonResponse
+    public function view(Product $product, ProductQuestion $question): JsonResponse
     {
+        if ($question->product_id !== $product->id) {
+            abort(404);
+        }
+
         $question->incrementViews();
 
         return response()->json([

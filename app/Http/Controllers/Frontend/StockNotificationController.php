@@ -32,11 +32,14 @@ class StockNotificationController extends Controller
 
         try {
             $variantModel = ProductVariant::findOrFail($variant);
+            /** @var \App\Models\User|null $user */
+            $user = auth('web')->user();
+            $customerId = $user?->latestCustomer()?->id;
             $notification = $this->notificationService->subscribe([
                 'product_id' => $variantModel->product_id,
                 'product_variant_id' => $variantModel->id,
                 'email' => $validated['email'],
-                'customer_id' => auth()->id(),
+                'customer_id' => $customerId,
             ]);
 
             return response()->json([

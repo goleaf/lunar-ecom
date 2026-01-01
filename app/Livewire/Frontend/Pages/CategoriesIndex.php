@@ -2,14 +2,18 @@
 
 namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Frontend\CategoryController;
+use App\Repositories\CategoryRepository;
 use Livewire\Component;
 
 class CategoriesIndex extends Component
 {
     public function render()
     {
-        return app(CategoryController::class)->index(request());
+        $categories = app(CategoryRepository::class)->getRootCategories();
+
+        return view('frontend.categories.index', [
+            'categories' => $categories,
+        ]);
     }
 }
 

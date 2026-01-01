@@ -52,8 +52,9 @@ class ProductBackInStock extends Notification implements ShouldQueue
         $price = null;
         if ($variant) {
             $pricing = \Lunar\Facades\Pricing::for($variant)->get();
-            if ($pricing->matched?->price) {
-                $price = $pricing->matched->price->value;
+            $matched = $pricing->matched;
+            if ($matched instanceof \Lunar\Models\Price) {
+                $price = $matched->price->value;
             }
         }
 
@@ -65,7 +66,7 @@ class ProductBackInStock extends Notification implements ShouldQueue
 
         if ($price) {
             $message->line(__('notifications.stock.price', [
-                'price' => $currency->formatter($price),
+                'price' => (new \Lunar\DataTypes\Price($price, $currency))->formatted(),
             ]));
         }
 

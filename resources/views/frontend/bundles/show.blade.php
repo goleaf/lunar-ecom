@@ -34,19 +34,19 @@
                     @if($bundle->show_individual_prices)
                         <div class="mb-4">
                             <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.individual_total') }}</p>
-                            <p class="text-xl line-through text-gray-500">{{ $currency->formatter($individualTotal) }}</p>
+                            <p class="text-xl line-through text-gray-500">{{ (new \Lunar\DataTypes\Price($individualTotal, $currency))->formatted() }}</p>
                         </div>
                     @endif
 
                     <div class="mb-4">
                         <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.bundle_price') }}</p>
-                        <p class="text-4xl font-bold text-blue-600">{{ $currency->formatter($bundlePrice) }}</p>
+                        <p class="text-4xl font-bold text-blue-600">{{ (new \Lunar\DataTypes\Price($bundlePrice, $currency))->formatted() }}</p>
                     </div>
 
                     @if($savings > 0 && $bundle->show_savings)
                         <div class="mb-4">
                             <p class="text-sm text-gray-600 mb-1">{{ __('frontend.bundles.you_save') }}</p>
-                            <p class="text-2xl font-semibold text-green-600">{{ $currency->formatter($savings) }}</p>
+                            <p class="text-2xl font-semibold text-green-600">{{ (new \Lunar\DataTypes\Price($savings, $currency))->formatted() }}</p>
                         </div>
                     @endif
 
@@ -87,7 +87,7 @@
                                                 @endif
                                             </label>
                                             <span class="text-sm text-gray-600">
-                                                {{ $currency->formatter($item->getPrice($currency)) }} each
+                                                {{ (new \Lunar\DataTypes\Price($item->getPrice($currency), $currency))->formatted() }} each
                                             </span>
                                         </div>
                                         <input type="number" 
@@ -142,7 +142,7 @@
                                     @endif
                                 </p>
                                 <p class="text-sm font-medium text-blue-600">
-                                    {{ $currency->formatter($item->getPrice($currency)) }}
+                                    {{ (new \Lunar\DataTypes\Price($item->getPrice($currency), $currency))->formatted() }}
                                 </p>
                             </div>
                         </div>

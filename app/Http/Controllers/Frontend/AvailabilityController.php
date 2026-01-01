@@ -29,9 +29,8 @@ class AvailabilityController extends Controller
         ]);
 
         $date = Carbon::parse($validated['date']);
-        $variant = $validated['variant_id'] 
-            ? ProductVariant::find($validated['variant_id']) 
-            : null;
+        $variantId = $validated['variant_id'] ?? null;
+        $variant = $variantId ? ProductVariant::find($variantId) : null;
 
         $availability = $this->availabilityService->checkDateAvailability(
             $product,
@@ -61,9 +60,8 @@ class AvailabilityController extends Controller
 
         $startDate = Carbon::parse($validated['start_date']);
         $endDate = Carbon::parse($validated['end_date']);
-        $variant = $validated['variant_id'] 
-            ? ProductVariant::find($validated['variant_id']) 
-            : null;
+        $variantId = $validated['variant_id'] ?? null;
+        $variant = $variantId ? ProductVariant::find($variantId) : null;
 
         $dates = $this->availabilityService->getAvailableDates(
             $product,
@@ -95,9 +93,8 @@ class AvailabilityController extends Controller
         $endDate = isset($validated['end_date']) 
             ? Carbon::parse($validated['end_date']) 
             : null;
-        $variant = $validated['variant_id'] 
-            ? ProductVariant::find($validated['variant_id']) 
-            : null;
+        $variantId = $validated['variant_id'] ?? null;
+        $variant = $variantId ? ProductVariant::find($variantId) : null;
 
         $pricing = $this->availabilityService->calculateRentalPricing(
             $product,
@@ -133,8 +130,12 @@ class AvailabilityController extends Controller
         ]);
 
         try {
+            /** @var \App\Models\User|null $user */
+            $user = auth('web')->user();
+            $customerId = $user?->latestCustomer()?->id;
+
             $booking = $this->availabilityService->reserveDate($product, array_merge($validated, [
-                'customer_id' => auth()->user()?->customer?->id,
+                'customer_id' => $customerId,
             ]));
 
             return response()->json([

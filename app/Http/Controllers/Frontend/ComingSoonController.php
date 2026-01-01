@@ -54,11 +54,15 @@ class ComingSoonController extends Controller
             ]);
         }
 
+        /** @var \App\Models\User|null $user */
+        $user = auth('web')->user();
+        $customerId = $user?->latestCustomer()?->id;
+
         // Create notification subscription
         $notification = ComingSoonNotification::create([
             'product_id' => $product->id,
             'email' => $request->email,
-            'customer_id' => auth()->user()?->customer?->id,
+            'customer_id' => $customerId,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);

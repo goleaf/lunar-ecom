@@ -241,10 +241,14 @@ class SizeGuideService
     public function recordFitReview(Product $product, array $data): FitReview
     {
         return DB::transaction(function () use ($product, $data) {
+            /** @var \App\Models\User|null $user */
+            $user = auth('web')->user();
+            $defaultCustomerId = $user?->latestCustomer()?->id;
+
             $review = FitReview::create([
                 'product_id' => $product->id,
                 'product_variant_id' => $data['product_variant_id'] ?? null,
-                'customer_id' => $data['customer_id'] ?? auth()->user()?->customer?->id,
+                'customer_id' => $data['customer_id'] ?? $defaultCustomerId,
                 'order_id' => $data['order_id'] ?? null,
                 'purchased_size' => $data['purchased_size'],
                 'recommended_size' => $data['recommended_size'] ?? null,

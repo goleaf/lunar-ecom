@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
     <div class="bg-white shadow rounded-lg p-6">
-        <h1 class="text-3xl font-bold text-gray-900">Questions & Answers</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Questions &amp; Answers</h1>
         <p class="text-sm text-gray-600 mt-1">{{ $product->translateAttribute('name') }}</p>
         <p class="text-sm text-gray-500 mt-2">{{ $qaCount ?? $questions->total() }} total questions</p>
     </div>

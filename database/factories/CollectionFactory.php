@@ -6,6 +6,8 @@ use App\Models\Collection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Lunar\Models\CollectionGroup;
 use Lunar\FieldTypes\Text;
+use Lunar\FieldTypes\TranslatedText;
+use Lunar\Models\Language;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Collection>
@@ -27,6 +29,26 @@ class CollectionFactory extends Factory
     public function definition(): array
     {
         $name = fake()->words(2, true);
+        $baseDescription = fake()->optional(0.7)->paragraph();
+
+        $languageCodes = Language::query()->orderBy('id')->pluck('code')->all();
+        if (empty($languageCodes)) {
+            $languageCodes = ['en'];
+        }
+
+        $translatedName = collect();
+        $translatedDescription = collect();
+
+        foreach ($languageCodes as $code) {
+            $translatedName[$code] = new Text($code === 'en' ? $name : "{$name} ({$code})");
+
+            $desc = $baseDescription ?? '';
+            $translatedDescription[$code] = new Text(
+                $desc === ''
+                    ? ''
+                    : ($code === 'en' ? $desc : "{$desc} ({$code})")
+            );
+        }
         
         return [
             'collection_group_id' => function () {
@@ -42,8 +64,8 @@ class CollectionFactory extends Factory
             'sort' => 'position:asc',
             'collection_type' => \App\Enums\CollectionType::STANDARD->value,
             'attribute_data' => collect([
-                'name' => new Text($name),
-                'description' => new Text(fake()->optional()->paragraph()),
+                'name' => new TranslatedText($translatedName),
+                'description' => new TranslatedText($translatedDescription),
             ]),
         ];
     }

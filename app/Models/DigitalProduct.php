@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
-use Lunar\Models\Product;
 
 /**
  * DigitalProduct model for managing digital product files and settings.
@@ -33,18 +33,18 @@ class DigitalProduct extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'product_id',
+        'product_variant_id',
+        'is_digital',
         'file_path',
         'file_size',
-        'mime_type',
-        'original_filename',
+        'file_type',
+        'file_name',
         'download_limit',
         'download_expiry_days',
-        'license_key_pattern',
-        'version',
-        'release_notes',
-        'requires_license_key',
-        'is_active',
+        'require_login',
+        'storage_disk',
+        'auto_deliver',
+        'send_email',
     ];
 
     /**
@@ -56,18 +56,20 @@ class DigitalProduct extends Model
         'file_size' => 'integer',
         'download_limit' => 'integer',
         'download_expiry_days' => 'integer',
-        'requires_license_key' => 'boolean',
-        'is_active' => 'boolean',
+        'is_digital' => 'boolean',
+        'require_login' => 'boolean',
+        'auto_deliver' => 'boolean',
+        'send_email' => 'boolean',
     ];
 
     /**
-     * Product relationship.
+     * Product variant relationship.
      *
      * @return BelongsTo
      */
-    public function product(): BelongsTo
+    public function productVariant(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     /**
@@ -93,9 +95,9 @@ class DigitalProduct extends Model
     /**
      * Current version relationship.
      *
-     * @return HasMany
+     * @return HasOne
      */
-    public function currentVersion()
+    public function currentVersion(): HasOne
     {
         return $this->hasOne(DigitalProductVersion::class)->where('is_current', true);
     }
@@ -130,7 +132,7 @@ class DigitalProduct extends Model
             return false;
         }
 
-        return Storage::disk('private')->exists($path);
+        return Storage::disk($this->storage_disk ?: 'private')->exists($path);
     }
 
     /**
@@ -145,7 +147,11 @@ class DigitalProduct extends Model
             return null;
         }
 
-        return Storage::disk('private')->url($path);
+        $diskName = $this->storage_disk ?: 'private';
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($diskName);
+
+        return $disk->url($path);
     }
 
     /**
@@ -193,6 +199,63 @@ class DigitalProduct extends Model
      */
     public function requiresLicense(): bool
     {
-        return $this->requires_license_key && !empty($this->license_key_pattern);
+        // License key rules are stored on the Download model currently.
+        return false;
+    }
+
+    /**
+     * Convenience accessor for the owning product (via the variant).
+     */
+    public function getProductAttribute(): ?Product
+    {
+        return $this->productVariant?->product;
+    }
+
+    /**
+     * Backwards-compatible alias for `file_type`.
+     */
+    public function getMimeTypeAttribute(): ?string
+    {
+        return $this->file_type;
+    }
+
+    /**
+     * Backwards-compatible alias for `file_name`.
+     */
+    public function getOriginalFilenameAttribute(): ?string
+    {
+        return $this->file_name;
+    }
+
+    /**
+     * Backwards-compatible alias for `product_id` (resolved via variant).
+     */
+    public function getProductIdAttribute(): ?int
+    {
+        return $this->productVariant?->product_id;
+    }
+
+    /**
+     * Backwards-compatible alias for "active" flag (record existence implies active).
+     */
+    public function getIsActiveAttribute(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Backwards-compatible version accessor (from current version when available).
+     */
+    public function getVersionAttribute(): ?string
+    {
+        return $this->currentVersion?->version;
+    }
+
+    /**
+     * Backwards-compatible release notes accessor (from current version when available).
+     */
+    public function getReleaseNotesAttribute(): ?string
+    {
+        return $this->currentVersion?->release_notes;
     }
 }

@@ -18,6 +18,14 @@ class ReferralTracking extends Model
 {
     use HasFactory;
 
+    /**
+     * Laravel would default this model to `referral_trackings`, but the migration
+     * creates `referral_tracking` (singular).
+     *
+     * @var string
+     */
+    protected $table = 'referral_tracking';
+
     protected $fillable = [
         'referral_code_id',
         'session_id',

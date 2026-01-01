@@ -26,25 +26,25 @@ class SearchAnalyticsHelper
         $cacheKey = "search.stats.{$period}";
 
         return Cache::remember($cacheKey, 3600, function () use ($period) {
-            $query = SearchAnalytic::query();
+            $baseQuery = SearchAnalytic::query();
 
             // Filter by period
             switch ($period) {
                 case 'day':
-                    $query->where('searched_at', '>=', now()->subDay());
+                    $baseQuery->where('searched_at', '>=', now()->subDay());
                     break;
                 case 'week':
-                    $query->where('searched_at', '>=', now()->subWeek());
+                    $baseQuery->where('searched_at', '>=', now()->subWeek());
                     break;
                 case 'month':
-                    $query->where('searched_at', '>=', now()->subMonth());
+                    $baseQuery->where('searched_at', '>=', now()->subMonth());
                     break;
             }
 
-            $total = $query->count();
-            $zeroResults = $query->where('zero_results', true)->count();
+            $total = (clone $baseQuery)->count();
+            $zeroResults = (clone $baseQuery)->where('zero_results', true)->count();
             $withResults = $total - $zeroResults;
-            $withClicks = $query->whereNotNull('clicked_product_id')->count();
+            $withClicks = (clone $baseQuery)->whereNotNull('clicked_product_id')->count();
 
             return [
                 'total_searches' => $total,
@@ -53,7 +53,7 @@ class SearchAnalyticsHelper
                 'searches_with_clicks' => $withClicks,
                 'zero_result_rate' => $total > 0 ? round(($zeroResults / $total) * 100, 2) : 0,
                 'click_through_rate' => $total > 0 ? round(($withClicks / $total) * 100, 2) : 0,
-                'average_results_per_search' => $query->avg('result_count') ?? 0,
+                'average_results_per_search' => (clone $baseQuery)->avg('result_count') ?? 0,
             ];
         });
     }

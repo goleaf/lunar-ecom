@@ -80,6 +80,12 @@ class DatabaseSeeder extends Seeder
             // Ensure attributes exist + are attached to all product types, then backfill existing products.
             ProductTypeAttributesSeeder::class,
             BackfillProductAttributeDataSeeder::class,
+            // Seed feature-domain models and ensure locale coverage across the dataset.
+            FeatureModelsSeeder::class,
+            // Catch-all: ensure every App\Models table has records + FK links.
+            AllModelsSeeder::class,
+            // Final pass: fill ALL locales wherever a locale-map/TranslatedText exists.
+            BackfillAllTranslationsSeeder::class,
         ]);
         
         // Option 2: Use FactorySeeder - Creates data using factories (more flexible)

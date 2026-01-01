@@ -66,7 +66,7 @@
                                 $currency = \Lunar\Models\Currency::getDefault();
                                 $price = $bundle->calculatePrice($currency);
                             @endphp
-                            {{ $currency->formatter($price) }}
+                            {{ (new \Lunar\DataTypes\Price($price, $currency))->formatted() }}
                             @if($bundle->pricing_type === 'percentage')
                                 <span class="text-xs text-gray-500">({{ $bundle->discount_amount }}% off)</span>
                             @endif

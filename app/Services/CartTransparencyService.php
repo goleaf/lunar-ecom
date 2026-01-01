@@ -125,18 +125,21 @@ class CartTransparencyService
         
         // Get discount breakdown from Lunar
         if ($cart->discountBreakdown && $cart->discountBreakdown->isNotEmpty()) {
-            foreach ($cart->discountBreakdown as $discount) {
+            foreach ($cart->discountBreakdown as $discountBreakdown) {
+                $discount = $discountBreakdown->discount ?? null;
+                $price = $discountBreakdown->price ?? null;
+
                 $breakdown[] = [
-                    'name' => $discount->name ?? 'Discount',
-                    'description' => $discount->description ?? null,
+                    'name' => $discount?->name ?? 'Discount',
+                    'description' => null,
                     'coupon_code' => $cart->coupon_code ?? null,
                     'amount' => [
-                        'value' => $discount->total?->value ?? 0,
-                        'formatted' => $discount->total?->formatted ?? $this->formatPrice(0, $cart->currency),
-                        'decimal' => $discount->total?->decimal ?? 0,
+                        'value' => $price?->value ?? 0,
+                        'formatted' => $price?->formatted ?? $this->formatPrice(0, $cart->currency),
+                        'decimal' => $price?->decimal ?? 0,
                     ],
-                    'type' => $discount->type ?? 'fixed',
-                    'priority' => $discount->priority ?? 0,
+                    'type' => $discount?->type ?? 'unknown',
+                    'priority' => $discount?->priority ?? 0,
                     'applied_at' => now()->toIso8601String(),
                 ];
             }
@@ -155,18 +158,22 @@ class CartTransparencyService
     {
         $breakdown = [];
         
-        if ($cart->taxBreakdown && $cart->taxBreakdown->isNotEmpty()) {
-            foreach ($cart->taxBreakdown as $tax) {
+        if ($cart->taxBreakdown && $cart->taxBreakdown->amounts && $cart->taxBreakdown->amounts->isNotEmpty()) {
+            foreach ($cart->taxBreakdown->amounts as $tax) {
+                $price = $tax->price ?? null;
+
                 $breakdown[] = [
-                    'name' => $tax->name ?? 'Tax',
+                    // Backward compatible keys
+                    'name' => $tax->description ?? $tax->identifier ?? 'Tax',
+                    // New/explicit keys
+                    'identifier' => $tax->identifier ?? null,
                     'description' => $tax->description ?? null,
                     'rate' => $tax->percentage ?? 0,
                     'amount' => [
-                        'value' => $tax->total?->value ?? 0,
-                        'formatted' => $tax->total?->formatted ?? $this->formatPrice(0, $cart->currency),
-                        'decimal' => $tax->total?->decimal ?? 0,
+                        'value' => $price?->value ?? 0,
+                        'formatted' => $price?->formatted ?? $this->formatPrice(0, $cart->currency),
+                        'decimal' => $price?->decimal ?? 0,
                     ],
-                    'type' => $tax->type ?? 'standard',
                 ];
             }
         }
@@ -184,21 +191,22 @@ class CartTransparencyService
     {
         $breakdown = [];
         
-        if ($cart->shippingBreakdown && $cart->shippingBreakdown->items) {
+        if ($cart->shippingBreakdown && $cart->shippingBreakdown->items && $cart->shippingBreakdown->items->isNotEmpty()) {
             foreach ($cart->shippingBreakdown->items as $shipping) {
                 $breakdown[] = [
                     'name' => $shipping->name ?? 'Shipping',
                     'identifier' => $shipping->identifier ?? null,
-                    'description' => $shipping->description ?? null,
+                    'description' => null,
                     'amount' => [
                         'value' => $shipping->price?->value ?? 0,
                         'formatted' => $shipping->price?->formatted ?? $this->formatPrice(0, $cart->currency),
                         'decimal' => $shipping->price?->decimal ?? 0,
                     ],
+                    // Backward compatible: per-item tax isn't available in Lunar's ShippingBreakdownItem.
                     'tax_amount' => [
-                        'value' => $shipping->tax?->value ?? 0,
-                        'formatted' => $shipping->tax?->formatted ?? $this->formatPrice(0, $cart->currency),
-                        'decimal' => $shipping->tax?->decimal ?? 0,
+                        'value' => 0,
+                        'formatted' => $this->formatPrice(0, $cart->currency),
+                        'decimal' => 0,
                     ],
                 ];
             }

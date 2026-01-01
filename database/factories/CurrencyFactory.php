@@ -24,7 +24,9 @@ class CurrencyFactory extends Factory
      */
     public function definition(): array
     {
-        $code = fake()->unique()->currencyCode();
+        do {
+            $code = strtoupper(fake()->unique()->lexify('???'));
+        } while (Currency::where('code', $code)->exists());
 
         return [
             'code' => $code,

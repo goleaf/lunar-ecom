@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Frontend\ComingSoonController;
+use App\Models\ComingSoonNotification;
 use Livewire\Component;
 
 class ComingSoonUnsubscribed extends Component
@@ -16,7 +16,14 @@ class ComingSoonUnsubscribed extends Component
 
     public function render()
     {
-        return app(ComingSoonController::class)->unsubscribe($this->token);
+        $notification = ComingSoonNotification::where('token', $this->token)->firstOrFail();
+        $product = $notification->product;
+
+        $notification->delete();
+
+        return view('frontend.coming-soon.unsubscribed', [
+            'product' => $product,
+        ]);
     }
 }
 

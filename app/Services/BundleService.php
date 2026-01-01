@@ -35,7 +35,7 @@ class BundleService
     public function calculateBundlePrice(Bundle $bundle, ?array $selectedItems = null, int $bundleQuantity = 1): array
     {
         $currency = Currency::getDefault();
-        $customerGroupId = StorefrontSession::getCustomerGroup()?->id;
+        $customerGroupId = StorefrontSession::getCustomerGroups()->first()?->id;
 
         $items = $this->getBundleItems($bundle, $selectedItems);
         
@@ -531,7 +531,7 @@ class BundleService
     protected function calculateItemPriceInBundle(BundleItem $item, Bundle $bundle, array $pricing, int $bundleQuantity = 1): int
     {
         $currency = Currency::getDefault();
-        $customerGroupId = StorefrontSession::getCustomerGroup()?->id;
+        $customerGroupId = StorefrontSession::getCustomerGroups()->first()?->id;
 
         $originalItemPrice = $item->getPrice($currency, $customerGroupId) * $item->quantity * $bundleQuantity;
         
@@ -622,7 +622,7 @@ class BundleService
         BundleAnalytic::create([
             'bundle_id' => $bundle->id,
             'event_type' => $eventType,
-            'user_id' => auth()->id(),
+            'user_id' => auth('web')->id(),
             'session_id' => session()->getId(),
             'selected_items' => $selectedItems,
             'bundle_price' => $pricing['bundle_price'] ?? null,

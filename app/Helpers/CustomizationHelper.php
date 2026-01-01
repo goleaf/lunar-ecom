@@ -43,7 +43,7 @@ class CustomizationHelper
         }
 
         $currency = \Lunar\Models\Currency::getDefault();
-        return \Lunar\Facades\Pricing::format($price * 100, $currency);
+        return (new \Lunar\DataTypes\Price((int) round($price * 100), $currency))->formatted();
     }
 }
 

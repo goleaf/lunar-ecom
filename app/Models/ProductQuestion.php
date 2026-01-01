@@ -115,8 +115,8 @@ class ProductQuestion extends Model
      */
     public function moderator(): BelongsTo
     {
-        $userClass = class_exists(\Lunar\Models\User::class) 
-            ? \Lunar\Models\User::class 
+        $userClass = class_exists('Lunar\\Models\\User')
+            ? 'Lunar\\Models\\User'
             : \App\Models\User::class;
         
         return $this->belongsTo($userClass, 'moderated_by');
@@ -200,8 +200,22 @@ class ProductQuestion extends Model
      */
     public function scopeSearch($query, string $search)
     {
-        return $query->whereFullText('question', $search)
-            ->orWhere('question', 'like', "%{$search}%");
+        $search = trim($search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        // SQLite (in-memory) used in tests does not support the full-text compilation that
+        // MySQL/Postgres do. Keep the search functional (and deterministic) by falling back.
+        if (config('database.default') === 'sqlite') {
+            return $query->where('question', 'like', "%{$search}%");
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->whereFullText('question', $search)
+                ->orWhere('question', 'like', "%{$search}%");
+        });
     }
 }
 

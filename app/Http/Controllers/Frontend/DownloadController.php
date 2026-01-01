@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Lunar\Customers\CustomerHelper;
 use App\Services\DigitalProductService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Gate;
 
 /**
  * Controller for handling digital product downloads.
@@ -25,14 +25,16 @@ class DownloadController extends Controller
      */
     public function index(Request $request)
     {
-        $customer = auth()->user()?->customer;
-
-        if (!$customer) {
+        $user = auth('web')->user();
+        if (!$user) {
             abort(403, 'You must be logged in to view downloads.');
         }
 
+        // Ensure the authenticated user has a Lunar customer attached.
+        $customer = CustomerHelper::getOrCreateCustomerForUser($user);
+
         $downloads = \App\Models\Download::where('customer_id', $customer->id)
-            ->with(['digitalProduct.product', 'order'])
+            ->with(['digitalProduct.productVariant.product', 'order'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -133,7 +135,9 @@ class DownloadController extends Controller
     public function resendEmail(Request $request, int $downloadId)
     {
         $download = \App\Models\Download::findOrFail($downloadId);
-        $customer = auth()->user()?->customer;
+        /** @var \App\Models\User|null $user */
+        $user = auth('web')->user();
+        $customer = $user?->latestCustomer();
 
         if (!$customer || $download->customer_id !== $customer->id) {
             abort(403, 'Unauthorized');

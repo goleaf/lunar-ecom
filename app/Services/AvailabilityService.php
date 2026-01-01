@@ -171,9 +171,8 @@ class AvailabilityService
     public function reserveDate(Product $product, array $bookingData): AvailabilityBooking
     {
         return DB::transaction(function () use ($product, $bookingData) {
-            $variant = $bookingData['variant_id'] 
-                ? ProductVariant::find($bookingData['variant_id']) 
-                : null;
+            $variantId = $bookingData['variant_id'] ?? null;
+            $variant = $variantId ? ProductVariant::find($variantId) : null;
 
             $startDate = Carbon::parse($bookingData['start_date']);
             $endDate = isset($bookingData['end_date']) 
@@ -465,10 +464,15 @@ class AvailabilityService
      */
     protected function getNotificationMessage(AvailabilityBooking $booking, string $type): string
     {
+        $productName = $booking->product?->translateAttribute('name') ?? 'product';
+        $startDate = $booking->start_date instanceof \Carbon\CarbonInterface
+            ? $booking->start_date->toDateString()
+            : null;
+
         return match ($type) {
-            'booking_confirmed' => "Your booking for {$booking->product->translateAttribute('name')} on {$booking->start_date->format('Y-m-d')} has been confirmed.",
-            'booking_cancelled' => "Your booking for {$booking->product->translateAttribute('name')} on {$booking->start_date->format('Y-m-d')} has been cancelled.",
-            'availability_changed' => "Availability for {$booking->product->translateAttribute('name')} has changed.",
+            'booking_confirmed' => "Your booking for {$productName}" . ($startDate ? " on {$startDate}" : '') . " has been confirmed.",
+            'booking_cancelled' => "Your booking for {$productName}" . ($startDate ? " on {$startDate}" : '') . " has been cancelled.",
+            'availability_changed' => "Availability for {$productName} has changed.",
             default => 'Notification',
         };
     }

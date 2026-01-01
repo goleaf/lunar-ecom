@@ -36,7 +36,7 @@
         <nav class="mb-4 text-sm" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2 flex-wrap">
                 <li>
-                    <a href="{{ route('frontend.index') }}" class="text-gray-500 hover:text-gray-700">
+                    <a href="{{ route('frontend.homepage') }}" class="text-gray-500 hover:text-gray-700">
                         {{ __('frontend.home') }}
                     </a>
                 </li>
@@ -86,7 +86,7 @@
     {{-- Sub-categories --}}
     @if(isset($children) && $children->count() > 0)
         <div class="mb-8">
-            <h2 class="text-xl font-semibold mb-4">{{ __('frontend.categories.subcategories') }}</h2>
+            <h2 class="text-xl font-semibold mb-4">{{ __('frontend.subcategories') }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach($children as $child)
                     <a href="{{ route('categories.show', $child->getFullPath()) }}" 
@@ -187,32 +187,34 @@
 
             {{-- Products Grid --}}
             <div class="lg:col-span-3">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold">
-                {{ __('frontend.products') }}
-                @if($products->total() > 0)
-                    <span class="text-gray-500 text-base font-normal">({{ $products->total() }})</span>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">
+                        {{ __('frontend.products') }}
+                        @if($products->total() > 0)
+                            <span class="text-gray-500 text-base font-normal">({{ $products->total() }})</span>
+                        @endif
+                    </h2>
+                </div>
+
+                @if($products->count() > 0)
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        @foreach($products as $product)
+                            @include('frontend.products._product-card', ['product' => $product])
+                        @endforeach
+                    </div>
+
+                    {{-- Pagination --}}
+                    <div class="mt-6">
+                        {{ $products->links() }}
+                    </div>
+                @else
+                    <div class="text-center py-12 bg-gray-50 rounded-lg">
+                        <p class="text-gray-600">{{ __('frontend.no_products') }}</p>
+                    </div>
                 @endif
-            </h2>
+            </div>
         </div>
-
-        @if($products->count() > 0)
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                @foreach($products as $product)
-                    @include('frontend.products._product-card', ['product' => $product])
-                @endforeach
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-6">
-                {{ $products->links() }}
-            </div>
-        @else
-            <div class="text-center py-12 bg-gray-50 rounded-lg">
-                <p class="text-gray-600">{{ __('frontend.no_products') }}</p>
-            </div>
-        @endif
-    </div>
+    @endif
 </div>
 @endsection
 

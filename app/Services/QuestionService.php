@@ -25,6 +25,7 @@ class QuestionService
     public function submitQuestion(Product $product, array $data): ProductQuestion
     {
         return DB::transaction(function () use ($product, $data) {
+            /** @var \App\Models\User|null $user */
             $user = auth('web')->user();
 
             // Check for duplicate questions
@@ -33,7 +34,7 @@ class QuestionService
             // Create the question
             $question = ProductQuestion::create([
                 'product_id' => $product->id,
-                'customer_id' => $data['customer_id'] ?? $user?->customer?->id,
+                'customer_id' => $data['customer_id'] ?? $user?->latestCustomer()?->id,
                 'customer_name' => $data['customer_name'] ?? $user?->name ?? 'Guest',
                 'email' => $data['email'] ?? $user?->email,
                 'question' => $data['question'],
@@ -176,17 +177,32 @@ class QuestionService
      */
     public function findSimilarQuestions(Product $product, string $question): \Illuminate\Database\Eloquent\Collection
     {
-        // Use full-text search and similarity matching
+        $question = trim($question);
+
+        if ($question === '') {
+            return collect();
+        }
+
         $similar = ProductQuestion::where('product_id', $product->id)
-            ->approved()
-            ->where(function ($query) use ($question) {
+            ->approved();
+
+        $snippet = substr($question, 0, 20);
+
+        // SQLite (in-memory) used in tests does not support full-text compilation.
+        if (config('database.default') === 'sqlite') {
+            return $similar
+                ->where('question', 'like', '%' . $snippet . '%')
+                ->limit(5)
+                ->get();
+        }
+
+        return $similar
+            ->where(function ($query) use ($question, $snippet) {
                 $query->whereFullText('question', $question)
-                    ->orWhere('question', 'like', '%' . substr($question, 0, 20) . '%');
+                    ->orWhere('question', 'like', '%' . $snippet . '%');
             })
             ->limit(5)
             ->get();
-
-        return $similar;
     }
 
     /**
@@ -343,8 +359,8 @@ class QuestionService
     {
         try {
             // Get admin users
-            $userClass = class_exists(\Lunar\Models\User::class) 
-                ? \Lunar\Models\User::class 
+            $userClass = class_exists('Lunar\\Models\\User')
+                ? 'Lunar\\Models\\User'
                 : \App\Models\User::class;
             
             $admins = $userClass::whereHas('roles', function ($query) {

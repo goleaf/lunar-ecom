@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Lunar\Models\Language;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Category>
@@ -28,6 +29,27 @@ class CategoryFactory extends Factory
         $baseSlug = str($name)->slug()->toString();
         $slug = $baseSlug;
 
+        $languageCodes = Language::query()->orderBy('id')->pluck('code')->all();
+        if (empty($languageCodes)) {
+            $languageCodes = ['en'];
+        }
+
+        $nameTranslations = [];
+        foreach ($languageCodes as $code) {
+            $nameTranslations[$code] = $code === 'en' ? $name : "{$name} ({$code})";
+        }
+
+        $baseDescription = fake()->optional(0.7)->paragraph();
+        $descriptionTranslations = null;
+        if ($baseDescription !== null) {
+            $descriptionTranslations = [];
+            foreach ($languageCodes as $code) {
+                $descriptionTranslations[$code] = $code === 'en'
+                    ? $baseDescription
+                    : "{$baseDescription} ({$code})";
+            }
+        }
+
         // Slugs are unique in `categories`. Seeders/factories may run multiple times
         // in one `--seed` (e.g. `CompleteSeeder` + `CategorySeeder`), so ensure uniqueness.
         $suffix = 2;
@@ -37,13 +59,9 @@ class CategoryFactory extends Factory
         }
         
         return [
-            'name' => [
-                'en' => $name,
-            ],
+            'name' => $nameTranslations,
             'slug' => $slug,
-            'description' => fake()->optional(0.7) ? [
-                'en' => fake()->paragraph(),
-            ] : null,
+            'description' => $descriptionTranslations,
             'parent_id' => null,
             'display_order' => fake()->numberBetween(0, 100),
             'is_active' => true,

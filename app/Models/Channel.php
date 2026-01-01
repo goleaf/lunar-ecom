@@ -14,7 +14,7 @@ class Channel extends LunarChannel
      *
      * @var array<string, string>
      */
-    protected $casts = [
+    public $casts = [
         'marketplace_config' => 'array',
         'allowed_countries' => 'array',
         'blocked_countries' => 'array',

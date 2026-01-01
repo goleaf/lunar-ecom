@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Frontend\StockNotificationController;
+use App\Services\StockNotificationService;
 use Livewire\Component;
 
 class StockNotificationUnsubscribe extends Component
@@ -16,7 +16,11 @@ class StockNotificationUnsubscribe extends Component
 
     public function render()
     {
-        return app(StockNotificationController::class)->unsubscribe($this->token);
+        $success = app(StockNotificationService::class)->unsubscribe($this->token);
+
+        return view('frontend.stock-notifications.unsubscribe', [
+            'success' => $success,
+        ]);
     }
 }
 

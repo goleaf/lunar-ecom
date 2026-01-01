@@ -155,12 +155,14 @@ class CartManager implements CartManagerInterface
             throw new \InvalidArgumentException('Coupon code is already applied');
         }
 
-        // Apply discount to cart
+        // Apply discount to cart (fires repricing / cache invalidation events).
         $cart->update(['coupon_code' => $couponCode]);
         
         // Recalculate totals with discount applied and repricing
         $this->calculateTotals();
-        $this->pricingEngine->repriceCart($cart, 'promotion_changed');
+        // NOTE: Custom repricing can be expensive and is triggered elsewhere via cart repricing events.
+        // Avoid double repricing here.
+        // $this->pricingEngine->repriceCart($cart, 'promotion_changed');
     }
 
     /**
@@ -282,7 +284,9 @@ class CartManager implements CartManagerInterface
 
         $cart->update(['coupon_code' => null]);
         $this->calculateTotals();
-        $this->pricingEngine->repriceCart($cart, 'promotion_changed');
+        // NOTE: Custom repricing can be expensive and is triggered elsewhere via cart repricing events.
+        // Avoid double repricing here.
+        // $this->pricingEngine->repriceCart($cart, 'promotion_changed');
     }
 
     /**

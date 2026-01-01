@@ -107,15 +107,7 @@ class ApplyCartDiscountsStep
         // Check for coupon code
         if ($cart->coupon_code) {
             $discount = Discount::where('coupon', $cart->coupon_code)
-                ->where('active', true)
-                ->where(function($query) {
-                    $query->whereNull('starts_at')
-                        ->orWhere('starts_at', '<=', now());
-                })
-                ->where(function($query) {
-                    $query->whereNull('ends_at')
-                        ->orWhere('ends_at', '>=', now());
-                })
+                ->active()
                 ->first();
             
             if ($discount && $this->discountAppliesToCart($discount, $cart)) {
@@ -124,16 +116,8 @@ class ApplyCartDiscountsStep
         }
         
         // Get other cart-level discounts (not tied to coupon codes)
-        $cartLevelDiscounts = Discount::where('active', true)
+        $cartLevelDiscounts = Discount::active()
             ->whereNull('coupon') // Not coupon-based
-            ->where(function($query) {
-                $query->whereNull('starts_at')
-                    ->orWhere('starts_at', '<=', now());
-            })
-            ->where(function($query) {
-                $query->whereNull('ends_at')
-                    ->orWhere('ends_at', '>=', now());
-            })
             ->get()
             ->filter(function($discount) use ($cart) {
                 return $this->discountAppliesToCart($discount, $cart);

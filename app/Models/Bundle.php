@@ -35,6 +35,7 @@ class Bundle extends Model
      */
     protected $fillable = [
         'product_id',
+        'category_id',
         'name',
         'description',
         'slug',
@@ -174,8 +175,10 @@ class Bundle extends Model
                 ->customerGroup($customerGroupId)
                 ->get();
 
-            if ($pricing->matched?->price) {
-                $itemPrice = $item->price_override ?? $pricing->matched->price->value;
+            $matched = $pricing->matched;
+
+            if ($matched instanceof \Lunar\Models\Price && $matched->price) {
+                $itemPrice = $item->price_override ?? $matched->price->value;
                 $itemDiscount = $item->discount_amount ?? 0;
                 $total += ($itemPrice - $itemDiscount) * $item->quantity;
             }

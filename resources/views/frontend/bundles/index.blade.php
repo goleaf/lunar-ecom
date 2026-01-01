@@ -29,7 +29,7 @@
 
                         @php
                             $currency = \Lunar\Models\Currency::getDefault();
-                            $customerGroupId = \Lunar\Facades\StorefrontSession::getCustomerGroup()?->id;
+                            $customerGroupId = \Lunar\Facades\StorefrontSession::getCustomerGroups()->first()?->id;
                             $individualTotal = $bundle->calculateIndividualTotal($currency, $customerGroupId);
                             $bundlePrice = $bundle->calculatePrice($currency, $customerGroupId);
                             $savings = $bundle->calculateSavings($currency, $customerGroupId);
@@ -38,14 +38,14 @@
                         <div class="mb-3">
                             <div class="flex items-center gap-2">
                                 <span class="text-2xl font-bold text-blue-600">
-                                    {{ $currency->formatter($bundlePrice) }}
+                                    {{ (new \Lunar\DataTypes\Price($bundlePrice, $currency))->formatted() }}
                                 </span>
                                 @if($savings > 0 && $bundle->show_savings)
                                     <span class="text-sm text-gray-500 line-through">
-                                        {{ $currency->formatter($individualTotal) }}
+                                        {{ (new \Lunar\DataTypes\Price($individualTotal, $currency))->formatted() }}
                                     </span>
                                     <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
-                                        Save {{ $currency->formatter($savings) }}
+                                        Save {{ (new \Lunar\DataTypes\Price($savings, $currency))->formatted() }}
                                     </span>
                                 @endif
                             </div>

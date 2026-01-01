@@ -62,7 +62,7 @@ class BundleController extends Controller
         $availability = $this->bundleService->validateBundleAvailability($bundle, $selectedItems, $quantity);
 
         $currency = Currency::getDefault();
-        $customerGroupId = StorefrontSession::getCustomerGroup()?->id;
+        $customerGroupId = StorefrontSession::getCustomerGroups()->first()?->id;
         $individualTotal = $pricing['original_price'] ?? $bundle->calculateIndividualTotal($currency, $customerGroupId);
         $bundlePrice = $pricing['bundle_price'] ?? $bundle->calculatePrice($currency, $customerGroupId, $quantity);
         $savings = $pricing['savings_amount'] ?? $bundle->calculateSavings($currency, $customerGroupId);

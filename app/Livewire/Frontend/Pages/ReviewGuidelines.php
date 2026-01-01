@@ -2,14 +2,16 @@
 
 namespace App\Livewire\Frontend\Pages;
 
-use App\Http\Controllers\Frontend\ReviewController;
+use App\Services\ReviewService;
 use Livewire\Component;
 
 class ReviewGuidelines extends Component
 {
     public function render()
     {
-        return app(ReviewController::class)->guidelines(request());
+        $guidelines = app(ReviewService::class)->getReviewGuidelines();
+
+        return view('frontend.reviews.guidelines', compact('guidelines'));
     }
 }
 

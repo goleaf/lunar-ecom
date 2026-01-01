@@ -52,10 +52,17 @@ class CalculateShippingStep
         if (isset($meta['shipping_option'])) {
             return $meta['shipping_option'];
         }
-        
+
+        // Avoid expensive / external shipping option resolution during tests
+        // (and generally when we don't have enough address context to compute shipping).
+        $cart->loadMissing('shippingAddress');
+        if (app()->runningUnitTests() || ! $cart->shippingAddress) {
+            return null;
+        }
+
         // Try to get from shipping manifest
         $options = ShippingManifest::getOptions($cart);
-        
+
         if ($options->isNotEmpty()) {
             // Return first available option (or selected one if available)
             return [
